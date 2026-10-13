@@ -2276,6 +2276,15 @@
             
             infoContainer.classList.remove('hidden');
             window.renderProducts(window.products.filter(p => p.category === 'freefire' && p.sub === subCat));
+
+            // Al entrar a LIMITADOS, si hay ID verificado, chequear descuentos
+            if (subCat === 'limitado') {
+                const ffIdInput = document.getElementById('ff-check-id');
+                const ffId = ffIdInput ? ffIdInput.value.trim() : '';
+                if (ffId && typeof window.checkFreeFireDiscounts === 'function') {
+                    window.checkFreeFireDiscounts(ffId);
+                }
+            }
         }
 
         window.filterIgSub = function(subCat) {
