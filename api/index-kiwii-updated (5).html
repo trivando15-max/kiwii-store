@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIWII STORE - Tu Tienda Gamer de Confianza</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kiwi: {
+                            red: '#ff1e27',
+                            darkred: '#800000',
+                            gold: '#ffb703',
+                            blue: '#00d4ff',
+                            dark: '#08080a',
+                            card: '#101216',
+                            border: '#1f2430'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #08080a; color: #ffffff; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
+        .animated-bg { position: relative; }
+        .animated-bg::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 200%; height: 200%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 0);
+            background-size: 30px 30px; z-index: 0; pointer-events: none;
+        }
+        
+        @keyframes orbMove1 { 0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; } 50% { transform: translate(5vw, 5vh) scale(1.2); opacity: 0.7; } }
+        @keyframes orbMove2 { 0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; } 50% { transform: translate(-8vw, -8vh) scale(0.9); opacity: 0.6; } }
+        .animate-orb1 { animation: orbMove1 12s infinite ease-in-out; }
+        .animate-orb2 { animation: orbMove2 18s infinite ease-in-out; }
+
+        .glow-red { box-shadow: 0 0 25px rgba(255, 30, 39, 0.4); }
+        .text-glow-red { text-shadow: 0 0 12px rgba(255, 30, 39, 0.8); }
+        .glow-gold { box-shadow: 0 0 25px rgba(255, 183, 3, 0.4); }
+        
+        .kiwi-float { animation: kiwiBounce 3s ease-in-out infinite; }
+        @keyframes kiwiBounce { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
+
+        .kiwi-float-subtle { animation: kiwiBounceSubtle 4s ease-in-out infinite; }
+        @keyframes kiwiBounceSubtle { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        .text-float-subtle { animation: textPulseSubtle 4s ease-in-out infinite; }
+        @keyframes textPulseSubtle { 0%, 100% { transform: translateY(0px); text-shadow: 0 0 5px rgba(255, 30, 39, 0.2); } 50% { transform: translateY(-2px); text-shadow: 0 0 15px rgba(255, 30, 39, 0.7); } }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f4758; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ff1e27; }
+
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .details-panel { transition: max-height 0.4s ease-out, opacity 0.3s ease-out; max-height: 0; opacity: 0; overflow: hidden; }
+        .details-panel.open { max-height: 800px; opacity: 1; border-color: #1f2430; }
+        .selected-card { border-color: #ff1e27 !important; background-color: rgba(255, 30, 39, 0.05); }
+
+        @keyframes fadeOutLoader {
+            0% { opacity: 1; visibility: visible; }
+            99% { opacity: 0; visibility: visible; }
+            100% { opacity: 0; visibility: hidden; display: none; z-index: -10; pointer-events: none; }
+        }
+        #page-loader { animation: fadeOutLoader 0.5s ease forwards; animation-delay: 1.5s; }
+
+        .role-owner { color: #fbcfe8; background-color: rgba(244, 114, 182, 0.15); border: 1px solid #f472b6; text-shadow: 0 0 8px rgba(244,114,182,0.8); }
+        .role-ceo { color: #fdba74; background-color: rgba(249, 115, 22, 0.15); border: 1px solid #f97316; text-shadow: 0 0 8px rgba(251,146,60,0.8); }
+        .role-mod { color: #c084fc; background-color: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; text-shadow: 0 0 8px rgba(192,132,252,0.8); }
+        .role-client { color: #6ee7b7; background-color: rgba(5, 150, 105, 0.15); border: 1px solid #10b981; }
+        .role-user { color: #9ca3af; background-color: transparent; border: 1px solid transparent; }
+    </style>
+</head>
+<body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
+
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-kiwi-red/10 rounded-full blur-[120px] animate-orb1"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[#5c0005]/20 rounded-full blur-[150px] animate-orb2"></div>
+    </div>
+
+    <div id="page-loader" class="fixed inset-0 bg-kiwi-dark z-[200] flex flex-col items-center justify-center transition-opacity duration-700">
+        <img src="Logo.jpg" alt="Cargando..." class="w-28 h-28 rounded-full border-4 border-kiwi-red shadow-[0_0_25px_#ff1e27] animate-pulse mb-6 object-cover">
+        <div class="flex items-center gap-2 mb-2">
+            <div class="w-3 h-3 bg-kiwi-red rounded-full animate-bounce"></div>
+            <div class="w-3 h-3 bg-kiwi-red rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+            <div class="w-3 h-3 bg-kiwi-red rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+        </div>
+        <h2 class="font-orbitron font-bold text-white tracking-widest text-sm text-glow-red">CARGANDO TIENDA...</h2>
+    </div>
+
+    <div id="welcome-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-500 hidden opacity-0">
+        <div class="bg-kiwi-card border border-kiwi-red w-full max-w-lg rounded-3xl p-8 relative shadow-[0_0_50px_rgba(255,30,39,0.3)] text-center transform scale-95 transition-transform duration-500">
+            <button onclick="window.closeWelcomeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <img src="Logo2.jpg" alt="Kiwii Store Logo" class="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-kiwi-red shadow-lg kiwi-float object-cover">
+            <h2 class="font-orbitron text-3xl font-black text-white mb-2">¡BIENVENIDO A <span class="text-kiwi-red text-glow-red">KIWII STORE</span>!</h2>
+            <p class="text-gray-300 font-rajdhani text-lg mb-6">Tu aventura empieza aquí. Explora nuestro catálogo de Roblox, Free Fire, Streaming y más. Las mejores ofertas te están esperando.</p>
+            <button onclick="window.closeWelcomeModal()" class="bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-3 px-8 rounded-xl transition shadow-lg glow-red text-lg w-full transform hover:scale-105">
+                ¡ENTRAR A LA TIENDA! <i class="fa-solid fa-rocket ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- HEADER / NAVBAR -->
+    <header class="sticky top-0 z-40 bg-kiwi-dark/95 backdrop-blur-md border-b border-kiwi-border">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between relative z-10">
+            <div class="flex items-center gap-3">
+                <button id="staff-menu-btn" onclick="window.toggleStaffDrawer()" class="hidden relative text-kiwi-gold hover:text-yellow-400 text-2xl transition mr-1">
+                    <i class="fa-solid fa-bars"></i>
+                    <span id="staff-notif-dot" class="hidden absolute -top-1 -right-1 flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                </button>
+
+                <div class="flex items-center gap-3 cursor-pointer group" onclick="window.goBackToHome()">
+                    <div class="relative w-12 h-12 rounded-full flex items-center justify-center kiwi-float-subtle overflow-hidden bg-kiwi-dark border border-kiwi-border shadow-[0_0_10px_rgba(255,30,39,0.2)] group-hover:border-kiwi-red transition-colors">
+                        <img src="Logo.jpg" alt="Kiwi Logo" class="w-full h-full object-cover">
+                    </div>
+                    <div class="text-float-subtle hidden sm:block">
+                        <h1 class="font-orbitron font-black text-2xl tracking-wider text-white flex items-center gap-1">
+                            KIWII <span class="text-kiwi-red text-glow-red">STORE</span>
+                        </h1>
+                        <p class="text-[10px] text-gray-400 font-rajdhani tracking-widest uppercase mt-[-2px]">TU TIENDA GAMER DE CONFIANZA</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="flex items-center gap-3">
+                <!-- BOTON DE MONEDA -->
+                <button onclick="window.openCurrencyModal()" class="bg-kiwi-dark border border-kiwi-border text-white text-sm rounded-xl px-4 py-2 mr-2 font-rajdhani font-bold flex items-center gap-2 hover:border-kiwi-red transition">
+                    <span id="currency-flag" class="text-lg">🇦🇷</span>
+                    <span id="currency-code">ARS</span>
+                    <i class="fa-solid fa-chevron-down text-xs opacity-60"></i>
+                </button>
+
+                <!-- CONTADOR ONLINE -->
+                <div class="flex items-center gap-2 bg-kiwi-dark border border-kiwi-border px-3 py-1.5 rounded-xl text-kiwi-gold text-xs font-orbitron font-bold shadow-lg mr-2 hidden sm:flex">
+                    <span class="relative flex h-2.5 w-2.5 mr-1">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    </span>
+                    ONLINE: <span id="online-counter" class="text-white ml-1 text-sm">1</span>
+                </div>
+                
+                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="bg-green-600 hover:bg-green-700 text-white p-2.5 rounded-xl transition flex items-center justify-center shadow-lg hover:scale-105" title="Atención WhatsApp">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                </a>
+                <button onclick="window.openOrdersPanel()" class="bg-kiwi-dark border border-kiwi-border text-white text-sm rounded-xl px-4 py-2 font-rajdhani font-bold flex items-center gap-2 hover:border-kiwi-red transition">
+                    <i class="fa-solid fa-box"></i> PEDIDOS
+                </button>
+                <button id="login-main-btn" onclick="window.openAuthModal()" class="bg-kiwi-red hover:bg-red-700 text-white font-rajdhani font-bold px-4 py-1.5 rounded-xl transition shadow-lg glow-red text-sm flex items-center gap-1 hover:scale-105">
+                    <i class="fa-solid fa-user"></i> <span id="user-display-name" class="hidden sm:inline">INICIAR SESIÓN</span>
+                </button>
+                <button onclick="window.toggleUserDrawer()" class="bg-kiwi-card border border-kiwi-border p-2.5 rounded-xl hover:border-kiwi-red transition text-white">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- APARTADO GESTIÓN DE PEDIDOS (CLIENTE) -->
+    <div id="orders-panel" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-orbitron text-2xl font-black text-white">MIS <span class="text-kiwi-red">PEDIDOS</span></h2>
+                <button onclick="window.closeOrdersPanel()" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> VOLVER
+                </button>
+            </div>
+            <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-orbitron">Saldo disponible</p>
+                        <p class="text-xl font-orbitron font-black text-kiwi-gold" id="orders-balance-display">$0 ARS</p>
+                    </div>
+                    <button onclick="window.openBalanceModal()" class="bg-kiwi-gold text-black font-bold px-4 py-2 rounded-xl text-sm">Cargar Saldo</button>
+                </div>
+            </div>
+            <div id="client-orders-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+
+    <!-- DRAWER LATERAL STAFF -->
+    <div id="staff-drawer" class="fixed inset-y-0 left-0 w-80 sm:w-96 bg-[#0f0e0a] border-r border-kiwi-gold z-50 transform -translate-x-full transition-transform duration-300 p-0 flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.8)]">
+        <div class="p-5 border-b border-yellow-900/50 bg-gradient-to-r from-kiwi-dark to-[#2a2205] flex justify-between items-center">
+            <h3 class="font-orbitron font-bold text-lg text-kiwi-gold flex items-center gap-2 text-shadow">
+                <i class="fa-solid fa-shield-halved"></i> PANEL STAFF
+            </h3>
+            <button onclick="window.toggleStaffDrawer()" class="text-kiwi-gold hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        
+        <div class="flex flex-col h-full overflow-hidden">
+            <div class="flex border-b border-kiwi-border bg-kiwi-dark">
+                <button onclick="window.switchStaffTab('cuentas')" id="tab-s-cuentas" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold relative transition">
+                    CUENTAS <span id="notif-cuentas" class="hidden absolute top-1 right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]"></span>
+                </button>
+                <button onclick="window.switchStaffTab('compras')" id="tab-s-compras" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 relative transition">
+                    COMPRAS <span id="notif-compras" class="hidden absolute top-1 right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]"></span>
+                </button>
+                <button onclick="window.switchStaffTab('chat')" id="tab-s-chat" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">CHAT</button>
+                <button onclick="window.switchStaffTab('metricas')" id="tab-s-metricas" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">INFO</button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-4 custom-scrollbar">
+                <div id="panel-cuentas" class="space-y-3">
+                    <input type="text" id="admin-search" placeholder="Buscar usuario..." onkeyup="window.filterAdminCuentas()" class="w-full bg-kiwi-dark border border-kiwi-gold/30 rounded-lg p-2 text-white text-xs mb-2 focus:outline-none focus:border-kiwi-gold">
+                    <div id="admin-users-list" class="space-y-2"></div>
+                </div>
+
+                <div id="panel-compras" class="space-y-3 hidden"></div>
+
+                <div id="panel-chat" class="hidden flex flex-col h-full">
+                    <div id="staff-chat-messages" class="flex-grow overflow-y-auto space-y-3 mb-4 custom-scrollbar pr-2 h-64 bg-kiwi-card/50 p-3 rounded-lg border border-kiwi-border"></div>
+                    <div class="flex gap-2 mt-auto">
+                        <input type="text" id="staff-chat-input" placeholder="Mensaje..." class="w-full bg-kiwi-dark border border-kiwi-gold/50 rounded-lg p-2 text-white text-sm focus:outline-none focus:border-kiwi-gold">
+                        <button onclick="window.sendStaffMessage()" class="bg-kiwi-gold text-black rounded-lg px-4 hover:bg-yellow-500 transition"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <div id="panel-metricas" class="space-y-3 hidden">
+                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-1 mb-3">Estadísticas de Atención</h4>
+                    <div id="metrics-content" class="text-sm text-gray-300 space-y-2"></div>
+                    
+                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-1 mb-3 mt-6">Acreditar Saldo</h4>
+                    <input id="credit-user" placeholder="Usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded p-2 text-xs text-white mb-1">
+                    <input id="credit-amount" type="number" placeholder="Monto ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded p-2 text-xs text-white mb-1">
+                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value)" class="w-full bg-kiwi-gold text-black font-bold py-2 rounded text-xs">Acreditar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ACCIONES DE CUENTA (STAFF) -->
+    <div id="action-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
+        <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-sm rounded-2xl p-6 relative shadow-2xl">
+            <button onclick="window.closeActionModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="font-orbitron font-bold text-kiwi-gold mb-1">Gestionar: <span id="action-username" class="text-white"></span></h3>
+            <p class="text-xs text-gray-400 mb-4">Solo Owner y CEO pueden hacer estas acciones.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Cambiar Nombre</label>
+                    <input type="text" id="action-new-username" placeholder="Dejar vacío para no cambiar" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-white text-sm focus:outline-none focus:border-kiwi-gold transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Cambiar Rango</label>
+                    <select id="action-role-select" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-white text-sm focus:outline-none focus:border-kiwi-gold transition">
+                        <option value="owner" class="text-pink-400 font-bold">Owner</option>
+                        <option value="ceo" class="text-orange-400 font-bold">CEO</option>
+                        <option value="mod" class="text-purple-400 font-bold">Mod</option>
+                        <option value="client" class="text-green-400 font-bold">Cliente</option>
+                        <option value="user" class="text-gray-400">Usuario</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Cambiar Contraseña Forzada</label>
+                    <div class="relative">
+                        <input type="password" id="action-new-pass" placeholder="Nueva contraseña..." class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-2 pr-10 text-white text-sm focus:outline-none focus:border-kiwi-gold transition">
+                        <i class="fa-solid fa-eye absolute right-3 top-2.5 text-gray-400 hover:text-white cursor-pointer" onclick="window.togglePassword('action-new-pass', this)"></i>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-2 border-t border-kiwi-border mt-2">
+                    <button id="action-save-btn" onclick="window.saveUserActions()" class="flex-1 bg-kiwi-gold hover:bg-yellow-600 text-black font-bold py-2 rounded-lg text-sm transition">Guardar</button>
+                    <button id="action-ban-btn" onclick="window.toggleBanUser()" class="flex-1 bg-red-900/80 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-sm transition border border-red-500">Banear</button>
+                </div>
+                <button id="action-delete-btn" onclick="window.deleteUserAction()" class="w-full bg-red-900/40 hover:bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition border border-red-800 mt-2">
+                    <i class="fa-solid fa-trash"></i> Eliminar Permanentemente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWER LATERAL USUARIO / COMUNIDAD -->
+    <div id="user-drawer" class="fixed inset-y-0 right-0 w-80 bg-kiwi-card border-l border-kiwi-border z-50 transform translate-x-full transition-transform duration-300 p-6 flex flex-col justify-between overflow-y-auto">
+        <div>
+            <div class="flex items-center justify-between pb-4 border-b border-kiwi-border mb-6">
+                <h3 class="font-orbitron font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-compass text-kiwi-red"></i> COMUNIDADES
+                </h3>
+                <button onclick="window.toggleUserDrawer()" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <h4 class="font-orbitron text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">CONTACTO</h4>
+            <div class="space-y-3 mb-6">
+                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="flex items-center gap-3 bg-green-600 hover:bg-green-700 p-4 rounded-xl border border-green-500 text-white transition">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i> 
+                    <span class="font-rajdhani font-bold text-lg">WhatsApp</span>
+                </a>
+                <a href="https://discord.gg/d35QmtVBSW" target="_blank" class="flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
+                    <i class="fa-brands fa-discord text-xl text-[#5865F2]"></i> <span class="font-rajdhani font-bold">Servidor de Discord</span>
+                </a>
+            </div>
+        </div>
+        <div class="pt-4 border-t border-kiwi-border text-center text-xs text-gray-500">
+            <p>KIWII STORE © 2026</p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full relative z-10" id="catalog-section">
+
+        <!-- HOME VIEW (VISTA INICIAL) -->
+        <div id="home-view">
+            <div class="reveal relative border border-kiwi-red/40 rounded-3xl mb-10 overflow-hidden flex flex-col md:flex-row items-center justify-between shadow-[0_0_30px_rgba(255,30,39,0.15)] min-h-[300px]">
+                <img src="Banner.jpg" alt="Kiwii Store Banner" class="absolute inset-0 w-full h-full object-cover opacity-50 z-0">
+                <div class="absolute inset-0 bg-gradient-to-r from-kiwi-dark/95 via-kiwi-card/70 to-transparent z-0"></div>
+                
+                <div class="z-10 relative p-8 w-full flex flex-col md:flex-row items-center justify-between h-full">
+                    <div class="max-w-xl">
+                        <span class="bg-kiwi-red text-white text-[11px] font-orbitron font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md inline-block mb-3">100% OFICIAL & SEGURO</span>
+                        <h2 class="font-orbitron text-4xl md:text-6xl font-black mb-2 leading-tight text-white drop-shadow-lg">
+                            RECARGAS GAMER Y <span class="text-kiwi-red text-glow-red">STREAMING</span>
+                        </h2>
+                        <p class="text-gray-200 font-rajdhani text-lg drop-shadow-md">
+                            Selecciona la categoría que buscas para abrir el catálogo completo. Entrega rápida con métodos de pago para Latam y Crypto.
+                        </p>
+                    </div>
+                    <div class="mt-8 md:mt-0 relative w-48 h-48 flex items-center justify-center kiwi-float hidden md:flex">
+                        <img src="Logo2.jpg" alt="Kiwi Mascota" class="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(255,30,39,0.4)] rounded-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORÍAS -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div onclick="window.filterCategory('roblox')" class="reveal cursor-pointer bg-blue-900/20 border border-blue-500 rounded-2xl p-4 flex flex-col items-center justify-center aspect-square transition duration-300 hover:bg-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-105" style="transition-delay: 0s;">
+                    <div class="w-16 h-16 mb-2 flex items-center justify-center bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-600">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="w-10 h-10 brightness-0 invert" alt="Roblox">
+                    </div>
+                    <span class="font-orbitron font-bold text-center text-sm md:text-base text-white">ROBLOX</span>
+                    <span class="text-[10px] text-gray-400 font-rajdhani font-bold uppercase mt-1">& Blox Fruits</span>
+                </div>
+                
+                <div onclick="window.filterCategory('freefire')" class="reveal cursor-pointer bg-orange-900/20 border border-orange-500 rounded-2xl p-4 flex flex-col items-center justify-center aspect-square transition duration-300 hover:bg-orange-500/30 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-105" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 mb-2 flex items-center justify-center bg-orange-900/40 rounded-xl shadow-lg border border-orange-500/50 text-4xl">🔥</div>
+                    <span class="font-orbitron font-bold text-center text-sm md:text-base text-white mt-1">FREE FIRE</span>
+                    <span class="text-[10px] text-gray-400 font-rajdhani font-bold uppercase mt-1">Diamantes</span>
+                </div>
+                
+                <div onclick="window.filterCategory('streaming')" class="reveal cursor-pointer bg-purple-900/20 border border-purple-500 rounded-2xl p-4 flex flex-col items-center justify-center aspect-square transition duration-300 hover:bg-purple-500/30 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-105" style="transition-delay: 0.2s;">
+                    <div class="w-16 h-16 mb-2 flex items-center justify-center bg-purple-900/40 rounded-xl shadow-lg border border-purple-500/50 text-3xl"><i class="fa-solid fa-tv text-purple-400"></i></div>
+                    <span class="font-orbitron font-bold text-center text-sm md:text-base text-white mt-1">STREAMING</span>
+                    <span class="text-[10px] text-gray-400 font-rajdhani font-bold uppercase mt-1">Apps & IA</span>
+                </div>
+                
+                <div onclick="window.filterCategory('instagram')" class="reveal cursor-pointer bg-pink-900/20 border border-pink-500 rounded-2xl p-4 flex flex-col items-center justify-center aspect-square transition duration-300 hover:bg-pink-500/30 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:scale-105" style="transition-delay: 0.3s;">
+                    <div class="w-16 h-16 mb-2 flex items-center justify-center bg-pink-900/40 rounded-xl shadow-lg border border-pink-500/50 text-4xl"><i class="fa-brands fa-instagram text-pink-500"></i></div>
+                    <span class="font-orbitron font-bold text-center text-sm md:text-base text-white mt-1 leading-tight">REDES<br>SOCIALES</span>
+                </div>
+            </div>
+
+            <!-- POR QUÉ ELEGIRNOS -->
+            <section id="why-us" class="mt-20 pt-10 border-t border-kiwi-border overflow-hidden">
+                <h3 class="reveal font-orbitron text-2xl md:text-3xl font-black text-center mb-10">
+                    ¿POR QUÉ COMPRAR EN <span class="text-kiwi-red">KIWII STORE</span>?
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+                    <div class="reveal bg-kiwi-card p-6 rounded-2xl border border-kiwi-border hover:border-kiwi-red transition" style="transition-delay: 0s;">
+                        <i class="fa-solid fa-bolt text-4xl text-kiwi-red mb-4"></i>
+                        <h4 class="font-orbitron font-bold text-lg mb-2">ENTREGA INMEDIATA</h4>
+                        <p class="text-gray-400 text-sm">Procesamiento automatizado de tus recargas en cuestión de minutos.</p>
+                    </div>
+                    <div class="reveal bg-kiwi-card p-6 rounded-2xl border border-kiwi-border hover:border-kiwi-red transition" style="transition-delay: 0.1s;">
+                        <i class="fa-solid fa-shield-cat text-4xl text-kiwi-red mb-4"></i>
+                        <h4 class="font-orbitron font-bold text-lg mb-2">COMPRA 100% SEGURA</h4>
+                        <p class="text-gray-400 text-sm">Métodos de pago protegidos y cuentas garantizadas.</p>
+                    </div>
+                    <div class="reveal bg-kiwi-card p-6 rounded-2xl border border-kiwi-border hover:border-kiwi-red transition" style="transition-delay: 0.2s;">
+                        <i class="fa-solid fa-headset text-4xl text-kiwi-red mb-4"></i>
+                        <h4 class="font-orbitron font-bold text-lg mb-2">ATENCIÓN 24/7</h4>
+                        <p class="text-gray-400 text-sm">Soporte personalizado vía WhatsApp ante cualquier duda.</p>
+                    </div>
+                    <div class="reveal bg-kiwi-card p-6 rounded-2xl border border-kiwi-border hover:border-kiwi-red transition" style="transition-delay: 0.3s;">
+                        <i class="fa-solid fa-tags text-4xl text-kiwi-red mb-4"></i>
+                        <h4 class="font-orbitron font-bold text-lg mb-2">MEJORES PRECIOS</h4>
+                        <p class="text-gray-400 text-sm">Tarifas regionales competitivas actualizadas.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TUTORIALES -->
+            <section id="tutorials" class="mt-20 pt-10 border-t border-kiwi-border overflow-hidden">
+                <h3 class="reveal font-orbitron text-2xl md:text-3xl font-black text-center mb-10">
+                    <i class="fa-solid fa-graduation-cap text-kiwi-red"></i> GUÍAS Y TUTORIALES
+                </h3>
+                <p class="reveal text-center text-gray-400 mb-8 text-sm max-w-2xl mx-auto">¿Tienes dudas sobre cómo recibir tus productos? Revisa estas guías rápidas antes de comprar.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <div class="reveal bg-kiwi-card rounded-2xl p-6 border border-blue-500/30 hover:border-blue-500 transition shadow-lg" style="transition-delay: 0s;">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-blue-900/50 rounded-xl flex items-center justify-center text-2xl text-blue-400 border border-blue-500/50">🎫</div>
+                            <h4 class="font-orbitron font-bold text-lg text-white">Cómo recibir Robux por Gamepass</h4>
+                        </div>
+                        <ul class="space-y-3 text-sm text-gray-300 font-rajdhani">
+                            <li class="flex gap-2"><i class="fa-solid fa-1 text-blue-400 mt-1"></i> Crea una experiencia o juego público en tu perfil de Roblox.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-2 text-blue-400 mt-1"></i> Entra a "Crear" en Roblox y añade un "Pase" a ese juego.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-3 text-blue-400 mt-1"></i> Ponle al Gamepass el precio que te indicaremos en WhatsApp.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-4 text-blue-400 mt-1"></i> Envíanos el link por WhatsApp.</li>
+                        </ul>
+                    </div>
+
+                    <div class="reveal bg-kiwi-card rounded-2xl p-6 border border-orange-500/30 hover:border-orange-500 transition shadow-lg" style="transition-delay: 0.2s;">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-orange-900/50 rounded-xl flex items-center justify-center text-2xl text-orange-400 border border-orange-500/50">🔥</div>
+                            <h4 class="font-orbitron font-bold text-lg text-white">Recargas de Free Fire</h4>
+                        </div>
+                        <ul class="space-y-3 text-sm text-gray-300 font-rajdhani">
+                            <li class="flex gap-2"><i class="fa-solid fa-1 text-orange-400 mt-1"></i> <strong>Ilimitadas:</strong> Se envían directo a tu ID de jugador en minutos.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-2 text-orange-400 mt-1"></i> <strong>Limitadas:</strong> ⚠️ Solo puedes comprar 1 paquete limitado por cada ID en su historia.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-3 text-orange-400 mt-1"></i> Asegúrate de copiar bien tu número de ID desde tu perfil.</li>
+                        </ul>
+                    </div>
+
+                    <div class="reveal bg-kiwi-card rounded-2xl p-6 border border-purple-500/30 hover:border-purple-500 transition shadow-lg md:col-span-2" style="transition-delay: 0.1s;">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-purple-900/50 rounded-xl flex items-center justify-center text-2xl text-purple-400 border border-purple-500/50">🍎</div>
+                            <h4 class="font-orbitron font-bold text-lg text-white">Entrega de Frutas (Blox Fruits)</h4>
+                        </div>
+                        <p class="text-sm text-gray-300 font-rajdhani mb-3">La entrega es súper sencilla y directa. ¡Sin complicaciones!</p>
+                        <ul class="space-y-3 text-sm text-gray-300 font-rajdhani grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i> <strong>Sin requisitos:</strong> No necesitas estar en un mar específico ni dar frutas a cambio.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i> <strong>Entrega Ultra Rápida:</strong> Tu fruta llegará a tu cuenta en un plazo de 2 a 15 minutos tras verificar el pago.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i> <strong>Offline:</strong> No hace falta que estemos conectados al mismo tiempo ni en el mismo servidor.</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i> <strong>100% Seguro:</strong> El envío se realiza mediante sistemas de regalo oficiales del juego.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section id="faq" class="mt-20 pt-10 border-t border-kiwi-border overflow-hidden">
+                <h3 class="reveal font-orbitron text-2xl md:text-3xl font-black text-center mb-10">
+                    <i class="fa-solid fa-circle-question text-kiwi-red"></i> PREGUNTAS FRECUENTES
+                </h3>
+                <div class="max-w-3xl mx-auto space-y-3">
+                    <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Cuánto tarda en llegar mi recarga o cuenta?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        </button>
+                        <div class="hidden px-5 pb-5">
+                            <p class="text-sm text-gray-300 font-rajdhani">Los servicios de Streaming, Diamantes de Free Fire y entrega de Frutas en Blox Fruits se entregan de 2 a 15 minutos tras verificar tu comprobante de pago por WhatsApp. Los Robux vía Gamepass demoran entre 5 a 7 días por políticas de Roblox.</p>
+                        </div>
+                    </div>
+                    <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Cómo pago y confirmo mi compra?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        </button>
+                        <div class="hidden px-5 pb-5">
+                            <p class="text-sm text-gray-300 font-rajdhani">Es muy fácil. Al hacer clic en "Comprar Ahora", selecciona tu método de pago. El sistema te mostrará los datos de transferencia (ej: Alias de Mercado Pago: Ivan.admin). Haces la transferencia y luego haces clic en el botón verde para enviarnos el comprobante directamente a nuestro WhatsApp oficial.</p>
+                        </div>
+                    </div>
+                    <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Qué pasa si me equivoco al escribir mi ID?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        </button>
+                        <div class="hidden px-5 pb-5">
+                            <p class="text-sm text-gray-300 font-rajdhani">Es de extrema importancia revisar cuidadosamente tus datos (ID, nombre de usuario o link) antes de enviar el mensaje. Si el pago y la entrega se procesan a un ID incorrecto que tú proporcionaste, lamentablemente no podremos emitir reembolsos ni revertir la transacción, ya que los sistemas de recarga son irreversibles.</p>
+                        </div>
+                    </div>
+                    <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Cuáles son los horarios de atención?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        </button>
+                        <div class="hidden px-5 pb-5">
+                            <p class="text-sm text-gray-300 font-rajdhani">Nuestro equipo está disponible y respondiendo activamente en WhatsApp todos los días desde las 10:00 AM hasta las 22:00 PM (Hora Argentina). Puedes realizar compras fuera de este horario y dejarnos el comprobante, pero la entrega se procesará a primera hora del día siguiente.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- CATEGORY VIEW -->
+        <div id="category-view" class="hidden min-h-screen">
+            <button onclick="window.goBackToHome()" class="mb-6 bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border text-white px-5 py-2.5 rounded-xl transition flex items-center gap-2 font-rajdhani font-bold text-lg shadow-lg transform hover:-translate-x-1">
+                <i class="fa-solid fa-arrow-left"></i> VOLVER AL INICIO
+            </button>
+
+            <div id="category-header-banner" class="reveal mb-8 p-5 md:p-8 rounded-2xl border border-kiwi-border bg-gradient-to-r from-kiwi-card to-kiwi-dark shadow-xl flex items-center gap-4">
+                <h2 id="category-title" class="font-orbitron text-2xl md:text-3xl font-black text-white uppercase flex items-center gap-3">CATEGORÍA</h2>
+            </div>
+
+            <!-- ROBLOX TABS -->
+            <div id="roblox-subcategories" class="reveal hidden mb-8 bg-kiwi-card border border-blue-500/40 rounded-2xl p-5 shadow-lg">
+                <h4 class="font-orbitron text-sm font-bold text-blue-400 mb-3 uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad"></i> Selecciona qué buscas:
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 font-rajdhani font-bold">
+                    <button id="tab-roblox-fruits" onclick="window.filterRobloxSub('fruits')" class="roblox-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-sm">
+                        <span class="text-xl">🍎</span> FRUTAS / GAMEPASS
+                    </button>
+                    <button id="tab-roblox-robux_grupo" onclick="window.filterRobloxSub('robux_grupo')" class="roblox-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-sm">
+                        <span class="text-xl">💎</span> ROBUX VIA GRUPO
+                    </button>
+                    <button id="tab-roblox-robux_gamepass" onclick="window.filterRobloxSub('robux_gamepass')" class="roblox-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-sm">
+                        <span class="text-xl">💎</span> ROBUX VIA GAMEPASS
+                    </button>
+                    <button id="tab-roblox-robux_plus" onclick="window.filterRobloxSub('robux_plus')" class="roblox-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-sm">
+                        <span class="text-xl">💎</span> ROBUX VIA PLUS
+                    </button>
+                </div>
+            </div>
+
+            <!-- FREE FIRE TABS ACTUALIZADO (3 COLUMNAS) -->
+            <div id="freefire-subcategories" class="reveal hidden mb-8 bg-kiwi-card border border-orange-500/40 rounded-2xl p-5 shadow-lg">
+                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-3 uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-fire"></i> Tipo de recarga:
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-rajdhani font-bold">
+                    <button id="tab-freefire-ilimitado" onclick="window.filterFreeFireSub('ilimitado')" class="ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg">
+                        <span class="text-2xl">💎</span> ILIMITADOS
+                    </button>
+                    <button id="tab-freefire-limitado" onclick="window.filterFreeFireSub('limitado')" class="ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg">
+                        <span class="text-2xl">⏳</span> LIMITADOS (1 x ID)
+                    </button>
+                    <button id="tab-freefire-especiales" onclick="window.filterFreeFireSub('especiales')" class="ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg">
+                        <span class="text-2xl">🎟️</span> PASE & FRAGMENTOS
+                    </button>
+                </div>
+            </div>
+
+            <!-- FREE FIRE ID CHECKER -->
+            <div id="ff-id-checker" class="hidden mb-6 bg-[#0c1220] border border-orange-500/30 rounded-2xl p-5">
+                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-id-card"></i> Verificar ID de Free Fire
+                </h4>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <input type="text" id="ff-check-id" placeholder="Ingresa tu ID de Free Fire" class="flex-1 bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-orange-500 focus:outline-none text-sm">
+                    <button onclick="window.checkFreeFireID()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-xl transition">
+                        Verificar
+                    </button>
+                </div>
+                <div id="ff-id-result" class="mt-3 text-sm font-rajdhani hidden"></div>
+                <p class="text-[10px] text-gray-500 mt-2">El ID se guardará en tu cuenta para autocompletar en futuras compras.</p>
+            </div>
+
+            <!-- INSTAGRAM TABS -->
+            <div id="instagram-subcategories" class="reveal hidden mb-8 bg-kiwi-card border border-pink-500/40 rounded-2xl p-5 shadow-lg">
+                <h4 class="font-orbitron text-sm font-bold text-pink-400 mb-3 uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-heart"></i> Selecciona el servicio:
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-rajdhani font-bold">
+                    <button id="tab-ig-seguidores" onclick="window.filterIgSub('seguidores')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
+                        <span class="text-xl">👥</span> SEGUIDORES DE INSTAGRAM
+                    </button>
+                    <button id="tab-ig-likes" onclick="window.filterIgSub('likes')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
+                        <span class="text-xl">❤️</span> LIKES / VISTAS DE INSTAGRAM REELS O PUBLICACIONES
+                    </button>
+                </div>
+            </div>
+
+            <div id="category-info-container" class="hidden mb-6"></div>
+
+            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden"></div>
+            
+            <div id="streaming-category-wrapper" class="hidden">
+                <div class="mb-12">
+                    <h2 class="font-orbitron text-2xl font-bold text-white mb-6 border-b border-kiwi-border pb-2 flex items-center gap-3"><i class="fa-solid fa-tv text-purple-500"></i> STREAMING</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="streaming-grid"></div>
+                </div>
+                <div class="mb-12">
+                    <h2 class="font-orbitron text-2xl font-bold text-white mb-6 border-b border-kiwi-border pb-2 flex items-center gap-3"><i class="fa-solid fa-robot text-blue-500"></i> INTELIGENCIA ARTIFICIAL</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ai-grid"></div>
+                </div>
+                <div class="mb-12">
+                    <h2 class="font-orbitron text-2xl font-bold text-white mb-6 border-b border-kiwi-border pb-2 flex items-center gap-3"><i class="fa-solid fa-shield-halved text-green-500"></i> EDICIÓN · VPN · DUOLINGO</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tools-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-kiwi-dark border-t border-kiwi-border py-8 mt-16 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-orbitron font-bold text-white">KIWII STORE</span>
+                <span class="text-xs text-gray-500">© 2026 - Todos los derechos reservados.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE MONEDA (DISEÑO EXACTO) -->
+    <div id="currency-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-[#0f111a] border border-[#2a2e40] w-full max-w-lg rounded-3xl p-6 relative shadow-2xl transform scale-95 transition-transform duration-300" id="currency-modal-card">
+            <button onclick="window.closeCurrencyModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h2 class="font-orbitron font-black text-2xl text-white mb-1">Moneda</h2>
+            <p class="text-gray-400 text-sm mb-5 font-rajdhani">Elige en qué moneda querés ver los precios.</p>
+            
+            <div class="bg-[#151825] border border-[#222635] rounded-xl p-3 mb-5 flex items-center gap-2 text-xs">
+                <span class="text-green-500 text-[10px]"><i class="fa-solid fa-circle"></i></span>
+                <span class="text-gray-200 font-bold font-rajdhani tracking-wide">Tasa del P2P de Binance</span>
+                <span class="ml-auto text-blue-400 text-[10px] font-bold">Actualizado ahora</span>
+            </div>
+
+            <div id="currency-options" class="grid grid-cols-2 gap-3">
+                <!-- ARS -->
+                <button id="curr-card-ARS" onclick="window.selectCurrency('ARS', '🇦🇷')" class="curr-card border border-kiwi-red bg-kiwi-red/10 rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-2xl font-black text-white font-orbitron">AR</span>
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-sm leading-none">ARS</span>
+                            <span class="text-gray-400 text-[10px] leading-none mt-1">Peso argentino</span>
+                        </div>
+                    </div>
+                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">Argentina</span>
+                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 1.642 ARS</span>
+                </button>
+                <!-- MXN -->
+                <button id="curr-card-MXN" onclick="window.selectCurrency('MXN', '🇲🇽')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-2xl font-black text-white font-orbitron">MX</span>
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-sm leading-none">MXN</span>
+                            <span class="text-gray-400 text-[10px] leading-none mt-1">Peso mexicano</span>
+                        </div>
+                    </div>
+                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">México</span>
+                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 18,87 MXN</span>
+                </button>
+                <!-- COP -->
+                <button id="curr-card-COP" onclick="window.selectCurrency('COP', '🇨🇴')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-2xl font-black text-white font-orbitron">CO</span>
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-sm leading-none">COP</span>
+                            <span class="text-gray-400 text-[10px] leading-none mt-1">Peso colombiano</span>
+                        </div>
+                    </div>
+                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">Colombia</span>
+                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 3.259 COP</span>
+                </button>
+                <!-- PEN -->
+                <button id="curr-card-PEN" onclick="window.selectCurrency('PEN', '🇵🇪')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-2xl font-black text-white font-orbitron">PE</span>
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-sm leading-none">PEN</span>
+                            <span class="text-gray-400 text-[10px] leading-none mt-1">Sol</span>
+                        </div>
+                    </div>
+                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">Perú</span>
+                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 3,45 PEN</span>
+                </button>
+                <!-- USDT -->
+                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '🪙')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-8 h-6 bg-green-500 rounded flex items-center justify-center font-bold text-white text-sm mr-1 shadow-lg">₮</div>
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-sm leading-none">USDT</span>
+                            <span class="text-gray-400 text-[10px] leading-none mt-1">Tether</span>
+                        </div>
+                    </div>
+                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">USDT</span>
+                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES DE AUTH, PERFIL, ACCIONES, Y DRAWER USUARIO -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-6 relative shadow-2xl transform transition-transform duration-300 scale-95" id="auth-modal-card">
+            <button onclick="window.closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="font-orbitron text-xl font-bold text-center mb-1 text-white" id="auth-modal-title">Iniciar Sesión</h3>
+            <p class="text-gray-400 text-center text-xs mb-6" id="auth-modal-desc">Ingresa para vincular tus compras y acceder a tu cuenta</p>
+            <div id="login-register-view">
+                <div class="flex justify-center gap-4 mb-6 border-b border-kiwi-border pb-2">
+                    <button onclick="window.switchAuthTab('login')" id="tab-login" class="font-orbitron font-bold text-kiwi-red border-b-2 border-kiwi-red pb-1 transition">INICIAR SESIÓN</button>
+                    <button onclick="window.switchAuthTab('register')" id="tab-register" class="font-orbitron font-bold text-gray-500 hover:text-gray-300 pb-1 transition">REGISTRARSE</button>
+                </div>
+                <form id="login-form" onsubmit="window.handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Usuario</label>
+                        <input type="text" id="login-user" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Contraseña</label>
+                        <div class="relative">
+                            <input type="password" id="login-pass" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 pr-10 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                            <i class="fa-solid fa-eye absolute right-4 top-3.5 text-gray-400 hover:text-white cursor-pointer" onclick="window.togglePassword('login-pass', this)"></i>
+                        </div>
+                    </div>
+                    <button type="button" onclick="window.switchAuthTab('forgot')" class="text-xs text-kiwi-gold hover:text-yellow-300 transition block text-right w-full mt-1">¿Olvidaste tu contraseña?</button>
+                    <button type="submit" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg mt-4">ENTRAR</button>
+                </form>
+                <form id="register-form" onsubmit="window.handleRegister(event)" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Usuario <span class="text-[10px] text-gray-500">(Debe ser único)</span></label>
+                        <input type="text" id="reg-user" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Correo</label>
+                        <input type="email" id="reg-email" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Contraseña</label>
+                            <input type="password" id="reg-pass" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Confirmar</label>
+                            <input type="password" id="reg-pass2" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg mt-4">CREAR CUENTA</button>
+                </form>
+            </div>
+            <div id="user-profile-view" class="hidden">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-kiwi-border">
+                    <div class="flex items-center gap-4">
+                        <div class="relative group cursor-pointer" onclick="document.getElementById('profile-pic-upload').click()">
+                            <div class="w-14 h-14 bg-kiwi-red rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg overflow-hidden border-2 border-transparent transition" id="profile-pic-container">
+                                <span id="profile-initial">U</span>
+                                <img id="profile-img-preview" class="hidden w-full h-full object-cover">
+                            </div>
+                            <input type="file" id="profile-pic-upload" accept="image/*" class="hidden" onchange="window.uploadProfilePic(event)">
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white text-lg flex items-center gap-2" id="profile-name">Usuario</h4>
+                            <p class="text-xs text-green-400 mt-1" id="profile-role"><i class="fa-solid fa-circle-check"></i> Cuenta Verificada</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-kiwi-dark border border-kiwi-gold/40 rounded-xl p-4 mb-5">
+                    <p class="text-xs text-gray-400 uppercase font-orbitron">Saldo en Página</p>
+                    <p class="text-2xl font-orbitron font-black text-kiwi-gold" id="user-balance-display">$0 ARS</p>
+                    <button onclick="window.openBalanceModal()" class="mt-2 text-xs bg-kiwi-gold text-black font-bold px-3 py-1 rounded">Cargar Saldo</button>
+                </div>
+                <h4 class="font-orbitron font-bold text-sm text-gray-300 mb-3 uppercase flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> Mis Pedidos</h4>
+                <div id="purchase-history-list" class="space-y-2 mb-6 max-h-64 overflow-y-auto custom-scrollbar pr-2"></div>
+                <button onclick="window.handleLogout()" class="w-full bg-red-900/50 hover:bg-red-800 text-white font-bold py-2.5 rounded-xl transition border border-red-500/30 text-sm">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- MODAL CARGAR SALDO -->
+    <div id="balance-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-6 relative">
+            <button onclick="document.getElementById('balance-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="font-orbitron text-xl font-bold text-kiwi-gold mb-2">Cargar Saldo</h3>
+            <p class="text-xs text-gray-400 mb-4">Envía el comprobante por WhatsApp. Una vez confirmado se acredita a tu saldo.</p>
+            <input type="number" id="balance-amount" placeholder="Monto en ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white mb-3">
+            <button onclick="window.requestBalanceLoad()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl">Solicitar Carga</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE CHECKOUT -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-kiwi-card border border-kiwi-red/60 w-full max-w-lg rounded-2xl p-6 relative shadow-2xl transform transition-transform duration-300 scale-95" id="checkout-modal-card">
+            <button onclick="window.closeCheckoutModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+
+            <span class="bg-kiwi-red/20 text-kiwi-red text-[10px] font-orbitron font-bold px-3 py-1 rounded-full uppercase">PAGO Y CONFIRMACIÓN</span>
+            <h3 id="modal-product-title" class="font-orbitron text-xl font-bold text-white mt-2 mb-1">Producto</h3>
+            <p id="modal-product-price" class="text-kiwi-red font-bold font-rajdhani text-2xl mb-2">$0 ARS</p>
+            
+            <p id="limited-warning" class="hidden text-orange-400 text-xs font-bold bg-orange-900/30 p-2 rounded mb-4 border border-orange-500/50">
+                <i class="fa-solid fa-triangle-exclamation"></i> ESTA ES UNA OFERTA LIMITADA (SOLO 1 COMPRA POR ID).
+            </p>
+
+            <div class="bg-kiwi-dark p-3.5 rounded-xl border border-kiwi-border mb-4 text-xs space-y-1">
+                <p class="text-gray-300 font-bold font-orbitron uppercase text-[11px] text-kiwi-gold">DATOS DE TRANSFERENCIA (MERCADO PAGO):</p>
+                <p class="text-gray-300"><span class="text-gray-500">Alias CBU:</span> <strong class="text-white font-mono bg-kiwi-card px-1.5 py-0.5 rounded">Ivan.admin</strong></p>
+                <p class="text-gray-300"><span class="text-gray-500">Titular:</span> <strong class="text-white">Iván Estrada</strong></p>
+            </div>
+
+            <form onsubmit="window.handlePurchaseSubmit(event)" class="space-y-4">
+                <div id="checkout-dynamic-fields">
+                    <label id="checkout-user-label" class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Tu Usuario / ID / Link de Perfil</label>
+                    <input type="text" id="user-account-input" required placeholder="..." class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                    <p id="checkout-user-warning" class="hidden text-orange-400 text-xs font-bold bg-orange-900/20 p-2 rounded mt-2 border border-orange-500/30 font-rajdhani"></p>
+                </div>
+                
+                <div id="checkout-extra-container" class="hidden pt-1">
+                    <label id="checkout-extra-label" class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Campo Extra</label>
+                    <input type="text" id="extra-account-input" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron mt-2">Método de Pago Seleccionado</label>
+                    <select id="payment-method-select" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                        <option>Mercado Pago / Transferencia</option>
+                        <option>Binance Pay (USDT)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]">
+                    <i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT PRINCIPAL -->
+    <script>
+        window.currentActiveProduct = null;
+        let currentUser = null;
+
+        // === FUNCIONES CRÍTICAS DE BOTONES (definidas primero) ===
+        window.goBackToHome = function() {
+            const catView = document.getElementById('category-view');
+            const homeView = document.getElementById('home-view');
+            if (catView) catView.classList.add('hidden');
+            if (homeView) homeView.classList.remove('hidden');
+            const section = document.getElementById('catalog-section');
+            if (section) section.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.scrollToId = function(id) {
+            if (document.getElementById('home-view') && document.getElementById('home-view').classList.contains('hidden')) {
+                window.goBackToHome();
+                setTimeout(() => {
+                    const el = document.getElementById(id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 200);
+            } else {
+                const el = document.getElementById(id);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        window.toggleUserDrawer = function() {
+            const drawer = document.getElementById('user-drawer');
+            if (drawer) drawer.classList.toggle('translate-x-full');
+        };
+
+        window.openAuthModal = function() {
+            const m = document.getElementById('auth-modal');
+            if (!m) { alert('Modal de login no encontrado'); return; }
+            const mc = document.getElementById('auth-modal-card');
+            m.classList.remove('hidden');
+            setTimeout(() => { if (mc) mc.classList.replace('scale-95', 'scale-100'); }, 10);
+            // Si ya está logueado, mostrar perfil
+            if (currentUser) {
+                const title = document.getElementById('auth-modal-title');
+                const desc = document.getElementById('auth-modal-desc');
+                const btnSection = document.getElementById('login-register-view');
+                const profileSection = document.getElementById('user-profile-view');
+                if (title) title.textContent = "Mi Perfil";
+                if (desc) desc.textContent = "Resumen de tu cuenta";
+                if (btnSection) btnSection.classList.add('hidden');
+                if (profileSection) profileSection.classList.remove('hidden');
+                const nameEl = document.getElementById('profile-name');
+                if (nameEl) nameEl.textContent = currentUser;
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            }
+        };
+
+        window.closeAuthModal = function() {
+            const m = document.getElementById('auth-modal');
+            const mc = document.getElementById('auth-modal-card');
+            if (mc) mc.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { if (m) m.classList.add('hidden'); }, 200);
+        };
+
+        window.openOrdersPanel = function() {
+            if (!currentUser) {
+                alert('Iniciá sesión para ver tus pedidos');
+                window.openAuthModal();
+                return;
+            }
+            const panel = document.getElementById('orders-panel');
+            if (!panel) { alert('Panel de pedidos no encontrado'); return; }
+            panel.classList.remove('hidden');
+            panel.style.display = 'block';
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
+
+        window.closeOrdersPanel = function() {
+            const panel = document.getElementById('orders-panel');
+            if (panel) {
+                panel.classList.add('hidden');
+                panel.style.display = '';
+            }
+            // Also close balance modal if it was open on top
+            const bal = document.getElementById('balance-modal');
+            if (bal) bal.classList.add('hidden');
+        };
+
+        // --- SISTEMA DE CONVERSION DE MONEDAS ---
+        window.currentCurrency = 'ARS';
+        window.exchangeRates = {
+            'ARS': 1642,
+            'MXN': 18.87,
+            'COP': 3259,
+            'PEN': 3.45,
+            'USDT': 1
+        };
+        window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
+
+        window.getConvertedPrice = function(prod) {
+            let usdtVal = 0;
+            // Calcular valor en USDT
+            if (prod.usdtPrice) {
+                usdtVal = prod.usdtPrice;
+            } else {
+                let match = prod.price.match(/\$([\d.]+)\s*ARS/);
+                if (match) {
+                    let arsVal = parseFloat(match[1].replace(/\./g, ''));
+                    usdtVal = arsVal / 1600; // Tasa base interna que venías usando
+                }
+            }
+
+            if (window.currentCurrency === 'USDT') {
+                return `₮ ${(usdtVal).toFixed(2)} USDT`;
+            }
+
+            let converted = usdtVal * window.exchangeRates[window.currentCurrency];
+            let formatted = converted.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            let sym = window.currencySymbols[window.currentCurrency];
+            
+            // Mantener texto de "Robux"
+            if (prod.price.includes('Robux - ')) {
+                let prefix = prod.price.split(' - ')[0];
+                return `${prefix} - ${sym}${formatted} ${window.currentCurrency}`;
+            }
+            if (prod.price.includes('USDT - ')) {
+                return `${usdtVal} USDT - ${sym}${formatted} ${window.currentCurrency}`;
+            }
+            return `${sym}${formatted} ${window.currentCurrency}`;
+        };
+
+        window.getConvertedVariantPrice = function(priceString) {
+            let usdtVal = 0;
+            let match = priceString.match(/([\d.]+)\s*USDT/);
+            if (match) { usdtVal = parseFloat(match[1]); } 
+            else {
+                let arsMatch = priceString.match(/\$([\d.]+)\s*ARS/);
+                if (arsMatch) usdtVal = parseFloat(arsMatch[1].replace(/\./g, '')) / 1600;
+            }
+            
+            if (window.currentCurrency === 'USDT') return `₮ ${(usdtVal).toFixed(2)} USDT`;
+            let converted = usdtVal * window.exchangeRates[window.currentCurrency];
+            let formatted = converted.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+            return `${window.currencySymbols[window.currentCurrency]}${formatted} ${window.currentCurrency}`;
+        }
+
+        // --- CONFIGURACIÓN DE SUPABASE (protegida) ---
+        const supabaseUrl = 'https://efbwdxdfpbilhxncdpgo.supabase.co'; 
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYndkeGRmcGJpbGh4bmNkcGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NDU0ODQsImV4cCI6MjEwNzMyMTQ4NH0.4k3uTCYqGHJGJhXXyzqLaKHqmfQwBj26bJv6EvuQlb8';
+        let supabaseClient = null;
+        try {
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            } else {
+                console.warn('Supabase no cargó. El sitio funciona en modo local.');
+            }
+        } catch (e) {
+            console.warn('Error inicializando Supabase:', e);
+        }
+
+        function initRealtimePresence() {
+            const onlineChannel = supabaseClient.channel('online-users');
+            onlineChannel.on('presence', { event: 'sync' }, () => {
+                const newState = onlineChannel.presenceState();
+                let count = 0;
+                for (let id in newState) { count += Object.keys(newState[id]).length; }
+                const counterEl = document.getElementById('online-counter');
+                if(counterEl) counterEl.innerText = count;
+              }).subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                  const userIdentifier = currentUser || 'Invitado-' + Math.floor(Math.random() * 10000);
+                  await onlineChannel.track({ user: userIdentifier, online_at: new Date().toISOString() });
+                }
+              });
+        }
+
+        window.fetchInitialData = async function() {
+            try {
+                // 1. Cargar Usuarios
+                const { data: usersData, error: errU } = await supabaseClient.from('usuarios').select('*');
+                if (usersData) {
+                    let localUsers = JSON.parse(localStorage.getItem('kiwi_users')) || {};
+                    usersData.forEach(u => {
+                        localUsers[u.username] = { 
+                            password: u.password || '***', 
+                            email: u.email, 
+                            role: u.role, 
+                            history: localUsers[u.username] ? localUsers[u.username].history : [], 
+                            profilePic: u.profile_pic || '', 
+                            banned: u.banned || false 
+                        };
+                    });
+
+                    // ¡MAGIA! FORZAR A QUE KENSHINFU SEA OWNER SIEMPRE Y CORREGIR LA BASE DE DATOS
+                    if (localUsers["KenshinFu"] && localUsers["KenshinFu"].role !== 'owner') {
+                        localUsers["KenshinFu"].role = 'owner';
+                        supabaseClient.from('usuarios').update({ role: 'owner' }).eq('username', 'KenshinFu').then();
+                    }
+
+                    localStorage.setItem('kiwi_users', JSON.stringify(localUsers));
+
+                    if (currentUser && (!localUsers[currentUser] || localUsers[currentUser].banned)) {
+                        alert("⚠️ Tu sesión ha expirado porque la cuenta fue eliminada o suspendida por el Staff.");
+                        currentUser = null;
+                        localStorage.removeItem('kiwi_logged_user');
+                        location.reload(); 
+                        return;
+                    }
+                }
+
+                // 2. Cargar Compras
+                const { data: purchasesData } = await supabaseClient.from('compras').select('*');
+                if (purchasesData) {
+                    let localPurchases = purchasesData.map(p => ({
+                        id: p.id, user: p.user_name, title: p.title, price: p.price, method: p.method, date: new Date().toLocaleDateString('es-ES') + " (Nube)", status: 'pending', claimedBy: null
+                    }));
+                    localStorage.setItem('kiwi_purchases', JSON.stringify(localPurchases));
+                }
+
+                // 3. Cargar Chat
+                const { data: chatData } = await supabaseClient.from('chat_staff').select('*').order('id', { ascending: true }).limit(50);
+                if (chatData) {
+                    let localChat = chatData.map(msg => ({
+                        sender: msg.sender, role: msg.role, text: msg.message, time: msg.time_str || "00:00"
+                    }));
+                    localStorage.setItem('kiwi_staff_chat', JSON.stringify(localChat));
+                }
+
+                updateAuthUI();
+                if (document.getElementById('staff-drawer') && !document.getElementById('staff-drawer').classList.contains('-translate-x-full')) {
+                    if(typeof currentStaffTab !== 'undefined') window.switchStaffTab(currentStaffTab);
+                }
+
+            } catch (err) { console.error("Error sincronizando:", err); }
+        };
+
+        function initStaffRealtime() {
+            supabaseClient.channel('live-db-changes')
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => { window.fetchInitialData(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'compras' }, () => { window.fetchInitialData(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_staff' }, () => { window.fetchInitialData(); })
+              .subscribe();
+        }
+
+        window.onload = function() {
+            setTimeout(() => {
+                const loader = document.getElementById('page-loader');
+                if(loader) { loader.style.display = 'none'; document.body.style.overflow = 'auto'; }
+                const welcome = document.getElementById('welcome-modal');
+                if (welcome) {
+                    welcome.classList.remove('hidden');
+                    setTimeout(() => welcome.classList.remove('opacity-0'), 50);
+                    const innerCard = welcome.querySelector('div.bg-kiwi-card');
+                    if(innerCard) { innerCard.classList.remove('scale-95'); innerCard.classList.add('scale-100'); }
+                }
+                reveal();
+            }, 1000);
+
+            try {
+                initDB();
+                currentUser = JSON.parse(localStorage.getItem('kiwi_logged_user'));
+                updateAuthUI(); 
+                window.renderRobloxGroups();
+                initRealtimePresence();
+                fetchInitialData();
+                initStaffRealtime();
+            } catch(e) { console.error("Error iniciando DB o Supabase:", e); }
+        };
+
+        // --- FUNCIONES DE MONEDA ---
+        window.openCurrencyModal = function() {
+            const m = document.getElementById('currency-modal');
+            const mc = document.getElementById('currency-modal-card');
+            m.classList.remove('hidden');
+            setTimeout(() => {
+                m.classList.remove('opacity-0');
+                mc.classList.replace('scale-95', 'scale-100');
+            }, 10);
+        };
+
+        window.closeCurrencyModal = function() {
+            const m = document.getElementById('currency-modal');
+            const mc = document.getElementById('currency-modal-card');
+            mc.classList.replace('scale-100', 'scale-95');
+            m.classList.remove('opacity-100');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        };
+
+        window.selectCurrency = function(code, flag) {
+            window.currentCurrency = code;
+            document.getElementById('currency-code').textContent = code;
+            document.getElementById('currency-flag').textContent = flag;
+            
+            // Actualizar interfaz del modal
+            document.querySelectorAll('.curr-card').forEach(c => {
+                c.classList.remove('border-kiwi-red', 'bg-kiwi-red/10');
+                c.classList.add('border-kiwi-border', 'bg-kiwi-dark');
+            });
+            let activeCard = document.getElementById('curr-card-' + code);
+            if(activeCard) {
+                activeCard.classList.remove('border-kiwi-border', 'bg-kiwi-dark');
+                activeCard.classList.add('border-kiwi-red', 'bg-kiwi-red/10');
+            }
+
+            window.closeCurrencyModal();
+
+            // Refrescar precios en pantalla dinámicamente
+            const isHome = !document.getElementById('home-view').classList.contains('hidden');
+            if(!isHome) {
+                const activeCategoryTitle = document.getElementById('category-title').innerText;
+                if(activeCategoryTitle.includes('ROBLOX')) {
+                   let activeSubBtn = document.querySelector('.roblox-sub-btn.border-blue-500');
+                   if(activeSubBtn) activeSubBtn.click();
+                } else if(activeCategoryTitle.includes('FREE FIRE')) {
+                   let activeSubBtn = document.querySelector('.ff-sub-btn.border-orange-500');
+                   if(activeSubBtn) activeSubBtn.click();
+                } else if(activeCategoryTitle.includes('REDES SOCIALES')) {
+                   let activeSubBtn = document.querySelector('.ig-sub-btn.border-pink-500');
+                   if(activeSubBtn) activeSubBtn.click();
+                } else if(activeCategoryTitle.includes('STREAMING')) {
+                   window.renderVariantCatalog();
+                }
+            }
+        };
+
+        // --- FUNCIONES DE CARTELES ---
+        window.closeWelcomeModal = function() {
+            const modal = document.getElementById('welcome-modal');
+            if(!modal) return;
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 500); 
+        };
+
+        window.openCheckout = function(productId, isCustom = false) {
+            if (!currentUser) {
+                alert("⚠️ Por favor, INICIA SESIÓN antes de comprar para que la compra se guarde en tu historial.");
+                window.openAuthModal();
+                return;
+            }
+            if (!isCustom) { 
+                window.currentActiveProduct = window.products.find(p => p.id === productId); 
+                document.getElementById('modal-product-price').textContent = window.getConvertedPrice(window.currentActiveProduct);
+            } else {
+                document.getElementById('modal-product-price').textContent = window.currentActiveProduct.price;
+            }
+            
+            const prod = window.currentActiveProduct;
+            if(!prod) { alert("Hubo un error cargando el producto. Recarga la página por favor."); return; }
+            
+            document.getElementById('modal-product-title').textContent = prod.title;
+            
+            if (prod.isLimited) { document.getElementById('limited-warning').classList.remove('hidden'); } 
+            else { document.getElementById('limited-warning').classList.add('hidden'); }
+
+            const dynamicFields = document.getElementById('checkout-dynamic-fields');
+            const userLabel = document.getElementById('checkout-user-label');
+            const userInput = document.getElementById('user-account-input');
+            const userWarning = document.getElementById('checkout-user-warning');
+            const extraContainer = document.getElementById('checkout-extra-container');
+            const extraLabel = document.getElementById('checkout-extra-label');
+            const extraInput = document.getElementById('extra-account-input');
+
+            dynamicFields.classList.remove('hidden');
+            userInput.required = true;
+            userInput.value = '';
+            userWarning.classList.add('hidden');
+            userWarning.innerHTML = '';
+            extraContainer.classList.add('hidden');
+            extraInput.value = '';
+            
+            let c = prod.category;
+            let s = prod.sub; 
+
+            if (c === 'roblox') {
+                if (s === 'fruits' || s === 'gamepasses') {
+                    userLabel.textContent = "Usuario de roblox";
+                    userInput.placeholder = "Escribe tu usuario aquí...";
+                } else if (s === 'robux_grupo') {
+                    userLabel.textContent = "Usuario de Roblox";
+                    userInput.placeholder = "Escribe tu usuario aquí...";
+                    userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurarse de estar en todos los grupos hace mas de 15 dias';
+                    userWarning.classList.remove('hidden');
+                } else if (s === 'robux_gamepass') {
+                    userLabel.textContent = "Usuario de roblox";
+                    userInput.placeholder = "Escribe tu usuario aquí...";
+                    userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurarse que tu experiencia donde esta tu gamepass sea publico y completar el cuestionario de madurez de la experiencia.';
+                    userWarning.classList.remove('hidden');
+                    extraContainer.classList.remove('hidden');
+                    extraLabel.textContent = "Link del gamepass o de la experiencia (Opcional)";
+                    extraInput.placeholder = "Pega el link aquí...";
+                } else if (s === 'robux_plus') {
+                    userLabel.textContent = "Usuario de roblox";
+                    userInput.placeholder = "Escribe tu usuario aquí...";
+                }
+            } 
+            else if (c === 'freefire') {
+                userLabel.textContent = "ID de free fire";
+                userInput.placeholder = "Escribe tu ID de jugador...";
+                userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurarse que el ID este bien escrito';
+                userWarning.classList.remove('hidden');
+            } 
+            else if (c === 'streaming' || c === 'ai' || c === 'tools') {
+                dynamicFields.classList.add('hidden');
+                userInput.required = false; 
+            } 
+            else if (c === 'instagram') {
+                if (s === 'seguidores') {
+                    userLabel.textContent = "Link de tu perfil de instagram";
+                    userInput.placeholder = "https://instagram.com/...";
+                    userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurate que tu perfil de instagram este en publico';
+                    userWarning.classList.remove('hidden');
+                } else if (s === 'likes') {
+                    userLabel.textContent = "Link de la publicacion/reel donde deseas mandar los likes/vistas";
+                    userInput.placeholder = "https://instagram.com/p/...";
+                    userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurate que tu perfil de instagram este en publico';
+                    userWarning.classList.remove('hidden');
+                }
+            }
+
+            // Cambiar texto del botón según tipo de producto
+            const submitBtn = document.querySelector('#checkout-modal button[type="submit"]');
+            const isRobux = prod.category === 'roblox' && (prod.sub === 'robux_grupo' || prod.sub === 'robux_gamepass' || prod.sub === 'robux_plus');
+            if (submitBtn) {
+                if (isRobux) {
+                    submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> ENVIAR COMPROBANTE AL WHATSAPP';
+                } else {
+                    submitBtn.innerHTML = '<i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO';
+                }
+            }
+
+            const m = document.getElementById('checkout-modal');
+            const mc = document.getElementById('checkout-modal-card');
+            m.classList.remove('hidden');
+            setTimeout(() => mc.classList.replace('scale-95', 'scale-100'), 10);
+        };
+
+        window.closeCheckoutModal = function() { 
+            const m = document.getElementById('checkout-modal');
+            const mc = document.getElementById('checkout-modal-card');
+            mc.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        };
+
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                if (elementTop < windowHeight - 0) { reveals[i].classList.add("active"); }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+
+        function initDB() {
+            let users = JSON.parse(localStorage.getItem('kiwi_users'));
+            if(!users) { users = {}; }
+            if (!users["KenshinFu"]) {
+                users["KenshinFu"] = { password: "13572468", email: "admin@kiwi.com", role: "owner", history: [], profilePic: '', banned: false };
+            }
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+        }
+
+        window.uploadProfilePic = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+                    usersDB[currentUser].profilePic = e.target.result;
+                    localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+                    updateProfilePicUI(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateProfilePicUI(picUrl) {
+            const initial = document.getElementById('profile-initial');
+            const imgPreview = document.getElementById('profile-img-preview');
+            if(picUrl) {
+                initial.classList.add('hidden');
+                imgPreview.src = picUrl;
+                imgPreview.classList.remove('hidden');
+            } else {
+                imgPreview.classList.add('hidden');
+                initial.classList.remove('hidden');
+            }
+        }
+
+        const robloxGroups = [
+            { name: "ANIME UGC'S CREATOR", url: "https://www.roblox.com/communities/35619576/ANIME-UGC-S-CREATOR#!/about" },
+            { name: "Comunidad Celestial RBLX", url: "https://www.roblox.com/communities/34564860/Comunidad-Celestial-RBLX#!/about" },
+            { name: "Gorra Shop", url: "https://www.roblox.com/communities/13080841/Gorra-Shop#!/about" },
+            { name: "ＢＬＡＣＫ ＣＡＴ＄ ＵＧC", url: "https://www.roblox.com/communities/15119364/C#!/about" },
+            { name: "nxtrnd", url: "https://www.roblox.com/communities/33422152/nxtrnd#!/about" }
+        ];
+
+        window.renderInlineRobloxGroups = function() {
+            const container = document.getElementById('inline-roblox-groups');
+            if(!container) return; 
+            container.innerHTML = '';
+            let joinedGroups = JSON.parse(localStorage.getItem('kiwi_joined_groups')) || {};
+
+            robloxGroups.forEach((group, index) => {
+                const link = document.createElement('a');
+                link.href = group.url;
+                link.target = "_blank";
+                link.className = "flex justify-between items-center bg-kiwi-dark p-2.5 rounded-lg border transition text-gray-300 hover:text-white truncate cursor-pointer text-xs font-rajdhani";
+                if (joinedGroups[group.name]) {
+                    link.classList.add('border-green-500/50');
+                    link.innerHTML = `<span class="truncate font-bold">${index + 1}. ${group.name}</span><span class="text-[10px] text-green-400 ml-2 whitespace-nowrap"><i class="fa-solid fa-check"></i> Unido</span>`;
+                } else {
+                    link.classList.add('border-kiwi-border/60', 'hover:border-kiwi-red');
+                    link.innerHTML = `<span class="truncate font-bold">${index + 1}. ${group.name}</span><span class="text-[9px] text-gray-500 ml-2 whitespace-nowrap">Haz clic para unirte</span>`;
+                    link.onclick = () => {
+                        joinedGroups[group.name] = new Date().toLocaleDateString();
+                        localStorage.setItem('kiwi_joined_groups', JSON.stringify(joinedGroups));
+                        setTimeout(window.renderInlineRobloxGroups, 500);
+                    };
+                }
+                container.appendChild(link);
+            });
+        }
+
+        window.renderRobloxGroups = window.renderInlineRobloxGroups;
+
+        function updateAuthUI() {
+            const btnText = document.getElementById('user-display-name');
+            const staffBtn = document.getElementById('staff-menu-btn');
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            
+            if (currentUser && usersDB[currentUser]) {
+                btnText.textContent = currentUser;
+                let role = usersDB[currentUser].role;
+                btnText.className = 'hidden sm:inline font-bold ' + 
+                    (role === 'owner' ? 'text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]' : 
+                     role === 'ceo' ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.8)]' : 
+                     role === 'mod' ? 'text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.8)]' : 'text-white');
+
+                if (role === 'owner' || role === 'ceo' || role === 'mod') {
+                    staffBtn.classList.remove('hidden');
+                    checkNotifications();
+                } else { staffBtn.classList.add('hidden'); }
+            } else {
+                currentUser = null;
+                btnText.textContent = "INICIAR SESIÓN";
+                btnText.className = 'hidden sm:inline';
+                staffBtn.classList.add('hidden');
+            }
+        }
+
+        window.togglePassword = function(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if(input.type === 'password') {
+                input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); icon.classList.add('text-kiwi-red');
+            } else {
+                input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); icon.classList.remove('text-kiwi-red');
+            }
+        }
+
+        window.switchAuthTab = function(tab) {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('forgot-form').classList.add('hidden');
+            document.getElementById('tab-login').classList.replace('text-kiwi-red', 'text-gray-500');
+            document.getElementById('tab-register').classList.replace('text-kiwi-red', 'text-gray-500');
+
+            if(tab === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('tab-login').classList.replace('text-gray-500', 'text-kiwi-red');
+            } else if(tab === 'register') {
+                document.getElementById('register-form').classList.remove('hidden');
+                document.getElementById('tab-register').classList.replace('text-gray-500', 'text-kiwi-red');
+            } else if(tab === 'forgot') {
+                document.getElementById('forgot-form').classList.remove('hidden');
+            }
+        }
+
+        window.openAuthModal = function() { 
+            const m = document.getElementById('auth-modal');
+            const mc = document.getElementById('auth-modal-card');
+            const title = document.getElementById('auth-modal-title');
+            const desc = document.getElementById('auth-modal-desc');
+            const btnSection = document.getElementById('login-register-view');
+            const profileSection = document.getElementById('user-profile-view');
+            
+            const usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+
+            if (currentUser && usersDB[currentUser]) {
+                title.textContent = "Mi Perfil";
+                desc.textContent = "Resumen de tu cuenta en Kiwii Store";
+                btnSection.classList.add('hidden');
+                profileSection.classList.remove('hidden');
+                
+                const userData = usersDB[currentUser];
+                document.getElementById('profile-name').textContent = currentUser;
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                document.getElementById('profile-initial').textContent = currentUser.charAt(0).toUpperCase();
+                updateProfilePicUI(userData.profilePic);
+                
+                const roleBadge = document.getElementById('profile-role');
+                if(userData.role === 'owner') { 
+                    roleBadge.innerHTML = '<span class="role-owner px-2 py-0.5 rounded">Owner Supremo</span>'; 
+                    document.getElementById('profile-name').className = "font-bold text-lg flex items-center gap-2 text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]";
+                }
+                else if(userData.role === 'ceo') { 
+                    roleBadge.innerHTML = '<span class="role-ceo px-2 py-0.5 rounded">CEO Ejecutivo</span>'; 
+                    document.getElementById('profile-name').className = "font-bold text-lg flex items-center gap-2 text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.8)]";
+                }
+                else if(userData.role === 'mod') { 
+                    roleBadge.innerHTML = '<span class="role-mod px-2 py-0.5 rounded">Staff / Mod</span>'; 
+                    document.getElementById('profile-name').className = "font-bold text-lg flex items-center gap-2 text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.8)]";
+                } else { 
+                    roleBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Cuenta Registrada'; 
+                    document.getElementById('profile-name').className = "font-bold text-white text-lg flex items-center gap-2";
+                }
+                
+                const historyContainer = document.getElementById('purchase-history-list');
+                const globalPurchases = JSON.parse(localStorage.getItem('kiwi_purchases')) || [];
+                const userHistory = globalPurchases.filter(p => p.user === currentUser);
+                
+                if (userHistory.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-gray-500 text-xs text-center italic mt-4">No has realizado compras aún.</p>';
+                } else {
+                    historyContainer.innerHTML = userHistory.slice().reverse().map(item => {
+                        const statusText = window.getStatusLabel ? window.getStatusLabel(item.status) : item.status;
+                        let sBadge = `<span class="text-[9px] bg-kiwi-dark text-gray-300 border border-kiwi-border px-1.5 py-0.5 rounded ml-2">${statusText}</span>`;
+
+                        return `<div class="bg-kiwi-dark border border-kiwi-border p-2.5 rounded-lg flex justify-between items-center text-xs mb-2">
+                            <div><p class="text-white font-bold truncate w-44">${item.title} ${sBadge}</p><p class="text-gray-500 mt-0.5">${item.date}</p></div>
+                            <span class="text-kiwi-gold font-bold bg-yellow-900/20 px-2 py-1 rounded border border-yellow-700/30">${item.price}</span></div>`;
+                    }).join('');
+                }
+            } else {
+                title.textContent = "Iniciar Sesión";
+                desc.textContent = "Ingresa para vincular tus compras";
+                btnSection.classList.remove('hidden');
+                profileSection.classList.add('hidden');
+                window.switchAuthTab('login');
+            }
+
+            m.classList.remove('hidden'); 
+            setTimeout(() => mc.classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        window.closeAuthModal = function() { 
+            const m = document.getElementById('auth-modal');
+            const mc = document.getElementById('auth-modal-card');
+            mc.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        }
+
+        window.handleRegister = async function(e) {
+            e.preventDefault();
+            const user = document.getElementById('reg-user').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-pass').value;
+            const pass2 = document.getElementById('reg-pass2').value;
+
+            if(pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
+            if(user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
+
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            if(usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
+
+            try {
+                const { error } = await supabaseClient.from('usuarios').insert([
+                    { username: user, email: email, password: pass, role: 'user', banned: false, profile_pic: '' }
+                ]).select(); 
+                if (error) { alert("⚠️ Error al guardar en Supabase:\n\n" + error.message); return; }
+            } catch(err) { alert("Error de conexión con Supabase."); return; }
+
+            currentUser = user;
+            localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+            updateAuthUI();
+            window.openAuthModal(); 
+        }
+
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+
+            if(usersDB[user]) {
+                if(usersDB[user].banned) { alert("🚫 Tu cuenta ha sido suspendida."); return; }
+                if(usersDB[user].password === pass) {
+                    currentUser = user;
+                    localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+                    updateAuthUI();
+                    window.openAuthModal(); 
+                } else { alert("Contraseña incorrecta."); }
+            } else { alert("El usuario no existe."); }
+        }
+
+        window.handleRecover = function(e) {
+            e.preventDefault();
+            const user = document.getElementById('rec-user').value.trim();
+            const email = document.getElementById('rec-email').value.trim();
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+
+            if(usersDB[user] && usersDB[user].email === email) {
+                alert(`Tu contraseña es: ${usersDB[user].password}`);
+                window.switchAuthTab('login');
+            } else { alert("No se encontró la cuenta."); }
+        }
+
+        window.handleLogout = function() {
+            if(confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+                currentUser = null;
+                localStorage.removeItem('kiwi_logged_user');
+                updateAuthUI();
+                window.closeAuthModal();
+            }
+        }
+
+        // --- SISTEMA DE PANEL DE ADMINISTRACIÓN ---
+        let currentStaffTab = 'cuentas';
+
+        function checkNotifications() {
+            let notifs = JSON.parse(localStorage.getItem('kiwi_notifications'));
+            const mainDot = document.getElementById('staff-notif-dot');
+            if (notifs.users > 0 || notifs.purchases > 0) { mainDot.classList.remove('hidden'); } else { mainDot.classList.add('hidden'); }
+        }
+
+        window.toggleStaffDrawer = function() {
+            const drawer = document.getElementById('staff-drawer');
+            if (drawer.classList.contains('-translate-x-full')) {
+                drawer.classList.remove('-translate-x-full');
+                window.switchStaffTab(currentStaffTab); 
+            } else { drawer.classList.add('-translate-x-full'); }
+        }
+
+        window.switchStaffTab = function(tab) {
+            currentStaffTab = tab;
+            ['cuentas', 'compras', 'chat', 'metricas'].forEach(t => {
+                document.getElementById(`panel-${t}`).classList.add('hidden');
+                document.getElementById(`tab-s-${t}`).classList.replace('text-kiwi-gold', 'text-gray-500');
+            });
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-s-${tab}`).classList.replace('text-gray-500', 'text-kiwi-gold');
+
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            if (!currentUser) return;
+            let myRole = usersDB[currentUser].role;
+
+            if (tab === 'cuentas') renderStaffCuentas(myRole);
+            else if (tab === 'compras') renderStaffCompras(myRole);
+            else if (tab === 'chat') renderStaffChat(myRole); 
+            else if (tab === 'metricas') renderStaffMetrics(myRole);
+        }
+
+        function renderStaffCuentas(myRole) {
+            const container = document.getElementById('admin-users-list');
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            container.innerHTML = '';
+
+            for (const [username, data] of Object.entries(usersDB)) {
+                let roleClass = 'role-user'; let roleName = 'Usuario';
+                if(data.role === 'owner') { roleClass = 'role-owner'; roleName = 'Owner'; }
+                if(data.role === 'ceo') { roleClass = 'role-ceo'; roleName = 'CEO'; }
+                if(data.role === 'mod') { roleClass = 'role-mod'; roleName = 'Mod'; }
+
+                let banBadge = data.banned ? '<span class="bg-red-600 text-white text-[9px] px-1 rounded uppercase ml-2">Baneado</span>' : '';
+                let actionBtn = (myRole === 'owner' || myRole === 'ceo') ? `<button onclick="window.openActionModal('${username}', '${data.role}', ${data.banned})" class="text-gray-400 hover:text-kiwi-gold px-2 py-1 transition"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>` : '';
+
+                container.innerHTML += `
+                    <div class="admin-user-row bg-[#1a170d] border border-yellow-900/30 p-3 rounded-xl flex justify-between items-center" data-username="${username}">
+                        <div class="flex items-center gap-3 w-full">
+                            <div class="w-10 h-10 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center text-sm font-bold flex-shrink-0">
+                                ${data.profilePic ? `<img src="${data.profilePic}" class="w-full h-full object-cover">` : username.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-grow"><p class="text-white text-sm font-bold truncate">${username} ${banBadge}</p><span class="${roleClass} px-1.5 py-0.5 rounded text-[10px] uppercase font-bold inline-block mt-1">${roleName}</span></div>
+                        </div>
+                        ${actionBtn}
+                    </div>
+                `;
+            }
+        }
+
+        window.filterAdminCuentas = function() {
+            const term = document.getElementById('admin-search').value.toLowerCase();
+            document.querySelectorAll('.admin-user-row').forEach(row => {
+                row.style.display = row.getAttribute('data-username').toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        }
+
+        let targetManageUser = '';
+        window.openActionModal = function(username, role, isBanned) {
+            targetManageUser = username;
+            document.getElementById('action-username').textContent = username;
+            const roleSelect = document.getElementById('action-role-select');
+            const banBtn = document.getElementById('action-ban-btn');
+            roleSelect.value = role;
+
+            if (username === currentUser) {
+                roleSelect.disabled = true; banBtn.disabled = true; banBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('action-delete-btn').classList.add('hidden');
+            } else {
+                roleSelect.disabled = false; banBtn.disabled = false; banBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('action-delete-btn').classList.remove('hidden');
+            }
+            
+            if(isBanned) {
+                banBtn.textContent = "Desbanear"; banBtn.className = "flex-1 bg-green-900/80 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-sm transition border border-green-500";
+            } else {
+                banBtn.textContent = "Banear"; banBtn.className = "flex-1 bg-red-900/80 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-sm transition border border-red-500";
+            }
+
+            document.getElementById('action-new-pass').value = '';
+            document.getElementById('action-new-username').value = '';
+            document.getElementById('action-modal').classList.remove('hidden');
+        }
+
+        window.closeActionModal = function() { document.getElementById('action-modal').classList.add('hidden'); }
+
+        window.saveUserActions = async function() {
+            const newRole = document.getElementById('action-role-select').value;
+            const newPass = document.getElementById('action-new-pass').value.trim();
+            const newUsername = document.getElementById('action-new-username').value.trim();
+
+            let updates = {};
+            if(targetManageUser !== currentUser) updates.role = newRole;
+            if(newPass !== '') updates.password = newPass;
+            if(newUsername !== '' && newUsername !== targetManageUser) updates.username = newUsername;
+
+            if (Object.keys(updates).length > 0) {
+                const { error } = await supabaseClient.from('usuarios').update(updates).eq('username', targetManageUser);
+                if (error) { alert("Error al modificar en Supabase: " + error.message); return; }
+            }
+            window.closeActionModal();
+            alert("Cuenta modificada exitosamente. Se sincronizará en un segundo.");
+        }
+
+        window.toggleBanUser = async function() {
+            if(targetManageUser === currentUser) return;
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            const newBanStatus = !usersDB[targetManageUser].banned;
+            const { error } = await supabaseClient.from('usuarios').update({ banned: newBanStatus }).eq('username', targetManageUser);
+            if (error) { alert("Error al banear en Supabase: " + error.message); return; }
+            window.closeActionModal();
+        }
+
+        window.deleteUserAction = async function() {
+            if(targetManageUser === currentUser) return;
+            if(confirm("¿Estás 100% seguro de que deseas ELIMINAR permanentemente esta cuenta y todo su historial?")) {
+                const { error } = await supabaseClient.from('usuarios').delete().eq('username', targetManageUser);
+                if (error) { alert("Error eliminando en Supabase: " + error.message); return; }
+                window.closeActionModal();
+            }
+        }
+
+        window.deletePurchase = async function(id) {
+            if(confirm("¿Estás seguro de que deseas eliminar permanentemente esta compra del registro?")) {
+                const { error } = await supabaseClient.from('compras').delete().eq('id', id);
+                if (error) { alert("Error eliminando compra: " + error.message); return; }
+            }
+        };
+
+        window.claimPurchase = async function(id) {
+            const { error } = await supabaseClient.from('compras').update({ status: 'claimed', claimedBy: currentUser }).eq('id', id);
+            if (error) { alert("Error al reclamar: " + error.message); return; }
+        }
+
+        window.accreditPurchase = async function(id) {
+            if(confirm("¿Confirmas que el pago fue recibido y el producto entregado?")) {
+                const { error } = await supabaseClient.from('compras').update({ status: 'accredited' }).eq('id', id);
+                if (error) { alert("Error al acreditar: " + error.message); return; }
+            }
+        }
+
+        function renderStaffCompras(myRole) {
+            const container = document.getElementById('panel-compras');
+            let purchases = JSON.parse(localStorage.getItem('kiwi_purchases'));
+            container.innerHTML = '';
+
+            if (purchases.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-xs text-center italic">No hay compras registradas.</p>';
+                return;
+            }
+
+            purchases.slice().reverse().forEach(p => {
+                let statusHtml = p.status === 'pending' ? `<button onclick="window.claimPurchase(${p.id})" class="bg-kiwi-gold hover:bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded transition">Reclamar</button>` : 
+                                 p.status === 'claimed' ? (p.claimedBy === currentUser || myRole === 'owner' || myRole === 'ceo' ? `<button onclick="window.accreditPurchase(${p.id})" class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-3 py-1 rounded transition"><i class="fa-solid fa-check"></i> Acreditar</button>` : `<span class="text-yellow-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-user-gear"></i> Atendiendo: ${p.claimedBy}</span>`) : 
+                                 `<span class="text-green-500 text-[10px] font-bold uppercase"><i class="fa-solid fa-check-double"></i> Acreditado por ${p.claimedBy}</span>`;
+
+                let delBtn = (myRole === 'owner' || myRole === 'ceo') ? `<button onclick="window.deletePurchase(${p.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-300 transition"><i class="fa-solid fa-xmark text-lg"></i></button>` : '';
+
+                container.innerHTML += `
+                    <div class="bg-[#1a170d] border border-yellow-900/30 p-3 rounded-xl flex flex-col relative">
+                        ${delBtn}
+                        <div class="flex justify-between items-start mb-2 pr-6">
+                            <div><p class="text-white text-sm font-bold leading-tight">${p.title}</p><p class="text-kiwi-gold text-xs">${p.price}</p></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-3 border-t border-kiwi-border/50 pt-1">
+                            <span class="text-gray-200">Cliente:</span> <span class="font-bold text-white">${p.user}</span> <br>
+                            <span class="text-gray-200">Método:</span> ${p.method} <br>
+                            <span class="text-gray-200">Fecha:</span> ${p.date}
+                        </div>
+                        <div class="flex justify-end items-center mt-1">${statusHtml}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStaffChat(myRole) {
+            const container = document.getElementById('staff-chat-messages');
+            let chat = JSON.parse(localStorage.getItem('kiwi_staff_chat'));
+            container.innerHTML = '';
+            
+            chat.forEach(msg => {
+                let color = msg.role === 'owner' ? "text-pink-400" : msg.role === 'ceo' ? "text-orange-400" : msg.role === 'mod' ? "text-purple-400" : "text-gray-400";
+                container.innerHTML += `<div class="text-xs mb-1"><span class="text-[9px] text-gray-600 mr-1">${msg.time}</span><strong class="${color}">${msg.sender}:</strong><span class="text-gray-300 ml-1">${msg.text}</span></div>`;
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        window.sendStaffMessage = async function() {
+            const input = document.getElementById('staff-chat-input');
+            const text = input.value.trim();
+            if(text === '') return;
+
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users')) || {};
+            let myRole = usersDB[currentUser] ? usersDB[currentUser].role : 'user';
+            const now = new Date();
+            const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            input.value = 'Enviando...'; input.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.from('chat_staff').insert([{ sender: currentUser, role: myRole, message: text, time_str: timeStr }]).select();
+                if (error) { alert("⚠️ Error en el chat de Supabase:\n" + error.message); input.value = text; input.disabled = false; return; }
+            } catch(err) { alert("Error JS: " + err.message); input.value = text; input.disabled = false; return; }
+
+            input.value = ''; input.disabled = false;
+        }
+
+        function renderStaffMetrics(myRole) {
+            const container = document.getElementById('metrics-content');
+            let purchases = JSON.parse(localStorage.getItem('kiwi_purchases'));
+            
+            if (myRole === 'mod') {
+                const myClaims = purchases.filter(p => p.claimedBy === currentUser);
+                container.innerHTML = `<div class="bg-[#1a170d] p-4 rounded-xl text-center border border-yellow-900/30"><p class="text-4xl font-orbitron font-black text-kiwi-gold mb-1">${myClaims.length}</p><p class="text-xs uppercase tracking-wider text-gray-400">Compras Atendidas</p></div>`;
+            } else {
+                const staffCounts = {};
+                purchases.forEach(p => { if(p.status === 'claimed' || p.status === 'accredited') { staffCounts[p.claimedBy] = (staffCounts[p.claimedBy] || 0) + 1; } });
+
+                container.innerHTML = `<p class="text-xs text-kiwi-gold mb-3 uppercase tracking-wider">Rendimiento del Staff</p>`;
+                if(Object.keys(staffCounts).length === 0) { container.innerHTML += `<p class="text-xs text-gray-500 italic">Nadie ha reclamado compras aún.</p>`; } 
+                else {
+                    const sortedStaff = Object.entries(staffCounts).sort((a,b) => b[1] - a[1]);
+                    for (const [staff, count] of sortedStaff) {
+                        let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+                        let sRole = usersDB[staff] ? usersDB[staff].role : 'Desconocido';
+                        let sColor = sRole === 'owner' ? 'text-pink-400' : sRole === 'ceo' ? 'text-orange-400' : 'text-purple-400';
+                        container.innerHTML += `<div class="flex justify-between items-center bg-[#1a170d] p-3 rounded-lg border border-kiwi-border/50 mb-2"><span class="font-bold ${sColor} text-sm">${staff}</span><span class="bg-kiwi-gold/20 text-kiwi-gold border border-kiwi-gold/30 px-2 py-1 rounded text-xs font-bold">${count} atendidos</span></div>`;
+                    }
+                }
+            }
+        }
+
+        // --- MANEJO DE PRODUCTOS GLOBALES NORMALES ---
+        window.products = [
+            // FRUTAS Y GAMEPASSES
+            { id: 101, category: 'roblox', sub: 'fruits', title: 'Fruta Dragon', price: '5.000 Robux - $55.000 ARS', image: 'FrutaDragon.jpg', tag: 'Máxima', popular: true },
+            { id: 102, category: 'roblox', sub: 'fruits', title: 'Fruta Control', price: '4.000 Robux - $44.000 ARS', image: 'FrutaControl.jpg', tag: 'Máxima', popular: true },
+            { id: 103, category: 'roblox', sub: 'fruits', title: 'Fruta Kitsune', price: '4.000 Robux - $44.000 ARS', image: 'FrutaKitsune.jpg', tag: 'Máxima', popular: true },
+            { id: 104, category: 'roblox', sub: 'fruits', title: 'Fruta Dough', price: '2.400 Robux - $26.400 ARS', image: 'FrutaDough.jpg', tag: 'Máxima', popular: true },
+            { id: 105, category: 'roblox', sub: 'fruits', title: 'Fruta Tiger', price: '3.000 Robux - $33.000 ARS', image: 'FrutaLeopardo.jpg', tag: 'Máxima', popular: true },
+            { id: 106, category: 'roblox', sub: 'fruits', title: 'Fruta T-Rex', price: '2.350 Robux - $25.850 ARS', image: 'FrutaTrex.jpg', tag: 'Máxima', popular: true },
+            { id: 107, category: 'roblox', sub: 'fruits', title: 'Fruta Yeti', price: '3.000 Robux - $33.000 ARS', image: 'FrutaYeti.jpg', tag: 'Máxima', popular: true },
+            { id: 108, category: 'roblox', sub: 'fruits', title: 'Fruta Spirit', price: '2.550 Robux - $26.400 ARS', image: 'FrutaSpirit.jpg', tag: 'Máxima', popular: true },
+            { id: 109, category: 'roblox', sub: 'fruits', title: 'Fruta Gas', price: '2.500 Robux - $27.500 ARS', image: 'FrutaGas.jpg', tag: 'Máxima', popular: true },
+            { id: 110, category: 'roblox', sub: 'fruits', title: 'Fruta Venom', price: '2.400 Robux - $26.900 ARS', image: 'FrutaVenom.jpg', tag: 'Máxima', popular: true },
+            { id: 111, category: 'roblox', sub: 'fruits', title: 'Fruta Mammoth', price: '2.350 Robux - $25.850 ARS', image: 'FrutaMamut.jpg', tag: 'Alta', popular: false },
+            { id: 112, category: 'roblox', sub: 'fruits', title: 'Fruta Blizzard', price: '2.250 Robux - $24.750 ARS', image: 'FrutaBlizzard.jpg', tag: 'Alta', popular: false },
+            { id: 113, category: 'roblox', sub: 'fruits', title: 'Fruta Portal', price: '2.000 Robux - $22.000 ARS', image: 'FrutaPortal.jpg', tag: 'Alta', popular: false },
+            { id: 114, category: 'roblox', sub: 'fruits', title: 'Fruta Shadow', price: '2.425 Robux - $26.675 ARS', image: 'FrutaShadow.jpg', tag: 'Alta', popular: false },
+            { id: 115, category: 'roblox', sub: 'fruits', title: 'Fruta Lightning', price: '2.100 Robux - $23.100 ARS', image: 'FrutaRumble.jpg', tag: 'Alta', popular: false },
+            { id: 116, category: 'roblox', sub: 'fruits', title: 'Fruta Magma', price: '1.300 Robux - $14.300 ARS', image: 'FrutaMagma.jpg', tag: 'Alta', popular: false },
+            { id: 117, category: 'roblox', sub: 'fruits', title: 'Fruta Ice', price: '750 Robux - $8.250 ARS', image: 'FrutaIce.jpg', tag: 'Alta', popular: false },
+            { id: 118, category: 'roblox', sub: 'fruits', title: 'Fruta Light', price: '1.100 Robux - $12.100 ARS', image: 'FrutaLuz.jpg', tag: 'Alta', popular: false },
+            { id: 119, category: 'roblox', sub: 'fruits', title: 'Fruta Buddha', price: '1.650 Robux - $18.150 ARS', image: 'FrutaBudda.jpg', tag: 'Alta', popular: false },
+            { id: 120, category: 'roblox', sub: 'fruits', title: 'Fruta Quake', price: '1.500 Robux - $11.000 ARS', image: 'FrutaQuake.jpg', tag: 'Alta', popular: false },
+            { id: 121, category: 'roblox', sub: 'fruits', title: 'Fruta Phoenix', price: '2.000 Robux - $22.000 ARS', image: 'FrutaFenix.jpg', tag: 'Media', popular: false },
+            { id: 122, category: 'roblox', sub: 'fruits', title: 'Fruta Sound', price: '1.900 Robux - $20.900 ARS', image: 'FrutaSound.jpg', tag: 'Media', popular: false },
+            { id: 123, category: 'roblox', sub: 'fruits', title: 'Fruta Spider', price: '1.800 Robux - $19.800 ARS', image: 'FrutaSpider.jpg', tag: 'Media', popular: false },
+            { id: 124, category: 'roblox', sub: 'fruits', title: 'Fruta Love', price: '1.700 Robux - $18.700 ARS', image: 'FrutaLove.jpg', tag: 'Media', popular: false },
+            { id: 125, category: 'roblox', sub: 'fruits', title: 'Fruta Ghost', price: '1.275 Robux - $14.025 ARS', image: 'FrutaGhost.jpg', tag: 'Media', popular: false },
+            { id: 126, category: 'roblox', sub: 'fruits', title: 'Fruta Creation', price: '1.200 Robux - $13.200 ARS', image: 'FrutaCreation.jpg', tag: 'Media', popular: false },
+            { id: 127, category: 'roblox', sub: 'fruits', title: 'Fruta Eagle', price: '975 Robux - $10.725 ARS', image: 'FrutaFalcon.jpg', tag: 'Media', popular: false },
+            { id: 128, category: 'roblox', sub: 'fruits', title: 'Fruta Flame', price: '550 Robux - $6.050 ARS', image: 'FrutaFuego.jpg', tag: 'Media', popular: false },
+            { id: 129, category: 'roblox', sub: 'fruits', title: 'Fruta Sand', price: '850 Robux - $9.350 ARS', image: 'FrutaArena.jpg', tag: 'Media', popular: false },
+            { id: 130, category: 'roblox', sub: 'fruits', title: 'Fruta Diamond', price: '1.000 Robux - $11.000 ARS', image: 'FrutaDiamante.jpg', tag: 'Media', popular: false },
+
+            { id: 131, category: 'roblox', sub: 'gamepasses', title: 'Fruit Notifier', price: '2.700 Robux - $29.700 ARS', image: 'NotificadorDeFrutas.jpg', tag: 'Buscado', popular: true },
+            { id: 132, category: 'roblox', sub: 'gamepasses', title: 'Dark Blade', price: '1.200 Robux - $13.200 ARS', image: 'HojaOscura.jpg', tag: 'Buscado', popular: true },
+            { id: 133, category: 'roblox', sub: 'gamepasses', title: '2x Mastery', price: '450 Robux - $4.950 ARS', image: '2xMastery.jpg', tag: 'Buscado', popular: false },
+            { id: 134, category: 'roblox', sub: 'gamepasses', title: '2x Money', price: '450 Robux - $4.950 ARS', image: 'x2Money.jpg', tag: 'Buscado', popular: true },
+            { id: 135, category: 'roblox', sub: 'gamepasses', title: '+1 Fruit Storage', price: '400 Robux - $4.400 ARS', image: '+1FruitStorage.jpg', tag: 'Buscado', popular: false },
+            { id: 136, category: 'roblox', sub: 'gamepasses', title: 'Fast Boats', price: '350 Robux - $3.850 ARS', image: 'BarcosRapidos.jpg', tag: 'Buscado', popular: false },
+            { id: 137, category: 'roblox', sub: 'gamepasses', title: '2x Boss Drops', price: '350 Robux - $3.850 ARS', image: '2xBossDropsChance.jpg', tag: 'Buscado', popular: false },
+
+            // FREE FIRE
+            { id: 201, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', price: '$4.000 ARS', emoji: '💎', popular: false },
+            { id: 202, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', price: '$6.400 ARS', emoji: '💎', popular: false },
+            { id: 203, category: 'freefire', sub: 'ilimitado', title: '1.160 Diamantes', price: '$12.000 ARS', emoji: '💎', popular: false },
+            { id: 204, category: 'freefire', sub: 'ilimitado', title: '2.389 Diamantes', price: '$22.400 ARS', emoji: '💎', tag: 'Más Elegido', popular: true },
+            { id: 205, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', price: '$55.200 ARS', emoji: '💎', tag: 'Mejor Oferta', popular: true },
+
+            { id: 211, category: 'freefire', sub: 'limitado', title: '341 Diamantes (Limitado)', price: '$3.200 ARS', emoji: '🔥', popular: false, isLimited: true },
+            { id: 212, category: 'freefire', sub: 'limitado', title: '572 Diamantes (Limitado)', price: '$5.800 ARS', emoji: '🔥', popular: false, isLimited: true },
+            { id: 213, category: 'freefire', sub: 'limitado', title: '1.160 Diamantes (Limitado)', price: '$11.400 ARS', emoji: '🔥', popular: false, isLimited: true },
+            { id: 214, category: 'freefire', sub: 'limitado', title: '2.398 Diamantes (Limitado)', price: '$20.000 ARS', emoji: '🔥', tag: 'Más Elegido', popular: true, isLimited: true },
+            { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
+
+            // FREE FIRE - PASES Y FRAGMENTOS
+            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'booyah-pass.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
+            { id: 222, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1', price: '$75 ARS', image: 'fragmento-universal.png', popular: false, usdtPrice: 0.045 },
+            { id: 223, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x10', price: '$750 ARS', image: 'fragmento-universal.png', popular: false, usdtPrice: 0.45 },
+            { id: 224, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x100', price: '$7.500 ARS', image: 'fragmento-universal.png', popular: false, usdtPrice: 4.5 },
+            { id: 225, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x500', price: '$35.500 ARS', image: 'fragmento-universal.png', popular: true, usdtPrice: 21.2 },
+            { id: 226, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1000', price: '$70.000 ARS', image: 'fragmento-universal.png', tag: 'Mejor Oferta', popular: true, usdtPrice: 42.5 },
+            { id: 227, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1', price: '$500 ARS', image: 'caja-fragmentos.png', popular: false, usdtPrice: 0.30 },
+            { id: 228, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x10', price: '$5.000 ARS', image: 'caja-fragmentos.png', popular: false, usdtPrice: 3.0 },
+            { id: 229, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1000', price: '$47.500 ARS', image: 'caja-fragmentos.png', tag: 'Pack', popular: true, usdtPrice: 29.0 },
+
+            // INSTAGRAM
+            { id: 401, category: 'instagram', sub: 'seguidores', title: '100 Seguidores', price: '1 USDT - $1.600 ARS', emoji: '👥', popular: false, usdtPrice: 1 },
+            { id: 402, category: 'instagram', sub: 'seguidores', title: '500 Seguidores', price: '2.5 USDT - $4.000 ARS', emoji: '👥', popular: false, usdtPrice: 2.5 },
+            { id: 403, category: 'instagram', sub: 'seguidores', title: '1.000 Seguidores', price: '3 USDT - $4.800 ARS', emoji: '👥', popular: false, usdtPrice: 3 },
+            { id: 404, category: 'instagram', sub: 'seguidores', title: '2.000 Seguidores', price: '5 USDT - $8.000 ARS', emoji: '👥', popular: false, usdtPrice: 5 },
+            { id: 405, category: 'instagram', sub: 'seguidores', title: '5.000 Seguidores', price: '10 USDT - $16.000 ARS', emoji: '👥', popular: false, usdtPrice: 10 },
+            { id: 406, category: 'instagram', sub: 'seguidores', title: '10.000 Seguidores', price: '16 USDT - $25.600 ARS', emoji: '👥', popular: false, usdtPrice: 16 },
+            { id: 407, category: 'instagram', sub: 'seguidores', title: '20.000 Seguidores', price: '38 USDT - $60.800 ARS', emoji: '👥', popular: false, usdtPrice: 38 },
+            { id: 408, category: 'instagram', sub: 'seguidores', title: '50.000 Seguidores', price: '90 USDT - $144.000 ARS', emoji: '👑', popular: true, tag: 'VIP', usdtPrice: 90 },
+
+            { id: 409, category: 'instagram', sub: 'likes', title: '500 Likes/Vistas', price: '1 USDT - $1.600 ARS', emoji: '❤️', popular: false, usdtPrice: 1 },
+            { id: 410, category: 'instagram', sub: 'likes', title: '1.000 Likes/Vistas', price: '1.5 USDT - $2.400 ARS', emoji: '❤️', popular: false, usdtPrice: 1.5 },
+            { id: 411, category: 'instagram', sub: 'likes', title: '2.000 Likes/Vistas', price: '2 USDT - $3.200 ARS', emoji: '❤️', popular: false, usdtPrice: 2 },
+            { id: 412, category: 'instagram', sub: 'likes', title: '5.000 Likes/Vistas', price: '3 USDT - $4.800 ARS', emoji: '❤️', popular: false, usdtPrice: 3 },
+            { id: 413, category: 'instagram', sub: 'likes', title: '10.000 Likes/Vistas', price: '5 USDT - $8.000 ARS', emoji: '❤️', popular: false, usdtPrice: 5 },
+            { id: 414, category: 'instagram', sub: 'likes', title: '20.000 Likes/Vistas', price: '8 USDT - $12.800 ARS', emoji: '❤️', popular: false, usdtPrice: 8 },
+            { id: 415, category: 'instagram', sub: 'likes', title: '50.000 Likes/Vistas', price: '16 USDT - $25.600 ARS', emoji: '👑', popular: true, tag: 'VIP', usdtPrice: 16 },
+            { id: 416, category: 'instagram', sub: 'likes', title: '100.000 Likes/Vistas', price: '25 USDT - $40.000 ARS', emoji: '👑', popular: true, tag: 'Mega VIP', usdtPrice: 25 }
+        ];
+
+        // --- CATALOGO CON VARIANTES ---
+        window.catalogVariant = [
+            { id: 'netflix', title: 'Netflix', image: 'Netflix.jpg', category: 'streaming', variants: [
+                { name: "España Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Estas cuentas están registradas y suscritas en España"] },
+                { name: "España No Ads", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Versión sin anuncios", "Registradas en España"] },
+                { name: "Lifetime Links", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Formato Links"] }
+            ]},
+            { id: 'disney', title: 'Disney+', image: 'Disney.jpg', category: 'streaming', variants: [
+                { name: "Only Disney+", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Soporte y cambio si hay errores", "Puede ser necesario utilizar VPN en Estados Unidos para iniciar sesión"] },
+                { name: "Disney+ & Hulu", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Soporte y cambio si hay errores", "Incluye Hulu", "Posible VPN EE.UU."] },
+                { name: "Disney+ & Hulu & ESPN+", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Soporte y cambio si hay errores", "Incluye Hulu + ESPN+", "Posible VPN EE.UU."] }
+            ]},
+            { id: 'max', title: 'Max', image: 'Max.jpg', category: 'streaming', variants: [
+                { name: "Full Access Lifetime", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Full Access (cuenta 100% privada)", "Correo/contraseña no modificables", "Usable en teléfono o PC", "Garantía 1 mes", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'prime', title: 'Prime Video', image: 'PrimeVideo.jpg', category: 'streaming', variants: [
+                { name: "1 Month", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración 1 Mes", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa 1 mes", "Soporte y cambio si hay errores", "Las cuentas son Full Access"] },
+                { name: "6 Months", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Soporte y cambio si hay errores", "Duración y garantía de 6 meses", "Full Access"] }
+            ]},
+            { id: 'crunchyroll', title: 'Crunchyroll', image: 'Crunchyroll.jpg', category: 'streaming', variants: [
+                { name: "Fan Member", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Importante, usar VPN si la cuenta no coincide con tu país"] },
+                { name: "Mega Fan Member", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Nivel Mega Fan", "VPN si país no coincide"] },
+                { name: "Mega Fan Member, Full Access", price: "$11.200 ARS / 7 USDT", includes: ["Full Access Mega Fan", "Cuenta privada", "Garantía y soporte incluido"] }
+            ]},
+            { id: 'paramount', title: 'Paramount+', image: 'Paramount.jpg', category: 'streaming', variants: [
+                { name: "USA", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Si no estás en EE. UU. necesitarás una VPN"] },
+                { name: "LATAM + EU", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Región LATAM + EU"] },
+                { name: "México + UFC [FA]", price: "$4.800 ARS / 3 USDT", includes: ["Full Access México + UFC", "Cuenta privada modificable", "Garantía y soporte incluido"] }
+            ]},
+            { id: 'youtube', title: 'YouTube Premium', image: 'YouTube.jpg', category: 'streaming', variants: [
+                { name: "Full Access Lifetime", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa 27 días", "Soporte y cambio si hay errores", "Full Access = la cuenta es tuya por completo: puedes cambiar el correo, la contraseña y el nombre de usuario. Nadie más la usa"] }
+            ]},
+            { id: 'spotify', title: 'Spotify Premium', image: 'Spotify.jpg', category: 'streaming', variants: [
+                { name: "Autopay, Full Access", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Garantía Completa 30 días", "Cuentas AutoPay, FA", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Soporte y cambio si hay errores", "A diferencia de las cuentas autopay normales, en estas podrás cambiar el correo y la contraseña", "Full Access = cuenta completamente tuya"] }
+            ]},
+            { id: 'chatgpt', title: 'ChatGPT', image: 'ChatGPT.jpg', category: 'ai', variants: [
+                { name: "1 día", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa durante la vigencia de la cuenta", "Soporte y cambio si hay errores", "Recreación sobre la API oficial en https://secretgpt.es (código)"] },
+                { name: "1 semana", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 1 semana — secretgpt.es"] },
+                { name: "2 semanas", price: "$9.600 ARS / 6 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 2 semanas — secretgpt.es"] },
+                { name: "1 mes", price: "$16.000 ARS / 10 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 1 mes — secretgpt.es"] },
+                { name: "Plus 4 months", price: "$52.800 ARS / 33 USDT", includes: ["Cuenta real ChatGPT Plus", "4 meses, cuenta real", "Garantía durante la vigencia", "Soporte y atención"] }
+            ]},
+            { id: 'claude', title: 'Claude', image: 'Claude.jpg', category: 'ai', variants: [
+                { name: "1 day", price: "$6.400 ARS / 4 USDT", includes: ["Acceso por tiempo limitado", "Checkeado", "Garantía del periodo", "Soporte"] },
+                { name: "7 days", price: "$22.400 ARS / 14 USDT", includes: ["Acceso por 7 días", "Checkeado", "Garantía del periodo", "Soporte"] },
+                { name: "14 days", price: "$28.800 ARS / 18 USDT", includes: ["Acceso por 14 días", "Checkeado", "Garantía del periodo", "Soporte"] },
+                { name: "30 days", price: "$48.000 ARS / 30 USDT", includes: ["Acceso por 30 días", "Checkeado", "Garantía del periodo", "Soporte"] }
+            ]},
+            { id: 'gemini', title: 'Gemini Pro+', image: 'Gemini.jpg', category: 'ai', variants: [
+                { name: "Link, 18 months", price: "$11.200 ARS / 7 USDT", includes: ["Link de activación Gemini Pro+ por 18 meses", "Activación en tu propia cuenta mediante link", "Soporte técnico ante problemas de enlace"] }
+            ]},
+            { id: 'capcut', title: 'CapCut', image: 'CapCut.jpg', category: 'tools', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Full Access Lifetime", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Full Access", "Correo/contraseña totalmente modificables", "Usable en teléfono o PC", "Garantía 1 mes"] }
+            ]},
+            { id: 'filmora', title: 'Filmora', image: 'Filmora.jpg', category: 'tools', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Comprobada y funcionando en el momento de la entrega", "Entrega automática al instante", "Datos de acceso e instrucciones incluidos", "Garantía y reemplazo gratuito si hay cualquier problema"] }
+            ]},
+            { id: 'nordvpn', title: 'NordVPN', image: 'NordVPN.jpg', category: 'tools', variants: [
+                { name: "Lifetime", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'expressvpn', title: 'ExpressVPN', image: 'ExpressVPN.jpg', category: 'tools', variants: [
+                { name: "Phone, Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Este producto solo funciona en MÓVIL"] }
+            ]},
+            { id: 'cyberghost', title: 'CyberGhost', image: 'CyberGhost.jpg', category: 'tools', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción VPN garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'duolingo', title: 'Duolingo', image: 'Duolingo.jpg', category: 'tools', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Super GiftLink 12 months", price: "$9.600 ARS / 6 USDT", includes: ["Super GiftLink 12 meses", "GiftLink de Super Duolingo", "Activación rápida y segura"] }
+            ]}
+        ];
+
+        window.renderVariantCatalog = function() {
+            const streamingGrid = document.getElementById('streaming-grid');
+            const aiGrid = document.getElementById('ai-grid');
+            const toolsGrid = document.getElementById('tools-grid');
+            
+            streamingGrid.innerHTML = ''; aiGrid.innerHTML = ''; toolsGrid.innerHTML = '';
+
+            window.catalogVariant.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `reveal active bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden flex flex-col transition duration-300 relative`;
+                card.style.transitionDelay = `${(index % 3) * 0.1}s`;
+
+                let variantsOptions = `<option value="" disabled selected>Selecciona una variante...</option>`;
+                item.variants.forEach((v, i) => {
+                    let displayPrice = window.getConvertedVariantPrice(v.price);
+                    variantsOptions += `<option value="${i}">${v.name} - ${displayPrice}</option>`;
+                });
+
+                card.innerHTML = `
+                    <div class="p-5 cursor-pointer flex items-center gap-4 hover:bg-kiwi-dark transition" onclick="window.toggleVariantDetails('${item.id}', this)">
+                        <div class="w-16 h-16 bg-kiwi-dark border border-kiwi-border rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-inner">
+                            <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="font-orbitron font-bold text-lg text-white">${item.title}</h4>
+                            <p class="text-[10px] text-gray-400 font-rajdhani uppercase tracking-wide">${item.variants.length} Opciones</p>
+                        </div>
+                        <i id="icon-${item.id}" class="fa-solid fa-chevron-down text-kiwi-red transition-transform duration-300"></i>
+                    </div>
+                    
+                    <div id="details-${item.id}" class="details-panel bg-[#0c1220] border-t border-kiwi-border/0 px-5">
+                        <div class="py-5">
+                            <label class="block text-xs font-bold text-gray-300 uppercase mb-2 font-orbitron">Elige tu plan</label>
+                            <select id="select-${item.id}" onchange="window.updateVariantDetails('${item.id}')" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition mb-4">
+                                ${variantsOptions}
+                            </select>
+                            
+                            <div id="info-${item.id}" class="hidden">
+                                <p class="text-xs text-kiwi-gold font-bold mb-2 uppercase tracking-wide">¿Qué incluye?</p>
+                                <ul id="list-${item.id}" class="text-xs text-gray-300 font-rajdhani space-y-1 mb-4 pl-1">
+                                </ul>
+                                <button onclick="window.buyVariant('${item.id}')" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-2.5 rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-cart-shopping"></i> Continuar Compra
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                if(item.category === 'streaming') streamingGrid.appendChild(card);
+                if(item.category === 'ai') aiGrid.appendChild(card);
+                if(item.category === 'tools') toolsGrid.appendChild(card);
+            });
+        }
+
+        window.toggleVariantDetails = function(id, el) {
+            const panel = document.getElementById(`details-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            const card = panel.parentElement;
+            
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+                card.classList.remove('selected-card');
+            } else {
+                document.querySelectorAll('.details-panel.open').forEach(p => {
+                    p.classList.remove('open');
+                    p.previousElementSibling.querySelector('i').style.transform = 'rotate(0deg)';
+                    p.parentElement.classList.remove('selected-card');
+                });
+                
+                panel.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+                card.classList.add('selected-card');
+            }
+        }
+
+        window.updateVariantDetails = function(id) {
+            const item = window.catalogVariant.find(c => c.id === id);
+            const select = document.getElementById(`select-${id}`);
+            const variantIndex = select.value;
+            
+            if(variantIndex === "") return;
+            
+            const variant = item.variants[variantIndex];
+            const infoDiv = document.getElementById(`info-${id}`);
+            const listEl = document.getElementById(`list-${id}`);
+            
+            listEl.innerHTML = variant.includes.map(inc => `<li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-500 mt-1 text-[10px]"></i> <span>${inc}</span></li>`).join('');
+            infoDiv.classList.remove('hidden');
+        }
+
+        window.buyVariant = function(id) {
+            const item = window.catalogVariant.find(c => c.id === id);
+            const select = document.getElementById(`select-${id}`);
+            const variantIndex = select.value;
+            
+            if (variantIndex === "") return;
+            const variant = item.variants[variantIndex];
+            
+            window.currentActiveProduct = {
+                title: `${item.title} - ${variant.name}`,
+                price: window.getConvertedVariantPrice(variant.price),
+                isLimited: false,
+                category: item.category,
+                sub: 'variant_item'
+            };
+            window.openCheckout(null, true);
+        }
+
+        window.renderProducts = function(items) {
+            const container = document.getElementById('product-grid');
+            container.innerHTML = '';
+
+            items.forEach((prod, index) => {
+                const card = document.createElement('div');
+                card.className = `reveal bg-kiwi-card border ${prod.popular ? 'border-kiwi-red glow-red' : 'border-kiwi-border'} rounded-2xl p-5 flex flex-col justify-between transition duration-300 relative overflow-hidden`;
+                card.style.transitionDelay = `${(index % 3) * 0.1}s`; 
+
+                let visualElement = '';
+                if (prod.image !== undefined) {
+                    visualElement = `
+                        <div class="w-16 h-16 bg-kiwi-dark border border-kiwi-border rounded-xl flex items-center justify-center mb-4 shadow-inner overflow-hidden mx-auto">
+                            ${prod.image ? `<img src="${prod.image}" alt="${prod.title}" class="w-full h-full object-cover">` : `<span class="text-gray-500 text-[10px] font-bold">FOTO</span>`}
+                        </div>
+                    `;
+                } else if (prod.emoji) {
+                    visualElement = `
+                        <div class="w-14 h-14 bg-kiwi-dark border border-kiwi-border rounded-xl flex items-center justify-center mb-4 text-3xl shadow-inner mx-auto">
+                            ${prod.emoji}
+                        </div>
+                    `;
+                }
+                
+                let displayPrice = window.getConvertedPrice(prod);
+
+                card.innerHTML = `
+                    ${prod.popular && prod.tag ? `<span class="absolute -top-3 right-4 bg-kiwi-red text-white text-[10px] font-orbitron font-bold px-3 py-1 rounded-full uppercase tracking-widest z-10">${prod.tag}</span>` : ''}
+                    <div class="text-center relative z-10">
+                        ${visualElement}
+                        <h4 class="font-orbitron font-bold text-base mb-2 text-white">${prod.title}</h4>
+                        <p class="text-sm font-rajdhani text-kiwi-gold font-bold mb-4">${displayPrice}</p>
+                    </div>
+                    <button onclick="window.openCheckout(${prod.id})" class="w-full bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 relative z-10">
+                        <i class="fa-solid fa-cart-shopping text-sm"></i> Comprar Ahora
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+            setTimeout(reveal, 100); 
+        }
+
+        window.renderRobuxCalculator = function(type) {
+            const container = document.getElementById('product-grid');
+            let title = ""; let infoHtml = ""; let multiplier = 12; let methodText = "";
+            document.getElementById('category-info-container').classList.add('hidden');
+
+            if (type === 'robux_grupo') {
+                title = "Robux via Grupo"; multiplier = 12; methodText = "Vía Grupo";
+                infoHtml = `
+                    <div class="bg-[#0c1220] border border-blue-500/30 rounded-xl p-5 relative z-10 mb-6">
+                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
+                         <ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4 mb-4">
+                             <li>Es necesario estar en TODOS los grupos POR MAS DE 15 DIAS.</li>
+                             <li>Una vez estés más de 15 días, recibirás los robux el mismo día de la compra.</li>
+                             <li>Únicamente se necesita tu usuario de roblox.</li>
+                         </ul>
+                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3"><i class="fa-solid fa-users"></i> Grupos Oficiales:</h4>
+                         <div id="inline-roblox-groups" class="max-h-48 overflow-y-auto custom-scrollbar space-y-2 pr-2 mb-4"></div>
+                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3 border-t border-blue-500/30 pt-4"><i class="fa-regular fa-calendar-check"></i> Calculadora de 15 días</h4>
+                         <input type="datetime-local" id="join-date" onchange="window.calculate15Days()" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-blue-500 text-sm mb-2">
+                         <p id="calc-result-date" class="text-sm font-bold text-green-400 hidden"></p>
+                    </div>
+                `;
+            } else if (type === 'robux_gamepass') {
+                title = "Robux via Gamepass"; multiplier = 13; methodText = "Vía Gamepass";
+                infoHtml = `
+                    <div class="bg-[#0c1220] border border-blue-500/30 rounded-xl p-5 relative z-10 mb-6">
+                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
+                         <ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4">
+                             <li>Se acredita el 30% que Roblox quita por venta.</li>
+                             <li>Se tiene que crear un pase en una experiencia PÚBLICA que poseas.</li>
+                             <li>Los Robux llegan como "pendientes" y demoran 5 días en acreditarse.</li>
+                         </ul>
+                    </div>
+                `;
+            } else if (type === 'robux_plus') {
+                title = "Robux via Plus"; multiplier = 14.5; methodText = "Vía Plus";
+                infoHtml = `
+                    <div class="bg-[#0c1220] border border-blue-500/30 rounded-xl p-5 relative z-10 mb-6">
+                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
+                         <ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4">
+                             <li>Se acredita el total de lo que compres al instante.</li>
+                             <li>Entrega unicamente con tu usuario de Roblox.</li>
+                         </ul>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="reveal col-span-1 md:col-span-2 lg:col-span-3 bg-kiwi-card border border-blue-500 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 text-9xl opacity-5"><i class="fa-solid fa-gem"></i></div>
+                    <h3 class="font-orbitron font-bold text-2xl text-white mb-6 flex items-center gap-3"><span class="text-3xl">💎</span> Calculadora de ${title}</h3>
+                    ${infoHtml}
+                    <div class="relative z-10 bg-kiwi-dark border border-kiwi-border rounded-xl p-5">
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2 font-orbitron">Cantidad de Robux (Mínimo 10)</label>
+                        <input type="number" id="custom-robux-amount" value="100" min="10" step="10" oninput="window.calculateRobux(${multiplier})" class="w-full bg-[#101216] border border-kiwi-border rounded-xl p-4 text-white focus:border-blue-500 font-bold text-xl mb-6">
+                        
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <div class="mb-4 md:mb-0 text-center md:text-left">
+                                <p class="text-gray-400 text-sm font-rajdhani uppercase">Total a pagar:</p>
+                                <p class="text-4xl font-orbitron font-black text-green-400" id="robux-calculated-price"></p>
+                                <span id="robux-calculated-price-display" class="hidden"></span>
+                            </div>
+                            <button onclick="window.buyCustomRobuxBtn('${methodText}', '${type}')" class="bg-blue-600 hover:bg-blue-700 text-white font-orbitron font-bold py-4 px-8 rounded-xl transition shadow-lg flex items-center gap-2 text-lg transform hover:scale-105">
+                                <i class="fa-solid fa-cart-shopping"></i> Comprar Robux
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            window.calculateRobux(multiplier);
+            if(type === 'robux_grupo') window.renderInlineRobloxGroups();
+            setTimeout(reveal, 100);
+        }
+
+        window.calculate15Days = function() {
+            const input = document.getElementById('join-date').value;
+            if(!input) return;
+            const joinDate = new Date(input);
+            const availableDate = new Date(joinDate.getTime() + (336 * 60 * 60 * 1000));
+            const resultEl = document.getElementById('calc-result-date');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            resultEl.textContent = `✅ Podrás pedir tu entrega a partir del: ${availableDate.toLocaleDateString('es-ES', options)}`;
+            resultEl.classList.remove('hidden');
+        }
+
+        window.calculateRobux = function(multiplier) {
+            const amountInput = document.getElementById('custom-robux-amount');
+            let amount = parseInt(amountInput.value);
+            if(isNaN(amount) || amount < 0) amount = 0;
+            
+            const arsTotal = (amount / 10) * multiplier * 10;
+            const usdtTotal = arsTotal / 1600;
+            
+            let finalConverted = window.currentCurrency === 'USDT' ? usdtTotal : usdtTotal * window.exchangeRates[window.currentCurrency];
+            
+            const sym = window.currencySymbols[window.currentCurrency];
+            const formatted = window.currentCurrency === 'USDT' ? finalConverted.toFixed(2) : finalConverted.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            
+            const priceEl = document.getElementById('robux-calculated-price');
+            if(priceEl) priceEl.innerHTML = `${sym}${formatted} <span class="text-lg text-gray-400">${window.currentCurrency}</span>`;
+            
+            document.getElementById('robux-calculated-price-display').textContent = `${sym}${formatted} ${window.currentCurrency}`;
+        }
+
+        window.buyCustomRobuxBtn = function(methodText, subType) {
+            const amount = document.getElementById('custom-robux-amount').value;
+            if(amount < 10) return alert("La compra mínima es de 10 Robux.");
+            const totalStr = document.getElementById('robux-calculated-price-display').textContent;
+            
+            window.currentActiveProduct = {
+                title: `${amount} Robux (${methodText})`,
+                price: totalStr,
+                isLimited: false, category: 'roblox', sub: subType
+            };
+            window.openCheckout(null, true);
+        }
+
+        window.filterCategory = function(category) {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('category-view').classList.remove('hidden');
+            document.getElementById('category-info-container').classList.add('hidden');
+
+            const titles = {
+                'roblox': '<i class="fa-solid fa-gamepad text-blue-500"></i> ROBLOX & BLOX FRUITS',
+                'freefire': '<i class="fa-solid fa-fire text-orange-500"></i> FREE FIRE',
+                'streaming': '<i class="fa-solid fa-tv text-purple-500"></i> STREAMING & IA',
+                'instagram': '<i class="fa-brands fa-instagram text-pink-500"></i> REDES SOCIALES'
+            };
+            document.getElementById('category-title').innerHTML = titles[category] || 'CATEGORÍA';
+
+            ['roblox', 'freefire', 'instagram'].forEach(c => document.getElementById(`${c}-subcategories`).classList.add('hidden'));
+            document.getElementById('streaming-category-wrapper').classList.add('hidden');
+            document.getElementById('product-grid').classList.remove('hidden');
+
+            if (category === 'roblox') {
+                document.getElementById('roblox-subcategories').classList.remove('hidden'); window.filterRobloxSub('fruits');
+            } else if (category === 'freefire') {
+                document.getElementById('freefire-subcategories').classList.remove('hidden'); window.filterFreeFireSub('ilimitado');
+            } else if (category === 'instagram') {
+                document.getElementById('instagram-subcategories').classList.remove('hidden'); window.filterIgSub('seguidores');
+            } else if (category === 'streaming') {
+                document.getElementById('product-grid').classList.add('hidden');
+                document.getElementById('streaming-category-wrapper').classList.remove('hidden'); window.renderVariantCatalog();
+            }
+            
+            document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(reveal, 100);
+        }
+
+        window.goBackToHome = function() {
+            document.getElementById('category-view').classList.add('hidden');
+            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(reveal, 100);
+        }
+
+        window.filterRobloxSub = function(subCat) {
+            document.querySelectorAll('.roblox-sub-btn').forEach(btn => btn.className = 'roblox-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-sm');
+            let activeBtn = document.getElementById('tab-roblox-' + subCat);
+            if(activeBtn) activeBtn.className = 'roblox-sub-btn bg-blue-600/30 border border-blue-500 text-white p-3 rounded-xl transition flex items-center justify-center gap-3 text-sm shadow-inner transform scale-[1.02]';
+
+            document.getElementById('category-info-container').classList.add('hidden');
+            if (subCat === 'fruits') window.renderProducts(window.products.filter(p => p.category === 'roblox' && (p.sub === 'fruits' || p.sub === 'gamepasses')));
+            else if (subCat.startsWith('robux_')) window.renderRobuxCalculator(subCat);
+        }
+
+        window.filterFreeFireSub = function(subCat) {
+            document.querySelectorAll('.ff-sub-btn').forEach(btn => btn.className = 'ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg');
+            let activeBtn = document.getElementById('tab-freefire-' + subCat);
+            if(activeBtn) activeBtn.className = 'ff-sub-btn bg-orange-600/30 border border-orange-500 text-white p-3 rounded-xl transition flex items-center justify-center gap-3 text-lg shadow-inner transform scale-[1.02]';
+            
+            const infoContainer = document.getElementById('category-info-container');
+            const countriesList = `<div class="mt-4 border border-orange-500/30 rounded-lg overflow-hidden"><button onclick="document.getElementById('ff-countries').classList.toggle('hidden')" class="w-full bg-orange-900/20 hover:bg-orange-900/40 text-orange-400 p-3 text-left font-orbitron font-bold text-xs flex justify-between items-center transition">Paises donde esta disponible <i class="fa-solid fa-chevron-down"></i></button><div id="ff-countries" class="hidden bg-[#0c1220] p-4 text-xs font-rajdhani text-gray-300 grid grid-cols-2 md:grid-cols-3 gap-2"><span>🇦🇷 Argentina</span><span>🇨🇱 Chile</span><span>🇵🇪 Perú</span><span>🇧🇴 Bolivia</span><span>🇺🇾 Uruguay</span><span>🇵🇾 Paraguay</span><span>🇲🇽 México</span><span>🇨🇴 Colombia</span><span>🇻🇪 Venezuela</span><span>🇪🇨 Ecuador</span><span>🇬🇹 Guatemala</span><span>🇵🇷 Puerto Rico</span><span>🇩🇴 República Dominicana</span><span>🇨🇷 Costa Rica</span><span>🇵🇦 Panamá</span><span>🇭🇳 Honduras</span><span>🇸🇻 El Salvador</span><span>🇳🇮 Nicaragua</span><span class="col-span-2 md:col-span-3">🇺🇸 Estados Unidos (Comunidad hispana)</span></div></div>`;
+            
+            if (subCat === 'ilimitado') infoContainer.innerHTML = `<div class="bg-[#0c1220] border border-orange-500/30 rounded-xl p-5 relative shadow-lg"><h4 class="font-orbitron font-bold text-sm text-orange-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Extra</h4><ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4"><li>Los Diamantes ILIMITADOS son ofertas que puedes recibir/comprar cuantas veces quieras sin limites de compra.</li><li>Solo disponibles para la Región Latinoamérica.</li></ul>${countriesList}</div>`;
+            else if (subCat === 'limitado') infoContainer.innerHTML = `<div class="bg-[#0c1220] border border-orange-500/30 rounded-xl p-5 relative shadow-lg"><h4 class="font-orbitron font-bold text-sm text-orange-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Extra</h4><ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4"><li>Los Diamantes LIMITADOS son ofertas que puedes recibir/comprar 1 vez por pack de diamantes.</li><li>Solo disponibles para la Región Latinoamérica.</li></ul>${countriesList}</div>`;
+            else if (subCat === 'especiales') infoContainer.innerHTML = `<div class="bg-[#0c1220] border border-orange-500/30 rounded-xl p-5 relative shadow-lg"><h4 class="font-orbitron font-bold text-sm text-orange-400 mb-3"><i class="fa-solid fa-ticket"></i> Pases y Fragmentos</h4><ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4"><li>Estos ítems se envían directo a tu cuenta de Free Fire mediante tu ID.</li><li>Solo disponibles para la Región Latinoamérica.</li></ul>${countriesList}</div>`;
+            
+            infoContainer.classList.remove('hidden');
+            window.renderProducts(window.products.filter(p => p.category === 'freefire' && p.sub === subCat));
+        }
+
+        window.filterIgSub = function(subCat) {
+            document.querySelectorAll('.ig-sub-btn').forEach(btn => btn.className = 'ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight');
+            let activeBtn = document.getElementById('tab-ig-' + subCat);
+            if(activeBtn) activeBtn.className = 'ig-sub-btn bg-pink-600/30 border border-pink-500 text-white p-3 rounded-xl transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm shadow-inner transform scale-[1.02] text-center leading-tight';
+            
+            const infoContainer = document.getElementById('category-info-container');
+            infoContainer.innerHTML = `<div class="bg-[#0c1220] border border-pink-500/30 rounded-xl p-5 relative shadow-lg"><h4 class="font-orbitron font-bold text-sm text-pink-400 mb-3"><i class="fa-solid fa-list-check"></i> Requisitos</h4><ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4"><li>Tener el perfil en publico.</li></ul></div>`;
+            infoContainer.classList.remove('hidden');
+            window.renderProducts(window.products.filter(p => p.category === 'instagram' && p.sub === subCat));
+        }
+
+
+        // === SISTEMA DE PEDIDOS Y SALDO ===
+        window.openBalanceModal = function() {
+            if (!currentUser) return alert('Iniciá sesión primero');
+            document.getElementById('balance-modal').classList.remove('hidden');
+        };
+
+        window.requestBalanceLoad = function() {
+            const amount = document.getElementById('balance-amount').value;
+            if (!amount || amount <= 0) return alert('Monto inválido');
+            const msg = `Hola Kiwi Store! Quiero cargar $${amount} ARS a mi saldo de la página.\nUsuario: ${currentUser}\nAdjunto comprobante.`;
+            window.open(`https://wa.me/5491139172595?text=${encodeURIComponent(msg)}`, '_blank');
+            document.getElementById('balance-modal').classList.add('hidden');
+            alert('Pedido de carga enviado. Una vez confirmado el comprobante se acreditará a tu saldo.');
+        };
+
+        window.getUserBalance = function() {
+            if (!currentUser) return 0;
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            return users[currentUser]?.balance || 0;
+        };
+
+        window.updateBalanceDisplay = function() {
+            const el = document.getElementById('user-balance-display');
+            const el2 = document.getElementById('orders-balance-display');
+            const bal = window.getUserBalance();
+            const txt = '$' + bal.toLocaleString('es-AR') + ' ARS';
+            if (el) el.textContent = txt;
+            if (el2) el2.textContent = txt;
+        };
+
+        // Status labels for clients
+        window.getStatusLabel = function(status) {
+            const map = {
+                'pending': 'Comprobante de pago en revisión',
+                'receipt_review': 'Comprobante de pago en revisión',
+                'confirmed': 'Comprobante confirmado, en proceso de entregar el producto',
+                'claimed': 'Comprobante confirmado, en proceso de entregar el producto',
+                'delivered': 'Producto Entregado',
+                'accredited': 'Producto Entregado',
+                'cancelled': 'Producto Cancelado'
+            };
+            return map[status] || status;
+        };
+
+        // Override or extend history rendering if needed (existing code already uses purchase-history-list)
+        // Add staff function to credit balance
+        window.creditUserBalance = async function(username, amount) {
+            if (!['owner','ceo'].includes(JSON.parse(localStorage.getItem('kiwi_users')||'{}')[currentUser]?.role)) return alert('Sin permisos');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[username]) return alert('Usuario no existe');
+            users[username].balance = (users[username].balance || 0) + Number(amount);
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            // Sync to Supabase if possible
+            try {
+                await supabaseClient.from('usuarios').update({ balance: users[username].balance }).eq('username', username);
+            } catch(e) {}
+            alert(`Se acreditaron $${amount} a ${username}. Nuevo saldo: $${users[username].balance}`);
+            if (typeof updateAuthUI === 'function') updateAuthUI();
+        };
+
+
+        window.handlePurchaseSubmit = function(e) {
+            e.preventDefault();
+            if (!currentUser) return alert('Iniciá sesión');
+
+            const prod = window.currentActiveProduct;
+            if (!prod) return alert('Error de producto');
+
+            const targetUser = document.getElementById('user-account-input').value.trim();
+            const method = document.getElementById('payment-method-select').value;
+            const extra = document.getElementById('extra-account-input').value.trim();
+
+            const isRobux = prod.category === 'roblox' && (prod.sub === 'robux_grupo' || prod.sub === 'robux_gamepass' || prod.sub === 'robux_plus');
+
+            if (isRobux) {
+                // Flujo WhatsApp clásico para Robux
+                const msg = `Hola Kiwi Store!\nProducto: ${prod.title}\nPrecio: ${prod.price}\nDatos: ${targetUser}\nMétodo: ${method}`;
+                window.open(`https://wa.me/5491139172595?text=${encodeURIComponent(msg)}`, '_blank');
+                window.closeCheckoutModal();
+                return;
+            }
+
+            // Flujo con saldo para el resto
+            const balance = window.getUserBalance();
+            // Extraer número del precio (asumiendo formato con ARS o número)
+            let priceNum = 0;
+            const priceMatch = (prod.price || '').toString().match(/[\d.]+/);
+            if (priceMatch) {
+                priceNum = parseFloat(priceMatch[0].replace(/\./g, ''));
+            }
+
+            if (balance < priceNum) {
+                alert('Saldo insuficiente. Tu saldo: $' + balance.toLocaleString('es-AR') + ' ARS\nPrecio: $' + priceNum.toLocaleString('es-AR') + ' ARS');
+                return;
+            }
+
+            // Descontar saldo
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (users[currentUser]) {
+                users[currentUser].balance = (users[currentUser].balance || 0) - priceNum;
+                localStorage.setItem('kiwi_users', JSON.stringify(users));
+            }
+
+            const orderId = Date.now();
+            const order = {
+                id: orderId,
+                user: currentUser,
+                title: prod.title,
+                price: prod.price,
+                method: 'Saldo Página',
+                date: new Date().toLocaleString('es-AR'),
+                status: 'confirmed', // directamente en proceso de entrega
+                claimedBy: null,
+                targetUser: targetUser || 'N/A',
+                extra: extra || '',
+                category: prod.category,
+                sub: prod.sub || ''
+            };
+
+            let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push(order);
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+
+            try {
+                if (supabaseClient) {
+                    supabaseClient.from('compras').insert([{
+                        id: orderId,
+                        user_name: currentUser,
+                        title: prod.title,
+                        price: prod.price,
+                        method: 'Saldo Página',
+                        status: 'confirmed',
+                        target_user: targetUser,
+                        extra: extra
+                    }]);
+                }
+            } catch(err) { console.warn('Supabase sync failed', err); }
+
+            window.closeCheckoutModal();
+            alert('Pedido creado. Estado: Comprobante confirmado, en proceso de entregar el producto.\nSaldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS');
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            if (typeof updateAuthUI === 'function') updateAuthUI();
+        };
+
+
+        // === FUNCIONES FALTANTES DE NAVEGACIÓN ===
+        window.scrollToId = function(id) {
+            if (document.getElementById('home-view') && document.getElementById('home-view').classList.contains('hidden')) {
+                window.goBackToHome();
+                setTimeout(() => {
+                    const el = document.getElementById(id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 200);
+            } else {
+                const el = document.getElementById(id);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        window.toggleUserDrawer = function() {
+            const drawer = document.getElementById('user-drawer');
+            if (drawer) drawer.classList.toggle('translate-x-full');
+        };
+
+        // === APARTADO GESTIÓN DE PEDIDOS (CLIENTE) ===
+        window.openOrdersPanel = function() {
+            console.log('openOrdersPanel called, currentUser:', currentUser);
+            if (!currentUser) {
+                alert('Iniciá sesión para ver tus pedidos');
+                if (typeof window.openAuthModal === 'function') window.openAuthModal();
+                return;
+            }
+            const panel = document.getElementById('orders-panel');
+            if (!panel) {
+                alert('Error: panel de pedidos no encontrado');
+                return;
+            }
+            panel.classList.remove('hidden');
+            panel.style.display = 'block';
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
+
+        window.closeOrdersPanel = function() {
+            const panel = document.getElementById('orders-panel');
+            if (panel) {
+                panel.classList.add('hidden');
+                panel.style.display = 'none';
+            }
+            const bal = document.getElementById('balance-modal');
+            if (bal) bal.classList.add('hidden');
+        };
+
+        window.renderClientOrders = function() {
+            const container = document.getElementById('client-orders-list');
+            if (!container || !currentUser) return;
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const mine = purchases.filter(p => p.user === currentUser).reverse();
+            if (mine.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No tenés pedidos todavía.</p>';
+                return;
+            }
+            container.innerHTML = mine.map(p => {
+                const statusText = window.getStatusLabel ? window.getStatusLabel(p.status) : p.status;
+                let color = 'text-gray-400';
+                if (p.status === 'receipt_review' || p.status === 'pending') color = 'text-yellow-400';
+                else if (p.status === 'confirmed' || p.status === 'claimed') color = 'text-blue-400';
+                else if (p.status === 'delivered' || p.status === 'accredited') color = 'text-green-400';
+                else if (p.status === 'cancelled') color = 'text-red-400';
+                return `
+                    <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-4 mb-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-orbitron font-bold text-white text-sm">${p.title}</p>
+                                <p class="text-xs text-gray-400">${p.date} · ${p.price}</p>
+                                <p class="text-xs text-gray-500 mt-1">ID: ${p.id} · Datos: ${p.targetUser || '-'}</p>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase ${color}">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+
+        // === FREE FIRE API INTEGRATION (Volsever) ===
+        // API calls now go through /api/volsever proxy
+
+        window.checkFreeFireID = async function() {
+            const idInput = document.getElementById('ff-check-id');
+            const resultEl = document.getElementById('ff-id-result');
+            const ffId = idInput.value.trim();
+            if (!ffId) { resultEl.textContent = 'Ingresá un ID'; resultEl.classList.remove('hidden'); return; }
+
+            resultEl.textContent = 'Verificando...';
+            resultEl.classList.remove('hidden');
+            resultEl.className = 'mt-3 text-sm font-rajdhani text-gray-400';
+
+            try {
+                const res = await fetch(`/api/volsever?action=check-products&id=${encodeURIComponent(ffId)}&region=BO`);
+                const json = await res.json();
+                if (json.status && json.data) {
+                    resultEl.innerHTML = `<span class="text-green-400 font-bold">✓ ID válido</span> — Nombre: <strong class="text-white">${json.data.username || 'N/A'}</strong> (Región: ${json.data.account_region || 'N/A'})`;
+                    resultEl.className = 'mt-3 text-sm font-rajdhani text-green-400';
+                    // Guardar ID en la cuenta
+                    if (currentUser) {
+                        const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                        if (users[currentUser]) {
+                            users[currentUser].ff_id = ffId;
+                            users[currentUser].ff_name = json.data.username || '';
+                            localStorage.setItem('kiwi_users', JSON.stringify(users));
+                        }
+                    }
+                    // Si estamos en limitados, chequear descuentos
+                    if (document.getElementById('tab-freefire-limitado') && document.getElementById('tab-freefire-limitado').classList.contains('bg-orange-600/30')) {
+                        window.checkFreeFireDiscounts(ffId);
+                    }
+                } else {
+                    resultEl.textContent = 'ID no encontrado o error: ' + (json.message || 'desconocido');
+                    resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
+                }
+            } catch (e) {
+                resultEl.textContent = 'Error de conexión: ' + e.message;
+                resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
+            }
+        };
+
+        window.checkFreeFireDiscounts = async function(ffId) {
+            if (!ffId) return;
+            try {
+                const res = await fetch(`/api/volsever?action=check-discounts&id=${encodeURIComponent(ffId)}`);
+                const json = await res.json();
+                if (json.status && json.data && json.data.discount_items) {
+                    window.ffAvailableDiscounts = json.data.discount_items;
+                    window.applyLimitedAvailability();
+                }
+            } catch (e) {
+                console.warn('Error checking discounts', e);
+            }
+        };
+
+        window.applyLimitedAvailability = function() {
+            if (!window.ffAvailableDiscounts) return;
+            const cards = document.querySelectorAll('#product-grid > div');
+            cards.forEach(card => {
+                const titleEl = card.querySelector('h4');
+                if (!titleEl) return;
+                const title = titleEl.textContent || '';
+                // Buscar si algún discount item matchea por diamonds o nombre
+                const match = window.ffAvailableDiscounts.find(d => 
+                    title.includes(String(d.diamonds)) || title.toLowerCase().includes('limitado')
+                );
+                const btn = card.querySelector('button');
+                if (match && match.is_discount) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                    if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
+                } else if (title.toLowerCase().includes('limitado')) {
+                    card.style.opacity = '0.4';
+                    card.style.pointerEvents = 'none';
+                    if (btn) { btn.disabled = true; btn.classList.add('opacity-50'); btn.textContent = 'No disponible'; }
+                }
+            });
+        };
+
+        // Autocompletar ID guardado al abrir checkout de Free Fire
+        const originalOpenCheckout = window.openCheckout;
+        window.openCheckout = function(productId, isCustom) {
+            originalOpenCheckout(productId, isCustom);
+            const prod = window.currentActiveProduct;
+            if (prod && prod.category === 'freefire' && currentUser) {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                const saved = users[currentUser]?.ff_id;
+                if (saved) {
+                    const input = document.getElementById('user-account-input');
+                    if (input && !input.value) input.value = saved;
+                }
+            }
+        };
+
+        // Mostrar el checker de ID cuando se entra a Free Fire
+        const originalFilterCategory = window.filterCategory;
+        window.filterCategory = function(category) {
+            originalFilterCategory(category);
+            const checker = document.getElementById('ff-id-checker');
+            if (checker) {
+                if (category === 'freefire') {
+                    checker.classList.remove('hidden');
+                    // Autocompletar si hay ID guardado
+                    if (currentUser) {
+                        const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                        const saved = users[currentUser]?.ff_id;
+                        if (saved) document.getElementById('ff-check-id').value = saved;
+                    }
+                } else {
+                    checker.classList.add('hidden');
+                }
+            }
+        };
+
+    </script>
+</body>
+</html>
