@@ -2645,8 +2645,13 @@
                 if (amountInput) amountInput.value = '';
             } catch (error) {
                 console.error('Error acreditando saldo:', error);
-                setStatus(`No se pudo acreditar: ${error.message || 'error desconocido'}`);
-                alert(`PRUEBA DE SINCRONIZACIÓN VERCEL\n${error.message || 'Error desconocido'}\n\nSi menciona la columna balance, hay que crearla en Supabase. Si menciona permisos/RLS, hay que ajustar las políticas de la base de datos.`);
+                const rawMessage = String(error?.message || error || 'Error desconocido');
+                const isFetchFailure = /failed to fetch|networkerror|fetch failed|load failed|network request failed/i.test(rawMessage);
+                const friendlyMessage = isFetchFailure
+                    ? 'No se pudo contactar con Supabase (fallo de red/CORS/DNS). Esto no demuestra un problema con la columna balance ni con RLS. Verificá que el proyecto esté activo, que la URL del proyecto sea correcta y que la conexión no esté bloqueada.'
+                    : rawMessage;
+                setStatus(`No se pudo acreditar: ${friendlyMessage}`);
+                alert(`NO SE PUDO SINCRONIZAR EL SALDO\n\n${friendlyMessage}\n\n${isFetchFailure ? 'Pasos: 1) Abrí el panel de Supabase y comprobá que el proyecto esté activo. 2) En Project Settings → API copiá la Project URL y la publishable/anon key y comparalas con las del HTML. 3) Abrí F12 → Console/Network y revisá la petición a ykxyiamlvlpccyfzyvzr.supabase.co. Si no aparece respuesta HTTP, es conexión/URL/DNS; si aparece 401/403, revisá la clave y las políticas RLS; si aparece 400, revisá tabla y columnas.' : 'Si el mensaje menciona una columna inexistente, revisá el esquema de public.usuarios. Si devuelve 401/403, revisá la clave y las políticas RLS.'}`);
             }
         };
 
