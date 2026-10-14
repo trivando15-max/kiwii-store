@@ -628,10 +628,10 @@
                         <input type="number" id="frag-qty" min="35" value="35" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mt-1">
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.setFragQty(35)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">35</button>
-                        <button onclick="window.setFragQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
-                        <button onclick="window.setFragQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
-                        <button onclick="window.setFragQty(500)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">500</button>
+                        <button onclick="window.addFragQty(35)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">35</button>
+                        <button onclick="window.addFragQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
+                        <button onclick="window.addFragQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
+                        <button onclick="window.addFragQty(500)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">500</button>
                     </div>
                 </div>
                 <p id="frag-price-result" class="mt-3 text-sm font-bold text-kiwi-gold">Precio: $0 ARS</p>
@@ -650,10 +650,10 @@
                         <input type="number" id="box-qty" min="7" value="7" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mt-1">
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.setBoxQty(7)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">7</button>
-                        <button onclick="window.setBoxQty(10)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">10</button>
-                        <button onclick="window.setBoxQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
-                        <button onclick="window.setBoxQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
+                        <button onclick="window.addBoxQty(7)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">7</button>
+                        <button onclick="window.addBoxQty(10)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">10</button>
+                        <button onclick="window.addBoxQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
+                        <button onclick="window.addBoxQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
                     </div>
                 </div>
                 <p id="box-price-result" class="mt-3 text-sm font-bold text-kiwi-gold">Precio: $0 ARS</p>
@@ -2651,7 +2651,8 @@
                 if (json.status && json.data) {
                     resultEl.innerHTML = `<span class="text-green-400 font-bold">✓ ID válido</span> — Nombre: <strong class="text-white">${json.data.username || 'N/A'}</strong> (Región: ${json.data.account_region || 'N/A'})`;
                     resultEl.className = 'mt-3 text-sm font-rajdhani text-green-400';
-                    // Guardar ID en la cuenta
+                    // Guardar ID y nombre
+                    window.lastFFName = json.data.username || '';
                     if (currentUser) {
                         const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                         if (users[currentUser]) {
@@ -2697,12 +2698,16 @@
                 const title = titleEl.textContent || '';
                 if (!title.toLowerCase().includes('limitado')) return; // solo afectar packs limitados
 
-                // Extraer número de diamantes del título (ej: "341 Diamantes (Limitado)")
+                // Extraer número y mapear a cantidad base (sin bono)
                 const numMatch = title.match(/([\d.]+)/);
-                const diamondsInTitle = numMatch ? parseInt(numMatch[1].replace(/\./g, '')) : 0;
+                let diamondsInTitle = numMatch ? parseInt(numMatch[1].replace(/\./g, '')) : 0;
+                // Mapeo aproximado de packs con bono → base
+                const baseMap = { 341: 100, 572: 310, 1160: 520, 2389: 1060, 2398: 1060, 6160: 2180, 5600: 5600 };
+                const baseDiamonds = baseMap[diamondsInTitle] || diamondsInTitle;
 
-                // Buscar match exacto por cantidad de diamantes
-                const match = window.ffAvailableDiscounts.find(d => d.diamonds === diamondsInTitle);
+                const match = window.ffAvailableDiscounts.find(d => 
+                    d.diamonds === baseDiamonds || d.diamonds === diamondsInTitle
+                );
 
                 const btn = card.querySelector('button');
                 if (match && match.is_discount) {
@@ -2934,12 +2939,15 @@
                 window.pendingFFProduct = prod;
                 window.pendingFFId = savedId;
                 const usersFF = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                const savedName = currentUser ? (usersFF[currentUser]?.ff_name || '') : '';
+                const savedName = (currentUser && usersFF[currentUser]?.ff_name) || window.lastFFName || '';
+                const displayPrice = (typeof window.getConvertedPrice === 'function') 
+                    ? window.getConvertedPrice(prod) 
+                    : prod.price;
                 const text = document.getElementById('ff-confirm-text');
                 text.innerHTML = `
                     <div class="text-left space-y-1 text-sm">
                         <p><strong>Producto:</strong> ${prod.title}</p>
-                        <p><strong>Precio:</strong> <span class="text-kiwi-gold font-bold">${prod.price}</span></p>
+                        <p><strong>Precio:</strong> <span class="text-kiwi-gold font-bold">${displayPrice}</span></p>
                         <p><strong>ID:</strong> ${savedId || '<span class="text-red-400">No verificado</span>'}</p>
                         <p><strong>Nombre:</strong> ${savedName || '<span class="text-red-400">No verificado</span>'}</p>
                     </div>
@@ -3187,6 +3195,20 @@
             } catch (e) {
                 return { success: false, error: e.message };
             }
+        };
+
+
+        window.addFragQty = function(q) {
+            const el = document.getElementById('frag-qty');
+            const current = parseInt(el.value) || 35;
+            el.value = Math.max(35, current + q);
+            window.updateFragPrice();
+        };
+        window.addBoxQty = function(q) {
+            const el = document.getElementById('box-qty');
+            const current = parseInt(el.value) || 7;
+            el.value = Math.max(7, current + q);
+            window.updateBoxPrice();
         };
 
     </script>
