@@ -1717,26 +1717,24 @@
 
         window.ensureCloudUser = async function(username, accountId) {
             if (!supabaseClient || !window.supabaseOnline) return null;
+            const desiredId = (accountId || window.generateAccountId()).trim();
             let row = await window.syncUserFromCloud(username);
             if (row) {
-                // Asegurar account_id si falta
-                if (!row.account_id && accountId) {
+                // Si no tiene account_id, asignarlo. Si ya tiene, respetar el de la nube.
+                if (!row.account_id) {
                     const { data, error } = await supabaseClient
                         .from('usuarios')
-                        .update({ account_id: accountId })
-                        .eq('username', row.username)
+                        .update({ account_id: desiredId })
+                        .eq('id', row.id)
                         .select(USUARIO_CLOUD_SELECT)
                         .single();
-                    if (!error && data) row = data;
+                    if (error) throw error;
+                    row = data;
                 }
                 return row;
             }
-            // Crear fila mínima en la nube
-            const payload = {
-                username,
-                balance: 0,
-                account_id: accountId || window.generateAccountId()
-            };
+            // Crear fila: username + account_id + balance
+            const payload = { username, balance: 0, account_id: desiredId };
             const { data, error } = await supabaseClient
                 .from('usuarios')
                 .insert([payload])
@@ -1835,18 +1833,21 @@
                 if (usersDB[localUser].banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
                 if (String(usersDB[localUser].password ?? '') !== pass) { alert('Contraseña incorrecta.'); return; }
 
-                // Sincronizar saldo / account_id desde la nube (columnas reales)
+                // Siempre sincronizar / crear en la nube: username + account_id + balance
                 if (supabaseClient && window.supabaseOnline) {
                     try {
                         if (!usersDB[localUser].accountId) usersDB[localUser].accountId = window.generateAccountId();
                         const cloud = await window.ensureCloudUser(localUser, usersDB[localUser].accountId);
                         if (cloud) {
+                            // La nube manda: ID y saldo oficiales
                             usersDB[localUser].accountId = cloud.account_id || usersDB[localUser].accountId;
-                            usersDB[localUser].balance = Number(cloud.balance ?? usersDB[localUser].balance ?? 0);
+                            usersDB[localUser].balance = Number(cloud.balance ?? 0);
                             localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+                            console.log('Cuenta sincronizada:', cloud.username, cloud.account_id, cloud.balance);
                         }
                     } catch (syncErr) {
                         console.warn('Login local OK; sync de saldo falló:', syncErr);
+                        alert('Entraste, pero no se pudo sincronizar con Supabase:\n' + (syncErr.message || syncErr));
                     }
                 }
 
@@ -2718,7 +2719,7 @@
             const statusEl = document.getElementById('credit-status');
             const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
             const targetName = String(username || '').trim();
-            const targetId = String(accountIdInput || document.getElementById('credit-account-id')?.value || '').trim();
+            const targetId = String(accountIdInput || document.getElementById('credit-account-id')?.value || '').trim().toUpperCase();
             const value = Number(amount);
             const users = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
             const staff = users[currentUser];
@@ -2729,14 +2730,14 @@
             if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) { setStatus('Ingresá un monto entero mayor que cero.'); return alert('El monto debe ser un número entero mayor que cero.'); }
 
             if (!window.supabaseOnline || !supabaseClient) {
-                setStatus('No se acreditó. Supabase no está en línea. El saldo local NO se modificó.');
-                alert('NO SE ACREDITÓ NADA.\n\nSupabase no está disponible. El saldo de este navegador no se tocó.');
+                setStatus('No se acreditó. Supabase no está en línea.');
+                alert('NO SE ACREDITÓ NADA. Supabase no está disponible.');
                 return;
             }
 
-            setStatus('Buscando cuenta en Supabase…');
+            setStatus('Buscando / sincronizando cuenta…');
             try {
-                // Debe coincidir username E account_id en la misma fila
+                // 1) Buscar por usuario + ID exactos
                 let lookup = await supabaseClient.from('usuarios')
                     .select('id, username, account_id, balance')
                     .ilike('username', targetName)
@@ -2745,26 +2746,64 @@
                 if (lookup.error) throw lookup.error;
                 let target = lookup.data?.[0];
 
+                // 2) Si no está, buscar solo por usuario
                 if (!target) {
-                    // Diagnóstico: ver si existe solo el usuario o solo el ID
-                    const byName = await supabaseClient.from('usuarios').select('username, account_id, balance').ilike('username', targetName).limit(1);
-                    const byId = await supabaseClient.from('usuarios').select('username, account_id, balance').eq('account_id', targetId).limit(1);
+                    const byName = await supabaseClient.from('usuarios')
+                        .select('id, username, account_id, balance')
+                        .ilike('username', targetName).limit(1);
                     if (byName.error) throw byName.error;
+                    const nameRow = byName.data?.[0];
+
+                    if (nameRow) {
+                        const realId = (nameRow.account_id || '').toUpperCase();
+                        if (realId && realId !== targetId) {
+                            setStatus('ID incorrecto para ese usuario.');
+                            return alert(
+                                'El usuario existe, pero el ID no coincide.\n\n' +
+                                'Usuario: ' + nameRow.username + '\n' +
+                                'ID real en Supabase: ' + (nameRow.account_id || 'sin ID') + '\n' +
+                                'ID que escribiste: ' + targetId + '\n\n' +
+                                'Copiá el ID real desde el perfil de esa cuenta (botón Copiar ID).'
+                            );
+                        }
+                        // Usuario existe sin ID o con el mismo ID (case) → usar esa fila y completar ID si falta
+                        if (!nameRow.account_id) {
+                            const { data: patched, error: patchErr } = await supabaseClient
+                                .from('usuarios')
+                                .update({ account_id: targetId })
+                                .eq('id', nameRow.id)
+                                .select('id, username, account_id, balance')
+                                .single();
+                            if (patchErr) throw patchErr;
+                            target = patched;
+                        } else {
+                            target = nameRow;
+                        }
+                    }
+                }
+
+                // 3) Si sigue sin existir: crear en la nube con usuario + ID (y saldo 0), luego acreditar
+                if (!target) {
+                    // Evitar ID duplicado en otra cuenta
+                    const byId = await supabaseClient.from('usuarios')
+                        .select('username, account_id').eq('account_id', targetId).limit(1);
                     if (byId.error) throw byId.error;
-                    if (byName.data?.[0] && byId.data?.[0] && byName.data[0].username !== byId.data[0].username) {
-                        setStatus('Usuario e ID pertenecen a cuentas distintas.');
-                        return alert('El nombre de usuario y el ID no coinciden con la misma cuenta.\nUsuario apunta a: ' + byName.data[0].username + ' / ' + (byName.data[0].account_id || 'sin ID') + '\nID apunta a: ' + byId.data[0].username + ' / ' + (byId.data[0].account_id || 'sin ID'));
+                    if (byId.data?.[0]) {
+                        setStatus('Ese ID ya pertenece a otro usuario.');
+                        return alert('El ID ' + targetId + ' ya está asignado al usuario "' + byId.data[0].username + '".');
                     }
-                    if (byName.data?.[0] && !byId.data?.[0]) {
-                        setStatus('El ID no coincide con ese usuario.');
-                        return alert('El usuario existe, pero el ID no es el de esa cuenta.\nID real: ' + (byName.data[0].account_id || 'sin ID asignado'));
+
+                    if (!confirm('La cuenta no existe en Supabase todavía.\n\nSe va a crear:\nUsuario: ' + targetName + '\nID: ' + targetId + '\n\n¿Continuar y acreditar $' + value.toLocaleString('es-AR') + ' ARS?')) {
+                        setStatus('Cancelado.');
+                        return;
                     }
-                    if (!byName.data?.[0] && byId.data?.[0]) {
-                        setStatus('El usuario no coincide con ese ID.');
-                        return alert('El ID existe, pero el nombre de usuario no es el de esa cuenta.\nUsuario real: ' + byId.data[0].username);
-                    }
-                    setStatus('No se encontró la cuenta.');
-                    return alert('No se encontró ninguna cuenta con ese usuario e ID en Supabase.');
+                    const { data: created, error: createErr } = await supabaseClient
+                        .from('usuarios')
+                        .insert([{ username: targetName, account_id: targetId, balance: 0 }])
+                        .select('id, username, account_id, balance')
+                        .single();
+                    if (createErr) throw createErr;
+                    target = created;
                 }
 
                 if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${target.username}?\nID: ${target.account_id}\nSaldo actual: $${Number(target.balance || 0).toLocaleString('es-AR')} ARS`)) {
@@ -2781,11 +2820,11 @@
                     .select('id, username, account_id, balance')
                     .single();
                 if (error) throw error;
-                if (!data) throw new Error('Supabase no devolvió la fila actualizada. Revisá las políticas RLS.');
+                if (!data) throw new Error('Supabase no devolvió la fila actualizada.');
 
                 const finalName = data.username;
                 const finalBalance = Number(data.balance ?? cloudBalance + value);
-                const finalId = data.account_id || target.account_id || '';
+                const finalId = data.account_id || targetId;
                 users[finalName] = {
                     ...(users[finalName] || {}),
                     accountId: finalId,
@@ -2794,8 +2833,8 @@
                 };
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
 
-                setStatus(`Listo: ${finalName} ahora tiene $${finalBalance.toLocaleString('es-AR')} ARS.`);
-                alert(`Saldo acreditado correctamente.\nUsuario: ${finalName}\nID: ${finalId || 'Sin ID'}\nNuevo saldo: $${finalBalance.toLocaleString('es-AR')} ARS`);
+                setStatus(`Listo: ${finalName} (${finalId}) → $${finalBalance.toLocaleString('es-AR')} ARS`);
+                alert(`Saldo acreditado correctamente.\nUsuario: ${finalName}\nID: ${finalId}\nNuevo saldo: $${finalBalance.toLocaleString('es-AR')} ARS`);
 
                 if (currentUser && currentUser.toLowerCase() === finalName.toLowerCase()) {
                     if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
@@ -2806,12 +2845,8 @@
             } catch (error) {
                 console.error('Error acreditando saldo:', error);
                 const rawMessage = String(error?.message || error || 'Error desconocido');
-                const isFetchFailure = /failed to fetch|networkerror|fetch failed|load failed|network request failed|name_not_resolved|err_name/i.test(rawMessage);
-                const friendlyMessage = isFetchFailure
-                    ? 'No se pudo contactar con Supabase (fallo de red/CORS/DNS). Verificá que el proyecto esté activo y la URL sea correcta.'
-                    : rawMessage;
-                setStatus(`No se pudo acreditar: ${friendlyMessage}`);
-                alert('NO SE PUDO SINCRONIZAR EL SALDO\n\n' + friendlyMessage);
+                setStatus('No se pudo acreditar: ' + rawMessage);
+                alert('NO SE PUDO SINCRONIZAR EL SALDO\n\n' + rawMessage);
             }
         };
 
