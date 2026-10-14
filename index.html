@@ -1102,22 +1102,60 @@
             return `${window.currencySymbols[window.currentCurrency]}${formatted} ${window.currentCurrency}`;
         }
 
-        // --- CONFIGURACIÓN DE SUPABASE (protegida) ---
-        const supabaseUrl = 'https://ykxyiamlvlpccyfzyvzr.supabase.co'; 
+        // --- CONFIGURACIÓN DE SUPABASE ---
+        // Si el host no resuelve (ERR_NAME_NOT_RESOLVED), el proyecto está pausado, borrado o la URL es incorrecta.
+        // Pegá acá la Project URL y la publishable key NUEVAS desde Supabase → Project Settings → API Keys.
+        const supabaseUrl = 'https://ykxyiamlvlppcyfzyvzr.supabase.co'; 
         const supabaseKey = 'sb_publishable_HxcnPrmcb9xu-6QwEJqLvA_vuXbCw5z';
         let supabaseClient = null;
-        try {
-            if (typeof supabase !== 'undefined' && supabase.createClient) {
-                supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-            } else {
-                console.warn('Supabase no cargó. El sitio funciona en modo local.');
+        window.supabaseOnline = false;
+
+        function showSupabaseBanner(text) {
+            if (document.getElementById('supabase-offline-banner')) return;
+            const bar = document.createElement('div');
+            bar.id = 'supabase-offline-banner';
+            bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:180;background:#3b0a0c;color:#fecaca;border-top:1px solid #ff1e27;padding:10px 16px;font-size:12px;font-family:Rajdhani,sans-serif;text-align:center;';
+            bar.textContent = text;
+            document.body.appendChild(bar);
+        }
+
+        async function probeSupabase() {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 4000);
+            try {
+                const res = await fetch(supabaseUrl + '/auth/v1/health', {
+                    signal: ctrl.signal,
+                    headers: { apikey: supabaseKey, Authorization: 'Bearer ' + supabaseKey }
+                });
+                clearTimeout(timer);
+                return res.status > 0 && res.status < 500;
+            } catch (e) {
+                clearTimeout(timer);
+                const msg = String(e && (e.message || e) || '');
+                console.warn('Supabase inalcanzable:', msg);
+                return false;
             }
-        } catch (e) {
-            console.warn('Error inicializando Supabase:', e);
+        }
+
+        function createSupabaseClient() {
+            try {
+                if (typeof supabase !== 'undefined' && supabase.createClient) {
+                    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+                        realtime: { params: { eventsPerSecond: 2 } },
+                        auth: { persistSession: false, autoRefreshToken: false }
+                    });
+                    return true;
+                }
+                console.warn('Supabase JS no cargó. El sitio funciona en modo local.');
+            } catch (e) {
+                console.warn('Error inicializando Supabase:', e);
+                supabaseClient = null;
+            }
+            return false;
         }
 
         function initRealtimePresence() {
-            if (!supabaseClient) return;
+            if (!supabaseClient || !window.supabaseOnline) return;
             const onlineChannel = supabaseClient.channel('online-users');
             onlineChannel.on('presence', { event: 'sync' }, () => {
                 const newState = onlineChannel.presenceState();
@@ -1157,7 +1195,7 @@
         };
 
         window.fetchInitialData = async function() {
-            if (!supabaseClient) {
+            if (!supabaseClient || !window.supabaseOnline) {
                 console.warn('Supabase no está disponible; se conserva la información local.');
                 return;
             }
@@ -1235,6 +1273,7 @@
         };
 
         function initStaffRealtime() {
+            if (!supabaseClient || !window.supabaseOnline) return;
             supabaseClient.channel('live-db-changes')
               .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => { window.fetchInitialData(); })
               .on('postgres_changes', { event: '*', schema: 'public', table: 'compras' }, () => { window.fetchInitialData(); })
@@ -1242,29 +1281,42 @@
               .subscribe();
         }
 
-        window.onload = function() {
+        window.onload = async function() {
+            document.querySelectorAll('img').forEach(img => {
+                img.addEventListener('error', function onErr() {
+                    img.removeEventListener('error', onErr);
+                    img.style.display = 'none';
+                });
+            });
             setTimeout(() => {
                 const loader = document.getElementById('page-loader');
-                if(loader) { loader.style.display = 'none'; document.body.style.overflow = 'auto'; }
+                if (loader) { loader.style.display = 'none'; document.body.style.overflow = 'auto'; }
                 const welcome = document.getElementById('welcome-modal');
                 if (welcome) {
                     welcome.classList.remove('hidden');
                     setTimeout(() => welcome.classList.remove('opacity-0'), 50);
                     const innerCard = welcome.querySelector('div.bg-kiwi-card');
-                    if(innerCard) { innerCard.classList.remove('scale-95'); innerCard.classList.add('scale-100'); }
+                    if (innerCard) { innerCard.classList.remove('scale-95'); innerCard.classList.add('scale-100'); }
                 }
-                reveal();
-            }, 1000);
+                if (typeof reveal === 'function') reveal();
+            }, 800);
 
             try {
                 initDB();
                 currentUser = JSON.parse(localStorage.getItem('kiwi_logged_user'));
-                updateAuthUI(); 
-                window.renderRobloxGroups();
-                initRealtimePresence();
-                fetchInitialData();
-                initStaffRealtime();
-            } catch(e) { console.error("Error iniciando DB o Supabase:", e); }
+                updateAuthUI();
+                if (typeof window.renderRobloxGroups === 'function') window.renderRobloxGroups();
+                window.supabaseOnline = await probeSupabase();
+                if (window.supabaseOnline) {
+                    createSupabaseClient();
+                    initRealtimePresence();
+                    fetchInitialData();
+                    initStaffRealtime();
+                } else {
+                    supabaseClient = null;
+                    showSupabaseBanner('Supabase no responde (el dominio del proyecto no existe o está pausado). La tienda sigue en modo local. El saldo NO se sincroniza hasta pegar una Project URL válida.');
+                }
+            } catch (e) { console.error('Error iniciando DB o Supabase:', e); }
         };
 
         // --- FUNCIONES DE MONEDA ---
@@ -2600,6 +2652,12 @@
             if (!users[username]) { setStatus('No se encontró esa cuenta en los usuarios cargados.'); return alert('Usuario no existe en los datos cargados.'); }
             if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${username}? Esta acción modifica el saldo de Kiwii Store.`)) return;
 
+            if (!window.supabaseOnline || !supabaseClient) {
+                setStatus('No se acreditó. Supabase no está en línea (ERR_NAME_NOT_RESOLVED). El saldo local NO se modificó.');
+                alert('NO SE ACREDITÓ NADA.\n\nEl navegador no puede resolver ykxyiamlvlppcyfzyvzr.supabase.co.\nEso significa que el proyecto está pausado, borrado o la URL es incorrecta.\n\nAbrí supabase.com/dashboard, restaurá el proyecto o creá uno nuevo, y reemplazá supabaseUrl y supabaseKey en el HTML.\nEl saldo de este navegador no se tocó.');
+                return;
+            }
+
             const oldBalance = Number(users[username].balance || 0);
             const newBalance = oldBalance + value;
             setStatus('Procesando acreditación…');
@@ -2646,12 +2704,12 @@
             } catch (error) {
                 console.error('Error acreditando saldo:', error);
                 const rawMessage = String(error?.message || error || 'Error desconocido');
-                const isFetchFailure = /failed to fetch|networkerror|fetch failed|load failed|network request failed/i.test(rawMessage);
+                const isFetchFailure = /failed to fetch|networkerror|fetch failed|load failed|network request failed|name_not_resolved|err_name/i.test(rawMessage);
                 const friendlyMessage = isFetchFailure
                     ? 'No se pudo contactar con Supabase (fallo de red/CORS/DNS). Esto no demuestra un problema con la columna balance ni con RLS. Verificá que el proyecto esté activo, que la URL del proyecto sea correcta y que la conexión no esté bloqueada.'
                     : rawMessage;
                 setStatus(`No se pudo acreditar: ${friendlyMessage}`);
-                alert(`NO SE PUDO SINCRONIZAR EL SALDO\n\n${friendlyMessage}\n\n${isFetchFailure ? 'Pasos: 1) Abrí el panel de Supabase y comprobá que el proyecto esté activo. 2) En Project Settings → API copiá la Project URL y la publishable/anon key y comparalas con las del HTML. 3) Abrí F12 → Console/Network y revisá la petición a ykxyiamlvlpccyfzyvzr.supabase.co. Si no aparece respuesta HTTP, es conexión/URL/DNS; si aparece 401/403, revisá la clave y las políticas RLS; si aparece 400, revisá tabla y columnas.' : 'Si el mensaje menciona una columna inexistente, revisá el esquema de public.usuarios. Si devuelve 401/403, revisá la clave y las políticas RLS.'}`);
+                alert(`NO SE PUDO SINCRONIZAR EL SALDO\n\n${friendlyMessage}\n\n${isFetchFailure ? 'Pasos: 1) Abrí el panel de Supabase y comprobá que el proyecto esté activo. 2) En Project Settings → API copiá la Project URL y la publishable/anon key y comparalas con las del HTML. 3) Abrí F12 → Console/Network y revisá la petición a ykxyiamlvlppcyfzyvzr.supabase.co. Si no aparece respuesta HTTP, es conexión/URL/DNS; si aparece 401/403, revisá la clave y las políticas RLS; si aparece 400, revisá tabla y columnas.' : 'Si el mensaje menciona una columna inexistente, revisá el esquema de public.usuarios. Si devuelve 401/403, revisá la clave y las políticas RLS.'}`);
             }
         };
 
