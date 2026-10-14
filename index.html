@@ -250,14 +250,16 @@
 
                 <div id="panel-saldo" class="space-y-3 hidden">
                     <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">ACREDITAR SALDO DE PRUEBA</h4>
-                    <p class="text-xs text-gray-300 leading-relaxed">Acredita saldo interno de Kiwii Store a una cuenta para probar el checkout. No carga saldo en RecargasAmérica.</p>
-                    <label for="credit-user" class="block text-xs text-gray-400">Usuario o ID de cuenta</label>
-                    <input id="credit-user" autocomplete="off" placeholder="Ej. KWS-7F3A91C2 o usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <p class="text-xs text-gray-300 leading-relaxed">Acredita saldo interno de Kiwii Store. Debés indicar el <strong>nombre de usuario</strong> y el <strong>ID de cuenta</strong> (ambos deben coincidir con la misma cuenta).</p>
+                    <label for="credit-user" class="block text-xs text-gray-400">Nombre de usuario</label>
+                    <input id="credit-user" autocomplete="off" placeholder="Ej. KenshinFu" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <label for="credit-account-id" class="block text-xs text-gray-400">ID de cuenta (KWS-...)</label>
+                    <input id="credit-account-id" autocomplete="off" placeholder="Ej. KWS-7F3A91C2" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
                     <label for="credit-amount" class="block text-xs text-gray-400">Monto a acreditar (ARS)</label>
                     <input id="credit-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 1500" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
-                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar saldo</button>
+                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value, document.getElementById('credit-account-id').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar saldo</button>
                     <p id="credit-status" role="status" class="text-xs text-gray-300"></p>
-                    <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Probá primero con una cuenta propia.</p>
+                    <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Usuario e ID deben pertenecer a la misma cuenta.</p>
                 </div>
 
                 <div id="panel-chat" class="hidden flex flex-col h-full">
@@ -1201,23 +1203,25 @@
             }
             try {
                 // 1. Cargar Usuarios
-                const { data: usersData, error: errU } = await supabaseClient.from('usuarios').select('*');
+                const { data: usersData, error: errU } = await supabaseClient.from('usuarios').select('id, username, balance, account_id');
+                if (errU) console.warn('Error leyendo usuarios:', errU);
                 if (usersData) {
                     let localUsers = JSON.parse(localStorage.getItem('kiwi_users')) || {};
                     usersData.forEach(u => {
-                        localUsers[u.username] = { 
-                            password: u.password || '***', 
-                            email: u.email, 
-                            role: u.role, 
-                            history: localUsers[u.username] ? localUsers[u.username].history : [], 
-                            profilePic: u.profile_pic || '', 
-                            accountId: u.account_id || (localUsers[u.username] ? localUsers[u.username].accountId : '') || '',
-                            banned: u.banned || false,
-                            balance: Number(u.balance ?? (localUsers[u.username] ? localUsers[u.username].balance : 0) ?? 0)
+                        const prev = localUsers[u.username] || {};
+                        localUsers[u.username] = {
+                            // password/role solo locales (no existen en la tabla de Supabase)
+                            password: prev.password || '',
+                            email: prev.email || '',
+                            role: prev.role || (u.username === 'KenshinFu' ? 'owner' : 'user'),
+                            history: prev.history || [],
+                            profilePic: prev.profilePic || '',
+                            accountId: u.account_id || prev.accountId || '',
+                            banned: !!prev.banned,
+                            balance: Number(u.balance ?? prev.balance ?? 0)
                         };
                     });
 
-                    // Asignar y sincronizar IDs para cuentas existentes. Requiere public.usuarios.account_id.
                     for (const userData of Object.values(localUsers)) {
                         if (!userData.accountId) userData.accountId = window.generateAccountId();
                     }
@@ -1225,14 +1229,12 @@
                         const accountId = localUsers[u.username]?.accountId;
                         if (accountId && !u.account_id) {
                             const { error: idError } = await supabaseClient.from('usuarios').update({ account_id: accountId }).eq('username', u.username);
-                            if (idError) console.warn('No se pudo guardar account_id; ejecutá la migración SQL incluida.', idError);
+                            if (idError) console.warn('No se pudo guardar account_id:', idError);
                         }
                     }
 
-                    // ¡MAGIA! FORZAR A QUE KENSHINFU SEA OWNER SIEMPRE Y CORREGIR LA BASE DE DATOS
-                    if (localUsers["KenshinFu"] && localUsers["KenshinFu"].role !== 'owner') {
+                    if (localUsers["KenshinFu"]) {
                         localUsers["KenshinFu"].role = 'owner';
-                        supabaseClient.from('usuarios').update({ role: 'owner' }).eq('username', 'KenshinFu').then();
                     }
 
                     localStorage.setItem('kiwi_users', JSON.stringify(localUsers));
@@ -1661,7 +1663,7 @@
                     try {
                         if (supabaseClient && window.supabaseOnline) {
                             const { data } = await supabaseClient.from('usuarios')
-                                .select('balance, account_id, role')
+                                .select('balance, account_id')
                                 .ilike('username', currentUser).limit(1);
                             const row = data && data[0];
                             if (row) {
@@ -1669,7 +1671,6 @@
                                 if (u[currentUser]) {
                                     u[currentUser].balance = Number(row.balance ?? 0);
                                     if (row.account_id) u[currentUser].accountId = row.account_id;
-                                    if (row.role) u[currentUser].role = row.role;
                                     localStorage.setItem('kiwi_users', JSON.stringify(u));
                                 }
                             }
@@ -1699,8 +1700,51 @@
             setTimeout(() => m.classList.add('hidden'), 300);
         }
 
-        // Columnas reales de public.usuarios (sin email: esa columna no existe en el proyecto)
-        const USUARIO_SELECT = 'username, password, role, banned, profile_pic, account_id, balance';
+        // Esquema real actual de public.usuarios: id, username, balance, account_id
+        // password / role / email / banned NO existen en la nube → se guardan solo en localStorage
+        const USUARIO_CLOUD_SELECT = 'id, username, balance, account_id';
+
+        window.syncUserFromCloud = async function(username) {
+            if (!supabaseClient || !window.supabaseOnline || !username) return null;
+            const { data, error } = await supabaseClient
+                .from('usuarios')
+                .select(USUARIO_CLOUD_SELECT)
+                .ilike('username', username)
+                .limit(1);
+            if (error) throw error;
+            return data && data[0] ? data[0] : null;
+        };
+
+        window.ensureCloudUser = async function(username, accountId) {
+            if (!supabaseClient || !window.supabaseOnline) return null;
+            let row = await window.syncUserFromCloud(username);
+            if (row) {
+                // Asegurar account_id si falta
+                if (!row.account_id && accountId) {
+                    const { data, error } = await supabaseClient
+                        .from('usuarios')
+                        .update({ account_id: accountId })
+                        .eq('username', row.username)
+                        .select(USUARIO_CLOUD_SELECT)
+                        .single();
+                    if (!error && data) row = data;
+                }
+                return row;
+            }
+            // Crear fila mínima en la nube
+            const payload = {
+                username,
+                balance: 0,
+                account_id: accountId || window.generateAccountId()
+            };
+            const { data, error } = await supabaseClient
+                .from('usuarios')
+                .insert([payload])
+                .select(USUARIO_CLOUD_SELECT)
+                .single();
+            if (error) throw error;
+            return data;
+        };
 
         window.handleRegister = async function(e) {
             e.preventDefault();
@@ -1713,10 +1757,9 @@
             if (user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
 
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
+            if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso en este navegador.`); return; }
 
             const accountId = window.generateAccountId();
-            // email solo local; la tabla usuarios no tiene columna email
             const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [] };
 
             if (!supabaseClient || !window.supabaseOnline) {
@@ -1724,27 +1767,19 @@
                 return;
             }
             try {
-                const { data: existing, error: lookupError } = await supabaseClient
-                    .from('usuarios').select('username').ilike('username', user).limit(1);
-                if (lookupError) throw lookupError;
-                if (existing && existing.length) {
-                    alert(`El nombre de usuario "${user}" ya está registrado.`);
+                const existing = await window.syncUserFromCloud(user);
+                if (existing) {
+                    alert(`El nombre de usuario "${user}" ya está registrado en la nube.`);
                     return;
                 }
-                const { data: inserted, error: insertError } = await supabaseClient
-                    .from('usuarios')
-                    .insert([{ username: user, password: pass, role: 'user', banned: false, profile_pic: '', account_id: accountId, balance: 0 }])
-                    .select(USUARIO_SELECT)
-                    .single();
-                if (insertError) throw insertError;
+                const inserted = await window.ensureCloudUser(user, accountId);
                 newUser.accountId = inserted.account_id || accountId;
                 newUser.balance = Number(inserted.balance ?? 0);
-                newUser.role = inserted.role || 'user';
                 usersDB[user] = newUser;
                 localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
             } catch (err) {
                 console.error('Supabase register failed:', err);
-                alert('No se pudo crear la cuenta en Supabase: ' + (err.message || 'Error de conexión') + '. No se guardó una cuenta local falsa.');
+                alert('No se pudo crear la cuenta en Supabase: ' + (err.message || 'Error de conexión'));
                 return;
             }
 
@@ -1753,7 +1788,7 @@
             if (typeof updateAuthUI === 'function') updateAuthUI();
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             window.openAuthModal();
-            alert('Cuenta creada correctamente');
+            alert('Cuenta creada.\nUsuario: ' + user + '\nID: ' + newUser.accountId);
         }
 
         window.handleLogin = async function(e) {
@@ -1763,62 +1798,66 @@
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!usersDB || typeof usersDB !== 'object') usersDB = {};
 
-            try {
-                if (supabaseClient && window.supabaseOnline) {
-                    // No pedir email: la columna no existe en public.usuarios
-                    const { data, error } = await supabaseClient
-                        .from('usuarios')
-                        .select(USUARIO_SELECT)
-                        .ilike('username', userInput)
-                        .limit(1);
-                    if (error) throw error;
-                    const row = data && data[0];
-                    if (!row) { alert('El usuario no existe.'); return; }
-                    if (row.banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
-                    if (String(row.password ?? '') !== pass) { alert('Contraseña incorrecta.'); return; }
+            // Asegurar owner local KenshinFu
+            if (!usersDB['KenshinFu']) {
+                usersDB['KenshinFu'] = {
+                    password: '13572468',
+                    email: '',
+                    role: 'owner',
+                    banned: false,
+                    profilePic: '',
+                    balance: 0,
+                    accountId: window.generateAccountId(),
+                    history: []
+                };
+                localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+            } else if (usersDB['KenshinFu'].role !== 'owner') {
+                usersDB['KenshinFu'].role = 'owner';
+                localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+            }
 
-                    const canonicalName = row.username;
-                    const previous = usersDB[canonicalName] || {};
-                    usersDB[canonicalName] = {
-                        ...previous,
-                        password: row.password,
-                        email: previous.email || '',
-                        role: row.role || previous.role || 'user',
-                        banned: !!row.banned,
-                        profilePic: row.profile_pic || previous.profilePic || '',
-                        accountId: row.account_id || previous.accountId || window.generateAccountId(),
-                        balance: Number(row.balance ?? previous.balance ?? 0),
-                        history: previous.history || []
-                    };
-                    if (!row.account_id) {
-                        const { data: updated, error: idError } = await supabaseClient
-                            .from('usuarios').update({ account_id: usersDB[canonicalName].accountId })
-                            .eq('username', canonicalName)
-                            .select('account_id').maybeSingle();
-                        if (idError) console.warn('No se pudo guardar account_id:', idError);
-                        else if (updated?.account_id) usersDB[canonicalName].accountId = updated.account_id;
+            try {
+                const localUser = Object.keys(usersDB).find(k => k.toLowerCase() === userInput.toLowerCase());
+
+                // La contraseña se valida SIEMPRE en local (no hay columna password en Supabase)
+                if (!localUser) {
+                    // Si no hay cuenta local, intentar ver si existe en la nube y pedir registrarse aquí
+                    if (supabaseClient && window.supabaseOnline) {
+                        const cloud = await window.syncUserFromCloud(userInput);
+                        if (cloud) {
+                            alert('Esa cuenta existe en la nube pero no tiene contraseña guardada en este navegador.\nRegistrate con el mismo nombre de usuario o usá el navegador donde la creaste.');
+                            return;
+                        }
                     }
-                    localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
-                    currentUser = canonicalName;
-                    localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
-                    if (typeof updateAuthUI === 'function') updateAuthUI();
-                    if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                    window.openAuthModal();
+                    alert('El usuario no existe en este navegador. Registrate primero.');
                     return;
                 }
-
-                const localUser = Object.keys(usersDB).find(k => k.toLowerCase() === userInput.toLowerCase());
-                if (!localUser) { alert('No hay conexión con Supabase y el usuario no existe localmente.'); return; }
                 if (usersDB[localUser].banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
-                if (usersDB[localUser].password !== pass) { alert('Contraseña incorrecta.'); return; }
+                if (String(usersDB[localUser].password ?? '') !== pass) { alert('Contraseña incorrecta.'); return; }
+
+                // Sincronizar saldo / account_id desde la nube (columnas reales)
+                if (supabaseClient && window.supabaseOnline) {
+                    try {
+                        if (!usersDB[localUser].accountId) usersDB[localUser].accountId = window.generateAccountId();
+                        const cloud = await window.ensureCloudUser(localUser, usersDB[localUser].accountId);
+                        if (cloud) {
+                            usersDB[localUser].accountId = cloud.account_id || usersDB[localUser].accountId;
+                            usersDB[localUser].balance = Number(cloud.balance ?? usersDB[localUser].balance ?? 0);
+                            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+                        }
+                    } catch (syncErr) {
+                        console.warn('Login local OK; sync de saldo falló:', syncErr);
+                    }
+                }
+
                 currentUser = localUser;
                 localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
                 if (typeof updateAuthUI === 'function') updateAuthUI();
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 window.openAuthModal();
             } catch (err) {
-                console.error('Error iniciando sesión en Supabase:', err);
-                alert('No se pudo iniciar sesión: ' + (err.message || 'Error de conexión con Supabase') + '. Revisá conexión, permisos RLS y columnas de la tabla usuarios.');
+                console.error('Error iniciando sesión:', err);
+                alert('No se pudo iniciar sesión: ' + (err.message || 'Error desconocido'));
             }
         };
 
@@ -1955,27 +1994,37 @@
             const newRole = document.getElementById('action-role-select').value;
             const newPass = document.getElementById('action-new-pass').value.trim();
             const newUsername = document.getElementById('action-new-username').value.trim();
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!usersDB[targetManageUser]) { alert('Usuario no encontrado localmente.'); return; }
 
-            let updates = {};
-            if(targetManageUser !== currentUser) updates.role = newRole;
-            if(newPass !== '') updates.password = newPass;
-            if(newUsername !== '' && newUsername !== targetManageUser) updates.username = newUsername;
+            // role y password solo existen en localStorage (no en la tabla usuarios de Supabase)
+            if (targetManageUser !== currentUser) usersDB[targetManageUser].role = newRole;
+            if (newPass !== '') usersDB[targetManageUser].password = newPass;
 
-            if (Object.keys(updates).length > 0) {
-                const { error } = await supabaseClient.from('usuarios').update(updates).eq('username', targetManageUser);
-                if (error) { alert("Error al modificar en Supabase: " + error.message); return; }
+            if (newUsername !== '' && newUsername !== targetManageUser) {
+                if (supabaseClient && window.supabaseOnline) {
+                    const { error } = await supabaseClient.from('usuarios')
+                        .update({ username: newUsername })
+                        .eq('username', targetManageUser);
+                    if (error) { alert('Error al renombrar en Supabase: ' + error.message); return; }
+                }
+                usersDB[newUsername] = { ...usersDB[targetManageUser] };
+                delete usersDB[targetManageUser];
+                targetManageUser = newUsername;
             }
+            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
             window.closeActionModal();
-            alert("Cuenta modificada exitosamente. Se sincronizará en un segundo.");
+            alert('Cuenta modificada. Rol y contraseña se guardan en este navegador; el nombre se sincroniza en la nube.');
         }
 
         window.toggleBanUser = async function() {
-            if(targetManageUser === currentUser) return;
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
-            const newBanStatus = !usersDB[targetManageUser].banned;
-            const { error } = await supabaseClient.from('usuarios').update({ banned: newBanStatus }).eq('username', targetManageUser);
-            if (error) { alert("Error al banear en Supabase: " + error.message); return; }
+            if (targetManageUser === currentUser) return;
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!usersDB[targetManageUser]) return;
+            usersDB[targetManageUser].banned = !usersDB[targetManageUser].banned;
+            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
             window.closeActionModal();
+            alert(usersDB[targetManageUser].banned ? 'Usuario baneado (local).' : 'Usuario desbaneado (local).');
         }
 
         window.deleteUserAction = async function() {
@@ -2665,16 +2714,18 @@
 
         // Override or extend history rendering if needed (existing code already uses purchase-history-list)
         // Add staff function to credit balance
-        window.creditUserBalance = async function(username, amount) {
+        window.creditUserBalance = async function(username, amount, accountIdInput) {
             const statusEl = document.getElementById('credit-status');
             const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
-            const targetInput = String(username || '').trim();
+            const targetName = String(username || '').trim();
+            const targetId = String(accountIdInput || document.getElementById('credit-account-id')?.value || '').trim();
             const value = Number(amount);
             const users = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
             const staff = users[currentUser];
 
             if (!staff || !['owner','ceo'].includes(staff.role)) { setStatus('Sin permisos para acreditar saldo.'); return alert('Sin permisos'); }
-            if (!targetInput) { setStatus('Ingresá un usuario o ID de cuenta.'); return alert('Ingresá un usuario o ID de cuenta.'); }
+            if (!targetName) { setStatus('Ingresá el nombre de usuario.'); return alert('Ingresá el nombre de usuario.'); }
+            if (!targetId) { setStatus('Ingresá el ID de cuenta (KWS-...).'); return alert('Ingresá el ID de cuenta (KWS-...).'); }
             if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) { setStatus('Ingresá un monto entero mayor que cero.'); return alert('El monto debe ser un número entero mayor que cero.'); }
 
             if (!window.supabaseOnline || !supabaseClient) {
@@ -2685,39 +2736,38 @@
 
             setStatus('Buscando cuenta en Supabase…');
             try {
-                // Buscar en la nube por username O por account_id (aunque no esté en localStorage)
+                // Debe coincidir username E account_id en la misma fila
                 let lookup = await supabaseClient.from('usuarios')
-                    .select('username, account_id, balance')
-                    .ilike('username', targetInput).limit(1);
+                    .select('id, username, account_id, balance')
+                    .ilike('username', targetName)
+                    .eq('account_id', targetId)
+                    .limit(1);
                 if (lookup.error) throw lookup.error;
                 let target = lookup.data?.[0];
+
                 if (!target) {
-                    lookup = await supabaseClient.from('usuarios')
-                        .select('username, account_id, balance')
-                        .eq('account_id', targetInput).limit(1);
-                    if (lookup.error) throw lookup.error;
-                    target = lookup.data?.[0];
-                }
-                // Fallback: coincidencia local por nombre o accountId
-                if (!target) {
-                    const localName = Object.keys(users).find(name =>
-                        name.toLowerCase() === targetInput.toLowerCase() ||
-                        String(users[name].accountId || '').toLowerCase() === targetInput.toLowerCase()
-                    );
-                    if (localName) {
-                        lookup = await supabaseClient.from('usuarios')
-                            .select('username, account_id, balance')
-                            .ilike('username', localName).limit(1);
-                        if (lookup.error) throw lookup.error;
-                        target = lookup.data?.[0];
+                    // Diagnóstico: ver si existe solo el usuario o solo el ID
+                    const byName = await supabaseClient.from('usuarios').select('username, account_id, balance').ilike('username', targetName).limit(1);
+                    const byId = await supabaseClient.from('usuarios').select('username, account_id, balance').eq('account_id', targetId).limit(1);
+                    if (byName.error) throw byName.error;
+                    if (byId.error) throw byId.error;
+                    if (byName.data?.[0] && byId.data?.[0] && byName.data[0].username !== byId.data[0].username) {
+                        setStatus('Usuario e ID pertenecen a cuentas distintas.');
+                        return alert('El nombre de usuario y el ID no coinciden con la misma cuenta.\nUsuario apunta a: ' + byName.data[0].username + ' / ' + (byName.data[0].account_id || 'sin ID') + '\nID apunta a: ' + byId.data[0].username + ' / ' + (byId.data[0].account_id || 'sin ID'));
                     }
-                }
-                if (!target) {
-                    setStatus('No se encontró ninguna cuenta con ese usuario o ID en Supabase.');
-                    return alert('No se encontró ninguna cuenta con ese usuario o ID en Supabase.');
+                    if (byName.data?.[0] && !byId.data?.[0]) {
+                        setStatus('El ID no coincide con ese usuario.');
+                        return alert('El usuario existe, pero el ID no es el de esa cuenta.\nID real: ' + (byName.data[0].account_id || 'sin ID asignado'));
+                    }
+                    if (!byName.data?.[0] && byId.data?.[0]) {
+                        setStatus('El usuario no coincide con ese ID.');
+                        return alert('El ID existe, pero el nombre de usuario no es el de esa cuenta.\nUsuario real: ' + byId.data[0].username);
+                    }
+                    setStatus('No se encontró la cuenta.');
+                    return alert('No se encontró ninguna cuenta con ese usuario e ID en Supabase.');
                 }
 
-                if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${target.username} (ID ${target.account_id || 'sin ID'})?\nSaldo actual en nube: $${Number(target.balance || 0).toLocaleString('es-AR')} ARS`)) {
+                if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${target.username}?\nID: ${target.account_id}\nSaldo actual: $${Number(target.balance || 0).toLocaleString('es-AR')} ARS`)) {
                     setStatus('Cancelado.');
                     return;
                 }
@@ -2727,8 +2777,8 @@
                 const { data, error } = await supabaseClient
                     .from('usuarios')
                     .update({ balance: cloudBalance + value })
-                    .eq('username', target.username)
-                    .select('username, account_id, balance')
+                    .eq('id', target.id)
+                    .select('id, username, account_id, balance')
                     .single();
                 if (error) throw error;
                 if (!data) throw new Error('Supabase no devolvió la fila actualizada. Revisá las políticas RLS.');
@@ -2740,14 +2790,13 @@
                     ...(users[finalName] || {}),
                     accountId: finalId,
                     balance: finalBalance,
-                    role: users[finalName]?.role || 'user'
+                    role: users[finalName]?.role || (finalName === 'KenshinFu' ? 'owner' : 'user')
                 };
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
 
                 setStatus(`Listo: ${finalName} ahora tiene $${finalBalance.toLocaleString('es-AR')} ARS.`);
                 alert(`Saldo acreditado correctamente.\nUsuario: ${finalName}\nID: ${finalId || 'Sin ID'}\nNuevo saldo: $${finalBalance.toLocaleString('es-AR')} ARS`);
 
-                // Si es la sesión actual, refrescar el header / perfil / pedidos
                 if (currentUser && currentUser.toLowerCase() === finalName.toLowerCase()) {
                     if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                     if (typeof updateAuthUI === 'function') updateAuthUI();
