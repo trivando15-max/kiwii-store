@@ -1117,6 +1117,7 @@
         }
 
         function initRealtimePresence() {
+            if (!supabaseClient) return;
             const onlineChannel = supabaseClient.channel('online-users');
             onlineChannel.on('presence', { event: 'sync' }, () => {
                 const newState = onlineChannel.presenceState();
@@ -1156,6 +1157,10 @@
         };
 
         window.fetchInitialData = async function() {
+            if (!supabaseClient) {
+                console.warn('Supabase no está disponible; se conserva la información local.');
+                return;
+            }
             try {
                 // 1. Cargar Usuarios
                 const { data: usersData, error: errU } = await supabaseClient.from('usuarios').select('*');
@@ -1632,19 +1637,38 @@
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
 
-            // Asignar ID público a la nueva cuenta.
+            // El ID se genera una sola vez y se guarda en la fila de Supabase.
             const accountId = window.generateAccountId();
-            usersDB[user] = { password: pass, email: email, role: 'user', banned: false, profilePic: '', balance: 0, accountId };
-            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+            const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [] };
 
-            // Intentar Supabase (opcional)
+            if (!supabaseClient) {
+                alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
+                return;
+            }
             try {
-                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-                    await supabaseClient.from('usuarios').insert([
-                        { username: user, email: email, password: pass, role: 'user', banned: false, profile_pic: '', account_id: accountId }
-                    ]);
+                const { data: existing, error: lookupError } = await supabaseClient
+                    .from('usuarios').select('username').ilike('username', user).limit(1);
+                if (lookupError) throw lookupError;
+                if (existing && existing.length) {
+                    alert(`El nombre de usuario "${user}" ya está registrado.`);
+                    return;
                 }
-            } catch(err) { console.warn('Supabase register failed', err); }
+                const { data: inserted, error: insertError } = await supabaseClient
+                    .from('usuarios')
+                    .insert([{ username: user, email, password: pass, role: 'user', banned: false, profile_pic: '', account_id: accountId, balance: 0 }])
+                    .select('username, email, role, banned, profile_pic, account_id, balance')
+                    .single();
+                if (insertError) throw insertError;
+                newUser.accountId = inserted.account_id || accountId;
+                newUser.balance = Number(inserted.balance ?? 0);
+                newUser.role = inserted.role || 'user';
+                usersDB[user] = newUser;
+                localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+            } catch (err) {
+                console.error('Supabase register failed:', err);
+                alert('No se pudo crear la cuenta en Supabase: ' + (err.message || 'Error de conexión') + '. No se guardó una cuenta local falsa.');
+                return;
+            }
 
             currentUser = user;
             localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
@@ -1653,24 +1677,70 @@
             alert('Cuenta creada correctamente');
         }
 
-        window.handleLogin = function(e) {
+        window.handleLogin = async function(e) {
             e.preventDefault();
-            const user = document.getElementById('login-user').value.trim();
+            const userInput = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-
             if (!usersDB || typeof usersDB !== 'object') usersDB = {};
 
-            if (usersDB[user]) {
-                if (usersDB[user].banned) { alert("🚫 Tu cuenta ha sido suspendida."); return; }
-                if (usersDB[user].password === pass) {
-                    currentUser = user;
+            try {
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient
+                        .from('usuarios')
+                        .select('username, email, password, role, banned, profile_pic, account_id, balance')
+                        .ilike('username', userInput)
+                        .limit(1);
+                    if (error) throw error;
+                    const row = data && data[0];
+                    if (!row) { alert('El usuario no existe.'); return; }
+                    if (row.banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
+                    if (String(row.password ?? '') !== pass) { alert('Contraseña incorrecta.'); return; }
+
+                    const canonicalName = row.username;
+                    const previous = usersDB[canonicalName] || {};
+                    usersDB[canonicalName] = {
+                        ...previous,
+                        password: row.password,
+                        email: row.email || previous.email || '',
+                        role: row.role || previous.role || 'user',
+                        banned: !!row.banned,
+                        profilePic: row.profile_pic || previous.profilePic || '',
+                        accountId: row.account_id || previous.accountId || window.generateAccountId(),
+                        balance: Number(row.balance ?? previous.balance ?? 0),
+                        history: previous.history || []
+                    };
+                    // Si la fila antigua no tenía ID, persistirlo en la misma fila de Supabase.
+                    if (!row.account_id) {
+                        const { data: updated, error: idError } = await supabaseClient
+                            .from('usuarios').update({ account_id: usersDB[canonicalName].accountId })
+                            .eq('username', canonicalName)
+                            .select('account_id').maybeSingle();
+                        if (idError) throw idError;
+                        if (updated?.account_id) usersDB[canonicalName].accountId = updated.account_id;
+                    }
+                    localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+                    currentUser = canonicalName;
                     localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
                     if (typeof updateAuthUI === 'function') updateAuthUI();
-                    window.openAuthModal(); 
-                } else { alert("Contraseña incorrecta."); }
-            } else { alert("El usuario no existe."); }
-        }
+                    window.openAuthModal();
+                    return;
+                }
+
+                // Sin Supabase solo se permite entrar con una cuenta previamente guardada en este navegador.
+                const localUser = Object.keys(usersDB).find(k => k.toLowerCase() === userInput.toLowerCase());
+                if (!localUser) { alert('No hay conexión con Supabase y el usuario no existe localmente.'); return; }
+                if (usersDB[localUser].banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
+                if (usersDB[localUser].password !== pass) { alert('Contraseña incorrecta.'); return; }
+                currentUser = localUser;
+                localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+                if (typeof updateAuthUI === 'function') updateAuthUI();
+                window.openAuthModal();
+            } catch (err) {
+                console.error('Error iniciando sesión en Supabase:', err);
+                alert('No se pudo iniciar sesión: ' + (err.message || 'Error de conexión con Supabase') + '. Revisá conexión, permisos RLS y columnas de la tabla usuarios.');
+            }
+        };
 
         window.handleRecover = function(e) {
             e.preventDefault();
@@ -2535,14 +2605,32 @@
             setStatus('Procesando acreditación…');
             try {
                 if (supabaseClient) {
+                    // Resolver primero la fila real en la nube por nombre o account_id.
+                    const accountId = String(users[username].accountId || '').trim();
+                    let lookup = await supabaseClient.from('usuarios')
+                        .select('username, account_id, balance')
+                        .ilike('username', username).limit(1);
+                    if (lookup.error) throw lookup.error;
+                    let target = lookup.data?.[0];
+                    if (!target && accountId) {
+                        lookup = await supabaseClient.from('usuarios')
+                            .select('username, account_id, balance')
+                            .eq('account_id', accountId).limit(1);
+                        if (lookup.error) throw lookup.error;
+                        target = lookup.data?.[0];
+                    }
+                    if (!target) throw new Error('No se encontró la cuenta en Supabase por usuario ni por ID. Verificá la tabla usuarios y sus datos.');
+                    const cloudBalance = Number(target.balance ?? 0);
                     const { data, error } = await supabaseClient
                         .from('usuarios')
-                        .update({ balance: newBalance })
-                        .eq('username', username)
-                        .select('username, balance');
+                        .update({ balance: cloudBalance + value })
+                        .eq('username', target.username)
+                        .select('username, account_id, balance')
+                        .single();
                     if (error) throw error;
-                    if (!data || data.length === 0) throw new Error('Supabase no actualizó ninguna fila. Revisá las políticas RLS y que el usuario exista en la tabla usuarios.');
-                    users[username].balance = Number(data[0].balance ?? newBalance);
+                    if (!data) throw new Error('Supabase no devolvió la fila actualizada. Revisá las políticas RLS.');
+                    username = target.username;
+                    users[username] = { ...(users[username] || {}), accountId: data.account_id || accountId, balance: Number(data.balance ?? cloudBalance + value) };
                     localStorage.setItem('kiwi_users', JSON.stringify(users));
                     setStatus(`Listo: ${username} ahora tiene $${users[username].balance.toLocaleString('es-AR')} ARS.`);
                     alert(`Saldo acreditado correctamente.\nUsuario: ${username}\nID: ${users[username].accountId || 'Sin ID'}\nNuevo saldo: $${users[username].balance.toLocaleString('es-AR')} ARS`);
