@@ -124,7 +124,7 @@
     <!-- HEADER / NAVBAR -->
     <header class="sticky top-0 z-40 bg-kiwi-dark/95 backdrop-blur-md border-b border-kiwi-border">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between relative z-10">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1.5 sm:gap-3">
                 <button id="staff-menu-btn" onclick="window.toggleStaffDrawer()" class="hidden relative text-kiwi-gold hover:text-yellow-400 text-2xl transition mr-1">
                     <i class="fa-solid fa-bars"></i>
                     <span id="staff-notif-dot" class="hidden absolute -top-1 -right-1 flex h-3 w-3">
@@ -168,6 +168,7 @@
                 <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="bg-green-600 hover:bg-green-700 text-white p-2.5 rounded-xl transition flex items-center justify-center shadow-lg hover:scale-105" title="Atención WhatsApp">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
                 </a>
+                <span id="header-balance" class="hidden sm:inline text-kiwi-gold font-orbitron font-bold text-sm px-2">$0</span>
                 <button onclick="window.openOrdersPanel()" class="bg-kiwi-dark border border-kiwi-border text-white text-sm rounded-xl px-4 py-2 font-rajdhani font-bold flex items-center gap-2 hover:border-kiwi-red transition">
                     <i class="fa-solid fa-box"></i> PEDIDOS
                 </button>
@@ -180,6 +181,19 @@
             </div>
         </div>
     </header>
+
+    
+    <!-- CONFIRMACIÓN COMPRA FREE FIRE -->
+    <div id="ff-confirm-modal" class="fixed inset-0 bg-black/80 z-[95] hidden flex items-center justify-center p-4">
+        <div class="bg-kiwi-card border border-orange-500/50 w-full max-w-sm rounded-2xl p-6 text-center">
+            <h3 class="font-orbitron font-bold text-white mb-2">Confirmar compra</h3>
+            <p id="ff-confirm-text" class="text-sm text-gray-300 mb-4"></p>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('ff-confirm-modal').classList.add('hidden')" class="flex-1 bg-gray-700 text-white py-2 rounded-xl">Cancelar</button>
+                <button onclick="window.confirmFreeFirePurchase()" class="flex-1 bg-orange-600 text-white font-bold py-2 rounded-xl">Comprar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- APARTADO GESTIÓN DE PEDIDOS (CLIENTE) -->
     <div id="orders-panel" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
@@ -291,6 +305,16 @@
                     <i class="fa-solid fa-trash"></i> Eliminar Permanentemente
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE PEDIDO -->
+    <div id="order-detail-modal" class="fixed inset-0 bg-black/80 z-[90] hidden flex items-center justify-center p-4">
+        <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-6 relative">
+            <button onclick="document.getElementById('order-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="font-orbitron font-bold text-white mb-4">Detalle del Pedido</h3>
+            <div id="order-detail-content" class="text-sm text-gray-300 space-y-2"></div>
+            <button onclick="window.requestSupport()" class="mt-4 w-full bg-kiwi-red text-white font-bold py-2 rounded-xl text-sm">Solicitar atención</button>
         </div>
     </div>
 
@@ -452,6 +476,36 @@
             </section>
 
             <!-- FAQ -->
+            
+            <!-- RESEÑAS -->
+            <section id="reviews" class="mt-20 pt-10 border-t border-kiwi-border">
+                <h3 class="font-orbitron text-2xl md:text-3xl font-black text-center mb-4">
+                    <i class="fa-solid fa-star text-kiwi-gold"></i> RESEÑAS DE CLIENTES
+                </h3>
+                <div class="text-center mb-6">
+                    <span id="reviews-average" class="text-2xl font-orbitron font-black text-kiwi-gold">0.0</span>
+                    <span class="text-gray-400 text-sm"> / 5</span>
+                    <p id="reviews-count" class="text-xs text-gray-500">0 reseñas</p>
+                </div>
+                <div id="reviews-list" class="max-w-3xl mx-auto space-y-3 mb-6"></div>
+                <div class="text-center">
+                    <button onclick="window.showAllReviews()" class="text-kiwi-red hover:underline text-sm">Ver todas las reseñas</button>
+                </div>
+                <div id="review-form-container" class="max-w-md mx-auto mt-8 bg-kiwi-card border border-kiwi-border rounded-2xl p-5 hidden">
+                    <h4 class="font-orbitron font-bold text-white mb-3">Dejá tu reseña</h4>
+                    <div class="flex gap-1 mb-3" id="star-rating">
+                        <i class="fa-solid fa-star text-gray-600 cursor-pointer text-xl" data-star="1"></i>
+                        <i class="fa-solid fa-star text-gray-600 cursor-pointer text-xl" data-star="2"></i>
+                        <i class="fa-solid fa-star text-gray-600 cursor-pointer text-xl" data-star="3"></i>
+                        <i class="fa-solid fa-star text-gray-600 cursor-pointer text-xl" data-star="4"></i>
+                        <i class="fa-solid fa-star text-gray-600 cursor-pointer text-xl" data-star="5"></i>
+                    </div>
+                    <textarea id="review-text" placeholder="Contanos tu experiencia..." class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm mb-3" rows="3"></textarea>
+                    <input type="file" id="review-image" accept="image/*" class="text-xs text-gray-400 mb-3">
+                    <button onclick="window.submitReview()" class="w-full bg-kiwi-gold text-black font-bold py-2 rounded-xl">Publicar reseña</button>
+                </div>
+            </section>
+
             <section id="faq" class="mt-20 pt-10 border-t border-kiwi-border overflow-hidden">
                 <h3 class="reveal font-orbitron text-2xl md:text-3xl font-black text-center mb-10">
                     <i class="fa-solid fa-circle-question text-kiwi-red"></i> PREGUNTAS FRECUENTES
@@ -560,6 +614,60 @@
                 </div>
                 <div id="ff-id-result" class="mt-3 text-sm font-rajdhani hidden"></div>
                 <p class="text-[10px] text-gray-500 mt-2">El ID se guardará en tu cuenta para autocompletar en futuras compras.</p>
+            </div>
+
+            <!-- CALCULADORA FRAGMENTOS UNIVERSALES -->
+            <div id="ff-fragments-calculator" class="hidden mb-6 bg-[#0c1220] border border-orange-500/30 rounded-2xl p-5">
+                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator"></i> Calculadora de Fragmentos Universales
+                </h4>
+                <p class="text-xs text-gray-400 mb-3">Mínimo de compra: <strong class="text-orange-400">35 fragmentos</strong>. Los precios de los paquetes son referenciales.</p>
+                <div class="flex flex-col sm:flex-row gap-3 items-end">
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-400">Cantidad de fragmentos</label>
+                        <input type="number" id="frag-qty" min="35" value="35" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mt-1">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.setFragQty(35)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">35</button>
+                        <button onclick="window.setFragQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
+                        <button onclick="window.setFragQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
+                        <button onclick="window.setFragQty(500)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">500</button>
+                    </div>
+                </div>
+                <p id="frag-price-result" class="mt-3 text-sm font-bold text-kiwi-gold">Precio: $0 ARS</p>
+                <button onclick="window.buyFragments()" class="mt-3 bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-2 rounded-xl text-sm">Comprar fragmentos</button>
+            </div>
+
+            <!-- CALCULADORA CAJAS DE FRAGMENTOS -->
+            <div id="ff-boxes-calculator" class="hidden mb-6 bg-[#0c1220] border border-orange-500/30 rounded-2xl p-5">
+                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-box"></i> Calculadora de Cajas de Fragmentos
+                </h4>
+                <p class="text-xs text-gray-400 mb-3">Mínimo de compra: <strong class="text-orange-400">7 cajas</strong>. Los precios de los paquetes son referenciales.</p>
+                <div class="flex flex-col sm:flex-row gap-3 items-end">
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-400">Cantidad de cajas</label>
+                        <input type="number" id="box-qty" min="7" value="7" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mt-1">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.setBoxQty(7)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">7</button>
+                        <button onclick="window.setBoxQty(10)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">10</button>
+                        <button onclick="window.setBoxQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
+                        <button onclick="window.setBoxQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
+                    </div>
+                </div>
+                <p id="box-price-result" class="mt-3 text-sm font-bold text-kiwi-gold">Precio: $0 ARS</p>
+                <button onclick="window.buyBoxes()" class="mt-3 bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-2 rounded-xl text-sm">Comprar cajas</button>
+            </div>
+
+            <!-- PASE BOOYAH -->
+            <div id="ff-booyah-card" class="hidden mb-6 bg-[#0c1220] border border-orange-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h4 class="font-orbitron font-bold text-orange-400 text-lg">🎟️ Pase Booyah</h4>
+                    <p class="text-sm text-gray-300 mt-1">Precio: <span class="text-kiwi-gold font-bold">$3.300 ARS</span></p>
+                    <p class="text-xs text-gray-500">Se envía directo a tu ID de Free Fire.</p>
+                </div>
+                <button onclick="window.buyBooyahPass()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-xl">Comprar Pase</button>
             </div>
 
             <!-- INSTAGRAM TABS -->
@@ -688,7 +796,7 @@
 
     <!-- MODALES DE AUTH, PERFIL, ACCIONES, Y DRAWER USUARIO -->
     <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-6 relative shadow-2xl transform transition-transform duration-300 scale-95" id="auth-modal-card">
+        <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-4 sm:p-6 relative shadow-2xl transform transition-transform duration-300 scale-95 max-h-[90vh] overflow-hidden" id="auth-modal-card">
             <button onclick="window.closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="font-orbitron text-xl font-bold text-center mb-1 text-white" id="auth-modal-title">Iniciar Sesión</h3>
             <p class="text-gray-400 text-center text-xs mb-6" id="auth-modal-desc">Ingresa para vincular tus compras y acceder a tu cuenta</p>
@@ -734,7 +842,7 @@
                     <button type="submit" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg mt-4">CREAR CUENTA</button>
                 </form>
             </div>
-            <div id="user-profile-view" class="hidden">
+            <div id="user-profile-view" class="hidden max-h-[70vh] overflow-y-auto pr-1">
                 <div class="flex items-center justify-between mb-6 pb-4 border-b border-kiwi-border">
                     <div class="flex items-center gap-4">
                         <div class="relative group cursor-pointer" onclick="document.getElementById('profile-pic-upload').click()">
@@ -755,8 +863,14 @@
                     <p class="text-2xl font-orbitron font-black text-kiwi-gold" id="user-balance-display">$0 ARS</p>
                     <button onclick="window.openBalanceModal()" class="mt-2 text-xs bg-kiwi-gold text-black font-bold px-3 py-1 rounded">Cargar Saldo</button>
                 </div>
-                <h4 class="font-orbitron font-bold text-sm text-gray-300 mb-3 uppercase flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> Mis Pedidos</h4>
-                <div id="purchase-history-list" class="space-y-2 mb-6 max-h-64 overflow-y-auto custom-scrollbar pr-2"></div>
+                <h4 class="font-orbitron font-bold text-sm text-gray-300 mb-3 uppercase mt-2">Editar Perfil</h4>
+                <div class="space-y-2 mb-4">
+                    <input type="email" id="profile-email" placeholder="Email" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm">
+                    <input type="text" id="profile-phone" placeholder="Teléfono (opcional)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm">
+                    <input type="text" id="profile-ff-id" placeholder="ID Free Fire" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm">
+                    <input type="password" id="profile-new-pass" placeholder="Nueva contraseña (dejar vacío para no cambiar)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm">
+                    <button onclick="window.saveProfile()" class="w-full bg-kiwi-gold text-black font-bold py-2 rounded-xl text-sm">Guardar cambios</button>
+                </div>
                 <button onclick="window.handleLogout()" class="w-full bg-red-900/50 hover:bg-red-800 text-white font-bold py-2.5 rounded-xl transition border border-red-500/30 text-sm">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
                 </button>
@@ -770,6 +884,13 @@
         <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-6 relative">
             <button onclick="document.getElementById('balance-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="font-orbitron text-xl font-bold text-kiwi-gold mb-2">Cargar Saldo</h3>
+            <select id="balance-currency" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mb-3">
+                <option value="ARS">Pesos Argentinos (ARS)</option>
+                <option value="MXN">Pesos Mexicanos (MXN)</option>
+                <option value="COP">Pesos Colombianos (COP)</option>
+                <option value="PEN">Soles Peruanos (PEN)</option>
+                <option value="USDT">USDT (Binance)</option>
+            </select>
             <p class="text-xs text-gray-400 mb-4">Envía el comprobante por WhatsApp. Una vez confirmado se acredita a tu saldo.</p>
             <input type="number" id="balance-amount" placeholder="Monto en ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white mb-3">
             <button onclick="window.requestBalanceLoad()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl">Solicitar Carga</button>
@@ -823,6 +944,24 @@
 
     <!-- SCRIPT PRINCIPAL -->
     <script>
+
+        // Fallback: asegurar que el botón de login funcione
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('login-main-btn');
+            if (loginBtn) {
+                loginBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.openAuthModal === 'function') {
+                        window.openAuthModal();
+                    } else {
+                        const m = document.getElementById('auth-modal');
+                        if (m) m.classList.remove('hidden');
+                    }
+                };
+            }
+        });
+
         window.currentActiveProduct = null;
         let currentUser = null;
 
@@ -860,20 +999,6 @@
             const mc = document.getElementById('auth-modal-card');
             m.classList.remove('hidden');
             setTimeout(() => { if (mc) mc.classList.replace('scale-95', 'scale-100'); }, 10);
-            // Si ya está logueado, mostrar perfil
-            if (currentUser) {
-                const title = document.getElementById('auth-modal-title');
-                const desc = document.getElementById('auth-modal-desc');
-                const btnSection = document.getElementById('login-register-view');
-                const profileSection = document.getElementById('user-profile-view');
-                if (title) title.textContent = "Mi Perfil";
-                if (desc) desc.textContent = "Resumen de tu cuenta";
-                if (btnSection) btnSection.classList.add('hidden');
-                if (profileSection) profileSection.classList.remove('hidden');
-                const nameEl = document.getElementById('profile-name');
-                if (nameEl) nameEl.textContent = currentUser;
-                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-            }
         };
 
         window.closeAuthModal = function() {
@@ -1383,88 +1508,57 @@
         }
 
         window.switchAuthTab = function(tab) {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('forgot-form').classList.add('hidden');
-            document.getElementById('tab-login').classList.replace('text-kiwi-red', 'text-gray-500');
-            document.getElementById('tab-register').classList.replace('text-kiwi-red', 'text-gray-500');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const forgotForm = document.getElementById('forgot-form');
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
 
-            if(tab === 'login') {
-                document.getElementById('login-form').classList.remove('hidden');
-                document.getElementById('tab-login').classList.replace('text-gray-500', 'text-kiwi-red');
-            } else if(tab === 'register') {
-                document.getElementById('register-form').classList.remove('hidden');
-                document.getElementById('tab-register').classList.replace('text-gray-500', 'text-kiwi-red');
-            } else if(tab === 'forgot') {
-                document.getElementById('forgot-form').classList.remove('hidden');
+            if (loginForm) loginForm.classList.add('hidden');
+            if (registerForm) registerForm.classList.add('hidden');
+            if (forgotForm) forgotForm.classList.add('hidden');
+            if (tabLogin) tabLogin.classList.replace('text-kiwi-red', 'text-gray-500');
+            if (tabRegister) tabRegister.classList.replace('text-kiwi-red', 'text-gray-500');
+
+            if (tab === 'login' && loginForm) {
+                loginForm.classList.remove('hidden');
+                if (tabLogin) tabLogin.classList.replace('text-gray-500', 'text-kiwi-red');
+            } else if (tab === 'register' && registerForm) {
+                registerForm.classList.remove('hidden');
+                if (tabRegister) tabRegister.classList.replace('text-gray-500', 'text-kiwi-red');
+            } else if (tab === 'forgot' && forgotForm) {
+                forgotForm.classList.remove('hidden');
             }
         }
 
-        window.openAuthModal = function() { 
+        window.openAuthModal = function() {
             const m = document.getElementById('auth-modal');
             const mc = document.getElementById('auth-modal-card');
+            if (!m) { alert('Modal no encontrado'); return; }
+
             const title = document.getElementById('auth-modal-title');
             const desc = document.getElementById('auth-modal-desc');
             const btnSection = document.getElementById('login-register-view');
             const profileSection = document.getElementById('user-profile-view');
-            
-            const usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
 
-            if (currentUser && usersDB[currentUser]) {
-                title.textContent = "Mi Perfil";
-                desc.textContent = "Resumen de tu cuenta en Kiwii Store";
-                btnSection.classList.add('hidden');
-                profileSection.classList.remove('hidden');
-                
-                const userData = usersDB[currentUser];
-                document.getElementById('profile-name').textContent = currentUser;
+            if (currentUser) {
+                if (title) title.textContent = "Mi Perfil";
+                if (desc) desc.textContent = "Resumen de tu cuenta";
+                if (btnSection) btnSection.classList.add('hidden');
+                if (profileSection) profileSection.classList.remove('hidden');
+                const nameEl = document.getElementById('profile-name');
+                if (nameEl) nameEl.textContent = currentUser;
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                document.getElementById('profile-initial').textContent = currentUser.charAt(0).toUpperCase();
-                updateProfilePicUI(userData.profilePic);
-                
-                const roleBadge = document.getElementById('profile-role');
-                if(userData.role === 'owner') { 
-                    roleBadge.innerHTML = '<span class="role-owner px-2 py-0.5 rounded">Owner Supremo</span>'; 
-                    document.getElementById('profile-name').className = "font-bold text-lg flex items-center gap-2 text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]";
-                }
-                else if(userData.role === 'ceo') { 
-                    roleBadge.innerHTML = '<span class="role-ceo px-2 py-0.5 rounded">CEO Ejecutivo</span>'; 
-                    document.getElementById('profile-name').className = "font-bold text-lg flex items-center gap-2 text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.8)]";
-                }
-                else if(userData.role === 'mod') { 
-                    roleBadge.innerHTML = '<span class="role-mod px-2 py-0.5 rounded">Staff / Mod</span>'; 
-                    document.getElementById('profile-name').className = "font-bold text-lg flex items-center gap-2 text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.8)]";
-                } else { 
-                    roleBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Cuenta Registrada'; 
-                    document.getElementById('profile-name').className = "font-bold text-white text-lg flex items-center gap-2";
-                }
-                
-                const historyContainer = document.getElementById('purchase-history-list');
-                const globalPurchases = JSON.parse(localStorage.getItem('kiwi_purchases')) || [];
-                const userHistory = globalPurchases.filter(p => p.user === currentUser);
-                
-                if (userHistory.length === 0) {
-                    historyContainer.innerHTML = '<p class="text-gray-500 text-xs text-center italic mt-4">No has realizado compras aún.</p>';
-                } else {
-                    historyContainer.innerHTML = userHistory.slice().reverse().map(item => {
-                        const statusText = window.getStatusLabel ? window.getStatusLabel(item.status) : item.status;
-                        let sBadge = `<span class="text-[9px] bg-kiwi-dark text-gray-300 border border-kiwi-border px-1.5 py-0.5 rounded ml-2">${statusText}</span>`;
-
-                        return `<div class="bg-kiwi-dark border border-kiwi-border p-2.5 rounded-lg flex justify-between items-center text-xs mb-2">
-                            <div><p class="text-white font-bold truncate w-44">${item.title} ${sBadge}</p><p class="text-gray-500 mt-0.5">${item.date}</p></div>
-                            <span class="text-kiwi-gold font-bold bg-yellow-900/20 px-2 py-1 rounded border border-yellow-700/30">${item.price}</span></div>`;
-                    }).join('');
-                }
             } else {
-                title.textContent = "Iniciar Sesión";
-                desc.textContent = "Ingresa para vincular tus compras";
-                btnSection.classList.remove('hidden');
-                profileSection.classList.add('hidden');
-                window.switchAuthTab('login');
+                if (title) title.textContent = "Iniciar Sesión";
+                if (desc) desc.textContent = "Ingresa para vincular tus compras";
+                if (btnSection) btnSection.classList.remove('hidden');
+                if (profileSection) profileSection.classList.add('hidden');
+                if (typeof window.switchAuthTab === 'function') window.switchAuthTab('login');
             }
 
-            m.classList.remove('hidden'); 
-            setTimeout(() => mc.classList.replace('scale-95', 'scale-100'), 10);
+            m.classList.remove('hidden');
+            setTimeout(() => { if (mc) mc.classList.replace('scale-95', 'scale-100'); }, 10);
         }
 
         window.closeAuthModal = function() { 
@@ -1481,37 +1575,46 @@
             const pass = document.getElementById('reg-pass').value;
             const pass2 = document.getElementById('reg-pass2').value;
 
-            if(pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
-            if(user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
+            if (pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
+            if (user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
 
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
-            if(usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
 
+            // Guardar localmente siempre
+            usersDB[user] = { password: pass, email: email, role: 'user', banned: false, profilePic: '', balance: 0 };
+            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+
+            // Intentar Supabase (opcional)
             try {
-                const { error } = await supabaseClient.from('usuarios').insert([
-                    { username: user, email: email, password: pass, role: 'user', banned: false, profile_pic: '' }
-                ]).select(); 
-                if (error) { alert("⚠️ Error al guardar en Supabase:\n\n" + error.message); return; }
-            } catch(err) { alert("Error de conexión con Supabase."); return; }
+                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    await supabaseClient.from('usuarios').insert([
+                        { username: user, email: email, password: pass, role: 'user', banned: false, profile_pic: '' }
+                    ]);
+                }
+            } catch(err) { console.warn('Supabase register failed', err); }
 
             currentUser = user;
             localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
-            updateAuthUI();
-            window.openAuthModal(); 
+            if (typeof updateAuthUI === 'function') updateAuthUI();
+            window.openAuthModal();
+            alert('Cuenta creada correctamente');
         }
 
         window.handleLogin = function(e) {
             e.preventDefault();
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
 
-            if(usersDB[user]) {
-                if(usersDB[user].banned) { alert("🚫 Tu cuenta ha sido suspendida."); return; }
-                if(usersDB[user].password === pass) {
+            if (!usersDB || typeof usersDB !== 'object') usersDB = {};
+
+            if (usersDB[user]) {
+                if (usersDB[user].banned) { alert("🚫 Tu cuenta ha sido suspendida."); return; }
+                if (usersDB[user].password === pass) {
                     currentUser = user;
                     localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
-                    updateAuthUI();
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
                     window.openAuthModal(); 
                 } else { alert("Contraseña incorrecta."); }
             } else { alert("El usuario no existe."); }
@@ -2323,10 +2426,15 @@
         window.updateBalanceDisplay = function() {
             const el = document.getElementById('user-balance-display');
             const el2 = document.getElementById('orders-balance-display');
+            const headerBal = document.getElementById('header-balance');
             const bal = window.getUserBalance();
-            const txt = '$' + bal.toLocaleString('es-AR') + ' ARS';
-            if (el) el.textContent = txt;
-            if (el2) el2.textContent = txt;
+            const txt = '$' + bal.toLocaleString('es-AR');
+            if (el) el.textContent = txt + ' ARS';
+            if (el2) el2.textContent = txt + ' ARS';
+            if (headerBal && currentUser) {
+                headerBal.textContent = txt;
+                headerBal.classList.remove('hidden');
+            }
         };
 
         // Status labels for clients
@@ -2509,7 +2617,7 @@
                 else if (p.status === 'delivered' || p.status === 'accredited') color = 'text-green-400';
                 else if (p.status === 'cancelled') color = 'text-red-400';
                 return `
-                    <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-4 mb-3">
+                    <div onclick="window.showOrderDetail(${p.id})" class="bg-kiwi-dark border border-kiwi-border rounded-xl p-4 mb-3 cursor-pointer hover:border-kiwi-red transition">
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="font-orbitron font-bold text-white text-sm">${p.title}</p>
@@ -2587,19 +2695,34 @@
                 const titleEl = card.querySelector('h4');
                 if (!titleEl) return;
                 const title = titleEl.textContent || '';
-                // Buscar si algún discount item matchea por diamonds o nombre
-                const match = window.ffAvailableDiscounts.find(d => 
-                    title.includes(String(d.diamonds)) || title.toLowerCase().includes('limitado')
-                );
+                if (!title.toLowerCase().includes('limitado')) return; // solo afectar packs limitados
+
+                // Extraer número de diamantes del título (ej: "341 Diamantes (Limitado)")
+                const numMatch = title.match(/([\d.]+)/);
+                const diamondsInTitle = numMatch ? parseInt(numMatch[1].replace(/\./g, '')) : 0;
+
+                // Buscar match exacto por cantidad de diamantes
+                const match = window.ffAvailableDiscounts.find(d => d.diamonds === diamondsInTitle);
+
                 const btn = card.querySelector('button');
                 if (match && match.is_discount) {
+                    // Disponible
                     card.style.opacity = '1';
                     card.style.pointerEvents = 'auto';
-                    if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
-                } else if (title.toLowerCase().includes('limitado')) {
-                    card.style.opacity = '0.4';
+                    if (btn) { 
+                        btn.disabled = false; 
+                        btn.classList.remove('opacity-50');
+                        btn.innerHTML = '<i class="fa-solid fa-wallet"></i> COMPRAR';
+                    }
+                } else {
+                    // No disponible
+                    card.style.opacity = '0.45';
                     card.style.pointerEvents = 'none';
-                    if (btn) { btn.disabled = true; btn.classList.add('opacity-50'); btn.textContent = 'No disponible'; }
+                    if (btn) { 
+                        btn.disabled = true; 
+                        btn.classList.add('opacity-50'); 
+                        btn.textContent = 'No disponible'; 
+                    }
                 }
             });
         };
@@ -2636,6 +2759,433 @@
                 } else {
                     checker.classList.add('hidden');
                 }
+            }
+        };
+
+
+        // === SISTEMA DE RESEÑAS ===
+        window.selectedStars = 0;
+        document.querySelectorAll('#star-rating i').forEach(star => {
+            star.addEventListener('click', function() {
+                window.selectedStars = parseInt(this.dataset.star);
+                document.querySelectorAll('#star-rating i').forEach((s, i) => {
+                    s.classList.toggle('text-kiwi-gold', i < window.selectedStars);
+                    s.classList.toggle('text-gray-600', i >= window.selectedStars);
+                });
+            });
+        });
+
+        window.submitReview = function() {
+            if (!currentUser) return alert('Iniciá sesión para dejar una reseña');
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const hasDelivered = purchases.some(p => p.user === currentUser && (p.status === 'delivered' || p.status === 'entregado'));
+            if (!hasDelivered) return alert('Solo podés reseñar si tenés al menos un pedido entregado');
+            if (window.selectedStars === 0) return alert('Seleccioná las estrellas');
+            const text = document.getElementById('review-text').value.trim();
+            if (!text) return alert('Escribí un comentario');
+
+            const review = {
+                id: Date.now(),
+                user: currentUser,
+                stars: window.selectedStars,
+                text: text,
+                date: new Date().toLocaleDateString('es-AR'),
+                image: null
+            };
+
+            // Handle image
+            const fileInput = document.getElementById('review-image');
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    review.image = e.target.result;
+                    saveReview(review);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveReview(review);
+            }
+        };
+
+        function saveReview(review) {
+            let reviews = JSON.parse(localStorage.getItem('kiwi_reviews') || '[]');
+            reviews.push(review);
+            localStorage.setItem('kiwi_reviews', JSON.stringify(reviews));
+            alert('Reseña publicada');
+            document.getElementById('review-text').value = '';
+            window.selectedStars = 0;
+            window.renderReviews();
+        }
+
+        window.renderReviews = function(showAll = false) {
+            const reviews = JSON.parse(localStorage.getItem('kiwi_reviews') || '[]');
+            const list = document.getElementById('reviews-list');
+            const avgEl = document.getElementById('reviews-average');
+            const countEl = document.getElementById('reviews-count');
+            if (!list) return;
+
+            const avg = reviews.length ? (reviews.reduce((s, r) => s + r.stars, 0) / reviews.length).toFixed(1) : '0.0';
+            if (avgEl) avgEl.textContent = avg;
+            if (countEl) countEl.textContent = reviews.length + ' reseñas';
+
+            const toShow = showAll ? reviews : reviews.slice(-5).reverse();
+            list.innerHTML = toShow.map(r => `
+                <div class="bg-kiwi-card border border-kiwi-border rounded-xl p-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-white text-sm">${r.user}</span>
+                        <span class="text-kiwi-gold text-xs">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+                    </div>
+                    <p class="text-sm text-gray-300">${r.text}</p>
+                    ${r.image ? `<img src="${r.image}" class="mt-2 max-h-32 rounded-lg">` : ''}
+                    <p class="text-[10px] text-gray-500 mt-1">${r.date}</p>
+                </div>
+            `).join('') || '<p class="text-gray-500 text-sm text-center">Aún no hay reseñas.</p>';
+        };
+
+        window.showAllReviews = function() {
+            window.renderReviews(true);
+        };
+
+        // Show review form if logged in
+        if (currentUser) document.getElementById('review-form-container')?.classList.remove('hidden');
+
+        // === DETALLE DE PEDIDO ===
+        window.showOrderDetail = function(orderId) {
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const order = purchases.find(p => p.id == orderId);
+            if (!order) return;
+            const content = document.getElementById('order-detail-content');
+            const status = order.status || 'receipt_review';
+            const steps = ['receipt_review', 'confirmed', 'delivered'];
+            const currentStep = steps.indexOf(status);
+            const timeline = steps.map((s, i) => {
+                const active = i <= currentStep;
+                const label = s === 'receipt_review' ? 'En revisión' : s === 'confirmed' ? 'En proceso' : 'Entregado';
+                return `<div class="flex items-center gap-2 ${active ? 'text-kiwi-gold' : 'text-gray-600'}">
+                    <div class="w-3 h-3 rounded-full ${active ? 'bg-kiwi-gold' : 'bg-gray-600'}"></div>
+                    <span class="text-xs">${label}</span>
+                </div>`;
+            }).join('<div class="w-8 h-0.5 bg-gray-700 mx-1"></div>');
+
+            content.innerHTML = `
+                <p><strong>ID:</strong> ${order.id} <button onclick="navigator.clipboard.writeText('${order.id}')" class="text-kiwi-gold text-xs ml-2">Copiar</button></p>
+                <p><strong>Producto:</strong> ${order.title}</p>
+                <p><strong>Precio:</strong> ${order.price}</p>
+                <p><strong>Datos:</strong> ${order.targetUser || '-'}</p>
+                <p><strong>Fecha:</strong> ${order.date}</p>
+                <div class="flex items-center gap-1 my-3">${timeline}</div>
+                <p><strong>Estado:</strong> ${window.getStatusLabel ? window.getStatusLabel(order.status) : order.status}</p>
+            `;
+            document.getElementById('order-detail-modal').classList.remove('hidden');
+            window.currentOrderForSupport = order;
+        };
+
+        window.requestSupport = function() {
+            if (!window.currentOrderForSupport) return;
+            const o = window.currentOrderForSupport;
+            const msg = `Hola, necesito atención para el pedido #${o.id}\nProducto: ${o.title}\nEstado: ${o.status}`;
+            window.open(`https://wa.me/5491139172595?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
+        // Badge de pedidos pendientes
+        window.updateOrdersBadge = function() {
+            if (!currentUser) return;
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const pending = purchases.filter(p => p.user === currentUser && (p.status === 'receipt_review' || p.status === 'pending')).length;
+            const btn = document.querySelector('button[onclick="window.openOrdersPanel()"]');
+            if (btn && pending > 0) {
+                btn.innerHTML = `<i class="fa-solid fa-box"></i> PEDIDOS <span class="bg-kiwi-red text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">${pending}</span>`;
+            }
+        };
+
+        // Call on load
+        setTimeout(() => { window.renderReviews(); window.updateOrdersBadge(); }, 500);
+
+
+        window.saveProfile = function() {
+            if (!currentUser) return;
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return;
+            const email = document.getElementById('profile-email').value.trim();
+            const phone = document.getElementById('profile-phone').value.trim();
+            const ffId = document.getElementById('profile-ff-id').value.trim();
+            const newPass = document.getElementById('profile-new-pass').value;
+            if (email) users[currentUser].email = email;
+            if (phone) users[currentUser].phone = phone;
+            if (ffId) users[currentUser].ff_id = ffId;
+            if (newPass) users[currentUser].password = newPass;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            alert('Perfil actualizado');
+        };
+
+
+        // Free Fire: compra directa con ID guardado
+        const originalOpenCheckoutFF = window.openCheckout;
+        window.openCheckout = function(productId, isCustom) {
+            const prod = window.products.find(p => p.id === productId);
+            if (prod && prod.category === 'freefire') {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                let savedId = currentUser ? (users[currentUser]?.ff_id || '') : '';
+                // Fallback: tomar el ID del verificador si está vacío
+                if (!savedId) {
+                    const checker = document.getElementById('ff-check-id');
+                    if (checker && checker.value.trim()) savedId = checker.value.trim();
+                }
+                window.pendingFFProduct = prod;
+                window.pendingFFId = savedId;
+                const usersFF = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                const savedName = currentUser ? (usersFF[currentUser]?.ff_name || '') : '';
+                const text = document.getElementById('ff-confirm-text');
+                text.innerHTML = `
+                    <div class="text-left space-y-1 text-sm">
+                        <p><strong>Producto:</strong> ${prod.title}</p>
+                        <p><strong>Precio:</strong> <span class="text-kiwi-gold font-bold">${prod.price}</span></p>
+                        <p><strong>ID:</strong> ${savedId || '<span class="text-red-400">No verificado</span>'}</p>
+                        <p><strong>Nombre:</strong> ${savedName || '<span class="text-red-400">No verificado</span>'}</p>
+                    </div>
+                    <p class="mt-3 text-xs text-gray-400">Confirmá que el ID y el nombre sean correctos antes de comprar.</p>`;
+                document.getElementById('ff-confirm-modal').classList.remove('hidden');
+                return;
+            }
+            originalOpenCheckoutFF(productId, isCustom);
+        };
+
+        window.confirmFreeFirePurchase = async function() {
+            const prod = window.pendingFFProduct;
+            if (!prod) return;
+            const ffId = window.pendingFFId || (document.getElementById('ff-confirm-id') ? document.getElementById('ff-confirm-id').value.trim() : '');
+            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+            if (!currentUser) return alert('Iniciá sesión para comprar');
+
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const bal = users[currentUser]?.balance || 0;
+            const priceNum = parseInt((prod.price || '').replace(/[^0-9]/g, '')) || 0;
+            if (bal < priceNum) {
+                document.getElementById('ff-confirm-modal').classList.add('hidden');
+                return alert('Saldo insuficiente');
+            }
+
+            // Descontar saldo
+            users[currentUser].balance = bal - priceNum;
+            users[currentUser].ff_id = ffId;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+
+            // Crear pedido
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const order = {
+                id: Date.now(),
+                user: currentUser,
+                title: prod.title,
+                price: prod.price,
+                targetUser: ffId,
+                date: new Date().toLocaleDateString('es-AR'),
+                status: 'confirmed',
+                category: 'freefire'
+            };
+            purchases.push(order);
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+
+            document.getElementById('ff-confirm-modal').classList.add('hidden');
+
+            // Si es ilimitado, intentar compra por RecargasAmerica
+            if (prod.sub === 'ilimitado' && typeof window.buyWithRecargas === 'function') {
+                const result = await window.buyWithRecargas(prod.title, ffId);
+                if (result && result.success) {
+                    order.status = 'delivered';
+                    localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+                    alert('Recarga enviada correctamente');
+                } else {
+                    alert('Pedido creado. Estado: En proceso\n(API: ' + (result?.error || 'pendiente') + ')');
+                }
+            } else {
+                alert('Pedido creado. Estado: En proceso');
+            }
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
+        };
+
+
+        // Calculadora Fragmentos Universales
+        const FRAG_PRICE_PER_UNIT = 75; // ARS por fragmento (ajustable)
+        window.setFragQty = function(q) {
+            document.getElementById('frag-qty').value = Math.max(35, q);
+            window.updateFragPrice();
+        };
+        window.updateFragPrice = function() {
+            const qty = Math.max(35, parseInt(document.getElementById('frag-qty').value) || 35);
+            document.getElementById('frag-qty').value = qty;
+            const price = qty * FRAG_PRICE_PER_UNIT;
+            document.getElementById('frag-price-result').textContent = 'Precio: $' + price.toLocaleString('es-AR') + ' ARS';
+        };
+        document.getElementById('frag-qty')?.addEventListener('input', window.updateFragPrice);
+
+        window.buyFragments = function() {
+            const qty = Math.max(35, parseInt(document.getElementById('frag-qty').value) || 35);
+            if (!currentUser) return alert('Iniciá sesión');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const bal = users[currentUser]?.balance || 0;
+            const price = qty * FRAG_PRICE_PER_UNIT;
+            if (bal < price) return alert('Saldo insuficiente');
+            const ffId = users[currentUser]?.ff_id;
+            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+
+            users[currentUser].balance = bal - price;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push({
+                id: Date.now(),
+                user: currentUser,
+                title: 'Fragmentos Universales x' + qty,
+                price: '$' + price.toLocaleString('es-AR') + ' ARS',
+                targetUser: ffId,
+                date: new Date().toLocaleDateString('es-AR'),
+                status: 'confirmed',
+                category: 'freefire'
+            });
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            alert('Pedido de ' + qty + ' fragmentos creado');
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
+
+        // Mostrar calculadora al entrar a especiales
+        const origFilterFF = window.filterFreeFireSub;
+        window.filterFreeFireSub = function(subCat) {
+            origFilterFF(subCat);
+            const calc = document.getElementById('ff-fragments-calculator');
+            if (calc) calc.classList.toggle('hidden', subCat !== 'especiales');
+            if (subCat === 'especiales') window.updateFragPrice();
+        };
+
+
+        // Calculadora Cajas de Fragmentos
+        const BOX_PRICE_PER_UNIT = 500; // ARS por caja (ajustable)
+        window.setBoxQty = function(q) {
+            document.getElementById('box-qty').value = Math.max(7, q);
+            window.updateBoxPrice();
+        };
+        window.updateBoxPrice = function() {
+            const qty = Math.max(7, parseInt(document.getElementById('box-qty').value) || 7);
+            document.getElementById('box-qty').value = qty;
+            const price = qty * BOX_PRICE_PER_UNIT;
+            document.getElementById('box-price-result').textContent = 'Precio: $' + price.toLocaleString('es-AR') + ' ARS';
+        };
+        document.getElementById('box-qty')?.addEventListener('input', window.updateBoxPrice);
+
+        window.buyBoxes = function() {
+            const qty = Math.max(7, parseInt(document.getElementById('box-qty').value) || 7);
+            if (!currentUser) return alert('Iniciá sesión');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const bal = users[currentUser]?.balance || 0;
+            const price = qty * BOX_PRICE_PER_UNIT;
+            if (bal < price) return alert('Saldo insuficiente');
+            const ffId = users[currentUser]?.ff_id;
+            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+
+            users[currentUser].balance = bal - price;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push({
+                id: Date.now(),
+                user: currentUser,
+                title: 'Cajas de Fragmentos x' + qty,
+                price: '$' + price.toLocaleString('es-AR') + ' ARS',
+                targetUser: ffId,
+                date: new Date().toLocaleDateString('es-AR'),
+                status: 'confirmed',
+                category: 'freefire'
+            });
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            alert('Pedido de ' + qty + ' cajas creado');
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
+
+        // Mostrar ambas calculadoras en especiales
+        const origFilterFF2 = window.filterFreeFireSub;
+        window.filterFreeFireSub = function(subCat) {
+            origFilterFF2(subCat);
+            const calcFrag = document.getElementById('ff-fragments-calculator');
+            const calcBox = document.getElementById('ff-boxes-calculator');
+            const show = subCat === 'especiales';
+            if (calcFrag) calcFrag.classList.toggle('hidden', !show);
+            if (calcBox) calcBox.classList.toggle('hidden', !show);
+            const booyah = document.getElementById('ff-booyah-card');
+            if (booyah) booyah.classList.toggle('hidden', !show);
+            const grid = document.getElementById('product-grid');
+            if (grid) grid.classList.toggle('hidden', show);
+            if (show) {
+                if (typeof window.updateFragPrice === 'function') window.updateFragPrice();
+                if (typeof window.updateBoxPrice === 'function') window.updateBoxPrice();
+            }
+        };
+
+
+        window.buyBooyahPass = function() {
+            if (!currentUser) return alert('Iniciá sesión');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const bal = users[currentUser]?.balance || 0;
+            const price = 3300;
+            if (bal < price) return alert('Saldo insuficiente');
+            const ffId = users[currentUser]?.ff_id;
+            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+
+            users[currentUser].balance = bal - price;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push({
+                id: Date.now(),
+                user: currentUser,
+                title: 'Pase Booyah',
+                price: '$3.300 ARS',
+                targetUser: ffId,
+                date: new Date().toLocaleDateString('es-AR'),
+                status: 'confirmed',
+                category: 'freefire'
+            });
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            alert('Pedido de Pase Booyah creado');
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
+
+
+        // Mapeo diamantes ilimitados → ID RecargasAmerica
+        window.recargasProductMap = {
+            '341': 5,   // ~100 + bono
+            '100': 5,
+            '572': 6,   // ~310 + bono
+            '310': 6,
+            '1160': 7,  // ~520 + bono
+            '520': 7,
+            '2389': 8,  // ~1060 + bono
+            '1060': 8,
+            '6160': 9,  // ~2180 + bono
+            '2180': 9,
+            '5600': 10
+        };
+
+        window.buyWithRecargas = async function(productTitle, playerId) {
+            const num = (productTitle.match(/([\d.]+)/) || [])[1];
+            const diamonds = num ? parseInt(num.replace(/\./g, '')) : 0;
+            const productId = window.recargasProductMap[diamonds] || window.recargasProductMap[String(diamonds)];
+            if (!productId) {
+                console.warn('No RecargasAmerica ID for', productTitle);
+                return { success: false, error: 'Producto no mapeado' };
+            }
+            try {
+                const res = await fetch('/api/recargas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, player_id: playerId, quantity: 1 })
+                });
+                return await res.json();
+            } catch (e) {
+                return { success: false, error: e.message };
             }
         };
 
