@@ -836,7 +836,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Correo</label>
-                        <input type="email" id="reg-email" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
+                        <input type="email" id="reg-email" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition" placeholder="Opcional (solo local)">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -1581,7 +1581,7 @@
         function updateAuthUI() {
             const btnText = document.getElementById('user-display-name');
             const staffBtn = document.getElementById('staff-menu-btn');
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             
             if (currentUser && usersDB[currentUser]) {
                 btnText.textContent = currentUser;
@@ -1593,13 +1593,16 @@
 
                 if (role === 'owner' || role === 'ceo' || role === 'mod') {
                     staffBtn.classList.remove('hidden');
-                    checkNotifications();
+                    if (typeof checkNotifications === 'function') checkNotifications();
                 } else { staffBtn.classList.add('hidden'); }
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             } else {
                 currentUser = null;
                 btnText.textContent = "INICIAR SESIÓN";
                 btnText.className = 'hidden sm:inline';
                 staffBtn.classList.add('hidden');
+                const headerBal = document.getElementById('header-balance');
+                if (headerBal) { headerBal.textContent = '$0'; headerBal.classList.add('hidden'); }
             }
         }
 
@@ -1653,10 +1656,30 @@
                 if (profileSection) profileSection.classList.remove('hidden');
                 const nameEl = document.getElementById('profile-name');
                 if (nameEl) nameEl.textContent = currentUser;
-                const profileUsers = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
-                const accountIdEl = document.getElementById('profile-account-id');
-                if (accountIdEl) accountIdEl.textContent = profileUsers[currentUser]?.accountId || 'Pendiente';
-                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                // Refrescar saldo desde la nube al abrir el perfil
+                (async () => {
+                    try {
+                        if (supabaseClient && window.supabaseOnline) {
+                            const { data } = await supabaseClient.from('usuarios')
+                                .select('balance, account_id, role')
+                                .ilike('username', currentUser).limit(1);
+                            const row = data && data[0];
+                            if (row) {
+                                const u = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                                if (u[currentUser]) {
+                                    u[currentUser].balance = Number(row.balance ?? 0);
+                                    if (row.account_id) u[currentUser].accountId = row.account_id;
+                                    if (row.role) u[currentUser].role = row.role;
+                                    localStorage.setItem('kiwi_users', JSON.stringify(u));
+                                }
+                            }
+                        }
+                    } catch (err) { console.warn('No se pudo refrescar saldo:', err); }
+                    const profileUsers = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
+                    const accountIdEl = document.getElementById('profile-account-id');
+                    if (accountIdEl) accountIdEl.textContent = profileUsers[currentUser]?.accountId || 'Pendiente';
+                    if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                })();
             } else {
                 if (title) title.textContent = "Iniciar Sesión";
                 if (desc) desc.textContent = "Ingresa para vincular tus compras";
@@ -1676,10 +1699,13 @@
             setTimeout(() => m.classList.add('hidden'), 300);
         }
 
+        // Columnas reales de public.usuarios (sin email: esa columna no existe en el proyecto)
+        const USUARIO_SELECT = 'username, password, role, banned, profile_pic, account_id, balance';
+
         window.handleRegister = async function(e) {
             e.preventDefault();
             const user = document.getElementById('reg-user').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
+            const email = (document.getElementById('reg-email')?.value || '').trim();
             const pass = document.getElementById('reg-pass').value;
             const pass2 = document.getElementById('reg-pass2').value;
 
@@ -1689,11 +1715,11 @@
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
 
-            // El ID se genera una sola vez y se guarda en la fila de Supabase.
             const accountId = window.generateAccountId();
+            // email solo local; la tabla usuarios no tiene columna email
             const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [] };
 
-            if (!supabaseClient) {
+            if (!supabaseClient || !window.supabaseOnline) {
                 alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
                 return;
             }
@@ -1707,8 +1733,8 @@
                 }
                 const { data: inserted, error: insertError } = await supabaseClient
                     .from('usuarios')
-                    .insert([{ username: user, email, password: pass, role: 'user', banned: false, profile_pic: '', account_id: accountId, balance: 0 }])
-                    .select('username, email, role, banned, profile_pic, account_id, balance')
+                    .insert([{ username: user, password: pass, role: 'user', banned: false, profile_pic: '', account_id: accountId, balance: 0 }])
+                    .select(USUARIO_SELECT)
                     .single();
                 if (insertError) throw insertError;
                 newUser.accountId = inserted.account_id || accountId;
@@ -1725,6 +1751,7 @@
             currentUser = user;
             localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
             if (typeof updateAuthUI === 'function') updateAuthUI();
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             window.openAuthModal();
             alert('Cuenta creada correctamente');
         }
@@ -1737,10 +1764,11 @@
             if (!usersDB || typeof usersDB !== 'object') usersDB = {};
 
             try {
-                if (supabaseClient) {
+                if (supabaseClient && window.supabaseOnline) {
+                    // No pedir email: la columna no existe en public.usuarios
                     const { data, error } = await supabaseClient
                         .from('usuarios')
-                        .select('username, email, password, role, banned, profile_pic, account_id, balance')
+                        .select(USUARIO_SELECT)
                         .ilike('username', userInput)
                         .limit(1);
                     if (error) throw error;
@@ -1754,7 +1782,7 @@
                     usersDB[canonicalName] = {
                         ...previous,
                         password: row.password,
-                        email: row.email || previous.email || '',
+                        email: previous.email || '',
                         role: row.role || previous.role || 'user',
                         banned: !!row.banned,
                         profilePic: row.profile_pic || previous.profilePic || '',
@@ -1762,24 +1790,23 @@
                         balance: Number(row.balance ?? previous.balance ?? 0),
                         history: previous.history || []
                     };
-                    // Si la fila antigua no tenía ID, persistirlo en la misma fila de Supabase.
                     if (!row.account_id) {
                         const { data: updated, error: idError } = await supabaseClient
                             .from('usuarios').update({ account_id: usersDB[canonicalName].accountId })
                             .eq('username', canonicalName)
                             .select('account_id').maybeSingle();
-                        if (idError) throw idError;
-                        if (updated?.account_id) usersDB[canonicalName].accountId = updated.account_id;
+                        if (idError) console.warn('No se pudo guardar account_id:', idError);
+                        else if (updated?.account_id) usersDB[canonicalName].accountId = updated.account_id;
                     }
                     localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
                     currentUser = canonicalName;
                     localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
                     if (typeof updateAuthUI === 'function') updateAuthUI();
+                    if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                     window.openAuthModal();
                     return;
                 }
 
-                // Sin Supabase solo se permite entrar con una cuenta previamente guardada en este navegador.
                 const localUser = Object.keys(usersDB).find(k => k.toLowerCase() === userInput.toLowerCase());
                 if (!localUser) { alert('No hay conexión con Supabase y el usuario no existe localmente.'); return; }
                 if (usersDB[localUser].banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
@@ -1787,6 +1814,7 @@
                 currentUser = localUser;
                 localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
                 if (typeof updateAuthUI === 'function') updateAuthUI();
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 window.openAuthModal();
             } catch (err) {
                 console.error('Error iniciando sesión en Supabase:', err);
@@ -2644,61 +2672,86 @@
             const value = Number(amount);
             const users = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
             const staff = users[currentUser];
-            username = Object.keys(users).find(name => name.toLowerCase() === targetInput.toLowerCase() || String(users[name].accountId || '').toLowerCase() === targetInput.toLowerCase()) || '';
 
             if (!staff || !['owner','ceo'].includes(staff.role)) { setStatus('Sin permisos para acreditar saldo.'); return alert('Sin permisos'); }
-            if (!username) { setStatus('No se encontró ninguna cuenta con ese usuario o ID.'); return alert('No se encontró ninguna cuenta con ese usuario o ID.'); }
+            if (!targetInput) { setStatus('Ingresá un usuario o ID de cuenta.'); return alert('Ingresá un usuario o ID de cuenta.'); }
             if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) { setStatus('Ingresá un monto entero mayor que cero.'); return alert('El monto debe ser un número entero mayor que cero.'); }
-            if (!users[username]) { setStatus('No se encontró esa cuenta en los usuarios cargados.'); return alert('Usuario no existe en los datos cargados.'); }
-            if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${username}? Esta acción modifica el saldo de Kiwii Store.`)) return;
 
             if (!window.supabaseOnline || !supabaseClient) {
-                setStatus('No se acreditó. Supabase no está en línea (ERR_NAME_NOT_RESOLVED). El saldo local NO se modificó.');
-                alert('NO SE ACREDITÓ NADA.\n\nEl navegador no puede resolver ykxyiamlvlppcyfzyvzr.supabase.co.\nEso significa que el proyecto está pausado, borrado o la URL es incorrecta.\n\nAbrí supabase.com/dashboard, restaurá el proyecto o creá uno nuevo, y reemplazá supabaseUrl y supabaseKey en el HTML.\nEl saldo de este navegador no se tocó.');
+                setStatus('No se acreditó. Supabase no está en línea. El saldo local NO se modificó.');
+                alert('NO SE ACREDITÓ NADA.\n\nSupabase no está disponible. El saldo de este navegador no se tocó.');
                 return;
             }
 
-            const oldBalance = Number(users[username].balance || 0);
-            const newBalance = oldBalance + value;
-            setStatus('Procesando acreditación…');
+            setStatus('Buscando cuenta en Supabase…');
             try {
-                if (supabaseClient) {
-                    // Resolver primero la fila real en la nube por nombre o account_id.
-                    const accountId = String(users[username].accountId || '').trim();
-                    let lookup = await supabaseClient.from('usuarios')
+                // Buscar en la nube por username O por account_id (aunque no esté en localStorage)
+                let lookup = await supabaseClient.from('usuarios')
+                    .select('username, account_id, balance')
+                    .ilike('username', targetInput).limit(1);
+                if (lookup.error) throw lookup.error;
+                let target = lookup.data?.[0];
+                if (!target) {
+                    lookup = await supabaseClient.from('usuarios')
                         .select('username, account_id, balance')
-                        .ilike('username', username).limit(1);
+                        .eq('account_id', targetInput).limit(1);
                     if (lookup.error) throw lookup.error;
-                    let target = lookup.data?.[0];
-                    if (!target && accountId) {
+                    target = lookup.data?.[0];
+                }
+                // Fallback: coincidencia local por nombre o accountId
+                if (!target) {
+                    const localName = Object.keys(users).find(name =>
+                        name.toLowerCase() === targetInput.toLowerCase() ||
+                        String(users[name].accountId || '').toLowerCase() === targetInput.toLowerCase()
+                    );
+                    if (localName) {
                         lookup = await supabaseClient.from('usuarios')
                             .select('username, account_id, balance')
-                            .eq('account_id', accountId).limit(1);
+                            .ilike('username', localName).limit(1);
                         if (lookup.error) throw lookup.error;
                         target = lookup.data?.[0];
                     }
-                    if (!target) throw new Error('No se encontró la cuenta en Supabase por usuario ni por ID. Verificá la tabla usuarios y sus datos.');
-                    const cloudBalance = Number(target.balance ?? 0);
-                    const { data, error } = await supabaseClient
-                        .from('usuarios')
-                        .update({ balance: cloudBalance + value })
-                        .eq('username', target.username)
-                        .select('username, account_id, balance')
-                        .single();
-                    if (error) throw error;
-                    if (!data) throw new Error('Supabase no devolvió la fila actualizada. Revisá las políticas RLS.');
-                    username = target.username;
-                    users[username] = { ...(users[username] || {}), accountId: data.account_id || accountId, balance: Number(data.balance ?? cloudBalance + value) };
-                    localStorage.setItem('kiwi_users', JSON.stringify(users));
-                    setStatus(`Listo: ${username} ahora tiene $${users[username].balance.toLocaleString('es-AR')} ARS.`);
-                    alert(`Saldo acreditado correctamente.\nUsuario: ${username}\nID: ${users[username].accountId || 'Sin ID'}\nNuevo saldo: $${users[username].balance.toLocaleString('es-AR')} ARS`);
-                } else {
-                    users[username].balance = newBalance;
-                    localStorage.setItem('kiwi_users', JSON.stringify(users));
-                    setStatus('Guardado solo en este navegador; Supabase no está conectado. No sirve como saldo compartido entre dispositivos.');
-                    alert('Saldo guardado solo localmente en este navegador. Supabase no está conectado, así que no queda sincronizado para todos los usuarios.');
                 }
-                if (username === currentUser && typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                if (!target) {
+                    setStatus('No se encontró ninguna cuenta con ese usuario o ID en Supabase.');
+                    return alert('No se encontró ninguna cuenta con ese usuario o ID en Supabase.');
+                }
+
+                if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${target.username} (ID ${target.account_id || 'sin ID'})?\nSaldo actual en nube: $${Number(target.balance || 0).toLocaleString('es-AR')} ARS`)) {
+                    setStatus('Cancelado.');
+                    return;
+                }
+
+                setStatus('Procesando acreditación…');
+                const cloudBalance = Number(target.balance ?? 0);
+                const { data, error } = await supabaseClient
+                    .from('usuarios')
+                    .update({ balance: cloudBalance + value })
+                    .eq('username', target.username)
+                    .select('username, account_id, balance')
+                    .single();
+                if (error) throw error;
+                if (!data) throw new Error('Supabase no devolvió la fila actualizada. Revisá las políticas RLS.');
+
+                const finalName = data.username;
+                const finalBalance = Number(data.balance ?? cloudBalance + value);
+                const finalId = data.account_id || target.account_id || '';
+                users[finalName] = {
+                    ...(users[finalName] || {}),
+                    accountId: finalId,
+                    balance: finalBalance,
+                    role: users[finalName]?.role || 'user'
+                };
+                localStorage.setItem('kiwi_users', JSON.stringify(users));
+
+                setStatus(`Listo: ${finalName} ahora tiene $${finalBalance.toLocaleString('es-AR')} ARS.`);
+                alert(`Saldo acreditado correctamente.\nUsuario: ${finalName}\nID: ${finalId || 'Sin ID'}\nNuevo saldo: $${finalBalance.toLocaleString('es-AR')} ARS`);
+
+                // Si es la sesión actual, refrescar el header / perfil / pedidos
+                if (currentUser && currentUser.toLowerCase() === finalName.toLowerCase()) {
+                    if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
+                }
                 const amountInput = document.getElementById('credit-amount');
                 if (amountInput) amountInput.value = '';
             } catch (error) {
@@ -2706,10 +2759,10 @@
                 const rawMessage = String(error?.message || error || 'Error desconocido');
                 const isFetchFailure = /failed to fetch|networkerror|fetch failed|load failed|network request failed|name_not_resolved|err_name/i.test(rawMessage);
                 const friendlyMessage = isFetchFailure
-                    ? 'No se pudo contactar con Supabase (fallo de red/CORS/DNS). Esto no demuestra un problema con la columna balance ni con RLS. Verificá que el proyecto esté activo, que la URL del proyecto sea correcta y que la conexión no esté bloqueada.'
+                    ? 'No se pudo contactar con Supabase (fallo de red/CORS/DNS). Verificá que el proyecto esté activo y la URL sea correcta.'
                     : rawMessage;
                 setStatus(`No se pudo acreditar: ${friendlyMessage}`);
-                alert(`NO SE PUDO SINCRONIZAR EL SALDO\n\n${friendlyMessage}\n\n${isFetchFailure ? 'Pasos: 1) Abrí el panel de Supabase y comprobá que el proyecto esté activo. 2) En Project Settings → API copiá la Project URL y la publishable/anon key y comparalas con las del HTML. 3) Abrí F12 → Console/Network y revisá la petición a ykxyiamlvlppcyfzyvzr.supabase.co. Si no aparece respuesta HTTP, es conexión/URL/DNS; si aparece 401/403, revisá la clave y las políticas RLS; si aparece 400, revisá tabla y columnas.' : 'Si el mensaje menciona una columna inexistente, revisá el esquema de public.usuarios. Si devuelve 401/403, revisá la clave y las políticas RLS.'}`);
+                alert('NO SE PUDO SINCRONIZAR EL SALDO\n\n' + friendlyMessage);
             }
         };
 
