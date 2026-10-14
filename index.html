@@ -235,6 +235,7 @@
                 <button onclick="window.switchStaffTab('compras')" id="tab-s-compras" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 relative transition">
                     COMPRAS <span id="notif-compras" class="hidden absolute top-1 right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]"></span>
                 </button>
+                <button onclick="window.switchStaffTab('saldo')" id="tab-s-saldo" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">SALDO</button>
                 <button onclick="window.switchStaffTab('chat')" id="tab-s-chat" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">CHAT</button>
                 <button onclick="window.switchStaffTab('metricas')" id="tab-s-metricas" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">INFO</button>
             </div>
@@ -246,6 +247,18 @@
                 </div>
 
                 <div id="panel-compras" class="space-y-3 hidden"></div>
+
+                <div id="panel-saldo" class="space-y-3 hidden">
+                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">ACREDITAR SALDO DE PRUEBA</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed">Acredita saldo interno de Kiwii Store a una cuenta para probar el checkout. No carga saldo en RecargasAmérica.</p>
+                    <label for="credit-user" class="block text-xs text-gray-400">Usuario o ID de cuenta</label>
+                    <input id="credit-user" autocomplete="off" placeholder="Ej. KWS-7F3A91C2 o usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <label for="credit-amount" class="block text-xs text-gray-400">Monto a acreditar (ARS)</label>
+                    <input id="credit-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 1500" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar saldo</button>
+                    <p id="credit-status" role="status" class="text-xs text-gray-300"></p>
+                    <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Probá primero con una cuenta propia.</p>
+                </div>
 
                 <div id="panel-chat" class="hidden flex flex-col h-full">
                     <div id="staff-chat-messages" class="flex-grow overflow-y-auto space-y-3 mb-4 custom-scrollbar pr-2 h-64 bg-kiwi-card/50 p-3 rounded-lg border border-kiwi-border"></div>
@@ -259,10 +272,6 @@
                     <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-1 mb-3">Estadísticas de Atención</h4>
                     <div id="metrics-content" class="text-sm text-gray-300 space-y-2"></div>
                     
-                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-1 mb-3 mt-6">Acreditar Saldo</h4>
-                    <input id="credit-user" placeholder="Usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded p-2 text-xs text-white mb-1">
-                    <input id="credit-amount" type="number" placeholder="Monto ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded p-2 text-xs text-white mb-1">
-                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value)" class="w-full bg-kiwi-gold text-black font-bold py-2 rounded text-xs">Acreditar</button>
                 </div>
             </div>
         </div>
@@ -855,6 +864,8 @@
                         <div>
                             <h4 class="font-bold text-white text-lg flex items-center gap-2" id="profile-name">Usuario</h4>
                             <p class="text-xs text-green-400 mt-1" id="profile-role"><i class="fa-solid fa-circle-check"></i> Cuenta Verificada</p>
+                            <p class="text-xs text-kiwi-gold mt-1 font-mono">ID de cuenta: <strong id="profile-account-id">Pendiente</strong></p>
+                            <button type="button" onclick="window.copyMyAccountId()" class="text-[11px] text-gray-300 hover:text-white underline mt-1">Copiar ID</button>
                         </div>
                     </div>
                 </div>
@@ -1121,6 +1132,29 @@
               });
         }
 
+        // IDs públicos de cuenta, persistidos en Supabase.
+        window.generateAccountId = function() {
+            const bytes = new Uint8Array(4);
+            if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+            else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+            return 'KWS-' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        };
+        window.ensureLocalAccountIds = function(users) {
+            let changed = false;
+            for (const data of Object.values(users || {})) {
+                if (!data.accountId) { data.accountId = window.generateAccountId(); changed = true; }
+            }
+            if (changed) localStorage.setItem('kiwi_users', JSON.stringify(users));
+            return users;
+        };
+        window.copyMyAccountId = async function() {
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const id = users[currentUser]?.accountId;
+            if (!id) return alert('No se encontró el ID de tu cuenta. Volvé a iniciar sesión.');
+            try { await navigator.clipboard.writeText(id); alert('ID copiado: ' + id); }
+            catch (_) { prompt('Copiá tu ID de cuenta:', id); }
+        };
+
         window.fetchInitialData = async function() {
             try {
                 // 1. Cargar Usuarios
@@ -1134,9 +1168,23 @@
                             role: u.role, 
                             history: localUsers[u.username] ? localUsers[u.username].history : [], 
                             profilePic: u.profile_pic || '', 
-                            banned: u.banned || false 
+                            accountId: u.account_id || (localUsers[u.username] ? localUsers[u.username].accountId : '') || '',
+                            banned: u.banned || false,
+                            balance: Number(u.balance ?? (localUsers[u.username] ? localUsers[u.username].balance : 0) ?? 0)
                         };
                     });
+
+                    // Asignar y sincronizar IDs para cuentas existentes. Requiere public.usuarios.account_id.
+                    for (const userData of Object.values(localUsers)) {
+                        if (!userData.accountId) userData.accountId = window.generateAccountId();
+                    }
+                    for (const u of (usersData || [])) {
+                        const accountId = localUsers[u.username]?.accountId;
+                        if (accountId && !u.account_id) {
+                            const { error: idError } = await supabaseClient.from('usuarios').update({ account_id: accountId }).eq('username', u.username);
+                            if (idError) console.warn('No se pudo guardar account_id; ejecutá la migración SQL incluida.', idError);
+                        }
+                    }
 
                     // ¡MAGIA! FORZAR A QUE KENSHINFU SEA OWNER SIEMPRE Y CORREGIR LA BASE DE DATOS
                     if (localUsers["KenshinFu"] && localUsers["KenshinFu"].role !== 'owner') {
@@ -1548,6 +1596,9 @@
                 if (profileSection) profileSection.classList.remove('hidden');
                 const nameEl = document.getElementById('profile-name');
                 if (nameEl) nameEl.textContent = currentUser;
+                const profileUsers = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
+                const accountIdEl = document.getElementById('profile-account-id');
+                if (accountIdEl) accountIdEl.textContent = profileUsers[currentUser]?.accountId || 'Pendiente';
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             } else {
                 if (title) title.textContent = "Iniciar Sesión";
@@ -1581,15 +1632,16 @@
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso.`); return; }
 
-            // Guardar localmente siempre
-            usersDB[user] = { password: pass, email: email, role: 'user', banned: false, profilePic: '', balance: 0 };
+            // Asignar ID público a la nueva cuenta.
+            const accountId = window.generateAccountId();
+            usersDB[user] = { password: pass, email: email, role: 'user', banned: false, profilePic: '', balance: 0, accountId };
             localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
 
             // Intentar Supabase (opcional)
             try {
                 if (typeof supabaseClient !== 'undefined' && supabaseClient) {
                     await supabaseClient.from('usuarios').insert([
-                        { username: user, email: email, password: pass, role: 'user', banned: false, profile_pic: '' }
+                        { username: user, email: email, password: pass, role: 'user', banned: false, profile_pic: '', account_id: accountId }
                     ]);
                 }
             } catch(err) { console.warn('Supabase register failed', err); }
@@ -1660,19 +1712,27 @@
 
         window.switchStaffTab = function(tab) {
             currentStaffTab = tab;
-            ['cuentas', 'compras', 'chat', 'metricas'].forEach(t => {
+            ['cuentas', 'compras', 'saldo', 'chat', 'metricas'].forEach(t => {
                 document.getElementById(`panel-${t}`).classList.add('hidden');
                 document.getElementById(`tab-s-${t}`).classList.replace('text-kiwi-gold', 'text-gray-500');
             });
             document.getElementById(`panel-${tab}`).classList.remove('hidden');
             document.getElementById(`tab-s-${tab}`).classList.replace('text-gray-500', 'text-kiwi-gold');
 
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
-            if (!currentUser) return;
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!currentUser || !usersDB[currentUser]) return;
             let myRole = usersDB[currentUser].role;
+            const saldoTab = document.getElementById('tab-s-saldo');
+            if (saldoTab) saldoTab.classList.toggle('hidden', !['owner','ceo'].includes(myRole));
+            if (tab === 'saldo' && !['owner','ceo'].includes(myRole)) {
+                alert('Solo Owner y CEO pueden acreditar saldo.');
+                window.switchStaffTab('cuentas');
+                return;
+            }
 
             if (tab === 'cuentas') renderStaffCuentas(myRole);
             else if (tab === 'compras') renderStaffCompras(myRole);
+            else if (tab === 'saldo') { const status = document.getElementById('credit-status'); if (status) status.textContent = ''; }
             else if (tab === 'chat') renderStaffChat(myRole); 
             else if (tab === 'metricas') renderStaffMetrics(myRole);
         }
@@ -1692,12 +1752,12 @@
                 let actionBtn = (myRole === 'owner' || myRole === 'ceo') ? `<button onclick="window.openActionModal('${username}', '${data.role}', ${data.banned})" class="text-gray-400 hover:text-kiwi-gold px-2 py-1 transition"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>` : '';
 
                 container.innerHTML += `
-                    <div class="admin-user-row bg-[#1a170d] border border-yellow-900/30 p-3 rounded-xl flex justify-between items-center" data-username="${username}">
+                    <div class="admin-user-row bg-[#1a170d] border border-yellow-900/30 p-3 rounded-xl flex justify-between items-center" data-username="${username}" data-account-id="${data.accountId || ''}">
                         <div class="flex items-center gap-3 w-full">
                             <div class="w-10 h-10 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center text-sm font-bold flex-shrink-0">
                                 ${data.profilePic ? `<img src="${data.profilePic}" class="w-full h-full object-cover">` : username.charAt(0).toUpperCase()}
                             </div>
-                            <div class="flex-grow"><p class="text-white text-sm font-bold truncate">${username} ${banBadge}</p><span class="${roleClass} px-1.5 py-0.5 rounded text-[10px] uppercase font-bold inline-block mt-1">${roleName}</span></div>
+                            <div class="flex-grow"><p class="text-white text-sm font-bold truncate">${username} ${banBadge}</p><p class="text-[10px] text-kiwi-gold font-mono mt-0.5">ID: ${data.accountId || 'Sin ID'}</p><span class="${roleClass} px-1.5 py-0.5 rounded text-[10px] uppercase font-bold inline-block mt-1">${roleName}</span></div>
                         </div>
                         ${actionBtn}
                     </div>
@@ -1708,7 +1768,7 @@
         window.filterAdminCuentas = function() {
             const term = document.getElementById('admin-search').value.toLowerCase();
             document.querySelectorAll('.admin-user-row').forEach(row => {
-                row.style.display = row.getAttribute('data-username').toLowerCase().includes(term) ? 'flex' : 'none';
+                row.style.display = (row.getAttribute('data-username').toLowerCase().includes(term) || (row.getAttribute('data-account-id') || '').toLowerCase().includes(term)) ? 'flex' : 'none';
             });
         }
 
@@ -2456,17 +2516,50 @@
         // Override or extend history rendering if needed (existing code already uses purchase-history-list)
         // Add staff function to credit balance
         window.creditUserBalance = async function(username, amount) {
-            if (!['owner','ceo'].includes(JSON.parse(localStorage.getItem('kiwi_users')||'{}')[currentUser]?.role)) return alert('Sin permisos');
-            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (!users[username]) return alert('Usuario no existe');
-            users[username].balance = (users[username].balance || 0) + Number(amount);
-            localStorage.setItem('kiwi_users', JSON.stringify(users));
-            // Sync to Supabase if possible
+            const statusEl = document.getElementById('credit-status');
+            const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+            const targetInput = String(username || '').trim();
+            const value = Number(amount);
+            const users = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
+            const staff = users[currentUser];
+            username = Object.keys(users).find(name => name.toLowerCase() === targetInput.toLowerCase() || String(users[name].accountId || '').toLowerCase() === targetInput.toLowerCase()) || '';
+
+            if (!staff || !['owner','ceo'].includes(staff.role)) { setStatus('Sin permisos para acreditar saldo.'); return alert('Sin permisos'); }
+            if (!username) { setStatus('No se encontró ninguna cuenta con ese usuario o ID.'); return alert('No se encontró ninguna cuenta con ese usuario o ID.'); }
+            if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) { setStatus('Ingresá un monto entero mayor que cero.'); return alert('El monto debe ser un número entero mayor que cero.'); }
+            if (!users[username]) { setStatus('No se encontró esa cuenta en los usuarios cargados.'); return alert('Usuario no existe en los datos cargados.'); }
+            if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${username}? Esta acción modifica el saldo de Kiwii Store.`)) return;
+
+            const oldBalance = Number(users[username].balance || 0);
+            const newBalance = oldBalance + value;
+            setStatus('Procesando acreditación…');
             try {
-                await supabaseClient.from('usuarios').update({ balance: users[username].balance }).eq('username', username);
-            } catch(e) {}
-            alert(`Se acreditaron $${amount} a ${username}. Nuevo saldo: $${users[username].balance}`);
-            if (typeof updateAuthUI === 'function') updateAuthUI();
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient
+                        .from('usuarios')
+                        .update({ balance: newBalance })
+                        .eq('username', username)
+                        .select('username, balance');
+                    if (error) throw error;
+                    if (!data || data.length === 0) throw new Error('Supabase no actualizó ninguna fila. Revisá las políticas RLS y que el usuario exista en la tabla usuarios.');
+                    users[username].balance = Number(data[0].balance ?? newBalance);
+                    localStorage.setItem('kiwi_users', JSON.stringify(users));
+                    setStatus(`Listo: ${username} ahora tiene $${users[username].balance.toLocaleString('es-AR')} ARS.`);
+                    alert(`Saldo acreditado correctamente.\nUsuario: ${username}\nID: ${users[username].accountId || 'Sin ID'}\nNuevo saldo: $${users[username].balance.toLocaleString('es-AR')} ARS`);
+                } else {
+                    users[username].balance = newBalance;
+                    localStorage.setItem('kiwi_users', JSON.stringify(users));
+                    setStatus('Guardado solo en este navegador; Supabase no está conectado. No sirve como saldo compartido entre dispositivos.');
+                    alert('Saldo guardado solo localmente en este navegador. Supabase no está conectado, así que no queda sincronizado para todos los usuarios.');
+                }
+                if (username === currentUser && typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                const amountInput = document.getElementById('credit-amount');
+                if (amountInput) amountInput.value = '';
+            } catch (error) {
+                console.error('Error acreditando saldo:', error);
+                setStatus(`No se pudo acreditar: ${error.message || 'error desconocido'}`);
+                alert(`No se pudo acreditar el saldo.\n${error.message || 'Error desconocido'}\n\nSi menciona la columna balance, hay que crearla en Supabase. Si menciona permisos/RLS, hay que ajustar las políticas de la base de datos.`);
+            }
         };
 
 
