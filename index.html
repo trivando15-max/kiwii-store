@@ -252,7 +252,7 @@
                     <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">ACREDITAR SALDO DE PRUEBA</h4>
                     <p class="text-xs text-gray-300 leading-relaxed">Acredita saldo interno de Kiwii Store. Debés indicar el <strong>nombre de usuario</strong> y el <strong>ID de cuenta</strong> (ambos deben coincidir con la misma cuenta).</p>
                     <label for="credit-user" class="block text-xs text-gray-400">Nombre de usuario</label>
-                    <input id="credit-user" autocomplete="off" placeholder="Ej. KenshinFu" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <input id="credit-user" autocomplete="off" placeholder="Nombre de usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
                     <label for="credit-account-id" class="block text-xs text-gray-400">ID de cuenta (KWS-...)</label>
                     <input id="credit-account-id" autocomplete="off" placeholder="Ej. KWS-7F3A91C2" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
                     <label for="credit-amount" class="block text-xs text-gray-400">Monto a acreditar (ARS)</label>
@@ -1273,7 +1273,9 @@
                         const patch = {};
                         if (loc.accountId && !u.account_id) patch.account_id = loc.accountId;
                         if (!u.role && loc.role) patch.role = loc.role;
-                        if (u.username === 'KenshinFu' && u.role !== 'owner') patch.role = 'owner';
+                        // Rangos protegidos: Owner y CEO se asignan por nombre de usuario.
+                        if (u.username === 'Kiwi_Store_Owner' && u.role !== 'owner') patch.role = 'owner';
+                        if (u.username === 'KenshinFu' && u.role !== 'ceo') patch.role = 'ceo';
                         if (!u.password && loc.password) patch.password = loc.password;
                         if (!u.email && loc.email) patch.email = loc.email;
                         if (Object.keys(patch).length > 0) {
@@ -1282,9 +1284,9 @@
                         }
                     }
 
-                    if (localUsers["KenshinFu"]) {
-                        localUsers["KenshinFu"].role = 'owner';
-                    }
+                    // Mantener los rangos correctos también en la copia local.
+                    if (localUsers['Kiwi_Store_Owner']) localUsers['Kiwi_Store_Owner'].role = 'owner';
+                    if (localUsers['KenshinFu']) localUsers['KenshinFu'].role = 'ceo';
 
                     localStorage.setItem('kiwi_users', JSON.stringify(localUsers));
 
@@ -1578,9 +1580,10 @@
         function initDB() {
             let users = JSON.parse(localStorage.getItem('kiwi_users'));
             if(!users) { users = {}; }
-            if (!users["KenshinFu"]) {
-                users["KenshinFu"] = { password: "13572468", email: "admin@kiwi.com", role: "owner", history: [], profilePic: '', banned: false };
-            }
+            // No crear usuarios administrativos con contraseñas predeterminadas.
+            // Si ya existen localmente, asegurar sus rangos correctos.
+            if (users['Kiwi_Store_Owner']) users['Kiwi_Store_Owner'].role = 'owner';
+            if (users['KenshinFu']) users['KenshinFu'].role = 'ceo';
             localStorage.setItem('kiwi_users', JSON.stringify(users));
         }
 
@@ -1797,7 +1800,7 @@
             const out = localObj || {};
             out.email = cloud.email != null ? cloud.email : (out.email || '');
             if (cloud.password != null && cloud.password !== '') out.password = cloud.password;
-            out.role = cloud.username === 'KenshinFu' ? 'owner' : (cloud.role || out.role || 'user');
+            out.role = cloud.username === 'Kiwi_Store_Owner' ? 'owner' : (cloud.username === 'KenshinFu' ? 'ceo' : (cloud.role || out.role || 'user'));
             out.banned = cloud.banned === true || cloud.banned === 'true' || cloud.banned === true;
             out.profilePic = cloud.profile_pic != null ? cloud.profile_pic : (out.profilePic || '');
             out.balance = Number(cloud.balance ?? out.balance ?? 0);
@@ -1808,13 +1811,12 @@
         window.ensureCloudUser = async function(username, accountId, extra = {}) {
             if (!supabaseClient || !window.supabaseOnline) return null;
             const desiredId = (accountId || window.generateAccountId()).trim();
-            const desiredRole = extra.role || (username === 'KenshinFu' ? 'owner' : 'user');
+            const desiredRole = username === 'Kiwi_Store_Owner' ? 'owner' : (username === 'KenshinFu' ? 'ceo' : (extra.role || 'user'));
             let row = await window.syncUserFromCloud(username);
             if (row) {
                 const patch = {};
                 if (!row.account_id) patch.account_id = desiredId;
-                if (!row.role) patch.role = desiredRole;
-                if (username === 'KenshinFu' && row.role !== 'owner') patch.role = 'owner';
+                if (!row.role || username === 'Kiwi_Store_Owner' || username === 'KenshinFu') patch.role = desiredRole;
                 if (extra.email != null && !row.email) patch.email = extra.email;
                 if (extra.password != null && !row.password) patch.password = extra.password;
                 if (extra.profile_pic != null && !row.profile_pic) patch.profile_pic = extra.profile_pic;
@@ -1944,7 +1946,8 @@
                         usersDB[uname] = window.applyCloudUserToLocal(usersDB[uname] || {}, cloud);
                         // Asegurar password local = la que usó
                         usersDB[uname].password = pass;
-                        if (uname === 'KenshinFu') usersDB[uname].role = 'owner';
+                        if (uname === 'Kiwi_Store_Owner') usersDB[uname].role = 'owner';
+                        if (uname === 'KenshinFu') usersDB[uname].role = 'ceo';
                         if (!usersDB[uname].accountId) {
                             usersDB[uname].accountId = window.generateAccountId();
                             await supabaseClient.from('usuarios')
@@ -3466,7 +3469,7 @@
                     ...(users[finalName] || {}),
                     accountId: finalId,
                     balance: finalBalance,
-                    role: users[finalName]?.role || (finalName === 'KenshinFu' ? 'owner' : 'user')
+                    role: finalName === 'Kiwi_Store_Owner' ? 'owner' : (finalName === 'KenshinFu' ? 'ceo' : (users[finalName]?.role || 'user'))
                 };
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
 
