@@ -2475,90 +2475,6 @@
             window.openCheckout(null, true);
         }
 
-        // === BULK MEDYA (vía proxy /api/bulkmedya — la API Key NO va en el frontend) ===
-        window.BULK_MEDYA = {
-            // Solo Service IDs públicos (no secretos)
-            services: {
-                ig_followers_baja: 15234,
-                ig_followers_media: 15217,
-                ig_followers_premium: 2004,
-                ig_likes: 18105,
-                ig_views: 6821,
-                tt_likes: 16216,
-                tt_views: 18527
-            }
-        };
-
-        /** Envía pedido a Bulk Medya a través del proxy de Vercel */
-        window.sendBulkMedyaOrder = async function(serviceId, link, quantity) {
-            try {
-                const res = await fetch('/api/bulkmedya', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'add',
-                        service: Number(serviceId),
-                        link: String(link).trim(),
-                        quantity: Number(quantity)
-                    })
-                });
-                const text = await res.text();
-                let json;
-                try { json = JSON.parse(text); } catch (_) { json = { raw: text }; }
-
-                if (json && (json.order || json.success === true)) {
-                    return { success: true, orderId: json.order || json.orderId, raw: json };
-                }
-                const errMsg = (json && (json.error || json.message)) || text || ('HTTP ' + res.status);
-                return { success: false, error: errMsg, raw: json };
-            } catch (e) {
-                return { success: false, error: e.message || String(e) };
-            }
-        };
-
-        /** Consulta estado de un pedido Bulk Medya */
-        window.getBulkMedyaStatus = async function(orderId) {
-            try {
-                const res = await fetch('/api/bulkmedya', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ action: 'status', order: orderId })
-                });
-                return await res.json();
-            } catch (e) {
-                return { error: e.message || String(e) };
-            }
-        };
-
-        window.extractQuantityFromTitle = function(title) {
-            const m = String(title || '').match(/([\d.]+)/);
-            if (!m) return 0;
-            return parseInt(m[1].replace(/\./g, ''), 10) || 0;
-        };
-
-        window.resolveBulkMedyaServiceId = function(prod) {
-            if (!prod) return null;
-            if (prod.category === 'instagram' && prod.sub === 'seguidores' && prod.igQuality) {
-                const map = {
-                    baja: window.BULK_MEDYA.services.ig_followers_baja,
-                    media: window.BULK_MEDYA.services.ig_followers_media,
-                    premium: window.BULK_MEDYA.services.ig_followers_premium
-                };
-                return map[prod.igQuality] || null;
-            }
-            if (prod.category === 'instagram' && prod.sub === 'likes') {
-                const type = (prod.socialLikeType || '').toLowerCase();
-                if (type.includes('vista')) return window.BULK_MEDYA.services.ig_views;
-                return window.BULK_MEDYA.services.ig_likes;
-            }
-            if (prod.category === 'tiktok' && prod.sub === 'likes') {
-                const type = (prod.socialLikeType || '').toLowerCase();
-                if (type.includes('vista')) return window.BULK_MEDYA.services.tt_views;
-                return window.BULK_MEDYA.services.tt_likes;
-            }
-            return null;
-        };
-
         // Variantes de calidad para seguidores de Instagram.
         window.instagramFollowerQualityInfo = {
             baja: {
@@ -2651,17 +2567,7 @@
             const select = document.getElementById('social-like-type-select');
             if (!prod) return alert('No se pudo cargar el paquete.');
             if (!select || !select.value) return alert('Elegí si querés Likes o Vistas antes de continuar.');
-            const usdt = Number(prod.usdtPrice || 0);
-            const purchasePriceARS = Number.isFinite(Number(prod.purchasePriceARS)) && Number(prod.purchasePriceARS) > 0
-                ? Number(prod.purchasePriceARS)
-                : Math.round(usdt * 1600);
-            window.currentActiveProduct = {
-                ...prod,
-                title: `${prod.title} (${select.value})`,
-                socialLikeType: select.value,
-                purchasePriceARS,
-                usdtPrice: usdt
-            };
+            window.currentActiveProduct = { ...prod, title: `${prod.title} (${select.value})`, socialLikeType: select.value };
             window.openCheckout(null, true);
         };
 
@@ -3227,7 +3133,7 @@
         };
 
 
-        window.handlePurchaseSubmit = async function(e) {
+        window.handlePurchaseSubmit = function(e) {
             e.preventDefault();
             if (!currentUser) return alert('Iniciá sesión');
 
@@ -3241,24 +3147,23 @@
             const isRobux = prod.category === 'roblox' && (prod.sub === 'robux_grupo' || prod.sub === 'robux_gamepass' || prod.sub === 'robux_plus');
 
             if (isRobux) {
+                // Flujo WhatsApp clásico para Robux
                 const msg = `Hola Kiwi Store!\nProducto: ${prod.title}\nPrecio: ${prod.price}\nDatos: ${targetUser}\nMétodo: ${method}`;
                 window.open(`https://wa.me/5491139172595?text=${encodeURIComponent(msg)}`, '_blank');
                 window.closeCheckoutModal();
                 return;
             }
 
+            // Flujo con saldo para el resto
             const balance = window.getUserBalance();
+            // Extraer número del precio (asumiendo formato con ARS o número)
             let priceNum = 0;
-            if (Number.isFinite(Number(prod.purchasePriceARS)) && Number(prod.purchasePriceARS) > 0) {
+            if ((prod.igQuality || prod.category === 'tiktok') && Number.isFinite(Number(prod.purchasePriceARS))) {
                 priceNum = Number(prod.purchasePriceARS);
-            } else if (Number.isFinite(Number(prod.usdtPrice)) && Number(prod.usdtPrice) > 0) {
-                priceNum = Math.round(Number(prod.usdtPrice) * 1600);
             } else {
-                const arsMatch = (prod.price || '').toString().match(/\$\s*([\d.]+)\s*ARS/i);
-                if (arsMatch) priceNum = parseFloat(arsMatch[1].replace(/\./g, '')) || 0;
-                else {
-                    const priceMatch = (prod.price || '').toString().match(/([\d.]+)/);
-                    if (priceMatch) priceNum = parseFloat(priceMatch[0].replace(/\./g, '')) || 0;
+                const priceMatch = (prod.price || '').toString().match(/[\d.]+/);
+                if (priceMatch) {
+                    priceNum = parseFloat(priceMatch[0].replace(/\./g, ''));
                 }
             }
 
@@ -3267,100 +3172,7 @@
                 return;
             }
 
-            const bulkServiceId = window.resolveBulkMedyaServiceId(prod);
-            const isBulkProduct = !!bulkServiceId;
-
-            if (isBulkProduct) {
-                if (!targetUser) return alert('Ingresá el link del perfil o de la publicación.');
-                const quantity = window.extractQuantityFromTitle(prod.title);
-                if (!quantity || quantity < 1) return alert('No se pudo determinar la cantidad del producto.');
-
-                const submitBtn = e.target.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando a Bulk Medya...';
-                }
-
-                const bulkResult = await window.sendBulkMedyaOrder(bulkServiceId, targetUser, quantity);
-
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO';
-                }
-
-                if (!bulkResult.success) {
-                    alert(
-                        'NO se descontó saldo.\n\n' +
-                        'Error al enviar el pedido a Bulk Medya:\n' +
-                        (bulkResult.error || 'Desconocido') +
-                        '\n\nRevisá el link, el Service ID o el saldo de tu cuenta Bulk Medya.'
-                    );
-                    return;
-                }
-
-                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                if (users[currentUser]) {
-                    users[currentUser].balance = (users[currentUser].balance || 0) - priceNum;
-                    localStorage.setItem('kiwi_users', JSON.stringify(users));
-                }
-
-                const orderId = Date.now();
-                const order = {
-                    id: orderId,
-                    user: currentUser,
-                    title: prod.title,
-                    price: prod.price,
-                    method: 'Saldo Página',
-                    date: new Date().toLocaleString('es-AR'),
-                    status: 'confirmed',
-                    claimedBy: null,
-                    targetUser: targetUser || 'N/A',
-                    extra: extra || '',
-                    category: prod.category,
-                    sub: prod.sub || '',
-                    bulkOrderId: bulkResult.orderId,
-                    bulkServiceId: bulkServiceId,
-                    quantity: quantity,
-                    igQuality: prod.igQuality || null,
-                    socialLikeType: prod.socialLikeType || null
-                };
-
-                let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-                purchases.push(order);
-                localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-
-                try {
-                    if (supabaseClient) {
-                        supabaseClient.from('compras').insert([{
-                            id: orderId,
-                            user_name: currentUser,
-                            title: prod.title,
-                            price: prod.price,
-                            method: 'Saldo Página',
-                            status: 'confirmed',
-                            target_user: targetUser,
-                            extra: extra,
-                            bulk_order_id: String(bulkResult.orderId)
-                        }]);
-                    }
-                } catch (err) { console.warn('Supabase sync failed', err); }
-
-                window.closeCheckoutModal();
-                alert(
-                    'Pedido enviado a Bulk Medya correctamente.\n\n' +
-                    'ID local: ' + orderId + '\n' +
-                    'ID Bulk Medya: ' + bulkResult.orderId + '\n' +
-                    'Cantidad: ' + quantity + '\n' +
-                    'Saldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS'
-                );
-                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                if (typeof updateAuthUI === 'function') updateAuthUI();
-                if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-                if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
-                return;
-            }
-
-            // Productos que no van a Bulk Medya
+            // Descontar saldo
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (users[currentUser]) {
                 users[currentUser].balance = (users[currentUser].balance || 0) - priceNum;
@@ -3375,7 +3187,7 @@
                 price: prod.price,
                 method: 'Saldo Página',
                 date: new Date().toLocaleString('es-AR'),
-                status: 'confirmed',
+                status: 'confirmed', // directamente en proceso de entrega
                 claimedBy: null,
                 targetUser: targetUser || 'N/A',
                 extra: extra || '',
@@ -3400,7 +3212,7 @@
                         extra: extra
                     }]);
                 }
-            } catch (err) { console.warn('Supabase sync failed', err); }
+            } catch(err) { console.warn('Supabase sync failed', err); }
 
             window.closeCheckoutModal();
             alert('Pedido creado. Estado: Comprobante confirmado, en proceso de entregar el producto.\nSaldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS');
@@ -3731,19 +3543,12 @@
                 </div>`;
             }).join('<div class="w-8 h-0.5 bg-gray-700 mx-1"></div>');
 
-            const bulkInfo = order.bulkOrderId
-                ? `<p><strong>ID Bulk Medya:</strong> <span class="text-kiwi-gold font-mono">${order.bulkOrderId}</span>
-                    <button onclick="navigator.clipboard.writeText('${order.bulkOrderId}')" class="text-kiwi-gold text-xs ml-2">Copiar</button></p>
-                   <p class="text-xs text-gray-500">Service ID: ${order.bulkServiceId || '-'} · Cantidad: ${order.quantity || '-'}</p>`
-                : '';
-
             content.innerHTML = `
                 <p><strong>ID:</strong> ${order.id} <button onclick="navigator.clipboard.writeText('${order.id}')" class="text-kiwi-gold text-xs ml-2">Copiar</button></p>
                 <p><strong>Producto:</strong> ${order.title}</p>
                 <p><strong>Precio:</strong> ${order.price}</p>
                 <p><strong>Datos:</strong> ${order.targetUser || '-'}</p>
                 <p><strong>Fecha:</strong> ${order.date}</p>
-                ${bulkInfo}
                 <div class="flex items-center gap-1 my-3">${timeline}</div>
                 <p><strong>Estado:</strong> ${window.getStatusLabel ? window.getStatusLabel(order.status) : order.status}</p>
             `;
