@@ -693,10 +693,39 @@
                     <button id="tab-ig-likes" onclick="window.filterIgSub('likes')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
                         <span class="text-xl">❤️</span> LIKES / VISTAS DE INSTAGRAM REELS O PUBLICACIONES
                     </button>
+                    <button id="tab-tiktok-likes" onclick="window.filterIgSub('tiktok-likes')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
+                        <span class="text-xl">🎵</span> LIKES / VISTAS DE TIKTOK
+                    </button>
+                    <button id="tab-tiktok-seguidores" onclick="window.filterIgSub('tiktok-seguidores')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
+                        <span class="text-xl">👥</span> SEGUIDORES DE TIKTOK
+                    </button>
                 </div>
             </div>
 
             <div id="category-info-container" class="hidden mb-6"></div>
+
+            <div id="instagram-likes-general-info" class="hidden mb-6 bg-kiwi-card border border-pink-500/40 rounded-2xl p-5 shadow-lg">
+                <h3 class="font-orbitron text-lg font-bold text-pink-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i> INFORMACIÓN GENERAL
+                </h3>
+                <p class="text-sm text-gray-200 mb-3">Misma calidad para todos los paquetes:</p>
+                <div class="mb-4">
+                    <label for="social-like-type-select" class="block text-xs text-gray-300 font-rajdhani font-bold mb-2">¿Qué querés comprar?</label>
+                    <select id="social-like-type-select" class="w-full bg-kiwi-dark border border-pink-500/40 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-pink-500">
+                        <option value="" selected disabled>Seleccioná Likes o Vistas...</option>
+                        <option value="Likes">Likes</option>
+                        <option value="Vistas">Vistas</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-2">Los precios son iguales; esta opción solo identifica el servicio en tu pedido.</p>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i><span>Calidad Alta</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i><span>Sin caídas</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i><span>Bots</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation text-yellow-400 mt-1"></i><span>Es necesario que la cuenta esté en público para poder solicitar la recarga en la publicación/reel.</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-link text-pink-400 mt-1"></i><span>Adjuntá el link de la publicación/reel en el formulario al comprar.</span></li>
+                </ul>
+            </div>
 
             <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden"></div>
             
@@ -1058,6 +1087,10 @@
         window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
 
         window.getConvertedPrice = function(prod) {
+            // Los precios de TikTok se basan en los precios publicados de Instagram +20%.
+            if (prod && prod.category === 'tiktok' && Number.isFinite(Number(prod.purchasePriceARS)) && window.currentCurrency === 'ARS') {
+                return `$${Number(prod.purchasePriceARS).toLocaleString('es-AR')} ARS`;
+            }
             let usdtVal = 0;
             // Calcular valor en USDT
             if (prod.usdtPrice) {
@@ -1464,16 +1497,17 @@
                 dynamicFields.classList.add('hidden');
                 userInput.required = false; 
             } 
-            else if (c === 'instagram') {
-                if (s === 'seguidores') {
-                    userLabel.textContent = "Link de tu perfil de instagram";
-                    userInput.placeholder = "https://instagram.com/...";
-                    userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurate que tu perfil de instagram este en publico';
+            else if (c === 'instagram' || c === 'tiktok') {
+                const platform = c === 'tiktok' ? 'TikTok' : 'Instagram';
+                if (s === 'seguidores' || s === 'tiktok-seguidores') {
+                    userLabel.textContent = `Link de tu perfil de ${platform}`;
+                    userInput.placeholder = platform === 'TikTok' ? 'https://tiktok.com/@...' : 'https://instagram.com/...';
+                    userWarning.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Asegurate que tu perfil de ${platform} esté en público`;
                     userWarning.classList.remove('hidden');
                 } else if (s === 'likes') {
-                    userLabel.textContent = "Link de la publicacion/reel donde deseas mandar los likes/vistas";
-                    userInput.placeholder = "https://instagram.com/p/...";
-                    userWarning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Asegurate que tu perfil de instagram este en publico';
+                    userLabel.textContent = `Link de la publicación/video donde deseas mandar los likes/vistas de ${platform}`;
+                    userInput.placeholder = platform === 'TikTok' ? 'https://tiktok.com/@usuario/video/...' : 'https://instagram.com/p/...';
+                    userWarning.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Asegurate que tu cuenta de ${platform} esté en público`;
                     userWarning.classList.remove('hidden');
                 }
             }
@@ -2245,7 +2279,17 @@
             { id: 413, category: 'instagram', sub: 'likes', title: '10.000 Likes/Vistas', price: '5 USDT - $8.000 ARS', emoji: '❤️', popular: false, usdtPrice: 5 },
             { id: 414, category: 'instagram', sub: 'likes', title: '20.000 Likes/Vistas', price: '8 USDT - $12.800 ARS', emoji: '❤️', popular: false, usdtPrice: 8 },
             { id: 415, category: 'instagram', sub: 'likes', title: '50.000 Likes/Vistas', price: '16 USDT - $25.600 ARS', emoji: '👑', popular: true, tag: 'VIP', usdtPrice: 16 },
-            { id: 416, category: 'instagram', sub: 'likes', title: '100.000 Likes/Vistas', price: '25 USDT - $40.000 ARS', emoji: '👑', popular: true, tag: 'Mega VIP', usdtPrice: 25 }
+            { id: 416, category: 'instagram', sub: 'likes', title: '100.000 Likes/Vistas', price: '25 USDT - $40.000 ARS', emoji: '👑', popular: true, tag: 'Mega VIP', usdtPrice: 25 },
+
+            // TIKTOK - Likes/Vistas: mismos paquetes de Instagram con un 20% adicional
+            { id: 417, category: 'tiktok', sub: 'likes', title: '500 Likes/Vistas', price: '1.2 USDT - $1.920 ARS', emoji: '🎵', popular: false, usdtPrice: 1.2, purchasePriceARS: 1920 },
+            { id: 418, category: 'tiktok', sub: 'likes', title: '1.000 Likes/Vistas', price: '1.8 USDT - $2.880 ARS', emoji: '🎵', popular: false, usdtPrice: 1.8, purchasePriceARS: 2880 },
+            { id: 419, category: 'tiktok', sub: 'likes', title: '2.000 Likes/Vistas', price: '2.4 USDT - $3.840 ARS', emoji: '🎵', popular: false, usdtPrice: 2.4, purchasePriceARS: 3840 },
+            { id: 420, category: 'tiktok', sub: 'likes', title: '5.000 Likes/Vistas', price: '3.6 USDT - $5.760 ARS', emoji: '🎵', popular: false, usdtPrice: 3.6, purchasePriceARS: 5760 },
+            { id: 421, category: 'tiktok', sub: 'likes', title: '10.000 Likes/Vistas', price: '6 USDT - $9.600 ARS', emoji: '🎵', popular: false, usdtPrice: 6, purchasePriceARS: 9600 },
+            { id: 422, category: 'tiktok', sub: 'likes', title: '20.000 Likes/Vistas', price: '9.6 USDT - $15.360 ARS', emoji: '🎵', popular: false, usdtPrice: 9.6, purchasePriceARS: 15360 },
+            { id: 423, category: 'tiktok', sub: 'likes', title: '50.000 Likes/Vistas', price: '19.2 USDT - $30.720 ARS', emoji: '👑', popular: true, tag: 'VIP', usdtPrice: 19.2, purchasePriceARS: 30720 },
+            { id: 424, category: 'tiktok', sub: 'likes', title: '100.000 Likes/Vistas', price: '30 USDT - $48.000 ARS', emoji: '👑', popular: true, tag: 'Mega VIP', usdtPrice: 30, purchasePriceARS: 48000 }
         ];
 
         // --- CATALOGO CON VARIANTES ---
@@ -2431,6 +2475,102 @@
             window.openCheckout(null, true);
         }
 
+        // Variantes de calidad para seguidores de Instagram.
+        window.instagramFollowerQualityInfo = {
+            baja: {
+                label: 'Calidad Baja',
+                bullets: [
+                    'Sin garantías por bajas de seguidores',
+                    'Tardanza estimada: entre 1 y 24 horas',
+                    'No se garantiza que lleguen completos',
+                    'Tasa de caídas: 50%',
+                    'Calidad de seguidores: bots',
+                    'Es necesario tener el perfil público'
+                ]
+            },
+            media: {
+                label: 'Calidad Media',
+                bullets: [
+                    'Garantía de 30 días por baja de seguidores',
+                    'Tardanza estimada: entre 10 minutos y 6 horas',
+                    'Se garantiza que lleguen completos',
+                    'Tasa de caídas: baja, menos del 50%',
+                    'Calidad de seguidores: bots y cuentas reales',
+                    'Es necesario tener el perfil público'
+                ]
+            },
+            premium: {
+                label: 'Calidad Premium',
+                bullets: [
+                    'Garantía permanente de por vida',
+                    'Tardanza estimada: entre 10 minutos y 6 horas',
+                    'Se garantiza que lleguen completos',
+                    'Tasa de caídas: 0–5%',
+                    'Calidad de seguidores: perfiles reales',
+                    'Es necesario tener el perfil público'
+                ]
+            }
+        };
+
+        window.getInstagramFollowerVariant = function(prod, quality) {
+            const factor = quality === 'baja' ? 0.4 : quality === 'premium' ? 1.4 : 1;
+            const baseUsdt = Number(prod.usdtPrice || 0);
+            const usdtPrice = Math.round(baseUsdt * factor * 100) / 100;
+            const purchasePriceARS = Math.round(baseUsdt * 1600 * factor);
+            return {
+                ...prod,
+                title: `${prod.title} - ${window.instagramFollowerQualityInfo[quality].label}`,
+                price: `${usdtPrice} USDT - $${purchasePriceARS.toLocaleString('es-AR')} ARS`,
+                usdtPrice,
+                purchasePriceARS,
+                igQuality: quality,
+                baseProductId: prod.id
+            };
+        };
+
+        window.updateInstagramFollowerCard = function(productId) {
+            const prod = window.products.find(p => p.id === productId);
+            const select = document.getElementById(`ig-quality-${productId}`);
+            const details = document.getElementById(`ig-quality-details-${productId}`);
+            const priceEl = document.getElementById(`ig-price-${productId}`);
+            if (!prod || !select || !details || !priceEl) return;
+            const quality = select.value;
+            if (!quality || !window.instagramFollowerQualityInfo[quality]) {
+                priceEl.textContent = 'Elegí una calidad para ver el precio';
+                details.classList.add('hidden');
+                document.getElementById(`ig-quality-title-${productId}`).textContent = '';
+                document.getElementById(`ig-quality-list-${productId}`).innerHTML = '';
+                return;
+            }
+            const variant = window.getInstagramFollowerVariant(prod, quality);
+            const info = window.instagramFollowerQualityInfo[quality];
+            priceEl.textContent = window.getConvertedPrice(variant);
+            document.getElementById(`ig-quality-title-${productId}`).textContent = info.label;
+            document.getElementById(`ig-quality-list-${productId}`).innerHTML = info.bullets
+                .map(item => `<li class="flex gap-2"><i class="fa-solid fa-check text-pink-400 mt-0.5"></i><span>${item}</span></li>`)
+                .join('');
+            details.classList.remove('hidden');
+        };
+
+        window.buyInstagramFollowers = function(productId) {
+            const prod = window.products.find(p => p.id === productId);
+            const select = document.getElementById(`ig-quality-${productId}`);
+            if (!prod || !select) return alert('No se pudo cargar el paquete de seguidores.');
+            if (!select.value) return alert('Elegí una calidad antes de comprar.');
+            const variant = window.getInstagramFollowerVariant(prod, select.value);
+            window.currentActiveProduct = variant;
+            window.openCheckout(null, true);
+        };
+
+        window.buySocialLikesViews = function(productId) {
+            const prod = window.products.find(p => p.id === productId);
+            const select = document.getElementById('social-like-type-select');
+            if (!prod) return alert('No se pudo cargar el paquete.');
+            if (!select || !select.value) return alert('Elegí si querés Likes o Vistas antes de continuar.');
+            window.currentActiveProduct = { ...prod, title: `${prod.title} (${select.value})`, socialLikeType: select.value };
+            window.openCheckout(null, true);
+        };
+
         window.renderProducts = function(items) {
             const container = document.getElementById('product-grid');
             container.innerHTML = '';
@@ -2455,18 +2595,45 @@
                     `;
                 }
                 
-                let displayPrice = window.getConvertedPrice(prod);
+                const isIgFollowers = prod.category === 'instagram' && prod.sub === 'seguidores';
+                const isSocialLikesViews = (prod.category === 'instagram' || prod.category === 'tiktok') && prod.sub === 'likes';
+                const selectedQuality = '';
+                const qualityPricing = null;
+                let displayPrice = isIgFollowers ? 'Elegí una calidad para ver el precio' : window.getConvertedPrice(prod);
 
                 card.innerHTML = `
                     ${prod.popular && prod.tag ? `<span class="absolute -top-3 right-4 bg-kiwi-red text-white text-[10px] font-orbitron font-bold px-3 py-1 rounded-full uppercase tracking-widest z-10">${prod.tag}</span>` : ''}
                     <div class="text-center relative z-10">
                         ${visualElement}
                         <h4 class="font-orbitron font-bold text-base mb-2 text-white">${prod.title}</h4>
-                        <p class="text-sm font-rajdhani text-kiwi-gold font-bold mb-4">${displayPrice}</p>
+                        <p class="text-sm font-rajdhani text-kiwi-gold font-bold mb-4" id="ig-price-${prod.id}">${displayPrice}</p>
                     </div>
-                    <button onclick="window.openCheckout(${prod.id})" class="w-full bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 relative z-10">
-                        <i class="fa-solid fa-cart-shopping text-sm"></i> Comprar Ahora
-                    </button>
+                    ${isIgFollowers ? `
+                        <div class="mb-4 relative z-10 text-left">
+                            <label for="ig-quality-${prod.id}" class="block text-xs text-gray-300 font-rajdhani font-bold mb-2"><i class="fa-solid fa-layer-group text-pink-400 mr-1"></i> Elegí la calidad</label>
+                            <select id="ig-quality-${prod.id}" onchange="window.updateInstagramFollowerCard(${prod.id})" class="w-full bg-kiwi-dark border border-pink-500/40 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-pink-500">
+                                <option value="" selected disabled>Seleccioná una calidad...</option>
+                                <option value="baja">Calidad Baja</option>
+                                <option value="media">Calidad Media</option>
+                                <option value="premium">Calidad Premium</option>
+                            </select>
+                            <div id="ig-quality-details-${prod.id}" class="mt-3 rounded-xl border border-pink-500/20 bg-black/20 p-3 text-xs text-gray-300 hidden">
+                                <p class="font-orbitron font-bold text-pink-300 mb-2" id="ig-quality-title-${prod.id}"></p>
+                                <ul class="space-y-1.5 font-rajdhani" id="ig-quality-list-${prod.id}"></ul>
+                            </div>
+                        </div>
+                        <button onclick="window.buyInstagramFollowers(${prod.id})" class="w-full bg-pink-700/80 hover:bg-pink-600 border border-pink-500/50 text-white font-rajdhani font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 relative z-10">
+                            <i class="fa-solid fa-cart-shopping text-sm"></i> Comprar Ahora
+                        </button>
+                    ` : isSocialLikesViews ? `
+                        <button onclick="window.buySocialLikesViews(${prod.id})" class="w-full bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 relative z-10">
+                            <i class="fa-solid fa-cart-shopping text-sm"></i> Comprar Ahora
+                        </button>
+                    ` : `
+                        <button onclick="window.openCheckout(${prod.id})" class="w-full bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 relative z-10">
+                            <i class="fa-solid fa-cart-shopping text-sm"></i> Comprar Ahora
+                        </button>
+                    `}
                 `;
                 container.appendChild(card);
             });
@@ -2758,13 +2925,24 @@
             if (grid) grid.classList.remove('hidden');
 
             document.querySelectorAll('.ig-sub-btn').forEach(btn => btn.className = 'ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight');
-            let activeBtn = document.getElementById('tab-ig-' + subCat);
+            let activeBtn = document.getElementById(({ 'tiktok-likes': 'tab-tiktok-likes', 'tiktok-seguidores': 'tab-tiktok-seguidores' })[subCat] || ('tab-ig-' + subCat));
             if(activeBtn) activeBtn.className = 'ig-sub-btn bg-pink-600/30 border border-pink-500 text-white p-3 rounded-xl transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm shadow-inner transform scale-[1.02] text-center leading-tight';
             
             const infoContainer = document.getElementById('category-info-container');
-            infoContainer.innerHTML = `<div class="bg-[#0c1220] border border-pink-500/30 rounded-xl p-5 relative shadow-lg"><h4 class="font-orbitron font-bold text-sm text-pink-400 mb-3"><i class="fa-solid fa-list-check"></i> Requisitos</h4><ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4"><li>Tener el perfil en publico.</li></ul></div>`;
-            infoContainer.classList.remove('hidden');
-            window.renderProducts(window.products.filter(p => p.category === 'instagram' && p.sub === subCat));
+            infoContainer.innerHTML = '';
+            infoContainer.classList.add('hidden');
+            const likesGeneralInfo = document.getElementById('instagram-likes-general-info');
+            const isLikesViews = subCat === 'likes' || subCat === 'tiktok-likes';
+            if (likesGeneralInfo) likesGeneralInfo.classList.toggle('hidden', !isLikesViews);
+            const select = document.getElementById('social-like-type-select');
+            if (select) select.value = '';
+            const filters = {
+                'seguidores': p => p.category === 'instagram' && p.sub === 'seguidores',
+                'likes': p => p.category === 'instagram' && p.sub === 'likes',
+                'tiktok-likes': p => p.category === 'tiktok' && p.sub === 'likes',
+                'tiktok-seguidores': p => p.category === 'tiktok' && p.sub === 'seguidores'
+            };
+            window.renderProducts(window.products.filter(filters[subCat] || (() => false)));
         }
 
 
@@ -2980,9 +3158,13 @@
             const balance = window.getUserBalance();
             // Extraer número del precio (asumiendo formato con ARS o número)
             let priceNum = 0;
-            const priceMatch = (prod.price || '').toString().match(/[\d.]+/);
-            if (priceMatch) {
-                priceNum = parseFloat(priceMatch[0].replace(/\./g, ''));
+            if ((prod.igQuality || prod.category === 'tiktok') && Number.isFinite(Number(prod.purchasePriceARS))) {
+                priceNum = Number(prod.purchasePriceARS);
+            } else {
+                const priceMatch = (prod.price || '').toString().match(/[\d.]+/);
+                if (priceMatch) {
+                    priceNum = parseFloat(priceMatch[0].replace(/\./g, ''));
+                }
             }
 
             if (balance < priceNum) {
