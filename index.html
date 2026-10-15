@@ -2591,16 +2591,33 @@
             window.openCheckout(null, true);
         }
 
-        window.hideFreeFireSpecialsUI = function() {
-            ['ff-fragments-calculator', 'ff-boxes-calculator', 'ff-booyah-card', 'ff-id-checker'].forEach(id => {
+        window.currentCatalogCategory = null;
+        window.currentFreeFireSub = null;
+
+        // Solo oculta UI de Free Fire especiales/checker. NO toca product-grid ni streaming.
+        window.hideFreeFireSpecialsUI = function(includeChecker) {
+            const ids = ['ff-fragments-calculator', 'ff-boxes-calculator', 'ff-booyah-card'];
+            if (includeChecker !== false) ids.push('ff-id-checker');
+            ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
             });
-            const grid = document.getElementById('product-grid');
-            if (grid) grid.classList.remove('hidden');
+        };
+
+        window.showFreeFireSpecialsUI = function() {
+            ['ff-fragments-calculator', 'ff-boxes-calculator', 'ff-booyah-card'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+            });
+            if (typeof window.updateFragPrice === 'function') window.updateFragPrice();
+            if (typeof window.updateBoxPrice === 'function') window.updateBoxPrice();
+            if (typeof window.updateBooyahPrice === 'function') window.updateBooyahPrice();
         };
 
         window.filterCategory = function(category) {
+            window.currentCatalogCategory = category;
+            window.currentFreeFireSub = null;
+
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('category-view').classList.remove('hidden');
             document.getElementById('category-info-container').classList.add('hidden');
@@ -2613,30 +2630,59 @@
             };
             document.getElementById('category-title').innerHTML = titles[category] || 'CATEGORÍA';
 
-            ['roblox', 'freefire', 'instagram'].forEach(c => document.getElementById(`${c}-subcategories`).classList.add('hidden'));
+            ['roblox', 'freefire', 'instagram'].forEach(c => {
+                const el = document.getElementById(`${c}-subcategories`);
+                if (el) el.classList.add('hidden');
+            });
             document.getElementById('streaming-category-wrapper').classList.add('hidden');
-            document.getElementById('product-grid').classList.remove('hidden');
 
-            // Siempre ocultar calculadoras/pase FF al cambiar de categoría
-            window.hideFreeFireSpecialsUI();
+            // Siempre ocultar calculadoras FF al cambiar de categoría
+            window.hideFreeFireSpecialsUI(true);
+
+            const grid = document.getElementById('product-grid');
+            const checker = document.getElementById('ff-id-checker');
 
             if (category === 'roblox') {
-                document.getElementById('roblox-subcategories').classList.remove('hidden'); window.filterRobloxSub('fruits');
+                if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
+                document.getElementById('roblox-subcategories').classList.remove('hidden');
+                window.filterRobloxSub('fruits');
             } else if (category === 'freefire') {
-                document.getElementById('freefire-subcategories').classList.remove('hidden'); window.filterFreeFireSub('ilimitado');
+                if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
+                document.getElementById('freefire-subcategories').classList.remove('hidden');
+                if (checker) {
+                    checker.classList.remove('hidden');
+                    if (currentUser) {
+                        const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                        const saved = users[currentUser]?.ff_id;
+                        if (saved) {
+                            const idInput = document.getElementById('ff-check-id');
+                            if (idInput) idInput.value = saved;
+                        }
+                    }
+                }
+                window.filterFreeFireSub('ilimitado');
             } else if (category === 'instagram') {
-                document.getElementById('instagram-subcategories').classList.remove('hidden'); window.filterIgSub('seguidores');
+                if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
+                document.getElementById('instagram-subcategories').classList.remove('hidden');
+                window.filterIgSub('seguidores');
             } else if (category === 'streaming') {
-                document.getElementById('product-grid').classList.add('hidden');
-                document.getElementById('streaming-category-wrapper').classList.remove('hidden'); window.renderVariantCatalog();
+                // Streaming: solo el wrapper de apps; sin grid ni calculadoras FF
+                if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
+                document.getElementById('streaming-category-wrapper').classList.remove('hidden');
+                window.renderVariantCatalog();
             }
-            
+
             document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
             setTimeout(reveal, 100);
         }
 
         window.goBackToHome = function() {
-            window.hideFreeFireSpecialsUI();
+            window.currentCatalogCategory = null;
+            window.currentFreeFireSub = null;
+            window.hideFreeFireSpecialsUI(true);
+            const grid = document.getElementById('product-grid');
+            if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
+            document.getElementById('streaming-category-wrapper').classList.add('hidden');
             document.getElementById('category-view').classList.add('hidden');
             document.getElementById('home-view').classList.remove('hidden');
             document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
@@ -2644,16 +2690,31 @@
         }
 
         window.filterRobloxSub = function(subCat) {
+            // Nunca mostrar UI de Free Fire dentro de Roblox
+            window.hideFreeFireSpecialsUI(true);
+            window.currentFreeFireSub = null;
+
             document.querySelectorAll('.roblox-sub-btn').forEach(btn => btn.className = 'roblox-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-sm');
             let activeBtn = document.getElementById('tab-roblox-' + subCat);
             if(activeBtn) activeBtn.className = 'roblox-sub-btn bg-blue-600/30 border border-blue-500 text-white p-3 rounded-xl transition flex items-center justify-center gap-3 text-sm shadow-inner transform scale-[1.02]';
 
             document.getElementById('category-info-container').classList.add('hidden');
+            const grid = document.getElementById('product-grid');
+            if (grid) grid.classList.remove('hidden');
+            document.getElementById('streaming-category-wrapper').classList.add('hidden');
+
             if (subCat === 'fruits') window.renderProducts(window.products.filter(p => p.category === 'roblox' && (p.sub === 'fruits' || p.sub === 'gamepasses')));
             else if (subCat.startsWith('robux_')) window.renderRobuxCalculator(subCat);
         }
 
         window.filterFreeFireSub = function(subCat) {
+            // Solo tiene efecto si estamos en la categoría Free Fire
+            if (window.currentCatalogCategory && window.currentCatalogCategory !== 'freefire') {
+                window.hideFreeFireSpecialsUI(true);
+                return;
+            }
+            window.currentFreeFireSub = subCat;
+
             document.querySelectorAll('.ff-sub-btn').forEach(btn => btn.className = 'ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg');
             let activeBtn = document.getElementById('tab-freefire-' + subCat);
             if(activeBtn) activeBtn.className = 'ff-sub-btn bg-orange-600/30 border border-orange-500 text-white p-3 rounded-xl transition flex items-center justify-center gap-3 text-lg shadow-inner transform scale-[1.02]';
@@ -2666,9 +2727,21 @@
             else if (subCat === 'especiales') infoContainer.innerHTML = `<div class="bg-[#0c1220] border border-orange-500/30 rounded-xl p-5 relative shadow-lg"><h4 class="font-orbitron font-bold text-sm text-orange-400 mb-3"><i class="fa-solid fa-ticket"></i> Pases y Fragmentos</h4><ul class="text-xs text-gray-300 font-rajdhani space-y-2 list-disc pl-4"><li>Estos ítems se envían directo a tu cuenta de Free Fire mediante tu ID.</li><li>Solo disponibles para la Región Latinoamérica.</li></ul>${countriesList}</div>`;
             
             infoContainer.classList.remove('hidden');
-            window.renderProducts(window.products.filter(p => p.category === 'freefire' && p.sub === subCat));
+            document.getElementById('streaming-category-wrapper').classList.add('hidden');
 
-            // Al entrar a LIMITADOS, si hay ID verificado, chequear descuentos
+            const grid = document.getElementById('product-grid');
+            const isEspeciales = subCat === 'especiales';
+
+            // Calculadoras solo en Especiales
+            if (isEspeciales) {
+                if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
+                window.showFreeFireSpecialsUI();
+            } else {
+                window.hideFreeFireSpecialsUI(false); // mantener checker visible
+                if (grid) grid.classList.remove('hidden');
+                window.renderProducts(window.products.filter(p => p.category === 'freefire' && p.sub === subCat));
+            }
+
             if (subCat === 'limitado') {
                 const ffIdInput = document.getElementById('ff-check-id');
                 const ffId = ffIdInput ? ffIdInput.value.trim() : '';
@@ -2679,6 +2752,11 @@
         }
 
         window.filterIgSub = function(subCat) {
+            window.hideFreeFireSpecialsUI(true);
+            document.getElementById('streaming-category-wrapper').classList.add('hidden');
+            const grid = document.getElementById('product-grid');
+            if (grid) grid.classList.remove('hidden');
+
             document.querySelectorAll('.ig-sub-btn').forEach(btn => btn.className = 'ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight');
             let activeBtn = document.getElementById('tab-ig-' + subCat);
             if(activeBtn) activeBtn.className = 'ig-sub-btn bg-pink-600/30 border border-pink-500 text-white p-3 rounded-xl transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm shadow-inner transform scale-[1.02] text-center leading-tight';
@@ -3179,31 +3257,6 @@
             }
         };
 
-        // Mostrar el checker de ID solo en Free Fire (calculadoras solo en especiales)
-        const originalFilterCategory = window.filterCategory;
-        window.filterCategory = function(category) {
-            originalFilterCategory(category);
-            const checker = document.getElementById('ff-id-checker');
-            if (checker) {
-                if (category === 'freefire') {
-                    checker.classList.remove('hidden');
-                    if (currentUser) {
-                        const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                        const saved = users[currentUser]?.ff_id;
-                        if (saved) {
-                            const idInput = document.getElementById('ff-check-id');
-                            if (idInput) idInput.value = saved;
-                        }
-                    }
-                } else {
-                    checker.classList.add('hidden');
-                    // Asegurar que pase/fragmentos no queden visibles fuera de FF
-                    window.hideFreeFireSpecialsUI();
-                }
-            }
-        };
-
-
         // === SISTEMA DE RESEÑAS ===
         window.selectedStars = 0;
         document.querySelectorAll('#star-rating i').forEach(star => {
@@ -3619,26 +3672,6 @@
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
             alert('Pedido de ' + qty + ' cajas creado');
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-        };
-
-        // Calculadoras y pase solo en Free Fire → Especiales
-        const origFilterFF = window.filterFreeFireSub;
-        window.filterFreeFireSub = function(subCat) {
-            if (typeof origFilterFF === 'function') origFilterFF(subCat);
-            const show = subCat === 'especiales';
-            const calcFrag = document.getElementById('ff-fragments-calculator');
-            const calcBox = document.getElementById('ff-boxes-calculator');
-            const booyah = document.getElementById('ff-booyah-card');
-            if (calcFrag) calcFrag.classList.toggle('hidden', !show);
-            if (calcBox) calcBox.classList.toggle('hidden', !show);
-            if (booyah) booyah.classList.toggle('hidden', !show);
-            const grid = document.getElementById('product-grid');
-            if (grid) grid.classList.toggle('hidden', show);
-            if (show) {
-                if (typeof window.updateFragPrice === 'function') window.updateFragPrice();
-                if (typeof window.updateBoxPrice === 'function') window.updateBoxPrice();
-                if (typeof window.updateBooyahPrice === 'function') window.updateBooyahPrice();
-            }
         };
 
         window.buyBooyahPass = function() {
