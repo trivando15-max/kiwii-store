@@ -2582,16 +2582,113 @@
             
             if (variantIndex === "") return;
             const variant = item.variants[variantIndex];
+
+            // Precio ARS desde el string original del catálogo (ej: "$3.200 ARS / 2 USDT")
+            let purchasePriceARS = 0;
+            const arsMatch = String(variant.price || '').match(/\$\s*([\d.]+)\s*ARS/i);
+            if (arsMatch) purchasePriceARS = parseFloat(arsMatch[1].replace(/\./g, '')) || 0;
+            const usdtMatch = String(variant.price || '').match(/([\d.]+)\s*USDT/i);
+            const usdtPrice = usdtMatch ? parseFloat(usdtMatch[1]) : 0;
+            if (!purchasePriceARS && usdtPrice) purchasePriceARS = Math.round(usdtPrice * 1600);
             
             window.currentActiveProduct = {
                 title: `${item.title} - ${variant.name}`,
                 price: window.getConvertedVariantPrice(variant.price),
                 isLimited: false,
                 category: item.category,
-                sub: 'variant_item'
+                sub: 'variant_item',
+                catalogId: item.id,
+                variantName: variant.name,
+                purchasePriceARS,
+                usdtPrice,
+                isResellme: true
             };
             window.openCheckout(null, true);
         }
+
+        // === RESELLME (Streaming / IA / Tools — vía proxy /api/resellme) ===
+        // Clave SOLO en Vercel: RESELLME_API_KEY
+        window.RESELLME_MAP = {
+            // key = catalogId + '::' + variantName (exacto como en el select)
+            'netflix::España Lifetime': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs0000je2uoh1a9uqus' },
+            'netflix::España No Ads': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs9000le2uoi3r875v9' },
+            'netflix::Lifetime Links': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqsi000ne2uo7tvimdex' },
+            'disney::Only Disney+': { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000n8f3ij02uo9aj' },
+            'disney::Disney+ & Hulu': { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000o8f3ii060vqbo' },
+            'disney::Disney+ & Hulu & ESPN+': { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000p8f3ig6zc2kgf' },
+            'max::Full Access Lifetime': { product_id: 'cmq8imqye0019e2uo3m45setk', variant_id: 'cmq8imqyv001de2uo4ygzdfz6' },
+            'max::Lifetime': { product_id: 'cmq8imqye0019e2uo3m45setk', variant_id: 'cmq8imqyo001be2uor41kz887' },
+            'prime::1 Month': { product_id: 'cmq8imr0r001le2uoy2sxj4bv', variant_id: 'cmq8imr10001ne2uotshr7wg5' },
+            'prime::6 Months': { product_id: 'cmq8imr0r001le2uoy2sxj4bv', variant_id: 'cmq8imr18001pe2uovi02i30t' },
+            'crunchyroll::Fan Member': { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'cmq8imqwy0013e2uooot307zx' },
+            'crunchyroll::Mega Fan Member': { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'cmq8imqx50015e2uo9c3c4ddc' },
+            'crunchyroll::Mega Fan Member, Full Access': { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'c3a0c25fad5b5610a3578c0c5' },
+            'paramount::USA': { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmq8imqzv001he2uovr26gy3q' },
+            'paramount::LATAM + EU': { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmq8imr01001je2uo5l9p9pfp' },
+            'paramount::México + UFC [FA]': { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmt8u7y1800029ij2kbkxdof6' },
+            'youtube::Full Access Lifetime': { product_id: 'cmq8g2yjg004f1465ym66i5zl', variant_id: 'cmq8g2yjs004h1465u30o77qk' },
+            'spotify::Autopay, Full Access': { product_id: 'cmq8g2ydj003r1465p4itbv7c', variant_id: 'cmq8g2ydq003t1465dq12sp6x' },
+            'chatgpt::1 día': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90002zknc3e4v4e9a' },
+            'chatgpt::1 semana': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90003zknc7phw3vx2' },
+            'chatgpt::2 semanas': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90004zknc0ap2yss4' },
+            'chatgpt::1 mes': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90005zknc0p4z9s81' },
+            'chatgpt::Plus 4 months': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'chatgpt-4m-real-account' },
+            'claude::1 day': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0k0jxxpcj6prcou6zr' },
+            'claude::7 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jxzpcj6lul4ovci' },
+            'claude::14 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy1pcj6p5lfhklo' },
+            'claude::30 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy3pcj6v40qbdz6' },
+            'gemini::Link, 18 months': { product_id: 'cmq8g2y8d00271465kwesaagh', variant_id: 'cmq8g2y8j002914651j6ff839' },
+            'capcut::Lifetime': { product_id: 'cmq8g2y1k0009146562hnagmo', variant_id: 'cmq8g2y1q000b146544j0436k' },
+            'capcut::Full Access Lifetime': { product_id: 'cmq8g2y1k0009146562hnagmo', variant_id: 'cmrndfbgn0003wltnixz50hz2' },
+            'filmora::Lifetime': { product_id: 'cmrpirsci000ae9oytj8xjvuy', variant_id: 'cmrpirsci000be9oyk0vsy4ir' },
+            'nordvpn::Lifetime': { product_id: 'cmq8g2ybn00371465iknhka57', variant_id: 'cmq8g2ybt00391465p0w9j6t3' },
+            'expressvpn::Phone, Lifetime': { product_id: 'cmq8g2y8300231465m01lxyum', variant_id: 'cmq8g2y8800251465j1ulrxgz' },
+            'cyberghost::Lifetime': { product_id: 'cmryzjpqx002xl86neho0cv4q', variant_id: 'cmryzjpqx002yl86nt5hjbz7m' },
+            'duolingo::Lifetime': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'cmq8g2y7x00211465fw9qzh71' },
+            'duolingo::Super GiftLink 12 months': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'var_sduo12m_on_duolingo_0001' }
+        };
+
+        window.resolveResellmeIds = function(prod) {
+            if (!prod) return null;
+            if (prod.resellmeProductId) {
+                return { product_id: prod.resellmeProductId, variant_id: prod.resellmeVariantId || null };
+            }
+            const key = (prod.catalogId || '') + '::' + (prod.variantName || '');
+            return window.RESELLME_MAP[key] || null;
+        };
+
+        window.sendResellmeOrder = async function(productId, variantId, quantity) {
+            try {
+                const body = {
+                    action: 'order',
+                    product_id: productId,
+                    quantity: Number(quantity) || 1
+                };
+                if (variantId) body.variant_id = variantId;
+                const res = await fetch('/api/resellme', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const json = await res.json().catch(() => ({}));
+                if (json && json.success && (json.keys || json.order_id)) {
+                    return {
+                        success: true,
+                        orderId: json.order_id,
+                        keys: Array.isArray(json.keys) ? json.keys : [],
+                        status: json.status,
+                        raw: json
+                    };
+                }
+                return {
+                    success: false,
+                    error: json.error || json.message || ('HTTP ' + res.status),
+                    raw: json
+                };
+            } catch (e) {
+                return { success: false, error: e.message || String(e) };
+            }
+        };
 
         // === BULK MEDYA (vía proxy /api/bulkmedya — la API Key NO va en el frontend) ===
         window.BULK_MEDYA = {
@@ -3637,6 +3734,105 @@
                 return;
             }
 
+            // === Streaming / IA / Tools → ResellMe (entrega automática de keys) ===
+            const resellIds = window.resolveResellmeIds(prod);
+            const isResellProduct = !!(prod.isResellme || resellIds);
+
+            if (isResellProduct) {
+                if (!resellIds || !resellIds.product_id) {
+                    return alert('Este producto no está mapeado para entrega automática. Contactá al staff.');
+                }
+
+                const submitBtnR = e.target.querySelector('button[type="submit"]');
+                if (submitBtnR) {
+                    submitBtnR.disabled = true;
+                    submitBtnR.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entregando producto...';
+                }
+
+                const rmResult = await window.sendResellmeOrder(resellIds.product_id, resellIds.variant_id, 1);
+
+                if (submitBtnR) {
+                    submitBtnR.disabled = false;
+                    submitBtnR.innerHTML = '<i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO';
+                }
+
+                if (!rmResult.success) {
+                    alert(
+                        'NO se descontó saldo.\n\n' +
+                        'No se pudo entregar el producto:\n' +
+                        (rmResult.error || 'Desconocido') +
+                        '\n\nProbá más tarde o contactá soporte.'
+                    );
+                    return;
+                }
+
+                const usersR = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                if (usersR[currentUser]) {
+                    usersR[currentUser].balance = (usersR[currentUser].balance || 0) - priceNum;
+                    localStorage.setItem('kiwi_users', JSON.stringify(usersR));
+                    if (typeof window.syncBalanceToCloud === 'function') {
+                        window.syncBalanceToCloud(currentUser, usersR[currentUser].balance);
+                    }
+                }
+
+                const keysText = (rmResult.keys && rmResult.keys.length)
+                    ? rmResult.keys.join('\n')
+                    : '(Sin keys en la respuesta — revisá el pedido más tarde)';
+
+                const orderIdR = Date.now();
+                const orderR = {
+                    id: orderIdR,
+                    user: currentUser,
+                    title: prod.title,
+                    price: prod.price,
+                    method: 'Saldo Página',
+                    date: new Date().toLocaleString('es-AR'),
+                    status: 'delivered',
+                    claimedBy: null,
+                    targetUser: targetUser || 'N/A',
+                    extra: extra || '',
+                    category: prod.category,
+                    sub: prod.sub || '',
+                    resellmeOrderId: rmResult.orderId || null,
+                    deliveryKeys: keysText,
+                    catalogId: prod.catalogId || null,
+                    variantName: prod.variantName || null
+                };
+
+                let purchasesR = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+                purchasesR.push(orderR);
+                localStorage.setItem('kiwi_purchases', JSON.stringify(purchasesR));
+
+                try {
+                    if (supabaseClient) {
+                        supabaseClient.from('compras').insert([{
+                            id: orderIdR,
+                            user_name: currentUser,
+                            title: prod.title,
+                            price: prod.price,
+                            method: 'Saldo Página',
+                            status: 'delivered',
+                            target_user: targetUser || '',
+                            extra: keysText
+                        }]);
+                    }
+                } catch (err) { console.warn('Supabase sync failed', err); }
+
+                window.closeCheckoutModal();
+                alert(
+                    '¡Producto entregado!\n\n' +
+                    'ID pedido: ' + orderIdR + '\n\n' +
+                    'DATOS DE ACCESO:\n' + keysText + '\n\n' +
+                    'También los encontrás en Mis Pedidos.\n' +
+                    'Saldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS'
+                );
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                if (typeof updateAuthUI === 'function') updateAuthUI();
+                if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+                if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
+                return;
+            }
+
             // Productos que no van por entrega automática
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (users[currentUser]) {
@@ -4018,6 +4214,15 @@
                    <p class="text-xs text-gray-500">Cantidad: ${order.quantity || '-'}</p>`
                 : '';
 
+            const keysEsc = (order.deliveryKeys || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const keysInfo = order.deliveryKeys
+                ? `<div class="mt-3 p-3 rounded-xl border border-green-500/40 bg-green-900/20">
+                    <p class="text-green-400 font-orbitron text-xs font-bold mb-2"><i class="fa-solid fa-key"></i> DATOS DE ACCESO</p>
+                    <pre class="text-xs text-white whitespace-pre-wrap break-all font-mono">${keysEsc}</pre>
+                    <button onclick="navigator.clipboard.writeText(${JSON.stringify(String(order.deliveryKeys))})" class="mt-2 text-kiwi-gold text-xs font-bold">Copiar datos</button>
+                   </div>`
+                : '';
+
             content.innerHTML = `
                 <p><strong>ID:</strong> ${order.id} <button onclick="navigator.clipboard.writeText('${order.id}')" class="text-kiwi-gold text-xs ml-2">Copiar</button></p>
                 <p><strong>Producto:</strong> ${order.title}</p>
@@ -4025,6 +4230,7 @@
                 <p><strong>Datos:</strong> ${order.targetUser || '-'}</p>
                 <p><strong>Fecha:</strong> ${order.date}</p>
                 ${bulkInfo}
+                ${keysInfo}
                 <div class="flex items-center gap-1 my-3">${timeline}</div>
                 <p><strong>Estado:</strong> ${window.getStatusLabel ? window.getStatusLabel(order.status) : order.status}</p>
             `;
