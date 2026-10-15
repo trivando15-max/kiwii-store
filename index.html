@@ -675,7 +675,7 @@
             <div id="ff-booyah-card" class="hidden mb-6 bg-[#0c1220] border border-orange-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                     <h4 class="font-orbitron font-bold text-orange-400 text-lg">🎟️ Pase Booyah</h4>
-                    <p class="text-sm text-gray-300 mt-1">Precio: <span class="text-kiwi-gold font-bold">$3.300 ARS</span></p>
+                    <p class="text-sm text-gray-300 mt-1">Precio: <span id="booyah-price-display" class="text-kiwi-gold font-bold">$3.300 ARS</span></p>
                     <p class="text-xs text-gray-500">Se envía directo a tu ID de Free Fire.</p>
                 </div>
                 <button onclick="window.buyBooyahPass()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-xl">Comprar Pase</button>
@@ -1359,6 +1359,11 @@
 
             window.closeCurrencyModal();
 
+            // Actualizar calculadoras FF si están visibles
+            if (typeof window.updateFragPrice === 'function') window.updateFragPrice();
+            if (typeof window.updateBoxPrice === 'function') window.updateBoxPrice();
+            if (typeof window.updateBooyahPrice === 'function') window.updateBooyahPrice();
+
             // Refrescar precios en pantalla dinámicamente
             const isHome = !document.getElementById('home-view').classList.contains('hidden');
             if(!isHome) {
@@ -1548,7 +1553,15 @@
             { name: "Comunidad Celestial RBLX", url: "https://www.roblox.com/communities/34564860/Comunidad-Celestial-RBLX#!/about" },
             { name: "Gorra Shop", url: "https://www.roblox.com/communities/13080841/Gorra-Shop#!/about" },
             { name: "ＢＬＡＣＫ ＣＡＴ＄ ＵＧC", url: "https://www.roblox.com/communities/15119364/C#!/about" },
-            { name: "nxtrnd", url: "https://www.roblox.com/communities/33422152/nxtrnd#!/about" }
+            { name: "nxtrnd", url: "https://www.roblox.com/communities/33422152/nxtrnd#!/about" },
+            { name: "Random Island", url: "https://www.roblox.com/communities/33332820/Random-Island#!/about" },
+            { name: "One Ugc man", url: "https://www.roblox.com/communities/35816914/One-Ugc-man#!/about" },
+            { name: "Really..?!", url: "https://www.roblox.com/communities/35826008/Really#!/about" },
+            { name: "Anime ugccs", url: "https://www.roblox.com/communities/578297005/Anime-ugccs#!/about" },
+            { name: "#SeIfMade Ent", url: "https://www.roblox.com/communities/33707960/SeIfMade-Ent#!/about" },
+            { name: "drowsing", url: "https://www.roblox.com/communities/35399081/drowsing#!/about" },
+            { name: "AnimeFACTORY1", url: "https://www.roblox.com/communities/809551446/AnimeFACTORY1#!/about" },
+            { name: "UGC Bundle Shop", url: "https://www.roblox.com/communities/567256399/UGC-Bundle-Shop#!/about" }
         ];
 
         window.renderInlineRobloxGroups = function() {
@@ -2578,6 +2591,15 @@
             window.openCheckout(null, true);
         }
 
+        window.hideFreeFireSpecialsUI = function() {
+            ['ff-fragments-calculator', 'ff-boxes-calculator', 'ff-booyah-card', 'ff-id-checker'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const grid = document.getElementById('product-grid');
+            if (grid) grid.classList.remove('hidden');
+        };
+
         window.filterCategory = function(category) {
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('category-view').classList.remove('hidden');
@@ -2595,6 +2617,9 @@
             document.getElementById('streaming-category-wrapper').classList.add('hidden');
             document.getElementById('product-grid').classList.remove('hidden');
 
+            // Siempre ocultar calculadoras/pase FF al cambiar de categoría
+            window.hideFreeFireSpecialsUI();
+
             if (category === 'roblox') {
                 document.getElementById('roblox-subcategories').classList.remove('hidden'); window.filterRobloxSub('fruits');
             } else if (category === 'freefire') {
@@ -2611,6 +2636,7 @@
         }
 
         window.goBackToHome = function() {
+            window.hideFreeFireSpecialsUI();
             document.getElementById('category-view').classList.add('hidden');
             document.getElementById('home-view').classList.remove('hidden');
             document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
@@ -3153,7 +3179,7 @@
             }
         };
 
-        // Mostrar el checker de ID cuando se entra a Free Fire
+        // Mostrar el checker de ID solo en Free Fire (calculadoras solo en especiales)
         const originalFilterCategory = window.filterCategory;
         window.filterCategory = function(category) {
             originalFilterCategory(category);
@@ -3161,14 +3187,18 @@
             if (checker) {
                 if (category === 'freefire') {
                     checker.classList.remove('hidden');
-                    // Autocompletar si hay ID guardado
                     if (currentUser) {
                         const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                         const saved = users[currentUser]?.ff_id;
-                        if (saved) document.getElementById('ff-check-id').value = saved;
+                        if (saved) {
+                            const idInput = document.getElementById('ff-check-id');
+                            if (idInput) idInput.value = saved;
+                        }
                     }
                 } else {
                     checker.classList.add('hidden');
+                    // Asegurar que pase/fragmentos no queden visibles fuera de FF
+                    window.hideFreeFireSpecialsUI();
                 }
             }
         };
@@ -3473,17 +3503,40 @@
         };
 
 
-        // Calculadora Fragmentos Universales
-        const FRAG_PRICE_PER_UNIT = 75; // ARS por fragmento (ajustable)
+        // Precios base en ARS (saldo interno siempre en ARS)
+        const FRAG_PRICE_PER_UNIT = 75;
+        const BOX_PRICE_PER_UNIT = 500;
+        const BOOYAH_PRICE_ARS = 3300;
+
+        // Convierte un monto ARS a la moneda seleccionada (solo visualización)
+        window.formatArsAsCurrency = function(arsAmount) {
+            const ars = Number(arsAmount) || 0;
+            const code = window.currentCurrency || 'ARS';
+            const sym = (window.currencySymbols && window.currencySymbols[code]) || '$';
+            if (code === 'ARS') {
+                return sym + ars.toLocaleString('es-AR') + ' ARS';
+            }
+            const usdt = ars / 1600;
+            if (code === 'USDT') {
+                return '₮ ' + usdt.toFixed(2) + ' USDT';
+            }
+            const rate = (window.exchangeRates && window.exchangeRates[code]) || 1;
+            const converted = usdt * rate;
+            return sym + converted.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ' + code;
+        };
+
         window.setFragQty = function(q) {
             document.getElementById('frag-qty').value = Math.max(35, q);
             window.updateFragPrice();
         };
         window.updateFragPrice = function() {
-            const qty = Math.max(35, parseInt(document.getElementById('frag-qty').value) || 35);
-            document.getElementById('frag-qty').value = qty;
-            const price = qty * FRAG_PRICE_PER_UNIT;
-            document.getElementById('frag-price-result').textContent = 'Precio: $' + price.toLocaleString('es-AR') + ' ARS';
+            const el = document.getElementById('frag-qty');
+            if (!el) return;
+            const qty = Math.max(35, parseInt(el.value) || 35);
+            el.value = qty;
+            const priceArs = qty * FRAG_PRICE_PER_UNIT;
+            const result = document.getElementById('frag-price-result');
+            if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
         };
         document.getElementById('frag-qty')?.addEventListener('input', window.updateFragPrice);
 
@@ -3517,29 +3570,26 @@
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
         };
 
-        // Mostrar calculadora al entrar a especiales
-        const origFilterFF = window.filterFreeFireSub;
-        window.filterFreeFireSub = function(subCat) {
-            origFilterFF(subCat);
-            const calc = document.getElementById('ff-fragments-calculator');
-            if (calc) calc.classList.toggle('hidden', subCat !== 'especiales');
-            if (subCat === 'especiales') window.updateFragPrice();
-        };
-
-
         // Calculadora Cajas de Fragmentos
-        const BOX_PRICE_PER_UNIT = 500; // ARS por caja (ajustable)
         window.setBoxQty = function(q) {
             document.getElementById('box-qty').value = Math.max(7, q);
             window.updateBoxPrice();
         };
         window.updateBoxPrice = function() {
-            const qty = Math.max(7, parseInt(document.getElementById('box-qty').value) || 7);
-            document.getElementById('box-qty').value = qty;
-            const price = qty * BOX_PRICE_PER_UNIT;
-            document.getElementById('box-price-result').textContent = 'Precio: $' + price.toLocaleString('es-AR') + ' ARS';
+            const el = document.getElementById('box-qty');
+            if (!el) return;
+            const qty = Math.max(7, parseInt(el.value) || 7);
+            el.value = qty;
+            const priceArs = qty * BOX_PRICE_PER_UNIT;
+            const result = document.getElementById('box-price-result');
+            if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
         };
         document.getElementById('box-qty')?.addEventListener('input', window.updateBoxPrice);
+
+        window.updateBooyahPrice = function() {
+            const el = document.getElementById('booyah-price-display');
+            if (el) el.textContent = window.formatArsAsCurrency(BOOYAH_PRICE_ARS);
+        };
 
         window.buyBoxes = function() {
             const qty = Math.max(7, parseInt(document.getElementById('box-qty').value) || 7);
@@ -3571,31 +3621,31 @@
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
         };
 
-        // Mostrar ambas calculadoras en especiales
-        const origFilterFF2 = window.filterFreeFireSub;
+        // Calculadoras y pase solo en Free Fire → Especiales
+        const origFilterFF = window.filterFreeFireSub;
         window.filterFreeFireSub = function(subCat) {
-            origFilterFF2(subCat);
+            if (typeof origFilterFF === 'function') origFilterFF(subCat);
+            const show = subCat === 'especiales';
             const calcFrag = document.getElementById('ff-fragments-calculator');
             const calcBox = document.getElementById('ff-boxes-calculator');
-            const show = subCat === 'especiales';
+            const booyah = document.getElementById('ff-booyah-card');
             if (calcFrag) calcFrag.classList.toggle('hidden', !show);
             if (calcBox) calcBox.classList.toggle('hidden', !show);
-            const booyah = document.getElementById('ff-booyah-card');
             if (booyah) booyah.classList.toggle('hidden', !show);
             const grid = document.getElementById('product-grid');
             if (grid) grid.classList.toggle('hidden', show);
             if (show) {
                 if (typeof window.updateFragPrice === 'function') window.updateFragPrice();
                 if (typeof window.updateBoxPrice === 'function') window.updateBoxPrice();
+                if (typeof window.updateBooyahPrice === 'function') window.updateBooyahPrice();
             }
         };
-
 
         window.buyBooyahPass = function() {
             if (!currentUser) return alert('Iniciá sesión');
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             const bal = users[currentUser]?.balance || 0;
-            const price = 3300;
+            const price = BOOYAH_PRICE_ARS;
             if (bal < price) return alert('Saldo insuficiente');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
@@ -3609,7 +3659,7 @@
                 id: Date.now(),
                 user: currentUser,
                 title: 'Pase Booyah',
-                price: '$3.300 ARS',
+                price: '$' + price.toLocaleString('es-AR') + ' ARS',
                 targetUser: ffId,
                 date: new Date().toLocaleDateString('es-AR'),
                 status: 'confirmed',
