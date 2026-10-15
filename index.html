@@ -3021,35 +3021,55 @@
         window.checkFreeFireID = async function() {
             const idInput = document.getElementById('ff-check-id');
             const resultEl = document.getElementById('ff-id-result');
-            const ffId = idInput.value.trim();
+            const raw = (idInput.value || '').trim();
+            // Solo dígitos: el ID de Free Fire es numérico (el nick se obtiene de la API)
+            const ffId = raw.replace(/\s+/g, '');
             if (!ffId) { resultEl.textContent = 'Ingresá un ID'; resultEl.classList.remove('hidden'); return; }
+            if (!/^\d{5,15}$/.test(ffId)) {
+                resultEl.innerHTML = '<span class="text-red-400">El ID debe ser solo números (5 a 15 dígitos). No uses el nombre del jugador.</span>';
+                resultEl.classList.remove('hidden');
+                resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
+                return;
+            }
+            idInput.value = ffId;
 
             resultEl.textContent = 'Verificando...';
             resultEl.classList.remove('hidden');
             resultEl.className = 'mt-3 text-sm font-rajdhani text-gray-400';
 
             try {
-                const res = await fetch(`/api/volsever?action=check-products&id=${encodeURIComponent(ffId)}&region=BO`);
-                const json = await res.json();
-                if (json.status && json.data) {
-                    resultEl.innerHTML = `<span class="text-green-400 font-bold">✓ ID válido</span> — Nombre: <strong class="text-white">${json.data.username || 'N/A'}</strong> (Región: ${json.data.account_region || 'N/A'})`;
+                // Probar regiones habituales Latam / global
+                const regions = ['SAC', 'BR', 'SG', 'BO', 'MX', 'US'];
+                let json = null;
+                for (const region of regions) {
+                    const res = await fetch(`/api/volsever?action=check-products&id=${encodeURIComponent(ffId)}&region=${region}`);
+                    const body = await res.json();
+                    if (body && body.status && body.data) { json = body; break; }
+                    json = body;
+                }
+                if (json && json.status && json.data) {
+                    const uname = json.data.username || json.data.nickname || 'N/A';
+                    const region = json.data.account_region || json.data.region || 'N/A';
+                    const uid = String(json.data.user_id || json.data.uid || ffId);
+                    resultEl.innerHTML = `<span class="text-green-400 font-bold">✓ ID válido</span> — Nombre: <strong class="text-white">${uname}</strong> (Región: ${region}) · UID: <strong>${uid}</strong>`;
                     resultEl.className = 'mt-3 text-sm font-rajdhani text-green-400';
-                    // Guardar ID y nombre
-                    window.lastFFName = json.data.username || '';
+                    window.lastFFName = uname;
+                    window.lastFFId = uid;
+                    window.lastFFRegion = region;
                     if (currentUser) {
                         const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                         if (users[currentUser]) {
-                            users[currentUser].ff_id = ffId;
-                            users[currentUser].ff_name = json.data.username || '';
+                            users[currentUser].ff_id = uid;
+                            users[currentUser].ff_name = uname;
+                            users[currentUser].ff_region = region;
                             localStorage.setItem('kiwi_users', JSON.stringify(users));
                         }
                     }
-                    // Si estamos en limitados, chequear descuentos
                     if (document.getElementById('tab-freefire-limitado') && document.getElementById('tab-freefire-limitado').classList.contains('bg-orange-600/30')) {
-                        window.checkFreeFireDiscounts(ffId);
+                        window.checkFreeFireDiscounts(uid);
                     }
                 } else {
-                    resultEl.textContent = 'ID no encontrado o error: ' + (json.message || 'desconocido');
+                    resultEl.textContent = 'ID no encontrado: ' + ((json && json.message) || 'desconocido');
                     resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
                 }
             } catch (e) {
@@ -3344,28 +3364,89 @@
             originalOpenCheckoutFF(productId, isCustom);
         };
 
+        window.parsePriceARS = function(priceStr) {
+            // "$1.396 ARS" o "1396" → 1396
+            const cleaned = String(priceStr || '').replace(/[^\d.,]/g, '');
+            if (!cleaned) return 0;
+            // formato AR: 1.396,50 o 1.396
+            if (cleaned.includes(',') && cleaned.includes('.')) {
+                return Math.round(parseFloat(cleaned.replace(/\./g, '').replace(',', '.')) || 0);
+            }
+            if (cleaned.includes(',') && !cleaned.includes('.')) {
+                return Math.round(parseFloat(cleaned.replace(',', '.')) || 0);
+            }
+            // puntos como miles: 1.396
+            if (/^\d{1,3}(\.\d{3})+$/.test(cleaned)) {
+                return parseInt(cleaned.replace(/\./g, ''), 10) || 0;
+            }
+            return Math.round(parseFloat(cleaned) || 0);
+        };
+
+        window.syncBalanceToCloud = async function(username, newBalance) {
+            if (!supabaseClient || !window.supabaseOnline || !username) return false;
+            try {
+                const { error } = await supabaseClient
+                    .from('usuarios')
+                    .update({ balance: Number(newBalance) })
+                    .ilike('username', username);
+                if (error) throw error;
+                return true;
+            } catch (e) {
+                console.warn('No se pudo sincronizar saldo a Supabase:', e);
+                return false;
+            }
+        };
+
         window.confirmFreeFirePurchase = async function() {
             const prod = window.pendingFFProduct;
             if (!prod) return;
-            const ffId = window.pendingFFId || (document.getElementById('ff-confirm-id') ? document.getElementById('ff-confirm-id').value.trim() : '');
+            // Priorizar UID numérico verificado
+            let ffId = window.lastFFId || window.pendingFFId || '';
+            if (!ffId) {
+                const checker = document.getElementById('ff-check-id');
+                if (checker) ffId = checker.value.trim();
+            }
+            ffId = String(ffId).replace(/\s+/g, '');
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+            if (!/^\d{5,15}$/.test(ffId)) {
+                return alert('El ID de Free Fire debe ser solo números (5 a 15 dígitos).\nNo uses el nombre del jugador (ej. HELLOKITTY8).');
+            }
             if (!currentUser) return alert('Iniciá sesión para comprar');
 
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            const bal = users[currentUser]?.balance || 0;
-            const priceNum = parseInt((prod.price || '').replace(/[^0-9]/g, '')) || 0;
+            if (!users[currentUser]) return alert('Sesión inválida. Volvé a iniciar sesión.');
+            const bal = Number(users[currentUser].balance || 0);
+            const priceNum = window.parsePriceARS(prod.price);
+            if (!priceNum) return alert('No se pudo leer el precio del producto.');
             if (bal < priceNum) {
                 document.getElementById('ff-confirm-modal').classList.add('hidden');
-                return alert('Saldo insuficiente');
+                return alert('Saldo insuficiente.\nTu saldo: $' + bal.toLocaleString('es-AR') + ' ARS\nPrecio: $' + priceNum.toLocaleString('es-AR') + ' ARS');
             }
 
-            // Descontar saldo
+            document.getElementById('ff-confirm-modal').classList.add('hidden');
+
+            // Diamantes ilimitados: API primero, saldo después
+            if (prod.sub === 'ilimitado') {
+                alert('Enviando recarga a Free Fire…\nID: ' + ffId + '\nProducto: ' + prod.title);
+                const result = await window.buyWithRecargas(prod.title, ffId);
+                if (!result || !result.success) {
+                    alert(
+                        'NO se descontó saldo ni se envió la recarga.\n\n' +
+                        'Motivo: ' + (result?.error || 'API sin respuesta') + '\n' +
+                        (result?.detail ? ('Detalle: ' + result.detail + '\n') : '') +
+                        '\nRevisá el endpoint /api/recargas en Vercel (el player_id no está llegando a RecargasAmerica).'
+                    );
+                    return;
+                }
+            }
+
+            // Descontar saldo SOLO si la API OK (ilimitado) o si es pedido manual (limitado/especiales)
             users[currentUser].balance = bal - priceNum;
             users[currentUser].ff_id = ffId;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            await window.syncBalanceToCloud(currentUser, users[currentUser].balance);
 
-            // Crear pedido
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             const order = {
                 id: Date.now(),
@@ -3373,27 +3454,19 @@
                 title: prod.title,
                 price: prod.price,
                 targetUser: ffId,
+                ffName: window.lastFFName || users[currentUser].ff_name || '',
                 date: new Date().toLocaleDateString('es-AR'),
-                status: 'confirmed',
-                category: 'freefire'
+                status: prod.sub === 'ilimitado' ? 'delivered' : 'confirmed',
+                category: 'freefire',
+                sub: prod.sub
             };
             purchases.push(order);
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
 
-            document.getElementById('ff-confirm-modal').classList.add('hidden');
-
-            // Si es ilimitado, intentar compra por RecargasAmerica
-            if (prod.sub === 'ilimitado' && typeof window.buyWithRecargas === 'function') {
-                const result = await window.buyWithRecargas(prod.title, ffId);
-                if (result && result.success) {
-                    order.status = 'delivered';
-                    localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-                    alert('Recarga enviada correctamente');
-                } else {
-                    alert('Pedido creado. Estado: En proceso\n(API: ' + (result?.error || 'pendiente') + ')');
-                }
+            if (prod.sub === 'ilimitado') {
+                alert('Recarga enviada correctamente.\nID: ' + ffId + '\nNuevo saldo: $' + users[currentUser].balance.toLocaleString('es-AR') + ' ARS');
             } else {
-                alert('Pedido creado. Estado: En proceso');
+                alert('Pedido creado. Estado: En proceso (entrega manual).\nID: ' + ffId);
             }
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
@@ -3565,23 +3638,57 @@
         };
 
         window.buyWithRecargas = async function(productTitle, playerId) {
-            const num = (productTitle.match(/([\d.]+)/) || [])[1];
-            const diamonds = num ? parseInt(num.replace(/\./g, '')) : 0;
-            const productId = window.recargasProductMap[diamonds] || window.recargasProductMap[String(diamonds)];
+            const num = (String(productTitle).match(/([\d.]+)/) || [])[1];
+            const diamonds = num ? parseInt(String(num).replace(/\./g, ''), 10) : 0;
+            const productId = Number(window.recargasProductMap[diamonds] || window.recargasProductMap[String(diamonds)] || 0);
+            const uid = String(playerId || '').trim();
             if (!productId) {
-                console.warn('No RecargasAmerica ID for', productTitle);
-                return { success: false, error: 'Producto no mapeado' };
+                console.warn('No RecargasAmerica ID for', productTitle, diamonds);
+                return { success: false, error: 'Producto no mapeado a RecargasAmerica (diamantes: ' + diamonds + ')' };
             }
-            try {
-                const res = await fetch('/api/recargas', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ product_id: productId, player_id: playerId, quantity: 1 })
-                });
-                return await res.json();
-            } catch (e) {
-                return { success: false, error: e.message };
+            if (!/^\d{5,15}$/.test(uid)) {
+                return { success: false, error: 'player_id inválido. Debe ser el ID numérico de Free Fire, no el nombre.' };
             }
+
+            // Varias formas de payload: el proxy de Vercel a veces pierde player_id
+            const payloads = [
+                { product_id: productId, player_id: uid, quantity: 1 },
+                { product_id: productId, player_id: uid, quantity: 1, playerId: uid, uid: uid },
+                { product_id: String(productId), player_id: uid, quantity: 1 }
+            ];
+
+            let lastError = 'sin respuesta';
+            for (const body of payloads) {
+                try {
+                    console.log('POST /api/recargas', body);
+                    const res = await fetch('/api/recargas', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const text = await res.text();
+                    let json;
+                    try { json = JSON.parse(text); } catch (_) { json = { raw: text }; }
+                    console.log('Respuesta /api/recargas', res.status, json);
+
+                    if (res.ok && (json.success === true || json.status === true || json.status === 'OK' || json.ok === true)) {
+                        return { success: true, data: json };
+                    }
+                    // Si el proxy dice success false
+                    lastError = json.error || json.message || json.raw || ('HTTP ' + res.status);
+                    // Si dice missing player_id, seguir probando otro payload
+                    if (/player_id|MISSING_FIELD/i.test(String(lastError))) continue;
+                    // Otros errores de negocio: no reintentar
+                    return { success: false, error: lastError, detail: text.slice(0, 300) };
+                } catch (e) {
+                    lastError = e.message || String(e);
+                }
+            }
+            return {
+                success: false,
+                error: lastError,
+                detail: 'El proxy /api/recargas en Vercel no está enviando player_id a RecargasAmerica. Hay que corregir ese archivo serverless.'
+            };
         };
 
 
