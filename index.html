@@ -213,7 +213,7 @@
             <button onclick="window.toggleStaffDrawer()" class="text-kiwi-gold hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
         
-        <div class="flex flex-col h-full overflow-hidden">
+        <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
             <div class="flex border-b border-kiwi-border bg-kiwi-dark">
                 <button onclick="window.switchStaffTab('cuentas')" id="tab-s-cuentas" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold relative transition">
                     CUENTAS <span id="notif-cuentas" class="hidden absolute top-1 right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]"></span>
@@ -222,8 +222,6 @@
                     COMPRAS <span id="notif-compras" class="hidden absolute top-1 right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]"></span>
                 </button>
                 <button onclick="window.switchStaffTab('saldo')" id="tab-s-saldo" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">SALDO</button>
-                <button onclick="window.switchStaffTab('chat')" id="tab-s-chat" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">CHAT</button>
-                <button onclick="window.switchStaffTab('metricas')" id="tab-s-metricas" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">INFO</button>
             </div>
 
             <div class="flex-grow overflow-y-auto p-4 custom-scrollbar">
@@ -248,19 +246,6 @@
                     <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Usuario e ID deben pertenecer a la misma cuenta.</p>
                 </div>
 
-                <div id="panel-chat" class="hidden flex flex-col h-full">
-                    <div id="staff-chat-messages" class="flex-grow overflow-y-auto space-y-3 mb-4 custom-scrollbar pr-2 h-64 bg-kiwi-card/50 p-3 rounded-lg border border-kiwi-border"></div>
-                    <div class="flex gap-2 mt-auto">
-                        <input type="text" id="staff-chat-input" placeholder="Mensaje..." class="w-full bg-kiwi-dark border border-kiwi-gold/50 rounded-lg p-2 text-white text-sm focus:outline-none focus:border-kiwi-gold">
-                        <button onclick="window.sendStaffMessage()" class="bg-kiwi-gold text-black rounded-lg px-4 hover:bg-yellow-500 transition"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-
-                <div id="panel-metricas" class="space-y-3 hidden">
-                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-1 mb-3">Estadísticas de Atención</h4>
-                    <div id="metrics-content" class="text-sm text-gray-300 space-y-2"></div>
-                    
-                </div>
             </div>
         </div>
     </div>
@@ -1472,21 +1457,11 @@
                 }
 
                 // 2. Cargar Compras
-                const { data: purchasesData } = await supabaseClient.from('compras').select('*');
-                if (purchasesData) {
-                    let localPurchases = purchasesData.map(p => ({
-                        id: p.id, user: p.user_name, title: p.title, price: p.price, method: p.method, date: new Date().toLocaleDateString('es-ES') + " (Nube)", status: 'pending', claimedBy: null
-                    }));
-                    localStorage.setItem('kiwi_purchases', JSON.stringify(localPurchases));
-                }
-
-                // 3. Cargar Chat
-                const { data: chatData } = await supabaseClient.from('chat_staff').select('*').order('id', { ascending: true }).limit(50);
-                if (chatData) {
-                    let localChat = chatData.map(msg => ({
-                        sender: msg.sender, role: msg.role, text: msg.message, time: msg.time_str || "00:00"
-                    }));
-                    localStorage.setItem('kiwi_staff_chat', JSON.stringify(localChat));
+                const { data: purchasesData, error: purchasesErr } = await supabaseClient.from('compras').select('*');
+                if (purchasesErr) console.warn('No se pudieron leer compras de la nube:', purchasesErr);
+                if (Array.isArray(purchasesData)) {
+                    window.mergeCloudPurchases(purchasesData);
+                    window.syncUnsyncedPurchases();
                 }
 
                 updateAuthUI();
@@ -1496,6 +1471,72 @@
 
             } catch (err) { console.error("Error sincronizando:", err); }
         };
+
+
+        // ===== Sincronización de compras con Supabase (v15) =====
+        window.sameUser = function(a, b) { return a != null && b != null && String(a).toLowerCase() === String(b).toLowerCase(); };
+        window.readPurchases = function() { try { const a = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]'); return Array.isArray(a) ? a : []; } catch (_) { return []; } };
+        window.mergeCloudPurchases = function(rows) {
+            const local = window.readPurchases();
+            const byId = {}; local.forEach(p => { byId[String(p.id)] = p; });
+            const cloudIds = new Set();
+            const merged = rows.map(r => {
+                const id = String(r.id); cloudIds.add(id);
+                const loc = byId[id] || {};
+                let date = r.date_str || loc.date || '';
+                if (!date && r.created_at) date = new Date(r.created_at).toLocaleString('es-AR');
+                return Object.assign({}, loc, {
+                    id: r.id, user: r.user_name, title: r.title, price: r.price, method: r.method,
+                    status: r.status || loc.status || 'pending',
+                    claimedBy: r.claimedBy ?? r.claimed_by ?? loc.claimedBy ?? null,
+                    targetUser: r.target_user ?? loc.targetUser ?? '',
+                    extra: r.extra ?? loc.extra ?? '',
+                    bulkOrderId: r.bulk_order_id ?? loc.bulkOrderId,
+                    category: r.category ?? loc.category,
+                    date: date, _synced: true
+                });
+            });
+            // Conservar compras locales que todavía no subieron (las ya sincronizadas que no están en la nube fueron borradas por staff)
+            local.forEach(p => { if (!cloudIds.has(String(p.id)) && !p._synced) merged.push(p); });
+            merged.sort((a, b) => Number(a.id) - Number(b.id));
+            window._purchaseSyncMuted = true;
+            localStorage.setItem('kiwi_purchases', JSON.stringify(merged));
+            window._purchaseSyncMuted = false;
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            if (typeof window.updateOrdersBadge === 'function') { try { window.updateOrdersBadge(); } catch (_) {} }
+        };
+        window.purchaseToRow = function(p, full) {
+            const row = { id: p.id, user_name: p.user, title: p.title, price: p.price, method: p.method || '', status: p.status || 'pending', target_user: p.targetUser || '', extra: p.extra || '' };
+            if (full) { if (p.bulkOrderId != null) row.bulk_order_id = String(p.bulkOrderId); row.category = p.category || ''; row.date_str = p.date || ''; row.claimedBy = p.claimedBy || null; }
+            return row;
+        };
+        window.syncUnsyncedPurchases = async function() {
+            if (!supabaseClient || !window.supabaseOnline) return;
+            const list = window.readPurchases().filter(p => !p._synced && p.user);
+            if (!list.length) return;
+            let { error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, true)));
+            if (error) {
+                console.warn('Upsert completo de compras falló, reintentando con columnas básicas:', error);
+                ({ error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, false))));
+            }
+            if (error) { console.error('No se pudieron guardar compras en Supabase:', error); return; }
+            const ids = new Set(list.map(p => String(p.id)));
+            const all = window.readPurchases().map(p => ids.has(String(p.id)) ? Object.assign(p, { _synced: true }) : p);
+            window._purchaseSyncMuted = true;
+            localStorage.setItem('kiwi_purchases', JSON.stringify(all));
+            window._purchaseSyncMuted = false;
+        };
+        (function() {
+            // Cualquier flujo que guarde compras en localStorage dispara la subida a la nube.
+            const origSet = Storage.prototype.setItem;
+            let t = null;
+            Storage.prototype.setItem = function(k, v) {
+                origSet.apply(this, arguments);
+                if (this !== window.localStorage) return;
+                if (k === 'kiwi_purchases' && !window._purchaseSyncMuted) { clearTimeout(t); t = setTimeout(() => window.syncUnsyncedPurchases(), 500); }
+                if (k === 'kiwi_logged_user' && typeof supabaseClient !== 'undefined' && supabaseClient && window.supabaseOnline && typeof fetchInitialData === 'function') setTimeout(() => fetchInitialData(), 300);
+            };
+        })();
 
         function initStaffRealtime() {
             if (!supabaseClient || !window.supabaseOnline) return;
@@ -2211,8 +2252,9 @@
         let currentStaffTab = 'cuentas';
 
         function checkNotifications() {
-            let notifs = JSON.parse(localStorage.getItem('kiwi_notifications'));
+            let notifs = JSON.parse(localStorage.getItem('kiwi_notifications') || 'null') || { users: 0, purchases: 0 };
             const mainDot = document.getElementById('staff-notif-dot');
+            if (!mainDot) return;
             if (notifs.users > 0 || notifs.purchases > 0) { mainDot.classList.remove('hidden'); } else { mainDot.classList.add('hidden'); }
         }
 
@@ -2226,9 +2268,12 @@
 
         window.switchStaffTab = function(tab) {
             currentStaffTab = tab;
-            ['cuentas', 'compras', 'saldo', 'chat', 'metricas'].forEach(t => {
-                document.getElementById(`panel-${t}`).classList.add('hidden');
-                document.getElementById(`tab-s-${t}`).classList.replace('text-kiwi-gold', 'text-gray-500');
+            if (!['cuentas', 'compras', 'saldo'].includes(tab)) tab = 'cuentas';
+            currentStaffTab = tab;
+            ['cuentas', 'compras', 'saldo'].forEach(t => {
+                const pn = document.getElementById(`panel-${t}`), tb = document.getElementById(`tab-s-${t}`);
+                if (pn) pn.classList.add('hidden');
+                if (tb) tb.classList.replace('text-kiwi-gold', 'text-gray-500');
             });
             document.getElementById(`panel-${tab}`).classList.remove('hidden');
             document.getElementById(`tab-s-${tab}`).classList.replace('text-gray-500', 'text-kiwi-gold');
@@ -2247,8 +2292,6 @@
             if (tab === 'cuentas') renderStaffCuentas(myRole);
             else if (tab === 'compras') renderStaffCompras(myRole);
             else if (tab === 'saldo') { const status = document.getElementById('credit-status'); if (status) status.textContent = ''; }
-            else if (tab === 'chat') renderStaffChat(myRole); 
-            else if (tab === 'metricas') renderStaffMetrics(myRole);
         }
 
         function renderStaffCuentas(myRole) {
@@ -2406,7 +2449,7 @@
 
         function renderStaffCompras(myRole) {
             const container = document.getElementById('panel-compras');
-            let purchases = JSON.parse(localStorage.getItem('kiwi_purchases'));
+            let purchases = window.readPurchases();
             container.innerHTML = '';
 
             if (purchases.length === 0) {
@@ -2417,7 +2460,7 @@
             purchases.slice().reverse().forEach(p => {
                 let statusHtml = p.status === 'pending' ? `<button onclick="window.claimPurchase(${p.id})" class="bg-kiwi-gold hover:bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded transition">Reclamar</button>` : 
                                  p.status === 'claimed' ? (p.claimedBy === currentUser || myRole === 'owner' || myRole === 'ceo' ? `<button onclick="window.accreditPurchase(${p.id})" class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-3 py-1 rounded transition"><i class="fa-solid fa-check"></i> Acreditar</button>` : `<span class="text-yellow-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-user-gear"></i> Atendiendo: ${p.claimedBy}</span>`) : 
-                                 `<span class="text-green-500 text-[10px] font-bold uppercase"><i class="fa-solid fa-check-double"></i> Acreditado por ${p.claimedBy}</span>`;
+                                 `<span class="text-green-500 text-[10px] font-bold uppercase"><i class="fa-solid fa-check-double"></i> ${p.status === 'accredited' ? 'Acreditado' : (window.getStatusLabel ? window.getStatusLabel(p.status) : p.status)}${p.claimedBy ? ' por ' + p.claimedBy : ''}</span>`;
 
                 let delBtn = (myRole === 'owner' || myRole === 'ceo') ? `<button onclick="window.deletePurchase(${p.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-300 transition"><i class="fa-solid fa-xmark text-lg"></i></button>` : '';
 
@@ -3104,7 +3147,8 @@
                             if (supabaseClient) {
                                 supabaseClient.from('compras')
                                     .update({ status: newStatus })
-                                    .eq('id', order.id);
+                                    .eq('id', order.id)
+                                    .then(({ error }) => { if (error) console.warn('No se pudo actualizar estado en nube:', error); });
                             }
                         } catch (_) {}
                     } else if (remoteStatus) {
@@ -4366,7 +4410,7 @@
 
                 try {
                     if (supabaseClient) {
-                        supabaseClient.from('compras').insert([{
+                        supabaseClient.from('compras').upsert([{
                             id: orderId,
                             user_name: currentUser,
                             title: prod.title,
@@ -4376,7 +4420,7 @@
                             target_user: targetUser,
                             extra: extra,
                             bulk_order_id: String(bulkResult.orderId)
-                        }]);
+                        }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4479,7 +4523,7 @@
 
                 try {
                     if (supabaseClient) {
-                        supabaseClient.from('compras').insert([{
+                        supabaseClient.from('compras').upsert([{
                             id: orderIdR,
                             user_name: currentUser,
                             title: prod.title,
@@ -4488,7 +4532,7 @@
                             status: 'delivered',
                             target_user: targetUser || '',
                             extra: keysText
-                        }]);
+                        }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4540,7 +4584,7 @@
 
             try {
                 if (supabaseClient) {
-                    supabaseClient.from('compras').insert([{
+                    supabaseClient.from('compras').upsert([{
                         id: orderId,
                         user_name: currentUser,
                         title: prod.title,
@@ -4549,7 +4593,7 @@
                         status: 'confirmed',
                         target_user: targetUser,
                         extra: extra
-                    }]);
+                    }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                 }
             } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4594,6 +4638,7 @@
             }
             panel.classList.remove('hidden');
             panel.style.display = 'block';
+            if (supabaseClient && window.supabaseOnline && typeof fetchInitialData === 'function') fetchInitialData();
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             // Consultar estados del proveedor y marcar entregados
             if (typeof window.syncBulkOrderStatuses === 'function') {
@@ -4616,7 +4661,7 @@
             const container = document.getElementById('client-orders-list');
             if (!container || !currentUser) return;
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            const mine = purchases.filter(p => p.user === currentUser).reverse();
+            const mine = purchases.filter(p => window.sameUser(p.user, currentUser)).reverse();
             if (mine.length === 0) {
                 container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No tenés pedidos todavía.</p>';
                 return;
@@ -4807,7 +4852,7 @@
         window.submitReview = function() {
             if (!currentUser) return alert('Iniciá sesión para dejar una reseña');
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            const hasDelivered = purchases.some(p => p.user === currentUser && (p.status === 'delivered' || p.status === 'entregado'));
+            const hasDelivered = purchases.some(p => window.sameUser(p.user, currentUser) && (p.status === 'delivered' || p.status === 'entregado'));
             if (!hasDelivered) return alert('Solo podés reseñar si tenés al menos un pedido entregado');
             if (window.selectedStars === 0) return alert('Seleccioná las estrellas');
             const text = document.getElementById('review-text').value.trim();
@@ -4937,7 +4982,7 @@
         window.updateOrdersBadge = function() {
             if (!currentUser) return;
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            const pending = purchases.filter(p => p.user === currentUser && (p.status === 'receipt_review' || p.status === 'pending')).length;
+            const pending = purchases.filter(p => window.sameUser(p.user, currentUser) && (p.status === 'receipt_review' || p.status === 'pending')).length;
             const btn = document.querySelector('button[onclick="window.openOrdersPanel()"]');
             if (btn && pending > 0) {
                 btn.innerHTML = `<i class="fa-solid fa-box"></i> PEDIDOS <span class="bg-kiwi-red text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">${pending}</span>`;
