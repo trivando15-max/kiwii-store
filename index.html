@@ -957,7 +957,7 @@
                 <i class="fa-solid fa-triangle-exclamation"></i> ESTA ES UNA OFERTA LIMITADA (SOLO 1 COMPRA POR ID).
             </p>
 
-            <div id="checkout-payment-info" class="bg-kiwi-dark p-3.5 rounded-xl border border-kiwi-border mb-4 text-xs space-y-1">
+            <div id="checkout-payment-info" class="hidden bg-kiwi-dark p-3.5 rounded-xl border border-kiwi-border mb-4 text-xs space-y-1">
                 <p class="text-kiwi-gold font-bold font-orbitron uppercase text-[11px]">DATOS DE PAGO</p>
                 <p class="text-gray-300"><span class="text-gray-500">Titular:</span> <strong class="text-white">Iván Estrada</strong></p>
                 <p id="checkout-payment-hint" class="text-gray-400">Seleccioná el método de pago según tu moneda.</p>
@@ -975,7 +975,7 @@
                     <input type="text" id="extra-account-input" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
                 </div>
 
-                <div>
+                <div id="checkout-payment-method-wrap" class="hidden">
                     <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron mt-2">Método de Pago</label>
                     <select id="payment-method-select" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
                         <option value="mp_ars">Mercado Pago / Transferencia (ARS)</option>
@@ -1542,17 +1542,26 @@
                 }
             }
 
-            // Método de pago sugerido según moneda actual
-            const paySelect = document.getElementById('payment-method-select');
-            if (paySelect) {
-                const curr = window.currentCurrency || 'ARS';
-                const map = { ARS: 'mp_ars', USDT: 'binance', MXN: 'transfer_mxn', COP: 'transfer_cop', PEN: 'transfer_pen' };
-                paySelect.value = map[curr] || 'mp_ars';
-            }
-            const payHint = document.getElementById('checkout-payment-hint');
-            if (payHint && window.PAYMENT_BY_CURRENCY) {
-                const info = window.PAYMENT_BY_CURRENCY[window.currentCurrency || 'ARS'];
-                if (info) payHint.textContent = info.detail;
+            // Datos de pago + métodos de pago: SOLO en Robux (grupo / gamepass / plus)
+            const payInfo = document.getElementById('checkout-payment-info');
+            const payMethodWrap = document.getElementById('checkout-payment-method-wrap');
+            if (isRobux) {
+                if (payInfo) payInfo.classList.remove('hidden');
+                if (payMethodWrap) payMethodWrap.classList.remove('hidden');
+                const paySelect = document.getElementById('payment-method-select');
+                if (paySelect) {
+                    const curr = window.currentCurrency || 'ARS';
+                    const map = { ARS: 'mp_ars', USDT: 'binance', MXN: 'transfer_mxn', COP: 'transfer_cop', PEN: 'transfer_pen' };
+                    paySelect.value = map[curr] || 'mp_ars';
+                }
+                const payHint = document.getElementById('checkout-payment-hint');
+                if (payHint && window.PAYMENT_BY_CURRENCY) {
+                    const info = window.PAYMENT_BY_CURRENCY[window.currentCurrency || 'ARS'];
+                    if (info) payHint.textContent = info.detail;
+                }
+            } else {
+                if (payInfo) payInfo.classList.add('hidden');
+                if (payMethodWrap) payMethodWrap.classList.add('hidden');
             }
 
             const m = document.getElementById('checkout-modal');
