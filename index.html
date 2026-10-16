@@ -597,30 +597,35 @@
             <!-- FREE FIRE: pestañas y selector "tipo de recarga" eliminados; todo vive en #ff-shell -->
             <div id="freefire-subcategories" class="hidden"></div>
 
-            <!-- INSTAGRAM TABS -->
-            <div id="instagram-subcategories" class="reveal hidden mb-8 bg-kiwi-card border border-pink-500/40 rounded-2xl p-5 shadow-lg">
-                <h4 class="font-orbitron text-sm font-bold text-pink-400 mb-3 uppercase flex items-center gap-2">
-                    <i class="fa-solid fa-heart"></i> Selecciona el servicio:
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-rajdhani font-bold">
-                    <button id="tab-ig-seguidores" onclick="window.filterIgSub('seguidores')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
-                        <span class="text-xl">👥</span> SEGUIDORES DE INSTAGRAM
-                    </button>
-                    <button id="tab-ig-likes" onclick="window.filterIgSub('likes')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
-                        <span class="text-xl">❤️</span> LIKES / VISTAS DE INSTAGRAM REELS O PUBLICACIONES
-                    </button>
-                    <button id="tab-tiktok-likes" onclick="window.filterIgSub('tiktok-likes')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
-                        <span class="text-xl">🎵</span> LIKES / VISTAS DE TIKTOK
-                    </button>
-                    <button id="tab-tiktok-seguidores" onclick="window.filterIgSub('tiktok-seguidores')" class="ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight">
-                        <span class="text-xl">👥</span> SEGUIDORES DE TIKTOK
-                    </button>
+            <!-- REDES SOCIALES: selector por plataforma -->
+            <div id="instagram-subcategories" class="reveal hidden mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-[#14161c] border border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                        <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/330px-Instagram_logo_2022.svg.png" alt="Instagram" class="w-11 h-11 rounded-xl object-contain shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-orbitron font-bold text-white text-sm">Instagram</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="tab-ig-seguidores" onclick="window.filterIgSub('seguidores')" class="ig-sub-btn"><i class="fa-solid fa-user-plus"></i> Seguidores</button>
+                                <button id="tab-ig-likes" onclick="window.filterIgSub('likes')" class="ig-sub-btn"><i class="fa-solid fa-heart"></i> Likes / Vistas</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[#14161c] border border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                        <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Tiktok_icon.svg/330px-Tiktok_icon.svg.png" alt="TikTok" class="w-11 h-11 rounded-xl object-contain shrink-0 bg-black">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-orbitron font-bold text-white text-sm">TikTok</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="tab-tiktok-likes" onclick="window.filterIgSub('tiktok-likes')" class="ig-sub-btn"><i class="fa-solid fa-heart"></i> Likes / Vistas</button>
+                                <button id="tab-tiktok-seguidores" onclick="window.filterIgSub('tiktok-seguidores')" class="ig-sub-btn"><i class="fa-solid fa-user-plus"></i> Seguidores</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="category-info-container" class="hidden mb-6"></div>
 
-            <div id="instagram-likes-general-info" class="hidden mb-6 bg-kiwi-card border border-pink-500/40 rounded-2xl p-5 shadow-lg">
+            <div id="instagram-likes-general-info" class="hidden mb-6 bg-[#14161c] border border-white/5 rounded-2xl p-5">
                 <h3 class="font-orbitron text-lg font-bold text-pink-400 mb-3 flex items-center gap-2">
                     <i class="fa-solid fa-circle-info"></i> INFORMACIÓN GENERAL
                 </h3>
@@ -1572,7 +1577,7 @@
                 } else if(activeCategoryTitle.includes('FREE FIRE')) {
                    if (typeof window.renderFFAll === 'function') window.renderFFAll();
                 } else if(activeCategoryTitle.includes('REDES SOCIALES')) {
-                   let activeSubBtn = document.querySelector('.ig-sub-btn.border-pink-500');
+                   let activeSubBtn = document.querySelector('.ig-sub-btn.bg-white');
                    if(activeSubBtn) activeSubBtn.click();
                 } else if(activeCategoryTitle.includes('STREAMING')) {
                    window.renderVariantCatalog();
@@ -1783,7 +1788,9 @@
             { name: "#SeIfMade Ent", url: "https://www.roblox.com/communities/33707960/SeIfMade-Ent#!/about" },
             { name: "drowsing", url: "https://www.roblox.com/communities/35399081/drowsing#!/about" },
             { name: "AnimeFACTORY1", url: "https://www.roblox.com/communities/809551446/AnimeFACTORY1#!/about" },
-            { name: "UGC Bundle Shop", url: "https://www.roblox.com/communities/567256399/UGC-Bundle-Shop#!/about" }
+            { name: "UGC Bundle Shop", url: "https://www.roblox.com/communities/567256399/UGC-Bundle-Shop#!/about" },
+            { name: "tactical cool", url: "https://www.roblox.com/communities/608833450/tactical-cool#!/about" },
+            { name: "Nova Group - Est 2026", url: "https://www.roblox.com/es/communities/511330430/Nova-Group-Est-2026" }
         ];
 
         window.renderInlineRobloxGroups = function() {
@@ -3422,11 +3429,20 @@
                              <li>Es necesario estar en TODOS los grupos POR MAS DE 15 DIAS.</li>
                              <li>Una vez estés más de 15 días, recibirás los robux el mismo día de la compra.</li>
                              <li>Únicamente se necesita tu usuario de roblox.</li>
+                             <li>Si no estás en todos los grupos no podemos realizar la recarga de los Robux. Es de suma importancia que estés en TODOS los grupos.</li>
                          </ul>
                          <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3"><i class="fa-solid fa-users"></i> Grupos Oficiales:</h4>
                          <div id="inline-roblox-groups" class="max-h-48 overflow-y-auto custom-scrollbar space-y-2 pr-2 mb-4"></div>
                          <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3 border-t border-blue-500/30 pt-4"><i class="fa-regular fa-calendar-check"></i> Calculadora de 15 días</h4>
-                         <input type="datetime-local" id="join-date" onchange="window.calculate15Days()" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-blue-500 text-sm mb-2">
+                         <p class="text-[11px] text-gray-400 mb-2">Elegí la fecha y hora en que te uniste al último grupo:</p>
+                         <div class="flex flex-col sm:flex-row gap-2 mb-2">
+                             <div class="relative flex-1 cursor-pointer" onclick="try{document.getElementById('join-date').showPicker()}catch(e){document.getElementById('join-date').focus()}">
+                                 <i class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 text-lg pointer-events-none"></i>
+                                 <input type="datetime-local" id="join-date" onchange="window.calculate15Days()" style="color-scheme: dark;" class="kiwi-date w-full bg-kiwi-dark border border-blue-500/40 hover:border-blue-500 rounded-xl p-3 pl-10 text-white focus:border-blue-500 focus:outline-none text-sm cursor-pointer">
+                             </div>
+                             <button type="button" onclick="try{document.getElementById('join-date').showPicker()}catch(e){document.getElementById('join-date').focus()}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"><i class="fa-regular fa-calendar-days"></i> Seleccionar fecha</button>
+                         </div>
+                         <style>.kiwi-date::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.4);opacity:1;cursor:pointer;width:20px;height:20px;}</style>
                          <p id="calc-result-date" class="text-sm font-bold text-green-400 hidden"></p>
                     </div>
                 `;
@@ -3896,9 +3912,9 @@
             const grid = document.getElementById('product-grid');
             if (grid) grid.classList.remove('hidden');
 
-            document.querySelectorAll('.ig-sub-btn').forEach(btn => btn.className = 'ig-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-pink-500 hover:text-white transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm text-center leading-tight');
+            document.querySelectorAll('.ig-sub-btn').forEach(btn => btn.className = 'ig-sub-btn px-3.5 py-1.5 rounded-full text-xs font-rajdhani font-bold border transition bg-[#1b1e25] text-gray-300 border-white/10 hover:border-white/30 hover:text-white flex items-center gap-1.5');
             let activeBtn = document.getElementById(({ 'tiktok-likes': 'tab-tiktok-likes', 'tiktok-seguidores': 'tab-tiktok-seguidores' })[subCat] || ('tab-ig-' + subCat));
-            if (activeBtn) activeBtn.className = 'ig-sub-btn bg-pink-600/30 border border-pink-500 text-white p-3 rounded-xl transition flex flex-col md:flex-row items-center justify-center gap-2 text-xs md:text-sm shadow-inner transform scale-[1.02] text-center leading-tight';
+            if (activeBtn) activeBtn.className = 'ig-sub-btn px-3.5 py-1.5 rounded-full text-xs font-rajdhani font-bold border transition bg-white text-black border-white flex items-center gap-1.5';
             
             const infoContainer = document.getElementById('category-info-container');
             if (infoContainer) {
@@ -3916,8 +3932,74 @@
                 'tiktok-likes': p => p.category === 'tiktok' && p.sub === 'likes',
                 'tiktok-seguidores': p => p.category === 'tiktok' && p.sub === 'seguidores'
             };
-            window.renderProducts(window.products.filter(filters[subCat] || (() => false)));
+            window.renderSocial(subCat, window.products.filter(filters[subCat] || (() => false)));
         }
+
+        // === REDES SOCIALES: panel con encabezado por plataforma y tarjetas compactas ===
+        window.SOCIAL_META = {
+            'seguidores': { name: 'Instagram', what: 'Seguidores', sub: 'Elegí la calidad en cada paquete · se entrega en tu perfil', logo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/330px-Instagram_logo_2022.svg.png', accent: 'from-pink-500/20', ring: 'hover:border-pink-500/50', btn: 'bg-pink-600 hover:bg-pink-500', icon: 'fa-user-plus', unit: 'seguidores' },
+            'likes': { name: 'Instagram', what: 'Likes / Vistas', sub: 'Para Reels o publicaciones · adjuntá el link en el checkout', logo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/330px-Instagram_logo_2022.svg.png', accent: 'from-pink-500/20', ring: 'hover:border-pink-500/50', btn: 'bg-pink-600 hover:bg-pink-500', icon: 'fa-heart', unit: 'likes / vistas' },
+            'tiktok-likes': { name: 'TikTok', what: 'Likes / Vistas', sub: 'Para tus videos · adjuntá el link en el checkout', logo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Tiktok_icon.svg/330px-Tiktok_icon.svg.png', accent: 'from-cyan-400/15', ring: 'hover:border-cyan-400/50', btn: 'bg-cyan-600 hover:bg-cyan-500', icon: 'fa-heart', unit: 'likes / vistas' },
+            'tiktok-seguidores': { name: 'TikTok', what: 'Seguidores', sub: 'Para tu perfil de TikTok', logo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Tiktok_icon.svg/330px-Tiktok_icon.svg.png', accent: 'from-cyan-400/15', ring: 'hover:border-cyan-400/50', btn: 'bg-cyan-600 hover:bg-cyan-500', icon: 'fa-user-plus', unit: 'seguidores' }
+        };
+        window.renderSocial = function(subCat, items) {
+            const m = window.SOCIAL_META[subCat] || window.SOCIAL_META['seguidores'];
+            const container = document.getElementById('product-grid');
+            const priceOf = p => String(window.getConvertedPrice(p)).split(' - ').pop();
+            const usdOf = p => Number(p.usdtPrice || 0);
+            const cards = items.map(prod => {
+                const isIgF = prod.category === 'instagram' && prod.sub === 'seguidores';
+                const isLV = (prod.category === 'instagram' || prod.category === 'tiktok') && prod.sub === 'likes';
+                const qty = (String(prod.title).match(/^[\d.]+/) || [''])[0];
+                const action = isIgF ? `window.buyInstagramFollowers(${prod.id})` : isLV ? `window.buySocialLikesViews(${prod.id})` : `window.openCheckout(${prod.id})`;
+                return `
+                <div class="group relative bg-[#1b1e25] border border-white/5 ${m.ring} rounded-2xl overflow-hidden flex flex-col transition">
+                    ${prod.popular && prod.tag ? `<span class="absolute top-2 right-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/90 text-black"><i class="fa-solid fa-crown"></i> ${prod.tag}</span>` : ''}
+                    <div class="bg-gradient-to-b ${m.accent} to-transparent px-4 pt-5 pb-3 text-center">
+                        <i class="fa-solid ${m.icon} text-white/70 text-sm mb-1"></i>
+                        <h4 class="sr-only">${prod.title}</h4>
+                        <p class="font-orbitron font-black text-2xl text-white leading-none">${qty || prod.title}</p>
+                        <p class="text-[11px] uppercase tracking-widest text-gray-400 font-rajdhani font-bold mt-1">${m.unit}</p>
+                    </div>
+                    <div class="px-4 pb-4 pt-2 flex flex-col gap-2 flex-1 bg-[#20232b]">
+                        <div class="text-center">
+                            <p class="text-emerald-400 font-bold text-base leading-tight" id="ig-price-${prod.id}">${isIgF ? 'Elegí una calidad' : priceOf(prod)}</p>
+                            <p class="text-[11px] text-gray-500">${isIgF ? 'desde ' : ''}≈ $${usdOf(prod).toFixed(2)} USD</p>
+                        </div>
+                        ${isIgF ? `
+                        <div class="text-left">
+                            <label for="ig-quality-${prod.id}" class="sr-only">Calidad</label>
+                            <select id="ig-quality-${prod.id}" onchange="window.updateInstagramFollowerCard(${prod.id})" class="w-full bg-[#14161c] border border-white/10 focus:border-pink-500 rounded-xl p-2.5 text-white text-xs focus:outline-none">
+                                <option value="" selected disabled>Elegí la calidad...</option>
+                                <option value="baja">Calidad Baja</option>
+                                <option value="media">Calidad Media</option>
+                                <option value="premium">Calidad Premium</option>
+                            </select>
+                            <div id="ig-quality-details-${prod.id}" class="mt-2 rounded-xl border border-white/5 bg-black/20 p-3 text-xs text-gray-300 hidden">
+                                <p class="font-orbitron font-bold text-pink-300 mb-2" id="ig-quality-title-${prod.id}"></p>
+                                <ul class="space-y-1.5 font-rajdhani" id="ig-quality-list-${prod.id}"></ul>
+                            </div>
+                        </div>` : ''}
+                        <button onclick="${action}" class="mt-auto w-full ${m.btn} text-white font-rajdhani font-bold text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-cart-shopping text-xs"></i> Comprar
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            container.innerHTML = `
+                <div class="col-span-full bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6" id="social-panel">
+                    <div class="flex items-center gap-3 mb-5">
+                        <img src="${m.logo}" alt="${m.name}" class="w-10 h-10 rounded-xl object-contain ${m.name === 'TikTok' ? 'bg-black' : ''}">
+                        <div>
+                            <h3 class="font-orbitron font-bold text-white text-base md:text-lg leading-tight">${m.what} de ${m.name}</h3>
+                            <p class="text-xs text-gray-500 font-rajdhani">${m.sub}</p>
+                        </div>
+                        <span class="ml-auto text-[11px] text-gray-500 font-rajdhani hidden sm:inline">${items.length} paquetes</span>
+                    </div>
+                    ${items.length ? `<div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">${cards}</div>`
+                        : `<div class="text-center py-10"><i class="fa-regular fa-clock text-gray-500 text-2xl mb-3"></i><p class="font-bold text-white text-sm">Próximamente</p><p class="text-xs text-gray-500 mt-1">Todavía no hay paquetes disponibles para este servicio.</p></div>`}
+                </div>`;
+        };
 
 
         // === SISTEMA DE PEDIDOS Y SALDO ===
