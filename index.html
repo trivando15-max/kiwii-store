@@ -1430,6 +1430,7 @@
                    if(activeSubBtn) activeSubBtn.click();
                 } else if(activeCategoryTitle.includes('STREAMING')) {
                    window.renderVariantCatalog();
+                   if (typeof window.refreshResellmeStockUI === 'function') window.refreshResellmeStockUI(false);
                 }
             }
         };
@@ -2498,7 +2499,16 @@
                 let variantsOptions = `<option value="" disabled selected>Selecciona una variante...</option>`;
                 item.variants.forEach((v, i) => {
                     let displayPrice = window.getConvertedVariantPrice(v.price);
-                    variantsOptions += `<option value="${i}">${v.name} - ${displayPrice}</option>`;
+                    const stock = (typeof window.getResellmeStock === 'function')
+                        ? window.getResellmeStock(item.id, v.name)
+                        : null;
+                    let stockLabel = '';
+                    if (stock === null || stock === undefined) stockLabel = '';
+                    else if (stock === Infinity || stock === -1) stockLabel = ' · Stock: ∞';
+                    else if (stock <= 0) stockLabel = ' · Sin stock';
+                    else stockLabel = ' · Stock: ' + stock;
+                    const disabled = (stock !== null && stock !== undefined && stock !== Infinity && stock !== -1 && stock <= 0) ? ' disabled' : '';
+                    variantsOptions += `<option value="${i}"${disabled}>${v.name} - ${displayPrice}${stockLabel}</option>`;
                 });
 
                 card.innerHTML = `
@@ -2508,7 +2518,7 @@
                         </div>
                         <div class="flex-grow">
                             <h4 class="font-orbitron font-bold text-lg text-white">${item.title}</h4>
-                            <p class="text-[10px] text-gray-400 font-rajdhani uppercase tracking-wide">${item.variants.length} Opciones</p>
+                            <p class="text-[10px] text-gray-400 font-rajdhani uppercase tracking-wide">${item.variants.length} Opciones <span id="stock-hint-${item.id}" class="text-kiwi-gold"></span></p>
                         </div>
                         <i id="icon-${item.id}" class="fa-solid fa-chevron-down text-kiwi-red transition-transform duration-300"></i>
                     </div>
@@ -2519,12 +2529,13 @@
                             <select id="select-${item.id}" onchange="window.updateVariantDetails('${item.id}')" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition mb-4">
                                 ${variantsOptions}
                             </select>
+                            <p id="stock-line-${item.id}" class="text-[11px] text-gray-400 mb-3 hidden"></p>
                             
                             <div id="info-${item.id}" class="hidden">
                                 <p class="text-xs text-kiwi-gold font-bold mb-2 uppercase tracking-wide">¿Qué incluye?</p>
                                 <ul id="list-${item.id}" class="text-xs text-gray-300 font-rajdhani space-y-1 mb-4 pl-1">
                                 </ul>
-                                <button onclick="window.buyVariant('${item.id}')" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-2.5 rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-2">
+                                <button id="buy-btn-${item.id}" onclick="window.buyVariant('${item.id}')" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-2.5 rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-cart-shopping"></i> Continuar Compra
                                 </button>
                             </div>
@@ -2570,9 +2581,41 @@
             const variant = item.variants[variantIndex];
             const infoDiv = document.getElementById(`info-${id}`);
             const listEl = document.getElementById(`list-${id}`);
+            const stockLine = document.getElementById('stock-line-' + id);
+            const buyBtn = document.getElementById('buy-btn-' + id);
             
             listEl.innerHTML = variant.includes.map(inc => `<li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-500 mt-1 text-[10px]"></i> <span>${inc}</span></li>`).join('');
             infoDiv.classList.remove('hidden');
+
+            const stock = (typeof window.getResellmeStock === 'function')
+                ? window.getResellmeStock(item.id, variant.name)
+                : null;
+            if (stockLine) {
+                if (stock === null || stock === undefined) {
+                    stockLine.classList.add('hidden');
+                    stockLine.textContent = '';
+                } else if (stock === Infinity || stock === -1) {
+                    stockLine.classList.remove('hidden');
+                    stockLine.innerHTML = '<span class="text-green-400"><i class="fa-solid fa-boxes-stacked"></i> Stock disponible</span>';
+                } else if (stock <= 0) {
+                    stockLine.classList.remove('hidden');
+                    stockLine.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-circle-xmark"></i> Sin stock por ahora</span>';
+                } else {
+                    stockLine.classList.remove('hidden');
+                    stockLine.innerHTML = '<span class="text-kiwi-gold"><i class="fa-solid fa-boxes-stacked"></i> Stock: <strong>' + stock + '</strong></span>';
+                }
+            }
+            if (buyBtn) {
+                if (stock !== null && stock !== undefined && stock !== Infinity && stock <= 0) {
+                    buyBtn.disabled = true;
+                    buyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    buyBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Sin stock';
+                } else {
+                    buyBtn.disabled = false;
+                    buyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    buyBtn.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Continuar Compra';
+                }
+            }
         }
 
         window.buyVariant = function(id) {
@@ -2582,6 +2625,13 @@
             
             if (variantIndex === "") return;
             const variant = item.variants[variantIndex];
+
+            const stock = (typeof window.getResellmeStock === 'function')
+                ? window.getResellmeStock(item.id, variant.name)
+                : null;
+            if (stock !== null && stock !== undefined && stock !== Infinity && stock <= 0) {
+                return alert('Esta variante no tiene stock disponible en este momento.');
+            }
 
             // Precio ARS desde el string original del catálogo (ej: "$3.200 ARS / 2 USDT")
             let purchasePriceARS = 0;
@@ -2655,6 +2705,88 @@
             }
             const key = (prod.catalogId || '') + '::' + (prod.variantName || '');
             return window.RESELLME_MAP[key] || null;
+        };
+
+        // Stock en vivo desde ResellMe (vía proxy). Cache en memoria.
+        window.resellmeStockByVariantId = {}; // variant_id → number | Infinity
+        window.resellmeStockLoadedAt = 0;
+
+        window.getResellmeStock = function(catalogId, variantName) {
+            const map = window.RESELLME_MAP[(catalogId || '') + '::' + (variantName || '')];
+            if (!map) return null;
+            const key = map.variant_id || map.product_id;
+            if (!(key in window.resellmeStockByVariantId)) return null;
+            return window.resellmeStockByVariantId[key];
+        };
+
+        window.fetchResellmeStock = async function(force) {
+            const now = Date.now();
+            if (!force && window.resellmeStockLoadedAt && (now - window.resellmeStockLoadedAt) < 60000) {
+                return window.resellmeStockByVariantId;
+            }
+            try {
+                const res = await fetch('/api/resellme', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({ action: 'products' })
+                });
+                const data = await res.json().catch(() => null);
+                if (!data || !Array.isArray(data.products)) return window.resellmeStockByVariantId;
+
+                const cache = {};
+                for (const p of data.products) {
+                    const vars = p.variants || [];
+                    if (vars.length === 0) {
+                        // producto sin variantes: stock a nivel producto
+                        const s = p.stock;
+                        cache[p.id] = (s === null || s === undefined) ? Infinity : Number(s);
+                    } else {
+                        for (const v of vars) {
+                            const s = v.stock;
+                            cache[v.id] = (s === null || s === undefined) ? Infinity : Number(s);
+                        }
+                    }
+                }
+                window.resellmeStockByVariantId = cache;
+                window.resellmeStockLoadedAt = now;
+                return cache;
+            } catch (e) {
+                console.warn('No se pudo cargar stock ResellMe:', e);
+                return window.resellmeStockByVariantId;
+            }
+        };
+
+        /** Actualiza selects visibles con el stock cacheado */
+        window.applyResellmeStockToUI = function() {
+            if (!window.catalogVariant) return;
+            window.catalogVariant.forEach(item => {
+                const select = document.getElementById('select-' + item.id);
+                if (!select) return;
+                const current = select.value;
+                // Reconstruir options con stock
+                let html = `<option value="" disabled selected>Selecciona una variante...</option>`;
+                item.variants.forEach((v, i) => {
+                    const displayPrice = window.getConvertedVariantPrice(v.price);
+                    const stock = window.getResellmeStock(item.id, v.name);
+                    let stockLabel = '';
+                    if (stock === null || stock === undefined) stockLabel = '';
+                    else if (stock === Infinity || stock === -1) stockLabel = ' · Stock: ∞';
+                    else if (stock <= 0) stockLabel = ' · Sin stock';
+                    else stockLabel = ' · Stock: ' + stock;
+                    const disabled = (stock !== null && stock !== undefined && stock !== Infinity && stock > -1 && stock <= 0) ? ' disabled' : '';
+                    const sel = (String(current) === String(i)) ? ' selected' : '';
+                    html += `<option value="${i}"${disabled}${sel}>${v.name} - ${displayPrice}${stockLabel}</option>`;
+                });
+                select.innerHTML = html;
+                if (current !== '' && select.value === current) {
+                    if (typeof window.updateVariantDetails === 'function') window.updateVariantDetails(item.id);
+                }
+            });
+        };
+
+        window.refreshResellmeStockUI = async function(force) {
+            await window.fetchResellmeStock(!!force);
+            window.applyResellmeStockToUI();
         };
 
         window.sendResellmeOrder = async function(productId, variantId, quantity) {
@@ -3232,6 +3364,17 @@
                 if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
                 document.getElementById('streaming-category-wrapper').classList.remove('hidden');
                 window.renderVariantCatalog();
+                // Stock en vivo desde ResellMe
+                if (typeof window.refreshResellmeStockUI === 'function') {
+                    window.refreshResellmeStockUI(false);
+                }
+                if (!window._resellmeStockInterval) {
+                    window._resellmeStockInterval = setInterval(() => {
+                        if (typeof window.refreshResellmeStockUI === 'function') {
+                            window.refreshResellmeStockUI(true);
+                        }
+                    }, 120000); // cada 2 min
+                }
             }
 
             document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
@@ -3830,6 +3973,10 @@
                 if (typeof updateAuthUI === 'function') updateAuthUI();
                 if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
                 if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
+                // Actualizar stock tras una venta
+                if (typeof window.refreshResellmeStockUI === 'function') {
+                    setTimeout(() => window.refreshResellmeStockUI(true), 1500);
+                }
                 return;
             }
 
