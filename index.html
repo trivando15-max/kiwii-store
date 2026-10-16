@@ -594,94 +594,8 @@
                 </div>
             </div>
 
-            <!-- FREE FIRE TABS ACTUALIZADO (3 COLUMNAS) -->
-            <div id="freefire-subcategories" class="reveal hidden mb-8 bg-kiwi-card border border-orange-500/40 rounded-2xl p-5 shadow-lg">
-                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-3 uppercase flex items-center gap-2">
-                    <i class="fa-solid fa-fire"></i> Tipo de recarga:
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-rajdhani font-bold">
-                    <button id="tab-freefire-ilimitado" onclick="window.filterFreeFireSub('ilimitado')" class="ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg">
-                        <span class="text-2xl">💎</span> ILIMITADOS
-                    </button>
-                    <button id="tab-freefire-limitado" onclick="window.filterFreeFireSub('limitado')" class="ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg">
-                        <span class="text-2xl">⏳</span> LIMITADOS (1 x ID)
-                    </button>
-                    <button id="tab-freefire-especiales" onclick="window.filterFreeFireSub('especiales')" class="ff-sub-btn bg-kiwi-dark border border-kiwi-border text-gray-300 p-3 rounded-xl hover:border-orange-500 hover:text-white transition flex items-center justify-center gap-3 text-lg">
-                        <span class="text-2xl">🎟️</span> PASE & FRAGMENTOS
-                    </button>
-                </div>
-            </div>
-
-            <!-- FREE FIRE ID CHECKER -->
-            <div id="ff-id-checker" class="hidden mb-6 bg-[#0c1220] border border-orange-500/30 rounded-2xl p-5">
-                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-id-card"></i> Verificar ID de Free Fire
-                </h4>
-                <div class="flex flex-col md:flex-row gap-3">
-                    <input type="text" id="ff-check-id" placeholder="Ingresa tu ID de Free Fire" class="flex-1 bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-orange-500 focus:outline-none text-sm">
-                    <button onclick="window.checkFreeFireID()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-xl transition">
-                        Verificar
-                    </button>
-                </div>
-                <div id="ff-id-result" class="mt-3 text-sm font-rajdhani hidden"></div>
-                <p class="text-[10px] text-gray-500 mt-2">El ID se guardará en tu cuenta para autocompletar en futuras compras.</p>
-            </div>
-
-            <!-- CALCULADORA FRAGMENTOS UNIVERSALES -->
-            <div id="ff-fragments-calculator" class="hidden mb-6 bg-[#0c1220] border border-orange-500/30 rounded-2xl p-5">
-                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-2 flex items-center gap-2">
-                    <i class="fa-solid fa-calculator"></i> Calculadora de Fragmentos Universales
-                </h4>
-                <p class="text-xs text-gray-400 mb-3">Mínimo de compra: <strong class="text-orange-400">35 fragmentos</strong>. Los precios de los paquetes son referenciales.</p>
-                <div class="flex flex-col sm:flex-row gap-3 items-end">
-                    <div class="flex-1">
-                        <label class="text-xs text-gray-400">Cantidad de fragmentos</label>
-                        <input type="number" id="frag-qty" min="35" value="35" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mt-1">
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.addFragQty(35)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">35</button>
-                        <button onclick="window.addFragQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
-                        <button onclick="window.addFragQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
-                        <button onclick="window.addFragQty(500)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">500</button>
-                    </div>
-                </div>
-                <p id="frag-price-result" class="mt-3 text-sm font-bold text-kiwi-gold">Precio: $0 ARS</p>
-                <p id="frag-min-error" class="hidden mt-1 text-red-400 text-sm font-bold">El monto mínimo es de 35 fragmentos</p>
-                <button onclick="window.buyFragments()" class="mt-3 bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-2 rounded-xl text-sm">Comprar fragmentos</button>
-            </div>
-
-            <!-- CALCULADORA CAJAS DE FRAGMENTOS -->
-            <div id="ff-boxes-calculator" class="hidden mb-6 bg-[#0c1220] border border-orange-500/30 rounded-2xl p-5">
-                <h4 class="font-orbitron text-sm font-bold text-orange-400 mb-2 flex items-center gap-2">
-                    <i class="fa-solid fa-box"></i> Calculadora de Cajas de Fragmentos
-                </h4>
-                <p class="text-xs text-gray-400 mb-3">Mínimo de compra: <strong class="text-orange-400">7 cajas</strong>. Los precios de los paquetes son referenciales.</p>
-                <div class="flex flex-col sm:flex-row gap-3 items-end">
-                    <div class="flex-1">
-                        <label class="text-xs text-gray-400">Cantidad de cajas</label>
-                        <input type="number" id="box-qty" min="7" value="7" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mt-1">
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.addBoxQty(7)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">7</button>
-                        <button onclick="window.addBoxQty(10)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">10</button>
-                        <button onclick="window.addBoxQty(50)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">50</button>
-                        <button onclick="window.addBoxQty(100)" class="bg-kiwi-dark border border-kiwi-border text-xs px-2 py-1 rounded">100</button>
-                    </div>
-                </div>
-                <p id="box-price-result" class="mt-3 text-sm font-bold text-kiwi-gold">Precio: $0 ARS</p>
-                <p id="box-min-error" class="hidden mt-1 text-red-400 text-sm font-bold">El monto mínimo es de 7 cajas</p>
-                <button onclick="window.buyBoxes()" class="mt-3 bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-2 rounded-xl text-sm">Comprar cajas</button>
-            </div>
-
-            <!-- PASE BOOYAH -->
-            <div id="ff-booyah-card" class="hidden mb-6 bg-[#0c1220] border border-orange-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                    <h4 class="font-orbitron font-bold text-orange-400 text-lg">🎟️ Pase Booyah</h4>
-                    <p class="text-sm text-gray-300 mt-1">Precio: <span id="booyah-price-display" class="text-kiwi-gold font-bold">$3.300 ARS</span></p>
-                    <p class="text-xs text-gray-500">Se envía directo a tu ID de Free Fire.</p>
-                </div>
-                <button onclick="window.buyBooyahPass()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-xl">Comprar Pase</button>
-            </div>
+            <!-- FREE FIRE: pestañas y selector "tipo de recarga" eliminados; todo vive en #ff-shell -->
+            <div id="freefire-subcategories" class="hidden"></div>
 
             <!-- INSTAGRAM TABS -->
             <div id="instagram-subcategories" class="reveal hidden mb-8 bg-kiwi-card border border-pink-500/40 rounded-2xl p-5 shadow-lg">
@@ -727,6 +641,141 @@
                     <li class="flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation text-yellow-400 mt-1"></i><span>Es necesario que la cuenta esté en público para poder solicitar la recarga en la publicación/reel.</span></li>
                     <li class="flex items-start gap-2"><i class="fa-solid fa-link text-pink-400 mt-1"></i><span>Adjuntá el link de la publicación/reel en el formulario al comprar.</span></li>
                 </ul>
+            </div>
+
+            <!-- FREE FIRE: LAYOUT TIPO PANEL (catálogo + columna lateral) -->
+            <div id="ff-shell" class="hidden mb-8">
+                <div class="mb-4">
+                    <p class="text-xs md:text-sm text-gray-400 font-rajdhani"><i class="fa-solid fa-circle-info text-gray-500 mr-1"></i> Puedes seleccionar ítems del catálogo. Verificá tu ID de jugador para continuar con la compra. Disponible solo para cuentas de la <strong class="text-gray-300">Región Latinoamérica</strong> · <button type="button" onclick="document.getElementById('ff-countries').classList.toggle('hidden')" class="underline text-gray-300 hover:text-white">ver países</button></p>
+                    <div id="ff-countries" class="hidden mt-2 bg-[#14161c] border border-white/5 rounded-xl p-3 text-xs font-rajdhani text-gray-300 grid grid-cols-2 md:grid-cols-4 gap-1.5"><span>🇦🇷 Argentina</span><span>🇨🇱 Chile</span><span>🇵🇪 Perú</span><span>🇧🇴 Bolivia</span><span>🇺🇾 Uruguay</span><span>🇵🇾 Paraguay</span><span>🇲🇽 México</span><span>🇨🇴 Colombia</span><span>🇻🇪 Venezuela</span><span>🇪🇨 Ecuador</span><span>🇬🇹 Guatemala</span><span>🇵🇷 Puerto Rico</span><span>🇩🇴 República Dominicana</span><span>🇨🇷 Costa Rica</span><span>🇵🇦 Panamá</span><span>🇭🇳 Honduras</span><span>🇸🇻 El Salvador</span><span>🇳🇮 Nicaragua</span><span class="col-span-2 md:col-span-4">🇺🇸 Estados Unidos (Comunidad hispana)</span></div>
+                </div>
+                <div class="flex flex-col lg:flex-row gap-5 items-start">
+                    <!-- Columna izquierda: catálogo -->
+                    <div id="ff-left" class="w-full lg:flex-1 min-w-0 space-y-5">
+                        <section id="ff-diamonds-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                                <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes</h3>
+                                <span class="text-[11px] text-gray-500 font-rajdhani">Ilimitados · comprá cuantas veces quieras</span>
+                            </div>
+                            <div id="ff-diamond-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+                        </section>
+
+                        <section id="ff-limited-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+                                <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes Limitados <span class="text-orange-400 text-sm">(1 x ID)</span></h3>
+                                <span class="text-[11px] text-gray-500 font-rajdhani">Más baratos · 1 compra por pack y por ID</span>
+                            </div>
+                            <p id="ff-limited-note" class="text-[11px] text-gray-500 font-rajdhani mb-4">Verificá tu ID para ver qué packs limitados tenés disponibles.</p>
+                            <div id="ff-limited-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+                        </section>
+
+                        <!-- PASE BOOYAH -->
+                        <section id="ff-booyah-card" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <h3 class="font-orbitron font-bold text-white text-base md:text-lg mb-4">Pase Booyah</h3>
+                            <div class="flex flex-col sm:flex-row items-stretch gap-4">
+                                <button type="button" id="ff-booyah-select" onclick="window.ffSelectProduct(221)" class="ff-card group w-44 mx-auto sm:mx-0 bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
+                                    <div class="aspect-square flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-4">
+                                        <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                    </div>
+                                    <div class="px-2 pb-3 pt-2 bg-[#20232b]">
+                                        <p class="font-bold text-white text-sm">Pase Booyah</p>
+                                        <p id="booyah-price-display" class="text-emerald-400 font-bold text-sm">$3.300 ARS</p>
+                                        <p id="booyah-usd-display" class="text-[11px] text-gray-500">≈ $2.00 USD</p>
+                                    </div>
+                                </button>
+                                <div class="flex-1 flex flex-col justify-between gap-3">
+                                    <ul class="text-xs text-gray-400 space-y-1.5 font-rajdhani">
+                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se envía directo a tu ID de Free Fire.</li>
+                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se descuenta de tu saldo al confirmar.</li>
+                                    </ul>
+                                    <button onclick="window.buyBooyahPass()" class="self-start bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar Pase</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- CALCULADORA FRAGMENTOS UNIVERSALES -->
+                        <section id="ff-fragments-calculator" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <div class="flex items-start gap-4 mb-4">
+                                <div class="w-16 h-16 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 p-2 flex items-center justify-center">
+                                    <img src="https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png" alt="Fragmentos Universales" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                </div>
+                                <div>
+                                    <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Fragmentos Universales</h3>
+                                    <p class="text-xs text-gray-400 mt-1">Mínimo de compra: <strong class="text-white">35 fragmentos</strong>. Los precios de los paquetes son referenciales.</p>
+                                </div>
+                            </div>
+                            <label for="frag-qty" class="text-xs text-gray-400">Cantidad de fragmentos</label>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-1">
+                                <input type="number" id="frag-qty" min="35" value="35" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
+                                <div class="flex gap-2">
+                                    <button onclick="window.addFragQty(35)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+35</button>
+                                    <button onclick="window.addFragQty(50)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+50</button>
+                                    <button onclick="window.addFragQty(100)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+100</button>
+                                    <button onclick="window.addFragQty(500)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+500</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
+                                <div>
+                                    <p id="frag-price-result" class="text-base font-bold text-emerald-400">Precio: $0 ARS</p>
+                                    <p id="frag-min-error" class="hidden mt-1 text-red-400 text-sm font-bold">El monto mínimo es de 35 fragmentos</p>
+                                </div>
+                                <button onclick="window.buyFragments()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar fragmentos</button>
+                            </div>
+                        </section>
+
+                        <!-- CALCULADORA CAJAS DE FRAGMENTOS -->
+                        <section id="ff-boxes-calculator" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <div class="flex items-start gap-4 mb-4">
+                                <div class="w-16 h-16 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 p-2 flex items-center justify-center">
+                                    <img src="https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png" alt="Cajas de Fragmentos" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                </div>
+                                <div>
+                                    <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Cajas de Fragmentos</h3>
+                                    <p class="text-xs text-gray-400 mt-1">Mínimo de compra: <strong class="text-white">7 cajas</strong>. Los precios de los paquetes son referenciales.</p>
+                                </div>
+                            </div>
+                            <label for="box-qty" class="text-xs text-gray-400">Cantidad de cajas</label>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-1">
+                                <input type="number" id="box-qty" min="7" value="7" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
+                                <div class="flex gap-2">
+                                    <button onclick="window.addBoxQty(7)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+7</button>
+                                    <button onclick="window.addBoxQty(10)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+10</button>
+                                    <button onclick="window.addBoxQty(50)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+50</button>
+                                    <button onclick="window.addBoxQty(100)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+100</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
+                                <div>
+                                    <p id="box-price-result" class="text-base font-bold text-emerald-400">Precio: $0 ARS</p>
+                                    <p id="box-min-error" class="hidden mt-1 text-red-400 text-sm font-bold">El monto mínimo es de 7 cajas</p>
+                                </div>
+                                <button onclick="window.buyBoxes()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar cajas</button>
+                            </div>
+                        </section>
+                        <div id="ff-grid-slot"></div>
+                    </div>
+
+                    <!-- Columna derecha: ID + resumen -->
+                    <aside class="w-full lg:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-24">
+                        <div id="ff-id-checker" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
+                            <h4 class="font-orbitron text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                ID de jugador <i class="fa-regular fa-circle-question text-gray-500 text-xs" title="Es el número de ID de tu cuenta de Free Fire (no el nombre)."></i>
+                            </h4>
+                            <div class="flex gap-2">
+                                <input type="text" id="ff-check-id" placeholder="Introducí tu ID de jugador..." oninput="window.renderFFSummary && window.renderFFSummary()" class="flex-1 min-w-0 bg-[#1b1e25] border border-white/10 rounded-xl p-3 text-white focus:border-white/30 focus:outline-none text-sm">
+                                <button onclick="window.checkFreeFireID()" title="Verificar" aria-label="Verificar ID" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold w-12 rounded-xl transition flex items-center justify-center">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </div>
+                            <div id="ff-id-result" class="mt-3 text-sm font-rajdhani hidden"></div>
+                            <p class="text-[10px] text-gray-500 mt-2">El ID se guardará en tu cuenta para autocompletar en futuras compras.</p>
+                        </div>
+                        <div id="ff-summary" class="bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 pb-2 mb-3">Resumen de compra</p>
+                            <div id="ff-summary-body"></div>
+                        </div>
+                    </aside>
+                </div>
             </div>
 
             <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden"></div>
@@ -1521,8 +1570,7 @@
                    let activeSubBtn = document.querySelector('.roblox-sub-btn.border-blue-500');
                    if(activeSubBtn) activeSubBtn.click();
                 } else if(activeCategoryTitle.includes('FREE FIRE')) {
-                   let activeSubBtn = document.querySelector('.ff-sub-btn.border-orange-500');
-                   if(activeSubBtn) activeSubBtn.click();
+                   if (typeof window.renderFFAll === 'function') window.renderFFAll();
                 } else if(activeCategoryTitle.includes('REDES SOCIALES')) {
                    let activeSubBtn = document.querySelector('.ig-sub-btn.border-pink-500');
                    if(activeSubBtn) activeSubBtn.click();
@@ -2467,27 +2515,27 @@
             { id: 200, category: 'freefire', sub: 'ilimitado', title: '110 Diamantes', price: '$1.396 ARS', usdtPrice: 0.85, emoji: '💎', popular: false },
             { id: 201, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', price: '$4.000 ARS', emoji: '💎', popular: false },
             { id: 202, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', price: '$6.400 ARS', emoji: '💎', popular: false },
-            { id: 203, category: 'freefire', sub: 'ilimitado', title: '1.160 Diamantes', price: '$12.000 ARS', emoji: '💎', popular: false },
-            { id: 204, category: 'freefire', sub: 'ilimitado', title: '2.389 Diamantes', price: '$22.400 ARS', emoji: '💎', tag: 'Más Elegido', popular: true },
+            { id: 203, category: 'freefire', sub: 'ilimitado', title: '1.166 Diamantes', price: '$12.000 ARS', emoji: '💎', popular: false },
+            { id: 204, category: 'freefire', sub: 'ilimitado', title: '2.398 Diamantes', price: '$22.400 ARS', emoji: '💎', tag: 'Más Elegido', popular: true },
             { id: 205, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', price: '$55.200 ARS', emoji: '💎', tag: 'Mejor Oferta', popular: true },
 
             { id: 210, category: 'freefire', sub: 'limitado', title: '110 Diamantes (Limitado)', price: '$1.149 ARS', usdtPrice: 0.70, emoji: '🔥', popular: false, isLimited: true },
             { id: 211, category: 'freefire', sub: 'limitado', title: '341 Diamantes (Limitado)', price: '$3.200 ARS', emoji: '🔥', popular: false, isLimited: true },
             { id: 212, category: 'freefire', sub: 'limitado', title: '572 Diamantes (Limitado)', price: '$5.800 ARS', emoji: '🔥', popular: false, isLimited: true },
-            { id: 213, category: 'freefire', sub: 'limitado', title: '1.160 Diamantes (Limitado)', price: '$11.400 ARS', emoji: '🔥', popular: false, isLimited: true },
+            { id: 213, category: 'freefire', sub: 'limitado', title: '1.166 Diamantes (Limitado)', price: '$11.400 ARS', emoji: '🔥', popular: false, isLimited: true },
             { id: 214, category: 'freefire', sub: 'limitado', title: '2.398 Diamantes (Limitado)', price: '$20.000 ARS', emoji: '🔥', tag: 'Más Elegido', popular: true, isLimited: true },
             { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
 
             // FREE FIRE - PASES Y FRAGMENTOS
-            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'booyah-pass.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
-            { id: 222, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1', price: '$75 ARS', image: 'fragmento-universal.png', popular: false, usdtPrice: 0.045 },
-            { id: 223, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x10', price: '$750 ARS', image: 'fragmento-universal.png', popular: false, usdtPrice: 0.45 },
-            { id: 224, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x100', price: '$7.500 ARS', image: 'fragmento-universal.png', popular: false, usdtPrice: 4.5 },
-            { id: 225, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x500', price: '$35.500 ARS', image: 'fragmento-universal.png', popular: true, usdtPrice: 21.2 },
-            { id: 226, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1000', price: '$70.000 ARS', image: 'fragmento-universal.png', tag: 'Mejor Oferta', popular: true, usdtPrice: 42.5 },
-            { id: 227, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1', price: '$500 ARS', image: 'caja-fragmentos.png', popular: false, usdtPrice: 0.30 },
-            { id: 228, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x10', price: '$5.000 ARS', image: 'caja-fragmentos.png', popular: false, usdtPrice: 3.0 },
-            { id: 229, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1000', price: '$47.500 ARS', image: 'caja-fragmentos.png', tag: 'Pack', popular: true, usdtPrice: 29.0 },
+            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
+            { id: 222, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1', price: '$75 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 0.045 },
+            { id: 223, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x10', price: '$750 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 0.45 },
+            { id: 224, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x100', price: '$7.500 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 4.5 },
+            { id: 225, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x500', price: '$35.500 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: true, usdtPrice: 21.2 },
+            { id: 226, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1000', price: '$70.000 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', tag: 'Mejor Oferta', popular: true, usdtPrice: 42.5 },
+            { id: 227, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1', price: '$500 ARS', image: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', popular: false, usdtPrice: 0.30 },
+            { id: 228, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x10', price: '$5.000 ARS', image: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', popular: false, usdtPrice: 3.0 },
+            { id: 229, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1000', price: '$47.500 ARS', image: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', tag: 'Pack', popular: true, usdtPrice: 29.0 },
 
             // INSTAGRAM
             { id: 401, category: 'instagram', sub: 'seguidores', title: '100 Seguidores', price: '1 USDT - $1.600 ARS', emoji: '👥', popular: false, usdtPrice: 1 },
@@ -3517,6 +3565,154 @@
             if (typeof window.updateBooyahPrice === 'function') window.updateBooyahPrice();
         };
 
+        // === FREE FIRE: panel de diamantes + resumen de compra ===
+        window.ffSelection = null; // { kind:'product'|'frag'|'box', id, title, price, usd, img, icon }
+        window.ffPlaceGrid = function(inFreeFire) {
+            const grid = document.getElementById('product-grid');
+            const shell = document.getElementById('ff-shell');
+            const slot = document.getElementById('ff-grid-slot');
+            if (!grid || !shell || !slot) return;
+            if (!window._ffGridHome) {
+                window._ffGridHome = document.createElement('div');
+                window._ffGridHome.id = 'product-grid-home';
+                window._ffGridHome.style.display = 'none';
+                grid.parentNode.insertBefore(window._ffGridHome, grid);
+            }
+            if (inFreeFire) {
+                shell.classList.remove('hidden');
+                if (grid.parentNode !== slot) slot.appendChild(grid);
+            } else {
+                shell.classList.add('hidden');
+                if (grid.previousSibling !== window._ffGridHome) window._ffGridHome.parentNode.insertBefore(grid, window._ffGridHome.nextSibling);
+                window.ffSelection = null;
+            }
+        };
+        window.ffBaseMap = { 110: [100, 10], 341: [310, 31], 572: [520, 52], 1166: [1060, 106], 2398: [2180, 218], 6160: [5600, 560] };
+        window.ffUsdOf = function(prod) {
+            if (prod.usdtPrice) return Number(prod.usdtPrice);
+            const m = String(prod.price || '').match(/\$([\d.]+)\s*ARS/);
+            return m ? parseFloat(m[1].replace(/\./g, '')) / 1600 : 0;
+        };
+        window.ffDiamondArt = function(i) {
+            const n = Math.min(6, i + 1);
+            const pos = [[50,52,46],[38,58,38],[62,58,38],[50,36,34],[28,40,30],[72,40,30]];
+            let gems = '';
+            for (let k = 0; k < n; k++) {
+                const [x, y, sz] = pos[k];
+                gems += `<i class="fa-solid fa-gem absolute text-sky-300 drop-shadow-[0_0_10px_rgba(56,189,248,0.7)]" style="left:${x}%;top:${y}%;font-size:${sz - n * 2}px;transform:translate(-50%,-50%)"></i>`;
+            }
+            return `<div class="relative w-full h-full">${gems}</div>`;
+        };
+        window.renderFFDiamonds = function(items, gridId) {
+            const isLim = gridId === 'ff-limited-grid';
+            const grid = document.getElementById(gridId || 'ff-diamond-grid');
+            if (!grid) return;
+            grid.innerHTML = items.map((prod, i) => {
+                const num = parseInt((String(prod.title).match(/([\d.]+)/) || [])[1]?.replace(/\./g, '') || '0', 10);
+                const bm = window.ffBaseMap[num];
+                const amount = bm ? `${bm[0].toLocaleString('es-AR')} + ${bm[1].toLocaleString('es-AR')}` : num.toLocaleString('es-AR');
+                const sel = window.ffSelection && window.ffSelection.id === prod.id;
+                return `
+                <button type="button" data-ff-id="${prod.id}" onclick="window.ffSelectProduct(${prod.id})" class="ff-card relative text-center rounded-xl overflow-hidden border transition ${sel ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
+                    ${isLim ? `<h4 class="sr-only">${prod.title}</h4><span class="ff-status absolute top-2 right-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">1 x ID</span>` : ''}
+                    ${prod.popular && prod.tag ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">${prod.tag}</span>` : ''}
+                    <div class="aspect-[4/3] bg-gradient-to-b from-sky-500/10 to-transparent flex items-center justify-center p-2">${i < 6 ? `<img src="https://cdn-gop.garenanow.com/gop/app/0000/100/067/pricing_image_config/0000/000/00${(bm ? [100,310,520,1060,2180,5600].indexOf(bm[0]) : i) + 1}/logo.png" alt="${prod.title}" loading="lazy" class="w-full h-full object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.5)]">` : window.ffDiamondArt(i)}</div>
+                    <div class="px-2 pb-3 pt-2 bg-[#20232b]">
+                        <p class="font-bold text-white text-sm">${num.toLocaleString('es-AR')} <span class="text-[10px] font-normal text-gray-400">Diamantes</span></p>
+                        <p class="text-emerald-400 font-bold text-sm">${window.getConvertedPrice(prod)}</p>
+                        <p class="text-[11px] text-gray-500">≈ $${window.ffUsdOf(prod).toFixed(2)} USD</p>
+                    </div>
+                </button>`;
+            }).join('');
+            const cur = window.ffSelection;
+            if (cur && cur.kind === 'product' && cur.id) {
+                const p = window.products.find(x => x.id === cur.id);
+                if (p) cur.price = window.getConvertedPrice(p);
+            }
+            window.renderFFSummary();
+        };
+        window.renderFFAll = function() {
+            window.currentFreeFireSub = 'all';
+            const grid = document.getElementById('product-grid');
+            if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
+            const info = document.getElementById('category-info-container'); if (info) { info.classList.add('hidden'); info.innerHTML = ''; }
+            ['ff-diamonds-panel', 'ff-limited-panel', 'ff-id-checker'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('hidden'); });
+            window.renderFFDiamonds(window.products.filter(p => p.category === 'freefire' && p.sub === 'limitado'), 'ff-limited-grid');
+            window.renderFFDiamonds(window.products.filter(p => p.category === 'freefire' && p.sub === 'ilimitado'), 'ff-diamond-grid');
+            window.showFreeFireSpecialsUI();
+            if (window.ffAvailableDiscounts) window.applyLimitedAvailability();
+            else {
+                const idv = (document.getElementById('ff-check-id')?.value || '').trim();
+                if (idv && typeof window.checkFreeFireDiscounts === 'function') window.checkFreeFireDiscounts(idv);
+            }
+        };
+        window.ffSelectProduct = function(id) {
+            const prod = window.products.find(p => p.id === id);
+            if (!prod) return;
+            window.ffSelection = { kind: 'product', id: prod.id, title: prod.title, price: (prod.id === 221 && document.getElementById('booyah-price-display')) ? document.getElementById('booyah-price-display').textContent : window.getConvertedPrice(prod), usd: window.ffUsdOf(prod), img: prod.image ? window.imgPath(prod.image) : null, icon: (prod.sub === 'ilimitado' || prod.sub === 'limitado') ? 'fa-gem' : 'fa-ticket' };
+            document.querySelectorAll('#ff-diamond-grid .ff-card, #ff-limited-grid .ff-card, #ff-booyah-select').forEach(c => {
+                const on = Number(c.dataset.ffId || (c.id === 'ff-booyah-select' ? 221 : 0)) === id;
+                c.classList.toggle('border-white/60', on); c.classList.toggle('bg-[#262a33]', on);
+                c.classList.toggle('border-white/5', !on);
+            });
+            window.renderFFSummary();
+            if (window.innerWidth < 1024) { const s = document.getElementById('ff-summary'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        };
+        window.ffSummaryFromCalc = function(kind, qty, priceArs) {
+            const cur = window.ffSelection;
+            if (qty === null || qty === undefined) {
+                if (cur && cur.kind === kind) { window.ffSelection = null; window.renderFFSummary(); }
+                return;
+            }
+            // Solo actualiza el resumen si el usuario está usando esa calculadora
+            const active = document.activeElement && (document.activeElement.id === (kind === 'frag' ? 'frag-qty' : 'box-qty'));
+            if (!active && !(cur && cur.kind === kind)) return;
+            window.ffSelection = { kind, id: null, title: kind === 'frag' ? `Fragmentos Universales x${qty}` : `Cajas de Fragmentos x${qty}`, price: window.formatArsAsCurrency(priceArs), usd: priceArs / 1600, img: kind === 'frag' ? 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png' : 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', icon: 'fa-box' };
+            window.renderFFSummary();
+        };
+        window.ffBuySelection = function() {
+            const s = window.ffSelection;
+            if (!s) return;
+            if (s.kind === 'frag') return window.buyFragments();
+            if (s.kind === 'box') return window.buyBoxes();
+            if (s.id === 221) return window.buyBooyahPass();
+            window.openCheckout(s.id);
+        };
+        window.renderFFSummary = function() {
+            const body = document.getElementById('ff-summary-body');
+            if (!body) return;
+            const s = window.ffSelection;
+            if (!s) {
+                body.innerHTML = `
+                    <div class="text-center py-6">
+                        <i class="fa-solid fa-cart-shopping text-gray-500 text-2xl mb-3"></i>
+                        <p class="font-bold text-white text-sm">Sin ítems seleccionados</p>
+                        <p class="text-xs text-gray-500 mt-1">Elegí productos del catálogo para ver el resumen acá.</p>
+                    </div>`;
+                return;
+            }
+            const idVal = (document.getElementById('ff-check-id')?.value || '').trim();
+            body.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-14 h-14 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 flex items-center justify-center p-1.5">
+                        ${s.img ? `<img src="${s.img}" alt="" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=&quot;fa-solid ${s.icon} text-sky-300 text-xl&quot;></i>'">` : `<i class="fa-solid ${s.icon} text-sky-300 text-xl"></i>`}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="font-bold text-white text-sm leading-tight">${s.title}</p>
+                        <p class="text-[11px] text-gray-500">ID: ${idVal ? idVal.replace(/[<>&"]/g, '') : '<span class="text-amber-400">sin ingresar</span>'}</p>
+                    </div>
+                </div>
+                <div class="flex items-end justify-between border-t border-white/5 mt-4 pt-3">
+                    <span class="text-xs text-gray-400 uppercase tracking-wider">Total</span>
+                    <div class="text-right">
+                        <p class="text-emerald-400 font-bold text-lg leading-none">${s.price}</p>
+                        <p class="text-[11px] text-gray-500 mt-1">≈ $${Number(s.usd || 0).toFixed(2)} USD</p>
+                    </div>
+                </div>
+                <button onclick="window.ffBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>
+                <button onclick="window.ffSelection=null;window.renderFFSummary();document.querySelectorAll('.ff-card').forEach(c=>{c.classList.remove('border-white/60','bg-[#262a33]');c.classList.add('border-white/5')})" class="mt-2 w-full text-xs text-gray-500 hover:text-gray-300">Quitar selección</button>`;
+        };
+
         window.filterCategory = function(category) {
             // Cerrar checkout si está abierto (permite salir de likes / cualquier pestaña)
             try {
@@ -3528,6 +3724,7 @@
 
             window.currentCatalogCategory = category;
             window.currentFreeFireSub = null;
+            window.ffPlaceGrid(category === 'freefire');
 
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('category-view').classList.remove('hidden');
@@ -3561,7 +3758,7 @@
                 window.filterRobloxSub('fruits');
             } else if (category === 'freefire') {
                 if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
-                document.getElementById('freefire-subcategories').classList.remove('hidden');
+                // (sin pestañas: todo en el panel)
                 if (checker) {
                     checker.classList.remove('hidden');
                     if (currentUser) {
@@ -3573,7 +3770,7 @@
                         }
                     }
                 }
-                window.filterFreeFireSub('ilimitado');
+                window.renderFFAll();
             } else if (category === 'instagram') {
                 if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
                 document.getElementById('instagram-subcategories').classList.remove('hidden');
@@ -3657,9 +3854,18 @@
             const isEspeciales = subCat === 'especiales';
 
             // Calculadoras solo en Especiales
-            if (isEspeciales) {
+            const dPanel = document.getElementById('ff-diamonds-panel');
+            if (dPanel) dPanel.classList.toggle('hidden', subCat !== 'ilimitado');
+            if (subCat === 'ilimitado') {
+                // Diamantes ilimitados en el panel nuevo + pases/fragmentos debajo
+                if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
+                window.renderFFDiamonds(window.products.filter(p => p.category === 'freefire' && p.sub === 'ilimitado'));
+                window.showFreeFireSpecialsUI();
+                const chk = document.getElementById('ff-id-checker'); if (chk) chk.classList.remove('hidden');
+            } else if (isEspeciales) {
                 if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
                 window.showFreeFireSpecialsUI();
+                const chk = document.getElementById('ff-id-checker'); if (chk) chk.classList.remove('hidden');
             } else {
                 window.hideFreeFireSpecialsUI(false); // mantener checker visible
                 if (grid) grid.classList.remove('hidden');
@@ -4386,9 +4592,7 @@
                             localStorage.setItem('kiwi_users', JSON.stringify(users));
                         }
                     }
-                    if (document.getElementById('tab-freefire-limitado') && document.getElementById('tab-freefire-limitado').classList.contains('bg-orange-600/30')) {
-                        window.checkFreeFireDiscounts(uid);
-                    }
+                    window.checkFreeFireDiscounts(uid);
                 } else {
                     resultEl.textContent = 'ID no encontrado: ' + ((json && json.message) || 'desconocido');
                     resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
@@ -4415,7 +4619,9 @@
 
         window.applyLimitedAvailability = function() {
             if (!window.ffAvailableDiscounts) return;
-            const cards = document.querySelectorAll('#product-grid > div');
+            const cards = document.querySelectorAll('#product-grid > div, #ff-limited-grid > .ff-card');
+            const note = document.getElementById('ff-limited-note');
+            if (note) note.textContent = 'Disponibilidad verificada para tu ID. Los packs en gris ya fueron usados o no están disponibles.';
             cards.forEach(card => {
                 const titleEl = card.querySelector('h4');
                 if (!titleEl) return;
@@ -4427,7 +4633,7 @@
                 let diamondsInTitle = numMatch ? parseInt(numMatch[1].replace(/\./g, '')) : 0;
                 // Mapeo aproximado de packs con bono → base
                 const baseMap = { 
-                    110: 100, 341: 310, 572: 520, 1160: 1060, 
+                    110: 100, 341: 310, 572: 520, 1160: 1060, 1166: 1060,
                     2389: 2180, 2398: 2180, 6160: 5600, 5600: 5600 
                 };
                 const baseDiamonds = baseMap[diamondsInTitle] || diamondsInTitle;
@@ -4436,6 +4642,16 @@
                     d.diamonds === baseDiamonds || d.diamonds === diamondsInTitle
                 );
 
+                if (card.classList.contains('ff-card')) {
+                    const ok = !!(match && match.is_discount);
+                    card.style.opacity = ok ? '1' : '0.45';
+                    card.style.pointerEvents = ok ? 'auto' : 'none';
+                    card.dataset.ffAvailable = ok ? '1' : '0';
+                    const st = card.querySelector('.ff-status');
+                    if (st) { st.textContent = ok ? 'Disponible' : 'No disponible'; st.className = 'ff-status absolute top-2 right-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ' + (ok ? 'bg-emerald-600/90 text-white' : 'bg-gray-700 text-gray-300'); }
+                    if (!ok && window.ffSelection && window.ffSelection.id === Number(card.dataset.ffId)) { window.ffSelection = null; window.renderFFSummary(); }
+                    return;
+                }
                 const btn = card.querySelector('button');
                 if (match && match.is_discount) {
                     // Disponible
@@ -4848,9 +5064,10 @@
             if (!el) return;
             const qty = window.kiwiReadQty(el, 35, 'frag-min-error');
             const result = document.getElementById('frag-price-result');
-            if (qty === null) { if (result) result.textContent = 'Precio: —'; return; }
+            if (qty === null) { if (result) result.textContent = 'Precio: —'; window.ffSummaryFromCalc && window.ffSummaryFromCalc('frag', null); return; }
             const priceArs = qty * FRAG_PRICE_PER_UNIT;
             if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
+            window.ffSummaryFromCalc && window.ffSummaryFromCalc('frag', qty, priceArs);
         };
         document.getElementById('frag-qty')?.addEventListener('input', window.updateFragPrice);
 
@@ -4895,15 +5112,18 @@
             if (!el) return;
             const qty = window.kiwiReadQty(el, 7, 'box-min-error');
             const result = document.getElementById('box-price-result');
-            if (qty === null) { if (result) result.textContent = 'Precio: —'; return; }
+            if (qty === null) { if (result) result.textContent = 'Precio: —'; window.ffSummaryFromCalc && window.ffSummaryFromCalc('box', null); return; }
             const priceArs = qty * BOX_PRICE_PER_UNIT;
             if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
+            window.ffSummaryFromCalc && window.ffSummaryFromCalc('box', qty, priceArs);
         };
         document.getElementById('box-qty')?.addEventListener('input', window.updateBoxPrice);
 
         window.updateBooyahPrice = function() {
             const el = document.getElementById('booyah-price-display');
             if (el) el.textContent = window.formatArsAsCurrency(BOOYAH_PRICE_ARS);
+            const usd = document.getElementById('booyah-usd-display');
+            if (usd) usd.textContent = '≈ $' + (BOOYAH_PRICE_ARS / 1600).toFixed(2) + ' USD';
         };
 
         window.buyBoxes = function() {
@@ -4976,8 +5196,10 @@
             '572': 7,
             '520': 7,
             '1160': 8,
+            '1166': 8,
             '1060': 8,
             '2389': 9,
+            '2398': 9,
             '2180': 9,
             '6160': 10,
             '5600': 10
