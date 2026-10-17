@@ -146,10 +146,7 @@
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                <div class="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-rajdhani font-bold text-gray-400 border border-white/5 bg-white/[0.02]">
-                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
-                    ONLINE <span id="online-counter" class="text-white">1</span>
-                </div>
+
                 <button onclick="window.openCurrencyModal()" class="h-10 border border-white/10 bg-white/[0.03] hover:border-white/25 text-white text-sm rounded-xl px-2.5 sm:px-3 font-rajdhani font-bold flex items-center gap-1.5 transition" title="Moneda">
                     <span id="currency-flag" class="text-base">🇦🇷</span>
                     <span id="currency-code" class="hidden sm:inline">ARS</span>
@@ -6018,6 +6015,22 @@ window.resetUser2FA = function(username) {
             }
         };
         document.addEventListener('DOMContentLoaded', window.loadDiscordReviews);
+
+
+        window.loadBinanceRates = async function() {
+            const fiats = ['ARS', 'MXN', 'COP', 'PEN'];
+            for (const fiat of fiats) {
+                try {
+                    const res = await fetch('/api/binance-p2p?fiat=' + fiat);
+                    const data = await res.json();
+                    if (data.rate && window.exchangeRates) {
+                        window.exchangeRates[fiat] = data.rate;
+                    }
+                } catch (e) {}
+            }
+            if (typeof window.refreshAllPrices === 'function') window.refreshAllPrices();
+        };
+        document.addEventListener('DOMContentLoaded', window.loadBinanceRates);
 
 </script>
 </body>
