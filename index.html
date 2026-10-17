@@ -5476,23 +5476,42 @@
                 if (typeof window.openAuthModal === 'function') window.openAuthModal();
                 return;
             }
+            // Cerrar modal de auth si está abierto
+            const authModal = document.getElementById('auth-modal');
+            if (authModal) authModal.classList.add('hidden');
             history.pushState({}, '', '/perfil-y-pedidos');
-            // Fill profile summary
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             const u = users[currentUser] || {};
             const nameEl = document.getElementById('profile-username-display');
             const idEl = document.getElementById('profile-id-display');
             const letterEl = document.getElementById('profile-avatar-letter');
             if (nameEl) nameEl.textContent = currentUser;
-            if (idEl) idEl.textContent = 'ID: ' + (u.accountId || '—');
+            if (idEl) idEl.textContent = 'ID: ' + (u.accountId || u.id || '—');
             if (letterEl) letterEl.textContent = (currentUser || 'U')[0].toUpperCase();
-            if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel(true);
+            // Abrir panel completo de perfil + pedidos
+            const panel = document.getElementById('orders-panel');
+            if (panel) {
+                panel.classList.remove('hidden');
+                if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            }
         };
 
 
         if (location.pathname === '/' || location.pathname === '') {
             history.replaceState({}, '', '/inicio');
         }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('login-main-btn');
+            if (btn) {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.goToProfile();
+                };
+            }
+        });
 
 </script>
 </body>
