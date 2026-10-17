@@ -1772,7 +1772,9 @@
             const submitBtn = document.querySelector('#checkout-modal button[type="submit"]');
             const isRobux = prod.category === 'roblox' && (prod.sub === 'robux_grupo' || prod.sub === 'robux_gamepass' || prod.sub === 'robux_plus');
             if (submitBtn) {
-                if (isRobux) {
+                if (prod.sub === 'robux_gamepass') {
+                    submitBtn.innerHTML = '<i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO Y ENVIAR A WHATSAPP';
+                } else if (isRobux) {
                     submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> ENVIAR COMPROBANTE AL WHATSAPP';
                 } else {
                     submitBtn.innerHTML = '<i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO';
