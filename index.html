@@ -6008,7 +6008,8 @@ window.resetUser2FA = function(username) {
                             ${r.avatar ? `<img src="${r.avatar}" class="w-8 h-8 rounded-full">` : '<div class="w-8 h-8 rounded-full bg-kiwi-red flex items-center justify-center text-xs font-bold">' + r.author[0] + '</div>'}
                             <span class="font-bold text-white text-sm">${r.author}</span>
                         </div>
-                        <p class="text-gray-300 text-sm">${r.content || '(sin texto)'}</p>
+                        ${r.image ? `<img src="${r.image}" class="w-full rounded-lg mb-2 max-h-48 object-cover">` : ''}
+                        <p class="text-gray-300 text-sm">${r.content || ''}</p>
                         <p class="text-[10px] text-gray-500 mt-2">${new Date(r.timestamp).toLocaleString('es-AR')}</p>
                     </div>
                 `).join('');
