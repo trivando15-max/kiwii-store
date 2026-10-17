@@ -3679,36 +3679,26 @@
                 return;
             }
 
-            // Grupo y Plus: compra con saldo
+            // Grupo y Plus: abrir modal de confirmación con saldo
             if (!currentUser) return alert('Iniciá sesión');
-            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (!users[currentUser]) return alert('Sesión inválida');
-            const bal = Number(users[currentUser].balance || 0);
-            if (bal < priceNum) return alert('Saldo insuficiente');
-            const robloxUser = prompt('Ingresá tu usuario de Roblox:');
-            if (!robloxUser) return;
-
-            users[currentUser].balance = bal - priceNum;
-            localStorage.setItem('kiwi_users', JSON.stringify(users));
-            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-
-            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            purchases.push({
-                id: Date.now(),
-                user: currentUser,
+            window.pendingRobux = { amount, methodText, subType, priceNum, totalStr };
+            window.currentActiveProduct = {
                 title: amount + ' Robux (' + methodText + ')',
                 price: totalStr,
-                targetUser: robloxUser,
-                method: methodText,
-                date: new Date().toLocaleString('es-AR'),
-                status: 'confirmed',
-                category: 'roblox',
-                sub: subType,
-                notes: ''
-            });
-            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-            alert('Pedido creado. Estado: En proceso.\nUsuario: ' + robloxUser);
-            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+                isLimited: false, category: 'roblox', sub: subType
+            };
+            // Abrir modal existente
+            const modal = document.getElementById('checkout-modal');
+            const titleEl = document.getElementById('checkout-product-title');
+            const priceEl = document.getElementById('checkout-product-price');
+            const userInput = document.getElementById('user-account-input');
+            if (titleEl) titleEl.textContent = amount + ' Robux (' + methodText + ')';
+            if (priceEl) priceEl.textContent = totalStr;
+            if (userInput) {
+                userInput.value = '';
+                userInput.placeholder = 'Escribe tu usuario de Roblox...';
+            }
+            if (modal) modal.classList.remove('hidden');
         }
 
         window.currentCatalogCategory = null;
@@ -4447,6 +4437,43 @@
                 }
             }
 
+            if (window.currentActiveProduct && window.currentActiveProduct.sub === 'robux_gamepass') {
+                // Gamepass: descontar saldo + WhatsApp automático
+                if (!currentUser) return alert('Iniciá sesión');
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                if (!users[currentUser]) return alert('Sesión inválida');
+                const bal = Number(users[currentUser].balance || 0);
+                const priceNumGP = window.parsePriceARS ? window.parsePriceARS(window.currentActiveProduct.price) : 0;
+                if (bal < priceNumGP) return alert('Saldo insuficiente');
+                const robloxUser = (document.getElementById('user-account-input')?.value || '').trim();
+                const gamepassLink = (document.getElementById('extra-input')?.value || '').trim();
+                if (!robloxUser) return alert('Ingresá tu usuario de Roblox');
+                users[currentUser].balance = bal - priceNumGP;
+                localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+                const order = {
+                    id: Date.now(),
+                    user: currentUser,
+                    title: window.currentActiveProduct.title,
+                    price: window.currentActiveProduct.price,
+                    targetUser: robloxUser,
+                    extra: gamepassLink,
+                    method: 'Vía Gamepass',
+                    date: new Date().toLocaleString('es-AR'),
+                    status: 'confirmed',
+                    category: 'roblox',
+                    sub: 'robux_gamepass',
+                    notes: ''
+                };
+                purchases.push(order);
+                localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+                document.getElementById('checkout-modal')?.classList.add('hidden');
+                const msg = `Hola Kiwi Store, quiero comprar:\nProducto: ${order.title}\nPrecio: ${order.price}\nUsuario Roblox: ${robloxUser}\nLink: ${gamepassLink || 'No indicado'}\nID pedido: ${order.id}`;
+                window.open('https://wa.me/5491139172595?text=' + encodeURIComponent(msg), '_blank');
+                if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+                return;
+            }
             if (balance < priceNum) {
                 alert('Saldo insuficiente. Tu saldo: $' + balance.toLocaleString('es-AR') + ' ARS\nPrecio: $' + priceNum.toLocaleString('es-AR') + ' ARS');
                 return;
@@ -5758,6 +5785,45 @@
             if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
         };
+
+
+        // Interceptar compra con saldo para Robux grupo/plus
+        document.addEventListener('click', function(ev) {
+            const btn = ev.target.closest('button');
+            if (!btn || !btn.textContent.includes('COMPRAR CON SALDO')) return;
+            if (!window.pendingRobux) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            const user = (document.getElementById('user-account-input')?.value || '').trim();
+            if (!user) return alert('Ingresá tu usuario de Roblox');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return alert('Sesión inválida');
+            const bal = Number(users[currentUser].balance || 0);
+            const { amount, methodText, subType, priceNum, totalStr } = window.pendingRobux;
+            if (bal < priceNum) return alert('Saldo insuficiente');
+            users[currentUser].balance = bal - priceNum;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push({
+                id: Date.now(),
+                user: currentUser,
+                title: amount + ' Robux (' + methodText + ')',
+                price: totalStr,
+                targetUser: user,
+                method: methodText,
+                date: new Date().toLocaleString('es-AR'),
+                status: 'confirmed',
+                category: 'roblox',
+                sub: subType,
+                notes: ''
+            });
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            document.getElementById('checkout-modal')?.classList.add('hidden');
+            window.pendingRobux = null;
+            alert('Pedido creado. Estado: En proceso.\nUsuario: ' + user);
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        }, true);
 
 </script>
 </body>
