@@ -91,8 +91,8 @@
         .role-client { color: #6ee7b7; background-color: rgba(5, 150, 105, 0.15); border: 1px solid #10b981; }
         .role-user { color: #9ca3af; background-color: transparent; border: 1px solid transparent; }
     
-        .cat-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(8px) brightness(0.35); transform:scale(1.1); z-index:0; }
-        .cat-bg-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.3)); z-index:1; }
+        .cat-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(3px) brightness(0.55); transform:scale(1.05); z-index:0; }
+        .cat-bg-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.15)); z-index:1; }
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -420,34 +420,34 @@
                 <button type="button" onclick="window.filterCategory('roblox')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
                     <div class="cat-bg" style="background-image:url('https://i.blogs.es/d16e63/apps.60351.13510798883386282.19007972-a8b6-4cc7-ba5d-ba9311808f97.17104978-8755-4bc8-a873-988455ce4f46/1366_2000.jpg')"></div>
                     <div class="cat-bg-overlay"></div>
-                    <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="w-7 h-7 md:w-8 md:h-8 brightness-0 invert" alt="Roblox"></div>
-                    <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">ROBLOX</p>
-                    <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Robux & Blox Fruits</p>
-                    <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
+                    <div class="relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="w-7 h-7 md:w-8 md:h-8 brightness-0 invert" alt="Roblox"></div>
+                    <p class="relative z-10 font-orbitron font-bold text-white text-sm md:text-base leading-tight drop-shadow">ROBLOX</p>
+                    <p class="relative z-10 text-[11px] md:text-xs text-gray-200 font-rajdhani mt-1">Robux & Blox Fruits</p>
+                    <span class="relative z-10 mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-white group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
                 <button type="button" onclick="window.filterCategory('freefire')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
                     <div class="cat-bg" style="background-image:url('https://i.blogs.es/7595ea/free-fire/1366_2000.jpg')"></div>
                     <div class="cat-bg-overlay"></div>
-                    <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><img src="https://cdn-gop.garenanow.com/gop/app/0000/100/067/pricing_image_config/0000/000/001/logo.png" class="w-9 h-9 md:w-10 md:h-10 object-contain" alt="Free Fire"></div>
-                    <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">FREE FIRE</p>
-                    <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Diamantes, pases y fragmentos</p>
-                    <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
+                    <div class="relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><img src="https://cdn-gop.garenanow.com/gop/app/0000/100/067/pricing_image_config/0000/000/001/logo.png" class="w-9 h-9 md:w-10 md:h-10 object-contain" alt="Free Fire"></div>
+                    <p class="relative z-10 font-orbitron font-bold text-white text-sm md:text-base leading-tight drop-shadow">FREE FIRE</p>
+                    <p class="relative z-10 text-[11px] md:text-xs text-gray-200 font-rajdhani mt-1">Diamantes, pases y fragmentos</p>
+                    <span class="relative z-10 mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-white group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
                 <button type="button" onclick="window.filterCategory('streaming')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
                     <div class="cat-bg" style="background-image:url('https://mercadoaudiovisual.com.ar/wp-content/uploads/2024/01/62795109_101.jpg')"></div>
                     <div class="cat-bg-overlay"></div>
-                    <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><i class="fa-solid fa-tv text-purple-300 text-xl"></i></div>
-                    <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">STREAMING & IA</p>
-                    <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Netflix, Spotify, ChatGPT y más</p>
-                    <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
+                    <div class="relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-tv text-purple-300 text-xl"></i></div>
+                    <p class="relative z-10 font-orbitron font-bold text-white text-sm md:text-base leading-tight drop-shadow">STREAMING & IA</p>
+                    <p class="relative z-10 text-[11px] md:text-xs text-gray-200 font-rajdhani mt-1">Netflix, Spotify, ChatGPT y más</p>
+                    <span class="relative z-10 mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-white group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
                 <button type="button" onclick="window.filterCategory('instagram')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
                     <div class="cat-bg" style="background-image:url('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80')"></div>
                     <div class="cat-bg-overlay"></div>
-                    <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/330px-Instagram_logo_2022.svg.png" class="w-7 h-7 md:w-8 md:h-8 object-contain" alt="Instagram"></div>
-                    <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">REDES SOCIALES</p>
-                    <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Instagram & TikTok</p>
-                    <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
+                    <div class="relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/330px-Instagram_logo_2022.svg.png" class="w-7 h-7 md:w-8 md:h-8 object-contain" alt="Instagram"></div>
+                    <p class="relative z-10 font-orbitron font-bold text-white text-sm md:text-base leading-tight drop-shadow">REDES SOCIALES</p>
+                    <p class="relative z-10 text-[11px] md:text-xs text-gray-200 font-rajdhani mt-1">Instagram & TikTok</p>
+                    <span class="relative z-10 mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-white group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
             </div>
 
@@ -847,7 +847,16 @@
                 </div>
             </div>
         </div>
-    </main>
+    
+            <!-- RESEÑAS DISCORD -->
+            <section id="discord-reviews" class="mt-16 pt-10 border-t border-kiwi-border">
+                <h3 class="font-orbitron text-2xl font-black text-center mb-6">RESEÑAS DE <span class="text-kiwi-red">DISCORD</span></h3>
+                <div id="discord-reviews-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p class="text-gray-500 text-sm text-center col-span-full">Cargando reseñas...</p>
+                </div>
+            </section>
+
+</main>
 
     <!-- FOOTER -->
     <footer class="bg-kiwi-dark border-t border-kiwi-border py-8 mt-16 relative z-10">
@@ -5981,6 +5990,33 @@ window.resetUser2FA = function(username) {
             if (comprasBtn && role === 'staff') comprasBtn.classList.remove('hidden');
         };
         setInterval(window.applyRolePermissions, 2000);
+
+
+        window.loadDiscordReviews = async function() {
+            const list = document.getElementById('discord-reviews-list');
+            if (!list) return;
+            try {
+                const res = await fetch('/api/discord-reviews');
+                const data = await res.json();
+                if (!data.reviews || data.reviews.length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 text-sm text-center col-span-full">No hay reseñas todavía.</p>';
+                    return;
+                }
+                list.innerHTML = data.reviews.map(r => `
+                    <div class="bg-kiwi-card border border-kiwi-border rounded-xl p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            ${r.avatar ? `<img src="${r.avatar}" class="w-8 h-8 rounded-full">` : '<div class="w-8 h-8 rounded-full bg-kiwi-red flex items-center justify-center text-xs font-bold">' + r.author[0] + '</div>'}
+                            <span class="font-bold text-white text-sm">${r.author}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm">${r.content || '(sin texto)'}</p>
+                        <p class="text-[10px] text-gray-500 mt-2">${new Date(r.timestamp).toLocaleString('es-AR')}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = '<p class="text-red-400 text-sm text-center col-span-full">Error al cargar reseñas.</p>';
+            }
+        };
+        document.addEventListener('DOMContentLoaded', window.loadDiscordReviews);
 
 </script>
 </body>
