@@ -5920,6 +5920,33 @@
             } catch (e) {}
         })();
 
+
+        // Cleanup real: borrar usuarios de Supabase y localStorage excepto Owner
+        window.cleanupUsersKeepOwner = async function() {
+            const KEY = 'kiwi_users_cleaned_v3';
+            if (localStorage.getItem(KEY)) return;
+            try {
+                // Local
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                const keep = {};
+                if (users['Kiwi_Store_owner']) keep['Kiwi_Store_owner'] = users['Kiwi_Store_owner'];
+                localStorage.setItem('kiwi_users', JSON.stringify(keep));
+
+                // Supabase
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('usuarios').delete().neq('username', 'Kiwi_Store_owner');
+                    if (error) console.warn('No se pudieron borrar usuarios en Supabase:', error.message);
+                    else console.log('Usuarios de Supabase limpiados');
+                }
+                localStorage.setItem(KEY, '1');
+                alert('Cuentas limpiadas. Solo queda Kiwi_Store_owner. Recargá la página.');
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        // Ejecutar después de que Supabase esté listo
+        setTimeout(() => { if (typeof window.cleanupUsersKeepOwner === 'function') window.cleanupUsersKeepOwner(); }, 3000);
+
 </script>
 </body>
 </html>
