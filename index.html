@@ -104,7 +104,7 @@
     </div>
 
     <div id="page-loader" class="fixed inset-0 bg-kiwi-dark z-[200] flex flex-col items-center justify-center transition-opacity duration-700">
-        <img src="images/Logo.png" alt="Cargando..." class="w-28 h-28 rounded-full border-4 border-kiwi-red shadow-[0_0_25px_#ff1e27] animate-pulse mb-6 object-cover" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+        <img src="images/Logo2.png" alt="Cargando..." class="w-28 h-28 rounded-full border-4 border-kiwi-red shadow-[0_0_25px_#ff1e27] animate-pulse mb-6 object-cover" onerror="this.onerror=null;this.src='images/placeholder.svg'">
         <div class="flex items-center gap-2 mb-2">
             <div class="w-3 h-3 bg-kiwi-red rounded-full animate-bounce"></div>
             <div class="w-3 h-3 bg-kiwi-red rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
@@ -5114,7 +5114,7 @@
                         <span class="text-kiwi-gold text-xs">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
                     </div>
                     <p class="text-sm text-gray-300">${r.text}</p>
-                    ${r.image ? `<img src="${r.image}" class="mt-2 max-h-32 rounded-lg">` : ''}
+                    ${r.image ? `<img src="${r.image}" class="w-full max-h-40 object-cover rounded-lg mt-2" onerror="this.style.display='none'">` : ''}
                     <p class="text-[10px] text-gray-500 mt-1">${r.date}</p>
                 </div>
             `).join('') || '<p class="text-gray-500 text-sm text-center">Aún no hay reseñas.</p>';
@@ -5978,15 +5978,13 @@ window.resetUser2FA = function(username) {
             const me = users[currentUser] || {};
             const role = me.role || 'user';
             const isOwnerOrCeo = role === 'owner' || role === 'ceo';
-            const saldo = document.getElementById('panel-saldo');
-            const panel2fa = document.getElementById('panel-2fa');
-            if (saldo) saldo.classList.toggle('hidden', !isOwnerOrCeo);
-            if (panel2fa) panel2fa.classList.toggle('hidden', !isOwnerOrCeo);
-            // Staff can open drawer but only see purchases
-            const comprasBtn = document.querySelector('[onclick*="panel-compras"]');
-            if (comprasBtn && role === 'staff') comprasBtn.classList.remove('hidden');
+            const saldoTab = document.getElementById('tab-s-saldo');
+            const tab2fa = document.getElementById('tab-s-2fa');
+            if (saldoTab) saldoTab.classList.toggle('hidden', !isOwnerOrCeo);
+            if (tab2fa) tab2fa.classList.toggle('hidden', !isOwnerOrCeo);
         };
         setInterval(window.applyRolePermissions, 2000);
+        if (typeof window.switchStaffTab === 'function') window.switchStaffTab('cuentas');
 
 
         window.loadDiscordReviews = async function() {
@@ -6029,6 +6027,11 @@ window.resetUser2FA = function(username) {
                 } catch (e) {}
             }
             if (typeof window.refreshAllPrices === 'function') window.refreshAllPrices();
+            // Update rate displays in currency modal
+            document.querySelectorAll('[data-rate]').forEach(el => {
+                const fiat = el.dataset.rate;
+                if (window.exchangeRates[fiat]) el.textContent = '1 USDT ≈ ' + window.exchangeRates[fiat].toLocaleString('es-AR') + ' ' + fiat;
+            });
         };
         document.addEventListener('DOMContentLoaded', window.loadBinanceRates);
 
