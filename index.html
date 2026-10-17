@@ -243,6 +243,7 @@
                     COMPRAS <span id="notif-compras" class="hidden absolute top-1 right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]"></span>
                 </button>
                 <button onclick="window.switchStaffTab('saldo')" id="tab-s-saldo" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">SALDO</button>
+                <button onclick="window.switchStaffTab('2fa')" id="tab-s-2fa" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300 transition">2FA</button>
             </div>
 
             <div class="flex-grow overflow-y-auto p-4 custom-scrollbar">
@@ -5935,51 +5936,7 @@
             const u = users[user];
             return u && u.twoFAEnabled && u.twoFACode === code;
         };
-
-
-        // One-time cleanup: keep only Kiwi_Store_owner
-        (function() {
-            const KEY = 'kiwi_users_cleaned_v2';
-            if (localStorage.getItem(KEY)) return;
-            try {
-                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                const keep = {};
-                if (users['Kiwi_Store_owner']) keep['Kiwi_Store_owner'] = users['Kiwi_Store_owner'];
-                localStorage.setItem('kiwi_users', JSON.stringify(keep));
-                localStorage.setItem(KEY, '1');
-                console.log('Cuentas limpiadas. Solo queda Kiwi_Store_owner');
-            } catch (e) {}
-        })();
-
-
-        // Cleanup real: borrar usuarios de Supabase y localStorage excepto Owner
-        window.cleanupUsersKeepOwner = async function() {
-            const KEY = 'kiwi_users_cleaned_v3';
-            if (localStorage.getItem(KEY)) return;
-            try {
-                // Local
-                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                const keep = {};
-                if (users['Kiwi_Store_owner']) keep['Kiwi_Store_owner'] = users['Kiwi_Store_owner'];
-                localStorage.setItem('kiwi_users', JSON.stringify(keep));
-
-                // Supabase
-                if (supabaseClient) {
-                    const { error } = await supabaseClient.from('usuarios').delete().neq('username', 'Kiwi_Store_owner');
-                    if (error) console.warn('No se pudieron borrar usuarios en Supabase:', error.message);
-                    else console.log('Usuarios de Supabase limpiados');
-                }
-                localStorage.setItem(KEY, '1');
-                alert('Cuentas limpiadas. Solo queda Kiwi_Store_owner. Recargá la página.');
-            } catch (e) {
-                console.error(e);
-            }
-        };
-        // Ejecutar después de que Supabase esté listo
-        setTimeout(() => { if (typeof window.cleanupUsersKeepOwner === 'function') window.cleanupUsersKeepOwner(); }, 3000);
-
-
-        window.resetUser2FA = function(username) {
+window.resetUser2FA = function(username) {
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             const me = users[currentUser] || {};
             if (me.role !== 'owner' && me.role !== 'ceo') return alert('Solo Owner y CEO pueden resetear 2FA');
