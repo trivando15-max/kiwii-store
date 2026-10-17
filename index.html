@@ -267,6 +267,15 @@
                     <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Usuario e ID deben pertenecer a la misma cuenta.</p>
                 </div>
 
+                <div id="panel-2fa" class="space-y-3 hidden">
+                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">RESETEAR CÓDIGO 2FA</h4>
+                    <p class="text-xs text-gray-300">Genera un nuevo código 2FA para un usuario. Solo Owner y CEO.</p>
+                    <label class="block text-xs text-gray-400">Nombre de usuario</label>
+                    <input id="reset-2fa-user" placeholder="Nombre de usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <button onclick="window.resetUser2FA(document.getElementById('reset-2fa-user').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Resetear 2FA</button>
+                    <p id="reset-2fa-status" class="text-xs text-gray-300"></p>
+                </div>
+
             </div>
         </div>
     </div>
@@ -2138,7 +2147,18 @@
             const accountId = window.generateAccountId();
             const twoFACode = Math.floor(100000 + Math.random() * 900000).toString();
             const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [], twoFAEnabled: true, twoFACode };
-            alert('Cuenta creada.\nCódigo 2FA: ' + twoFACode + '\nGuardalo. Lo vas a necesitar para entrar.');
+            const msg = document.createElement('div');
+            msg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+            msg.innerHTML = `
+                <div style="background:#111;color:#fff;padding:32px;border:3px solid #e11d2a;border-radius:16px;text-align:center;max-width:420px;width:100%">
+                    <p style="font-size:22px;font-weight:bold;margin:0 0 8px">¡CÓDIGO 2FA IMPORTANTE!</p>
+                    <p style="color:#f87171;font-size:14px;margin:0 0 16px">Guardalo ahora. Sin este código NO vas a poder entrar a tu cuenta.</p>
+                    <div style="font-size:42px;letter-spacing:8px;color:#e11d2a;font-weight:bold;margin:12px 0">${twoFACode}</div>
+                    <p style="font-size:13px;color:#aaa;margin:0 0 20px">Copialo y guardalo en un lugar seguro.</p>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background:#e11d2a;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-weight:bold">Ya lo guardé</button>
+                </div>
+            `;
+            document.body.appendChild(msg);
 
             if (!supabaseClient || !window.supabaseOnline) {
                 alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
@@ -2177,6 +2197,17 @@
         }
 
         window.handleLogin = async function(e) {
+            const userEl = document.getElementById('login-user');
+            const user = userEl ? userEl.value.trim() : '';
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (users[user] && users[user].twoFAEnabled) {
+                const code = prompt('Ingresá tu código 2FA:');
+                if (!code || code !== users[user].twoFACode) {
+                    e.preventDefault();
+                    alert('Código 2FA incorrecto');
+                    return;
+                }
+            }
             e.preventDefault();
             const userInput = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
@@ -5946,6 +5977,35 @@
         };
         // Ejecutar después de que Supabase esté listo
         setTimeout(() => { if (typeof window.cleanupUsersKeepOwner === 'function') window.cleanupUsersKeepOwner(); }, 3000);
+
+
+        window.resetUser2FA = function(username) {
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const me = users[currentUser] || {};
+            if (me.role !== 'owner' && me.role !== 'ceo') return alert('Solo Owner y CEO pueden resetear 2FA');
+            if (!users[username]) return alert('Usuario no encontrado');
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            users[username].twoFACode = code;
+            users[username].twoFAEnabled = true;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            document.getElementById('reset-2fa-status').textContent = 'Nuevo código: ' + code;
+            alert('Código 2FA reseteado para ' + username + ': ' + code);
+        };
+
+        window.applyRolePermissions = function() {
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const me = users[currentUser] || {};
+            const role = me.role || 'user';
+            const isOwnerOrCeo = role === 'owner' || role === 'ceo';
+            const saldo = document.getElementById('panel-saldo');
+            const panel2fa = document.getElementById('panel-2fa');
+            if (saldo) saldo.classList.toggle('hidden', !isOwnerOrCeo);
+            if (panel2fa) panel2fa.classList.toggle('hidden', !isOwnerOrCeo);
+            // Staff can open drawer but only see purchases
+            const comprasBtn = document.querySelector('[onclick*="panel-compras"]');
+            if (comprasBtn && role === 'staff') comprasBtn.classList.remove('hidden');
+        };
+        setInterval(window.applyRolePermissions, 2000);
 
 </script>
 </body>
