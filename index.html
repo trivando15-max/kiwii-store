@@ -182,10 +182,22 @@
     <div id="orders-panel" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
         <div class="max-w-4xl mx-auto px-4 py-8">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="font-orbitron text-2xl font-black text-white">MIS <span class="text-kiwi-red">PEDIDOS</span></h2>
+                <div>
+                    <h2 class="font-orbitron text-2xl font-black text-white">MI <span class="text-kiwi-red">PERFIL</span></h2>
+                    <p class="text-xs text-gray-400 font-rajdhani">Cuenta y pedidos en un solo lugar</p>
+                </div>
                 <button onclick="window.closeOrdersPanel()" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> VOLVER
                 </button>
+            </div>
+            <div id="profile-summary-in-orders" class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full bg-kiwi-red flex items-center justify-center text-2xl font-bold" id="profile-avatar-letter">U</div>
+                    <div>
+                        <p class="font-orbitron font-bold text-white" id="profile-username-display">Usuario</p>
+                        <p class="text-xs text-gray-400" id="profile-id-display">ID: —</p>
+                    </div>
+                </div>
             </div>
             <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
                 <div class="flex items-center justify-between">
@@ -566,7 +578,7 @@
         </div>
 
         <!-- CATEGORY VIEW -->
-        <div id="category-view" class="hidden min-h-screen">
+        <div id="category-view" class="hidden">
             <button onclick="window.goBackToHome()" class="mb-6 bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border text-white px-5 py-2.5 rounded-xl transition flex items-center gap-2 font-rajdhani font-bold text-lg shadow-lg transform hover:-translate-x-1">
                 <i class="fa-solid fa-arrow-left"></i> VOLVER AL INICIO
             </button>
@@ -3796,6 +3808,14 @@
         };
 
         window.filterCategory = function(category) {
+            // Hide Free Fire exclusive panels to avoid empty space
+            ['ff-diamonds-panel','ff-limited-panel','ff-id-checker','ff-specials-panel'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const info = document.getElementById('category-info-container');
+            if (info && category !== 'freefire') info.classList.add('hidden');
+
             const routeMap = { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
             if (routeMap[category] && location.pathname !== routeMap[category]) {
                 history.pushState({}, '', routeMap[category]);
@@ -5457,10 +5477,16 @@
                 return;
             }
             history.pushState({}, '', '/perfil-y-pedidos');
-            if (typeof window.openAuthModal === 'function') window.openAuthModal();
-            setTimeout(() => {
-                if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel(true);
-            }, 200);
+            // Fill profile summary
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const u = users[currentUser] || {};
+            const nameEl = document.getElementById('profile-username-display');
+            const idEl = document.getElementById('profile-id-display');
+            const letterEl = document.getElementById('profile-avatar-letter');
+            if (nameEl) nameEl.textContent = currentUser;
+            if (idEl) idEl.textContent = 'ID: ' + (u.accountId || '—');
+            if (letterEl) letterEl.textContent = (currentUser || 'U')[0].toUpperCase();
+            if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel(true);
         };
 
 
