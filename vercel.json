@@ -1,7 +1,11 @@
 {
   "rewrites": [
-    { "source": "/catalogo", "destination": "/catalogo.html" },
-    { "source": "/pedidos", "destination": "/pedidos.html" },
+    { "source": "/catalogo", "destination": "/index.html" },
+    { "source": "/catalogo/roblox", "destination": "/index.html" },
+    { "source": "/catalogo/free-fire", "destination": "/index.html" },
+    { "source": "/catalogo/suscripciones-IA", "destination": "/index.html" },
+    { "source": "/catalogo/redes-sociales", "destination": "/index.html" },
+    { "source": "/perfil-y-pedidos", "destination": "/index.html" },
     { "source": "/inicio", "destination": "/index.html" }
   ]
 }
