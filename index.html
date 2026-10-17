@@ -4630,8 +4630,8 @@
         };
 
         // === APARTADO GESTIÓN DE PEDIDOS (CLIENTE) ===
-        window.openOrdersPanel = async function() {
-            if (location.pathname !== '/perfil-y-pedidos') history.pushState({}, '', '/perfil-y-pedidos');
+        window.openOrdersPanel = async function(fromProfile) {
+            if (fromProfile && location.pathname !== '/perfil-y-pedidos') history.pushState({}, '', '/perfil-y-pedidos');
             console.log('openOrdersPanel called, currentUser:', currentUser);
             if (!currentUser) {
                 alert('Iniciá sesión para ver tus pedidos');
@@ -5443,7 +5443,7 @@
             if (path === '/perfil-y-pedidos') {
                 setTimeout(() => {
                     if (typeof window.openAuthModal === 'function') window.openAuthModal();
-                    if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel();
+                    if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel(true);
                 }, 300);
             }
         };
@@ -5459,7 +5459,7 @@
             history.pushState({}, '', '/perfil-y-pedidos');
             if (typeof window.openAuthModal === 'function') window.openAuthModal();
             setTimeout(() => {
-                if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel();
+                if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel(true);
             }, 200);
         };
 
