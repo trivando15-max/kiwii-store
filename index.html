@@ -104,6 +104,16 @@
     
         .cat-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(3px) brightness(0.55); transform:scale(1.05); z-index:0; }
         .cat-bg-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.15)); z-index:1; }
+
+        /* Mobile improvements */
+        @media (max-width: 640px) {
+            .max-w-lg, .max-w-md, .max-w-sm { max-width: 95vw; }
+            #welcome-modal .bg-kiwi-card { padding: 1.25rem; }
+            #user-drawer, #staff-drawer { width: 85vw; }
+            h1, h2, h3 { word-break: break-word; }
+            .grid { gap: 0.75rem; }
+            button, a { min-height: 44px; }
+        }
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -124,7 +134,7 @@
         <h2 class="font-orbitron font-bold text-white tracking-widest text-sm text-glow-red">CARGANDO TIENDA...</h2>
     </div>
 
-    <div id="welcome-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-500 hidden opacity-0">
+    <div id="welcome-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 transition-opacity duration-500 hidden opacity-0">
         <div class="bg-kiwi-card border border-kiwi-red w-full max-w-lg rounded-3xl p-8 relative shadow-[0_0_50px_rgba(255,30,39,0.3)] text-center transform scale-95 transition-transform duration-500">
             <button onclick="window.closeWelcomeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
             <img src="images/Logo2.png" alt="Kiwii Store Logo" class="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-kiwi-red shadow-lg kiwi-float object-cover" onerror="this.onerror=null;this.src='images/placeholder.svg'">
@@ -431,7 +441,7 @@
                     <p class="text-xs text-gray-500 font-rajdhani">Elegí qué querés recargar</p>
                 </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
                 <button type="button" onclick="window.filterCategory('roblox')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
                     <div class="cat-bg" style="background-image:url('https://i.blogs.es/d16e63/apps.60351.13510798883386282.19007972-a8b6-4cc7-ba5d-ba9311808f97.17104978-8755-4bc8-a873-988455ce4f46/1366_2000.jpg')"></div>
                     <div class="cat-bg-overlay"></div>
