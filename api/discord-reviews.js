@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (!token) return res.status(500).json({ error: 'Falta DISCORD_BOT_TOKEN' });
 
   try {
-    const r = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=10`, {
+    const r = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=15`, {
       headers: { Authorization: `Bot ${token}` }
     });
     if (!r.ok) return res.status(r.status).json({ error: 'Discord error', status: r.status });
@@ -15,6 +15,7 @@ export default async function handler(req, res) {
         ? `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.png`
         : null,
       content: m.content,
+      image: m.attachments && m.attachments[0] ? m.attachments[0].url : null,
       timestamp: m.timestamp
     }));
     res.setHeader('Cache-Control', 's-maxage=60');
