@@ -91,6 +91,7 @@
         .role-client { color: #6ee7b7; background-color: rgba(5, 150, 105, 0.15); border: 1px solid #10b981; }
         .role-user { color: #9ca3af; background-color: transparent; border: 1px solid transparent; }
     </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
 
@@ -931,6 +932,9 @@
                     <button onclick="window.switchAuthTab('register')" id="tab-register" class="font-orbitron font-bold text-gray-500 hover:text-gray-300 pb-1 transition">REGISTRARSE</button>
                 </div>
                 <form id="login-form" onsubmit="window.handleLogin(event)" class="space-y-4">
+
+                    <div class="cf-turnstile" data-sitekey="0x4AAAAAAFZcuNAyQiRcs_Iz"></div>
+
                     <div>
                         <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Usuario</label>
                         <input type="text" id="login-user" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
@@ -946,6 +950,9 @@
                     <button type="submit" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg mt-4">ENTRAR</button>
                 </form>
                 <form id="register-form" onsubmit="window.handleRegister(event)" class="space-y-4 hidden">
+
+                    <div class="cf-turnstile" data-sitekey="0x4AAAAAAFZcuNAyQiRcs_Iz"></div>
+
                     <div>
                         <label class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Usuario <span class="text-[10px] text-gray-500">(Debe ser único)</span></label>
                         <input type="text" id="reg-user" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
@@ -2121,13 +2128,16 @@
             const pass2 = document.getElementById('reg-pass2').value;
 
             if (pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
+            if (!window.isStrongPassword(pass)) { alert("La contraseña debe tener al menos 8 caracteres y 1 número."); return; }
             if (user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
 
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso en este navegador.`); return; }
 
             const accountId = window.generateAccountId();
-            const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [] };
+            const twoFACode = Math.floor(100000 + Math.random() * 900000).toString();
+            const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [], twoFAEnabled: true, twoFACode };
+            alert('Cuenta creada.\nCódigo 2FA: ' + twoFACode + '\nGuardalo. Lo vas a necesitar para entrar.');
 
             if (!supabaseClient || !window.supabaseOnline) {
                 alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
@@ -5826,6 +5836,73 @@
             alert('Pedido creado. Estado: En proceso.\nUsuario: ' + user);
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
         }, true);
+
+
+        // === SECURITY ===
+        window.loginAttempts = JSON.parse(localStorage.getItem('kiwi_login_attempts') || '{}');
+
+        window.checkRateLimit = function(user) {
+            const key = (user || '').toLowerCase();
+            const now = Date.now();
+            const rec = window.loginAttempts[key] || { count: 0, lockUntil: 0 };
+            if (rec.lockUntil > now) {
+                const mins = Math.ceil((rec.lockUntil - now) / 60000);
+                alert('Demasiados intentos. Esperá ' + mins + ' minutos.');
+                return false;
+            }
+            return true;
+        };
+
+        window.recordFailedLogin = function(user) {
+            const key = (user || '').toLowerCase();
+            const rec = window.loginAttempts[key] || { count: 0, lockUntil: 0 };
+            rec.count++;
+            if (rec.count >= 5) {
+                rec.lockUntil = Date.now() + 15 * 60 * 1000;
+                rec.count = 0;
+            }
+            window.loginAttempts[key] = rec;
+            localStorage.setItem('kiwi_login_attempts', JSON.stringify(window.loginAttempts));
+        };
+
+        window.clearLoginAttempts = function(user) {
+            const key = (user || '').toLowerCase();
+            delete window.loginAttempts[key];
+            localStorage.setItem('kiwi_login_attempts', JSON.stringify(window.loginAttempts));
+        };
+
+        window.isStrongPassword = function(pass) {
+            return pass.length >= 8 && /\d/.test(pass);
+        };
+
+        // Auto logout after 30 min inactivity
+        let lastActivity = Date.now();
+        document.addEventListener('click', () => lastActivity = Date.now());
+        document.addEventListener('keypress', () => lastActivity = Date.now());
+        setInterval(() => {
+            if (currentUser && Date.now() - lastActivity > 30 * 60 * 1000) {
+                if (typeof window.logout === 'function') window.logout();
+                alert('Sesión cerrada por inactividad');
+            }
+        }, 60000);
+
+        // Simple 2FA (email code stored locally for demo)
+        window.enable2FA = function() {
+            if (!currentUser) return alert('Iniciá sesión');
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return;
+            users[currentUser].twoFACode = code;
+            users[currentUser].twoFAEnabled = true;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            alert('2FA activado. Código de prueba: ' + code + '\n(En producción se envía por email)');
+        };
+
+        window.verify2FA = function(user, code) {
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const u = users[user];
+            return u && u.twoFAEnabled && u.twoFACode === code;
+        };
 
 </script>
 </body>
