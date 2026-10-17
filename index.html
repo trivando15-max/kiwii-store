@@ -2499,6 +2499,8 @@
 
                 let delBtn = (myRole === 'owner' || myRole === 'ceo') ? `<button onclick="window.deletePurchase(${p.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-300 transition"><i class="fa-solid fa-xmark text-lg"></i></button>` : '';
 
+                const extra = p.targetUser ? `<br><span class="text-gray-200">Dato:</span> <span class="text-white font-bold">${p.targetUser}</span>` : '';
+                const note = p.notes ? `<br><span class="text-yellow-400">Nota:</span> ${p.notes}` : '';
                 container.innerHTML += `
                     <div class="bg-[#1a170d] border border-yellow-900/30 p-3 rounded-xl flex flex-col relative">
                         ${delBtn}
@@ -2507,8 +2509,18 @@
                         </div>
                         <div class="text-xs text-gray-400 mb-3 border-t border-kiwi-border/50 pt-1">
                             <span class="text-gray-200">Cliente:</span> <span class="font-bold text-white">${p.user}</span> <br>
-                            <span class="text-gray-200">Método:</span> ${p.method} <br>
+                            <span class="text-gray-200">Método:</span> ${p.method || p.sub || '—'} <br>
                             <span class="text-gray-200">Fecha:</span> ${p.date}
+                            ${extra}${note}
+                        </div>
+                        <div class="flex gap-2 items-center mb-2">
+                            <select onchange="window.setOrderStatus(${p.id}, this.value)" class="bg-kiwi-dark border border-kiwi-border text-white text-xs rounded p-1">
+                                <option value="confirmed" ${p.status==='confirmed'?'selected':''}>En proceso</option>
+                                <option value="delivered" ${p.status==='delivered'?'selected':''}>Entregado</option>
+                                <option value="cancelled" ${p.status==='cancelled'?'selected':''}>Cancelado</option>
+                                <option value="receipt_review" ${p.status==='receipt_review'?'selected':''}>En revisión</option>
+                            </select>
+                            <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-+2 py-1 rounded">Nota</button>
                         </div>
                         <div class="flex justify-end items-center mt-1">${statusHtml}</div>
                     </div>
@@ -3654,13 +3666,49 @@
                 return alert('El monto mínimo es de 100 Robux');
             }
             const totalStr = document.getElementById('robux-calculated-price-display').textContent;
-            
-            window.currentActiveProduct = {
-                title: `${amount} Robux (${methodText})`,
+            const priceNum = window.parsePriceARS ? window.parsePriceARS(totalStr) : 0;
+
+            // Gamepass sigue por WhatsApp
+            if (subType === 'robux_gamepass') {
+                window.currentActiveProduct = {
+                    title: `${amount} Robux (${methodText})`,
+                    price: totalStr,
+                    isLimited: false, category: 'roblox', sub: subType
+                };
+                window.openCheckout(null, true);
+                return;
+            }
+
+            // Grupo y Plus: compra con saldo
+            if (!currentUser) return alert('Iniciá sesión');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return alert('Sesión inválida');
+            const bal = Number(users[currentUser].balance || 0);
+            if (bal < priceNum) return alert('Saldo insuficiente');
+            const robloxUser = prompt('Ingresá tu usuario de Roblox:');
+            if (!robloxUser) return;
+
+            users[currentUser].balance = bal - priceNum;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push({
+                id: Date.now(),
+                user: currentUser,
+                title: amount + ' Robux (' + methodText + ')',
                 price: totalStr,
-                isLimited: false, category: 'roblox', sub: subType
-            };
-            window.openCheckout(null, true);
+                targetUser: robloxUser,
+                method: methodText,
+                date: new Date().toLocaleString('es-AR'),
+                status: 'confirmed',
+                category: 'roblox',
+                sub: subType,
+                notes: ''
+            });
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            alert('Pedido creado. Estado: En proceso.\nUsuario: ' + robloxUser);
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
         }
 
         window.currentCatalogCategory = null;
@@ -4739,6 +4787,7 @@
                                 <p class="font-orbitron font-bold text-white text-sm">${p.title}</p>
                                 <p class="text-xs text-gray-400">${p.date} · ${p.price}</p>
                                 <p class="text-xs text-gray-500 mt-1">ID: ${p.id} · Datos: ${p.targetUser || '-'}</p>
+                                ${p.notes ? `<p class="text-xs text-yellow-400 mt-1"><i class="fa-solid fa-note-sticky"></i> Nota: ${p.notes}</p>` : ''}
                             </div>
                             <span class="text-[10px] font-bold uppercase ${color}">${statusText}</span>
                         </div>
@@ -5687,6 +5736,28 @@
                 if (target && typeof window.filterCategory === 'function') window.filterCategory(target);
             }
         });
+
+
+        window.setOrderStatus = function(id, status) {
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const p = purchases.find(x => x.id === id);
+            if (!p) return;
+            p.status = status;
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
+        window.addOrderNote = function(id) {
+            const note = prompt('Nota para el cliente:');
+            if (note === null) return;
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            const p = purchases.find(x => x.id === id);
+            if (!p) return;
+            p.notes = note;
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+        };
 
 </script>
 </body>
