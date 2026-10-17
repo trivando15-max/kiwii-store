@@ -9,16 +9,20 @@ export default async function handler(req, res) {
     });
     if (!r.ok) return res.status(r.status).json({ error: 'Discord error', status: r.status });
     const messages = await r.json();
-    const reviews = messages.map(m => ({
-      author: m.author.username,
-      avatar: m.author.avatar
-        ? `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.png`
-        : null,
-      content: m.content,
-      image: m.attachments && m.attachments[0] ? m.attachments[0].url : null,
-      timestamp: m.timestamp
-    }));
-    res.setHeader('Cache-Control', 's-maxage=60');
+    const reviews = messages.map(m => {
+      let image = null;
+      if (m.attachments && m.attachments[0]) image = m.attachments[0].url;
+      else if (m.embeds && m.embeds[0] && m.embeds[0].image) image = m.embeds[0].image.url;
+      else if (m.embeds && m.embeds[0] && m.embeds[0].thumbnail) image = m.embeds[0].thumbnail.url;
+      return {
+        author: m.author.username,
+        avatar: m.author.avatar ? `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.png` : null,
+        content: m.content,
+        image,
+        timestamp: m.timestamp
+      };
+    });
+    res.setHeader('Cache-Control', 's-maxage=30');
     return res.status(200).json({ reviews });
   } catch (e) {
     return res.status(500).json({ error: e.message });
