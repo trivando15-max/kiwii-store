@@ -90,7 +90,10 @@
         .role-mod { color: #c084fc; background-color: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; text-shadow: 0 0 8px rgba(192,132,252,0.8); }
         .role-client { color: #6ee7b7; background-color: rgba(5, 150, 105, 0.15); border: 1px solid #10b981; }
         .role-user { color: #9ca3af; background-color: transparent; border: 1px solid transparent; }
-    </style>
+    
+        .cat-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(8px) brightness(0.35); transform:scale(1.1); z-index:0; }
+        .cat-bg-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.3)); z-index:1; }
+</style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
@@ -415,28 +418,32 @@
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
                 <button type="button" onclick="window.filterCategory('roblox')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
-                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-blue-500 blur-2xl opacity-40 group-hover:opacity-70 transition"></div>
+                    <div class="cat-bg" style="background-image:url('https://i.blogs.es/d16e63/apps.60351.13510798883386282.19007972-a8b6-4cc7-ba5d-ba9311808f97.17104978-8755-4bc8-a873-988455ce4f46/1366_2000.jpg')"></div>
+                    <div class="cat-bg-overlay"></div>
                     <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="w-7 h-7 md:w-8 md:h-8 brightness-0 invert" alt="Roblox"></div>
                     <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">ROBLOX</p>
                     <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Robux & Blox Fruits</p>
                     <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
                 <button type="button" onclick="window.filterCategory('freefire')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
-                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-orange-500 blur-2xl opacity-40 group-hover:opacity-70 transition"></div>
+                    <div class="cat-bg" style="background-image:url('https://i.blogs.es/7595ea/free-fire/1366_2000.jpg')"></div>
+                    <div class="cat-bg-overlay"></div>
                     <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><img src="https://cdn-gop.garenanow.com/gop/app/0000/100/067/pricing_image_config/0000/000/001/logo.png" class="w-9 h-9 md:w-10 md:h-10 object-contain" alt="Free Fire"></div>
                     <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">FREE FIRE</p>
                     <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Diamantes, pases y fragmentos</p>
                     <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
                 <button type="button" onclick="window.filterCategory('streaming')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
-                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-purple-500 blur-2xl opacity-40 group-hover:opacity-70 transition"></div>
+                    <div class="cat-bg" style="background-image:url('https://mercadoaudiovisual.com.ar/wp-content/uploads/2024/01/62795109_101.jpg')"></div>
+                    <div class="cat-bg-overlay"></div>
                     <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><i class="fa-solid fa-tv text-purple-300 text-xl"></i></div>
                     <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">STREAMING & IA</p>
                     <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Netflix, Spotify, ChatGPT y más</p>
                     <span class="relative mt-4 inline-flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-gray-400 group-hover:text-kiwi-red transition">Ver catálogo <i class="fa-solid fa-arrow-right text-[10px] transition group-hover:translate-x-1"></i></span>
                 </button>
                 <button type="button" onclick="window.filterCategory('instagram')" class="reveal group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-4 md:p-5 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(225,29,42,0.18)]">
-                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-pink-500 blur-2xl opacity-40 group-hover:opacity-70 transition"></div>
+                    <div class="cat-bg" style="background-image:url('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80')"></div>
+                    <div class="cat-bg-overlay"></div>
                     <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center mb-4"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/330px-Instagram_logo_2022.svg.png" class="w-7 h-7 md:w-8 md:h-8 object-contain" alt="Instagram"></div>
                     <p class="relative font-orbitron font-bold text-white text-sm md:text-base leading-tight">REDES SOCIALES</p>
                     <p class="relative text-[11px] md:text-xs text-gray-500 font-rajdhani mt-1">Instagram & TikTok</p>
@@ -3590,8 +3597,8 @@
             if (type === 'robux_grupo') {
                 title = "Robux via Grupo"; multiplier = 12; methodText = "Vía Grupo";
                 infoHtml = `
-                    <div class="bg-[#0c1220] border border-blue-500/30 rounded-xl p-5 relative z-10 mb-6">
-                         <h4 class="font-orbitron font-bold text-base text-blue-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
+                    <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
+                         <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
                          <ul class="text-sm text-gray-200 font-rajdhani space-y-2 list-disc pl-4 mb-4">
                              <li>Es necesario estar en TODOS los grupos POR MAS DE 15 DIAS.</li>
                              <li>Una vez estés más de 15 días, recibirás los robux el mismo día de la compra en un plazo de 1 hora a 24 horas.</li>
@@ -3599,9 +3606,9 @@
                              <li>Si no estás en todos los grupos no podemos realizar la recarga de los Robux. Es de suma importancia que estés en TODOS los grupos.</li>
                              <li>Se acredita el 100% de los robux que selecciones para comprar.</li>
                          </ul>
-                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3"><i class="fa-solid fa-users"></i> Grupos Oficiales:</h4>
+                         <h4 class="font-orbitron font-bold text-sm text-yellow-400 mb-3"><i class="fa-solid fa-users"></i> Grupos Oficiales:</h4>
                          <div id="inline-roblox-groups" class="max-h-48 overflow-y-auto custom-scrollbar space-y-2 pr-2 mb-4"></div>
-                         <h4 class="font-orbitron font-bold text-sm text-blue-400 mb-3 border-t border-blue-500/30 pt-4"><i class="fa-regular fa-calendar-check"></i> Calculadora de 15 días</h4>
+                         <h4 class="font-orbitron font-bold text-sm text-yellow-400 mb-3 border-t border-blue-500/30 pt-4"><i class="fa-regular fa-calendar-check"></i> Calculadora de 15 días</h4>
                          <p class="text-[11px] text-gray-400 mb-2">Elegí la fecha y hora en que te uniste al último grupo:</p>
                          <div class="flex flex-col sm:flex-row gap-2 mb-2">
                              <div class="relative flex-1 cursor-pointer" onclick="try{document.getElementById('join-date').showPicker()}catch(e){document.getElementById('join-date').focus()}">
@@ -3617,8 +3624,8 @@
             } else if (type === 'robux_gamepass') {
                 title = "Robux via Gamepass"; multiplier = 9.12; methodText = "Vía Gamepass";
                 infoHtml = `
-                    <div class="bg-[#0c1220] border border-blue-500/30 rounded-xl p-5 relative z-10 mb-6">
-                         <h4 class="font-orbitron font-bold text-base text-blue-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
+                    <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
+                         <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
                          <ul class="text-sm text-gray-200 font-rajdhani space-y-2 list-disc pl-4">
                              <li>No se cubre el 30% de lo que roblox te quita por gamepass. podes comprar mas robux para cubrir ese porcentaje vos mismo.</li>
                              <li>Se tiene que crear un pase en una experiencia PÚBLICA que poseas.</li>
@@ -3632,8 +3639,8 @@
             } else if (type === 'robux_plus') {
                 title = "Robux via Plus"; multiplier = 14.5; methodText = "Vía Plus";
                 infoHtml = `
-                    <div class="bg-[#0c1220] border border-blue-500/30 rounded-xl p-5 relative z-10 mb-6">
-                         <h4 class="font-orbitron font-bold text-base text-blue-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
+                    <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
+                         <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
                          <ul class="text-sm text-gray-200 font-rajdhani space-y-2 list-disc pl-4">
                              <li>Se acredita el total de lo que compres al instante.</li>
                              <li>Entrega unicamente con tu usuario de Roblox.</li>
@@ -3647,7 +3654,7 @@
             container.innerHTML = `
                 <div class="reveal col-span-1 md:col-span-2 lg:col-span-3 bg-kiwi-card border border-blue-500 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
                     <div class="absolute -right-10 -top-10 text-9xl opacity-5"><i class="fa-solid fa-gem"></i></div>
-                    <h3 class="font-orbitron font-bold text-2xl text-white mb-6 flex items-center gap-3"><span class="text-3xl">💎</span> Calculadora de ${title}</h3>
+                    <h3 class="font-orbitron font-bold text-2xl text-white mb-6 flex items-center gap-3"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Robux_2019_Logo_gold.svg" alt="Robux" class="w-8 h-8"> Calculadora de ${title}</h3>
                     ${infoHtml}
                     <div class="relative z-10 bg-kiwi-dark border border-kiwi-border rounded-xl p-5">
                         <label class="block text-xs font-bold text-gray-300 uppercase mb-2 font-orbitron">Cantidad de Robux (Mínimo 100)</label>
