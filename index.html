@@ -200,6 +200,17 @@
                 </div>
             </div>
             <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
+                <h3 class="font-orbitron text-sm font-bold text-kiwi-gold mb-3">EDITAR PERFIL</h3>
+                <div class="space-y-3">
+                    <input type="email" id="profile-email-full" placeholder="Email" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
+                    <input type="text" id="profile-phone-full" placeholder="Teléfono (opcional)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
+                    <input type="text" id="profile-ff-id-full" placeholder="ID Free Fire" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
+                    <input type="password" id="profile-new-pass-full" placeholder="Nueva contraseña (dejar vacío para no cambiar)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
+                    <button onclick="window.saveProfileFull()" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-sm">Guardar cambios</button>
+                </div>
+            </div>
+            <h3 class="font-orbitron text-sm font-bold text-white mb-3">MIS PEDIDOS</h3>
+            <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs text-gray-400 uppercase font-orbitron">Saldo disponible</p>
@@ -725,7 +736,7 @@
                             </div>
                             <label for="frag-qty" class="text-xs text-gray-400">Cantidad de fragmentos</label>
                             <div class="flex flex-col sm:flex-row gap-2 mt-1">
-                                <input type="number" id="frag-qty" min="35" value="35" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
+                                <input type="number" id="frag-qty" min="35" step="1" inputmode="numeric" value="35" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
                                 <div class="flex gap-2">
                                     <button onclick="window.addFragQty(35)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+35</button>
                                     <button onclick="window.addFragQty(50)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+50</button>
@@ -755,7 +766,7 @@
                             </div>
                             <label for="box-qty" class="text-xs text-gray-400">Cantidad de cajas</label>
                             <div class="flex flex-col sm:flex-row gap-2 mt-1">
-                                <input type="number" id="box-qty" min="7" value="7" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
+                                <input type="number" id="box-qty" min="7" step="1" inputmode="numeric" value="7" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
                                 <div class="flex gap-2">
                                     <button onclick="window.addBoxQty(7)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+7</button>
                                     <button onclick="window.addBoxQty(10)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+10</button>
@@ -2091,6 +2102,17 @@
         };
 
         window.handleRegister = async function(e) {
+            const emailEl = document.getElementById('reg-email');
+            const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+            if (email) {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                const taken = Object.values(users).some(u => (u.email || '').toLowerCase() === email);
+                if (taken) {
+                    e.preventDefault();
+                    alert('Ese Gmail ya está registrado. Usá otro o iniciá sesión.');
+                    return;
+                }
+            }
             e.preventDefault();
             const user = document.getElementById('reg-user').value.trim();
             const email = (document.getElementById('reg-email')?.value || '').trim();
@@ -3904,6 +3926,11 @@
         }
 
         window.goBackToHome = function() {
+            if (location.pathname !== '/inicio') history.pushState({}, '', '/inicio');
+            const orders = document.getElementById('orders-panel');
+            if (orders) orders.classList.add('hidden');
+            const auth = document.getElementById('auth-modal');
+            if (auth) auth.classList.add('hidden');
             window.currentCatalogCategory = null;
             window.currentFreeFireSub = null;
             window.hideFreeFireSpecialsUI(true);
@@ -3912,7 +3939,7 @@
             document.getElementById('streaming-category-wrapper').classList.add('hidden');
             document.getElementById('category-view').classList.add('hidden');
             document.getElementById('home-view').classList.remove('hidden');
-            document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(reveal, 100);
         }
 
@@ -5488,6 +5515,12 @@
             if (nameEl) nameEl.textContent = currentUser;
             if (idEl) idEl.textContent = 'ID: ' + (u.accountId || u.id || '—');
             if (letterEl) letterEl.textContent = (currentUser || 'U')[0].toUpperCase();
+            const emailF = document.getElementById('profile-email-full');
+            const phoneF = document.getElementById('profile-phone-full');
+            const ffF = document.getElementById('profile-ff-id-full');
+            if (emailF) emailF.value = u.email || '';
+            if (phoneF) phoneF.value = u.phone || '';
+            if (ffF) ffF.value = u.ff_id || '';
             // Abrir panel completo de perfil + pedidos
             const panel = document.getElementById('orders-panel');
             if (panel) {
@@ -5510,6 +5543,108 @@
                     e.stopPropagation();
                     window.goToProfile();
                 };
+            }
+        });
+
+
+        window.saveProfileFull = function() {
+            if (!currentUser) return alert('Iniciá sesión');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return;
+            const email = document.getElementById('profile-email-full').value.trim();
+            const phone = document.getElementById('profile-phone-full').value.trim();
+            const ffId = document.getElementById('profile-ff-id-full').value.trim();
+            const newPass = document.getElementById('profile-new-pass-full').value;
+            if (email) users[currentUser].email = email;
+            if (phone) users[currentUser].phone = phone;
+            if (ffId) users[currentUser].ff_id = ffId;
+            if (newPass) users[currentUser].password = newPass;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            alert('Perfil actualizado');
+        };
+
+
+        // Sanitizers
+        document.addEventListener('input', function(ev) {
+            const t = ev.target;
+            if (!t || !t.id) return;
+            // Solo enteros en cantidades
+            if (['frag-qty','box-qty','robux-qty','robux-qty-grupo','robux-qty-plus'].includes(t.id)) {
+                t.value = t.value.replace(/[^0-9]/g, '');
+            }
+            // Saldo no negativo
+            if (t.id === 'credit-amount' || t.id === 'balance-amount') {
+                if (parseFloat(t.value) < 0) t.value = '0';
+            }
+        });
+        // Fecha de grupo no puede ser futura
+        document.addEventListener('change', function(ev) {
+            if (ev.target && ev.target.type === 'datetime-local') {
+                if (new Date(ev.target.value) > new Date()) {
+                    ev.target.value = '';
+                    alert('La fecha no puede ser en el futuro');
+                }
+            }
+        });
+
+
+        window.validateSocialLink = function(url, platform) {
+            if (!url) return false;
+            try {
+                const u = new URL(url.startsWith('http') ? url : 'https://' + url);
+                const host = u.hostname.toLowerCase();
+                if (platform === 'tiktok' || platform === 'TikTok') {
+                    return host === 'tiktok.com' || host.endsWith('.tiktok.com');
+                }
+                if (platform === 'instagram' || platform === 'Instagram') {
+                    return host === 'instagram.com' || host.endsWith('.instagram.com');
+                }
+            } catch (e) { return false; }
+            return false;
+        };
+
+
+        document.addEventListener('input', function(ev) {
+            if (ev.target && ev.target.id === 'user-account-input') {
+                const val = ev.target.value.trim();
+                const placeholder = (ev.target.placeholder || '').toLowerCase();
+                let platform = null;
+                if (placeholder.includes('tiktok')) platform = 'tiktok';
+                else if (placeholder.includes('instagram')) platform = 'instagram';
+                if (platform && val && typeof window.validateSocialLink === 'function') {
+                    const ok = window.validateSocialLink(val, platform);
+                    ev.target.style.borderColor = ok ? '#22c55e' : '#ef4444';
+                    if (!ok && val.length > 5) {
+                        ev.target.title = 'El link debe ser de ' + (platform === 'tiktok' ? 'tiktok.com' : 'instagram.com');
+                    }
+                }
+            }
+        });
+        // Block form submit if link is invalid
+        document.addEventListener('submit', function(ev) {
+            const input = document.getElementById('user-account-input');
+            if (!input || !ev.target.contains(input)) return;
+            const val = input.value.trim();
+            const placeholder = (input.placeholder || '').toLowerCase();
+            let platform = null;
+            if (placeholder.includes('tiktok')) platform = 'tiktok';
+            else if (placeholder.includes('instagram')) platform = 'instagram';
+            if (platform && val && !window.validateSocialLink(val, platform)) {
+                ev.preventDefault();
+                alert('El link debe ser de ' + (platform === 'tiktok' ? 'tiktok.com' : 'instagram.com') + ' (dominio raíz).');
+            }
+        });
+
+
+        // Force home on load if at root or /inicio
+        window.addEventListener('load', function() {
+            const p = location.pathname.replace(/\/+$/, '') || '/';
+            if (p === '/' || p === '/inicio') {
+                if (p === '/') history.replaceState({}, '', '/inicio');
+                const home = document.getElementById('home-view');
+                const cat = document.getElementById('category-view');
+                if (home) home.classList.remove('hidden');
+                if (cat) cat.classList.add('hidden');
             }
         });
 
