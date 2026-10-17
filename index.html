@@ -5647,6 +5647,41 @@
             }
         });
 
+
+        // Re-bind profile button so it always works
+        function bindProfileBtn() {
+            const btn = document.getElementById('login-main-btn');
+            if (!btn) return;
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof window.goToProfile === 'function') window.goToProfile();
+            };
+        }
+        bindProfileBtn();
+        setInterval(bindProfileBtn, 2000);
+
+        // Browser back/forward updates the view
+        window.addEventListener('popstate', function() {
+            const path = location.pathname.replace(/\/+$/, '') || '/';
+            const orders = document.getElementById('orders-panel');
+            const home = document.getElementById('home-view');
+            const cat = document.getElementById('category-view');
+            if (path === '/' || path === '/inicio') {
+                if (orders) orders.classList.add('hidden');
+                if (home) home.classList.remove('hidden');
+                if (cat) cat.classList.add('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (path === '/perfil-y-pedidos') {
+                if (typeof window.goToProfile === 'function') window.goToProfile();
+            } else if (path.startsWith('/catalogo')) {
+                if (orders) orders.classList.add('hidden');
+                const map = { '/catalogo/roblox': 'roblox', '/catalogo/free-fire': 'freefire', '/catalogo/suscripciones-IA': 'streaming', '/catalogo/redes-sociales': 'instagram' };
+                const target = map[path];
+                if (target && typeof window.filterCategory === 'function') window.filterCategory(target);
+            }
+        });
+
 </script>
 </body>
 </html>
