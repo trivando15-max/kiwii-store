@@ -780,6 +780,10 @@
                             <div id="ff-id-result" class="mt-3 text-sm font-rajdhani hidden"></div>
                             <p class="text-[10px] text-gray-500 mt-2">El ID se guardará en tu cuenta para autocompletar en futuras compras.</p>
                         </div>
+<div id="ff-limited-result" class="mt-3 text-sm font-rajdhani hidden"></div>
+                            <p class="text-[10px] text-gray-500 mt-2">Solo consulta las ofertas limitadas disponibles para este ID.</p>
+                        </div>
+
                         <div id="ff-summary" class="bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
                             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 pb-2 mb-3">Resumen de compra</p>
                             <div id="ff-summary-body"></div>
@@ -3794,6 +3798,10 @@
         };
 
         window.filterCategory = function(category) {
+            const routeMap = { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
+            if (routeMap[category] && location.pathname !== routeMap[category]) {
+                history.pushState({}, '', routeMap[category]);
+            }
             // Cerrar checkout si está abierto (permite salir de likes / cualquier pestaña)
             try {
                 const checkout = document.getElementById('checkout-modal');
@@ -4625,6 +4633,7 @@
 
         // === APARTADO GESTIÓN DE PEDIDOS (CLIENTE) ===
         window.openOrdersPanel = async function() {
+            if (location.pathname !== '/perfil-y-pedidos') history.pushState({}, '', '/perfil-y-pedidos');
             console.log('openOrdersPanel called, currentUser:', currentUser);
             if (!currentUser) {
                 alert('Iniciá sesión para ver tus pedidos');
@@ -4739,7 +4748,7 @@
                             localStorage.setItem('kiwi_users', JSON.stringify(users));
                         }
                     }
-                    // Descuentos solo se consultan al entrar a pestaña LIMITADOS
+                    window.checkFreeFireDiscounts(uid);
                 } else {
                     resultEl.textContent = 'ID no encontrado: ' + ((json && json.message) || 'desconocido');
                     resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
@@ -5420,6 +5429,29 @@
             window.updateBoxPrice();
         };
 
-    </script>
+        // Rutas limpias
+        window.handleCleanRoutes = function() {
+            const path = location.pathname.replace(/\/+$/, '') || '/';
+            const map = {
+                '/catalogo/roblox': 'roblox',
+                '/catalogo/free-fire': 'freefire',
+                '/catalogo/suscripciones-IA': 'streaming',
+                '/catalogo/redes-sociales': 'instagram'
+            };
+            const target = map[path];
+            if (target && typeof window.filterCategory === 'function') {
+                setTimeout(() => window.filterCategory(target), 300);
+            }
+            if (path === '/perfil-y-pedidos') {
+                setTimeout(() => {
+                    if (typeof window.openAuthModal === 'function') window.openAuthModal();
+                    if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel();
+                }, 300);
+            }
+        };
+        document.addEventListener('DOMContentLoaded', window.handleCleanRoutes);
+        if (document.readyState !== 'loading') setTimeout(window.handleCleanRoutes, 100);
+
+</script>
 </body>
 </html>
