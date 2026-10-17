@@ -4739,7 +4739,7 @@
                             localStorage.setItem('kiwi_users', JSON.stringify(users));
                         }
                     }
-                    window.checkFreeFireDiscounts(uid);
+                    // Descuentos solo se consultan al entrar a pestaña LIMITADOS
                 } else {
                     resultEl.textContent = 'ID no encontrado: ' + ((json && json.message) || 'desconocido');
                     resultEl.className = 'mt-3 text-sm font-rajdhani text-red-400';
