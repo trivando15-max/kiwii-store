@@ -6009,7 +6009,7 @@ window.resetUser2FA = function(username) {
                     </div>
                 `).join('');
             } catch (e) {
-                list.innerHTML = '<p class="text-red-400 text-sm text-center col-span-full">Error al cargar reseñas.</p>';
+                list.innerHTML = '<p class="text-red-400 text-sm text-center col-span-full">Error: ' + e.message + '. Revisá que api/discord-reviews.js esté en GitHub y que DISCORD_BOT_TOKEN esté en Vercel.</p>';
             }
         };
         document.addEventListener('DOMContentLoaded', window.loadDiscordReviews);
@@ -6033,7 +6033,20 @@ window.resetUser2FA = function(username) {
                 if (window.exchangeRates[fiat]) el.textContent = '1 USDT ≈ ' + window.exchangeRates[fiat].toLocaleString('es-AR') + ' ' + fiat;
             });
         };
-        document.addEventListener('DOMContentLoaded', window.loadBinanceRates);
+        document.addEventListener('DOMContentLoaded', async function() {
+            await window.loadBinanceRates();
+            // Force update visible rate texts
+            const map = { ARS: '1 USDT ≈ ', MXN: '1 USDT ≈ ', COP: '1 USDT ≈ ', PEN: '1 USDT ≈ ' };
+            document.querySelectorAll('span').forEach(el => {
+                const t = el.textContent || '';
+                if (t.includes('1 USDT ≈')) {
+                    const fiat = t.includes('ARS') ? 'ARS' : t.includes('MXN') ? 'MXN' : t.includes('COP') ? 'COP' : t.includes('PEN') ? 'PEN' : null;
+                    if (fiat && window.exchangeRates[fiat]) {
+                        el.textContent = '1 USDT ≈ ' + window.exchangeRates[fiat].toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + fiat;
+                    }
+                }
+            });
+        });
 
 </script>
 </body>
