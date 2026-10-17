@@ -5905,6 +5905,21 @@
             return u && u.twoFAEnabled && u.twoFACode === code;
         };
 
+
+        // One-time cleanup: keep only Kiwi_Store_owner
+        (function() {
+            const KEY = 'kiwi_users_cleaned_v2';
+            if (localStorage.getItem(KEY)) return;
+            try {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                const keep = {};
+                if (users['Kiwi_Store_owner']) keep['Kiwi_Store_owner'] = users['Kiwi_Store_owner'];
+                localStorage.setItem('kiwi_users', JSON.stringify(keep));
+                localStorage.setItem(KEY, '1');
+                console.log('Cuentas limpiadas. Solo queda Kiwi_Store_owner');
+            } catch (e) {}
+        })();
+
 </script>
 </body>
 </html>
