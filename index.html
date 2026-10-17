@@ -155,10 +155,7 @@
                 <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="h-10 w-10 bg-green-600/90 hover:bg-green-600 text-white rounded-xl transition flex items-center justify-center" title="Atención WhatsApp">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
                 </a>
-                <button onclick="window.openOrdersPanel()" class="h-10 border border-white/10 bg-white/[0.03] hover:border-white/25 text-white text-sm rounded-xl px-2.5 sm:px-3 font-rajdhani font-bold flex items-center gap-2 transition" title="Pedidos">
-                    <i class="fa-solid fa-box"></i> <span class="hidden md:inline">PEDIDOS</span>
-                </button>
-                <button id="login-main-btn" onclick="window.openAuthModal()" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
+                <button id="login-main-btn" onclick="window.goToProfile()" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
                     <i class="fa-solid fa-user"></i> <span id="user-display-name" class="hidden sm:inline">INICIAR SESIÓN</span>
                 </button>
                 <button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
@@ -1178,6 +1175,7 @@
 
         // === FUNCIONES CRÍTICAS DE BOTONES (definidas primero) ===
         window.goBackToHome = function() {
+            if (location.pathname !== '/inicio') history.pushState({}, '', '/inicio');
             const catView = document.getElementById('category-view');
             const homeView = document.getElementById('home-view');
             if (catView) catView.classList.add('hidden');
@@ -5451,6 +5449,24 @@
         };
         document.addEventListener('DOMContentLoaded', window.handleCleanRoutes);
         if (document.readyState !== 'loading') setTimeout(window.handleCleanRoutes, 100);
+
+
+        window.goToProfile = function() {
+            if (!currentUser) {
+                if (typeof window.openAuthModal === 'function') window.openAuthModal();
+                return;
+            }
+            history.pushState({}, '', '/perfil-y-pedidos');
+            if (typeof window.openAuthModal === 'function') window.openAuthModal();
+            setTimeout(() => {
+                if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel();
+            }, 200);
+        };
+
+
+        if (location.pathname === '/' || location.pathname === '') {
+            history.replaceState({}, '', '/inicio');
+        }
 
 </script>
 </body>
