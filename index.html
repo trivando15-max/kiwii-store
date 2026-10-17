@@ -2347,31 +2347,42 @@
         }
 
         window.switchStaffTab = function(tab) {
+            const valid = ['cuentas', 'compras', 'saldo', '2fa'];
+            if (!valid.includes(tab)) tab = 'cuentas';
             currentStaffTab = tab;
-            if (!['cuentas', 'compras', 'saldo'].includes(tab)) tab = 'cuentas';
-            currentStaffTab = tab;
-            ['cuentas', 'compras', 'saldo'].forEach(t => {
-                const pn = document.getElementById(`panel-${t}`), tb = document.getElementById(`tab-s-${t}`);
+            valid.forEach(t => {
+                const pn = document.getElementById('panel-' + t);
+                const tb = document.getElementById('tab-s-' + t);
                 if (pn) pn.classList.add('hidden');
-                if (tb) tb.classList.replace('text-kiwi-gold', 'text-gray-500');
+                if (tb) {
+                    tb.classList.remove('text-kiwi-gold', 'border-kiwi-gold');
+                    tb.classList.add('text-gray-500');
+                }
             });
-            document.getElementById(`panel-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-s-${tab}`).classList.replace('text-gray-500', 'text-kiwi-gold');
+            const activePanel = document.getElementById('panel-' + tab);
+            const activeTab = document.getElementById('tab-s-' + tab);
+            if (activePanel) activePanel.classList.remove('hidden');
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-500');
+                activeTab.classList.add('text-kiwi-gold', 'border-kiwi-gold');
+            }
 
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!currentUser || !usersDB[currentUser]) return;
             let myRole = usersDB[currentUser].role;
+            const canManage = ['owner','ceo'].includes(myRole);
             const saldoTab = document.getElementById('tab-s-saldo');
-            if (saldoTab) saldoTab.classList.toggle('hidden', !['owner','ceo'].includes(myRole));
-            if (tab === 'saldo' && !['owner','ceo'].includes(myRole)) {
-                alert('Solo Owner y CEO pueden acreditar saldo.');
+            const tab2fa = document.getElementById('tab-s-2fa');
+            if (saldoTab) saldoTab.classList.toggle('hidden', !canManage);
+            if (tab2fa) tab2fa.classList.toggle('hidden', !canManage);
+            if ((tab === 'saldo' || tab === '2fa') && !canManage) {
+                alert('Solo Owner y CEO pueden usar esta sección.');
                 window.switchStaffTab('cuentas');
                 return;
             }
 
             if (tab === 'cuentas') renderStaffCuentas(myRole);
             else if (tab === 'compras') renderStaffCompras(myRole);
-            else if (tab === 'saldo') { const status = document.getElementById('credit-status'); if (status) status.textContent = ''; }
         }
 
         function renderStaffCuentas(myRole) {
