@@ -373,6 +373,15 @@
                 <button onclick="window.toggleUserDrawer()" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
+            <h4 class="font-orbitron text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">CUENTA</h4>
+            <div class="space-y-3 mb-6">
+                <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
+                    <i class="fa-solid fa-user text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Mi Perfil</span>
+                </button>
+                <button id="staff-menu-btn" onclick="history.pushState({}, '', '/panel-admin'); window.toggleStaffDrawer(); window.toggleUserDrawer();" class="hidden w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-gold transition text-gray-300 hover:text-white">
+                    <i class="fa-solid fa-shield-halved text-xl text-kiwi-gold"></i> <span class="font-rajdhani font-bold">Panel Staff</span>
+                </button>
+            </div>
             <h4 class="font-orbitron text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">CONTACTO</h4>
             <div class="space-y-3 mb-6">
                 <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="flex items-center gap-3 bg-green-600 hover:bg-green-700 p-4 rounded-xl border border-green-500 text-white transition">
@@ -914,7 +923,7 @@
     </div>
 
     <!-- MODALES DE AUTH, PERFIL, ACCIONES, Y DRAWER USUARIO -->
-    <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="auth-modal" style="display:none !important;" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-4 sm:p-6 relative shadow-2xl transform transition-transform duration-300 scale-95 max-h-[90vh] overflow-hidden" id="auth-modal-card">
             <button onclick="window.closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="font-orbitron text-xl font-bold text-center mb-1 text-white" id="auth-modal-title">Iniciar Sesión</h3>
@@ -5685,8 +5694,12 @@
             }
             if (path === '/perfil-y-pedidos') {
                 setTimeout(() => {
-                    if (typeof window.openAuthModal === 'function') window.openAuthModal();
-                    if (typeof window.openOrdersPanel === 'function') window.openOrdersPanel(true);
+                    if (typeof window.goToProfile === 'function') window.goToProfile();
+                }, 400);
+            }
+            if (path === '/panel-admin') {
+                setTimeout(() => {
+                    if (typeof window.toggleStaffDrawer === 'function') window.toggleStaffDrawer();
                 }, 300);
             }
         };
@@ -6141,6 +6154,15 @@ window.resetUser2FA = function(username) {
                 localStorage.removeItem('kiwi_logged_user');
                 localStorage.removeItem('kiwi_session_expiry');
             }
+        })();
+
+
+        // Show staff button for owner/ceo/mod
+        (function() {
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const u = users[currentUser];
+            const btn = document.getElementById('staff-menu-btn');
+            if (btn && u && ['owner','ceo','mod'].includes(u.role)) btn.classList.remove('hidden');
         })();
 
 </script>
