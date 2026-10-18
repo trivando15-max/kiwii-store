@@ -4382,7 +4382,7 @@
                     target = created;
                 }
 
-                if (!confirm(`¿Acreditar $${value.toLocaleString('es-AR')} ARS a ${target.username}?\nID: ${target.account_id}\nSaldo actual: $${Number(target.balance || 0).toLocaleString('es-AR')} ARS`)) {
+                if (!confirm('¿Acreditar ' + value.toFixed(2) + ' USDT a ' + target.username + '?\nID: ' + target.account_id + '\nSaldo actual: ' + Number(target.balance || 0).toFixed(2) + ' USDT')) {
                     setStatus('Cancelado.');
                     return;
                 }
@@ -4464,6 +4464,28 @@
                 const msg = 'Hola Kiwi Store!\nProducto: ' + prod.title + '\nPrecio: ' + prod.price + '\nUsuario: ' + targetUser + '\nLink: ' + (extra || 'No indicado') + '\nID: ' + order.id;
                 window.open('https://wa.me/5491139172595?text=' + encodeURIComponent(msg), '_blank');
                 window.closeCheckoutModal();
+                return;
+            }
+            if (isRobux && (prod.sub === 'robux_grupo' || prod.sub === 'robux_plus')) {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                if (!users[currentUser]) return alert('Sesión inválida');
+                const usdtPrice = Number(prod.usdtPrice) || 0;
+                const bal = Number(users[currentUser].balance || 0);
+                if (bal < usdtPrice) return alert('Saldo insuficiente');
+                users[currentUser].balance = bal - usdtPrice;
+                localStorage.setItem('kiwi_users', JSON.stringify(users));
+                const order = {
+                    id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
+                    method: prod.sub === 'robux_grupo' ? 'Vía Grupo' : 'Vía Plus',
+                    date: new Date().toLocaleString('es-AR'), status: 'confirmed',
+                    targetUser, extra, category: 'roblox', sub: prod.sub, usdtPrice, notes: ''
+                };
+                const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+                purchases.push(order);
+                localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                window.closeCheckoutModal();
+                alert('Pedido creado. Estado: En proceso.\nUsuario: ' + targetUser);
                 return;
             }
             if (isRobux) {
