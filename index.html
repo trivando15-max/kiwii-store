@@ -2160,6 +2160,7 @@
 
             currentUser = user;
             localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
             if (typeof updateAuthUI === 'function') updateAuthUI();
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             window.openAuthModal();
@@ -2170,9 +2171,10 @@
             const userEl = document.getElementById('login-user');
             const user = userEl ? userEl.value.trim() : '';
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (users[user] && users[user].twoFAEnabled) {
-                const code = prompt('Ingresá tu código 2FA:');
-                if (!code || code !== users[user].twoFACode) {
+            const localUser = users[user] || users[Object.keys(users).find(k => k.toLowerCase() === user.toLowerCase())];
+            if (localUser && localUser.twoFAEnabled && localUser.twoFACode) {
+                const code = prompt('Ingresá tu código 2FA (lo recibiste al registrarte):');
+                if (!code || code !== localUser.twoFACode) {
                     e.preventDefault();
                     alert('Código 2FA incorrecto');
                     return;
@@ -2231,6 +2233,7 @@
 
                         currentUser = uname;
                         localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
                         if (typeof updateAuthUI === 'function') updateAuthUI();
                         if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                         window.openAuthModal();
@@ -2267,6 +2270,7 @@
 
                 currentUser = localUser;
                 localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
                 if (typeof updateAuthUI === 'function') updateAuthUI();
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 window.openAuthModal();
@@ -2492,6 +2496,11 @@
             if(confirm("¿Estás seguro de que deseas eliminar permanentemente esta compra del registro?")) {
                 const { error } = await supabaseClient.from('compras').delete().eq('id', id);
                 if (error) { alert("Error eliminando compra: " + error.message); return; }
+                let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+                purchases = purchases.filter(p => String(p.id) !== String(id));
+                localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+                if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+                if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             }
         };
 
@@ -6108,6 +6117,16 @@ window.resetUser2FA = function(username) {
             const flagEl = document.getElementById('currency-flag');
             if (codeEl) codeEl.textContent = pref;
             if (flagEl) flagEl.textContent = flags[pref] || '₮';
+        })();
+
+
+        // Session persistence check
+        (function() {
+            const expiry = Number(localStorage.getItem('kiwi_session_expiry') || 0);
+            if (expiry && Date.now() > expiry) {
+                localStorage.removeItem('kiwi_logged_user');
+                localStorage.removeItem('kiwi_session_expiry');
+            }
         })();
 
 </script>
