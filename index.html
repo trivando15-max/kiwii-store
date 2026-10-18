@@ -5316,11 +5316,11 @@
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!users[currentUser]) return alert('Sesión inválida. Volvé a iniciar sesión.');
             const bal = Number(users[currentUser].balance || 0);
-            const priceNum = window.parsePriceARS(prod.price);
+            const priceNum = Number(prod.usdtPrice) || (window.parsePriceARS ? window.parsePriceARS(prod.price) / (window.exchangeRates.ARS || 1600) : 0);
             if (!priceNum) return alert('No se pudo leer el precio del producto.');
             if (bal < priceNum) {
                 document.getElementById('ff-confirm-modal').classList.add('hidden');
-                return alert('Saldo insuficiente.\nTu saldo: $' + bal.toLocaleString('es-AR') + ' ARS\nPrecio: $' + priceNum.toLocaleString('es-AR') + ' ARS');
+                return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + priceNum.toFixed(2) + ' USDT');
             }
 
             document.getElementById('ff-confirm-modal').classList.add('hidden');
