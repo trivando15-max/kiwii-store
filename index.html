@@ -1585,6 +1585,7 @@
                 const saved = localStorage.getItem('kiwi_logged_user');
                 if (saved) {
                     try { currentUser = JSON.parse(saved); } catch(e) { currentUser = null; }
+                    if (currentUser) localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
                 }
                 updateAuthUI();
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
@@ -2051,7 +2052,7 @@
             out.role = cloud.username === 'Kiwi_Store_Owner' ? 'owner' : (cloud.username === 'KenshinFu' ? 'ceo' : (cloud.role || out.role || 'user'));
             out.banned = cloud.banned === true || cloud.banned === 'true' || cloud.banned === true;
             out.profilePic = cloud.profile_pic != null ? cloud.profile_pic : (out.profilePic || '');
-            out.balance = Number(cloud.balance ?? out.balance ?? 0);
+            out.balance = Number(cloud.balance ?? 0);
             out.accountId = cloud.account_id || out.accountId || '';
             return out;
         };
