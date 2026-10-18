@@ -1692,7 +1692,7 @@
             }
             const priceEl = document.getElementById('modal-product-price');
             if (priceEl && window.currentActiveProduct) {
-                priceEl.textContent = window.getConvertedPrice(window.currentActiveProduct) || window.currentActiveProduct.price || '—';
+                priceEl.textContent = window.currentActiveProduct.price || window.getConvertedPrice(window.currentActiveProduct) || '—';
             }
             
             const prod = window.currentActiveProduct;
@@ -3705,28 +3705,28 @@
                 if (minErr) minErr.classList.remove('hidden');
                 return alert('El monto mínimo es de 100 Robux');
             }
-            const totalStr = document.getElementById('robux-calculated-price-display').textContent;
-            const priceNum = window.parsePriceARS ? window.parsePriceARS(totalStr) : 0;
+            // Calculate USDT price (0.075 per 10 Robux for grupo, adjust as needed)
+            const multiplier = subType === 'robux_gamepass' ? 0.057 : (subType === 'robux_plus' ? 0.08 : 0.075);
+            const usdtPrice = (amount / 10) * multiplier;
+            const rate = window.exchangeRates[window.currentCurrency] || 1;
+            const converted = window.currentCurrency === 'USDT' ? usdtPrice : usdtPrice * rate;
+            const sym = window.currencySymbols[window.currentCurrency] || '';
+            const totalStr = sym + converted.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + window.currentCurrency;
 
-            // Gamepass sigue por WhatsApp
+            window.currentActiveProduct = {
+                title: amount + ' Robux (' + methodText + ')',
+                price: totalStr,
+                usdtPrice: usdtPrice,
+                isLimited: false, category: 'roblox', sub: subType
+            };
+
             if (subType === 'robux_gamepass') {
-                window.currentActiveProduct = {
-                    title: `${amount} Robux (${methodText})`,
-                    price: totalStr,
-                    isLimited: false, category: 'roblox', sub: subType
-                };
                 window.openCheckout(null, true);
                 return;
             }
 
-            // Grupo y Plus: abrir modal de confirmación con saldo
             if (!currentUser) return alert('Iniciá sesión');
-            window.pendingRobux = { amount, methodText, subType, priceNum, totalStr };
-            window.currentActiveProduct = {
-                title: amount + ' Robux (' + methodText + ')',
-                price: totalStr,
-                isLimited: false, category: 'roblox', sub: subType
-            };
+            window.pendingRobux = { amount, methodText, subType, priceNum: usdtPrice, totalStr };
             // Abrir modal existente
             const modal = document.getElementById('checkout-modal');
             const titleEl = document.getElementById('checkout-product-title');
