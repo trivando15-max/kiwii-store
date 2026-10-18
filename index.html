@@ -286,9 +286,16 @@
                     <input id="credit-user" autocomplete="off" placeholder="Nombre de usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
                     <label for="credit-account-id" class="block text-xs text-gray-400">ID de cuenta (KWS-...)</label>
                     <input id="credit-account-id" autocomplete="off" placeholder="Ej. KWS-7F3A91C2" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
-                    <label for="credit-amount" class="block text-xs text-gray-400">Monto a acreditar (ARS)</label>
-                    <input id="credit-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 1500" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
-                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value, document.getElementById('credit-account-id').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar saldo</button>
+                    <label for="credit-amount" class="block text-xs text-gray-400">Monto a acreditar</label>
+                    <select id="credit-currency" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white mb-2">
+                        <option value="USDT">USDT</option>
+                        <option value="ARS">ARS</option>
+                        <option value="MXN">MXN</option>
+                        <option value="COP">COP</option>
+                        <option value="PEN">PEN</option>
+                    </select>
+                    <input id="credit-amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ej. 1.50" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value, document.getElementById('credit-account-id').value, document.getElementById('credit-currency').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar saldo</button>
                     <p id="credit-status" role="status" class="text-xs text-gray-300"></p>
                     <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Usuario e ID deben pertenecer a la misma cuenta.</p>
                 </div>
@@ -1053,11 +1060,7 @@
                 <i class="fa-solid fa-triangle-exclamation"></i> ESTA ES UNA OFERTA LIMITADA (SOLO 1 COMPRA POR ID).
             </p>
 
-            <div id="checkout-payment-info" class="hidden bg-kiwi-dark p-3.5 rounded-xl border border-kiwi-border mb-4 text-xs space-y-1">
-                <p class="text-kiwi-gold font-bold font-orbitron uppercase text-[11px]">DATOS DE PAGO</p>
-                <p class="text-gray-300"><span class="text-gray-500">Titular:</span> <strong class="text-white">Iván Estrada</strong></p>
-                <p id="checkout-payment-hint" class="text-gray-400">Seleccioná el método de pago según tu moneda.</p>
-            </div>
+
 
             <form onsubmit="window.handlePurchaseSubmit(event)" class="space-y-4">
                 <div id="checkout-dynamic-fields">
@@ -2557,7 +2560,7 @@
                                 <option value="cancelled" ${p.status==='cancelled'?'selected':''}>Cancelado</option>
                                 <option value="receipt_review" ${p.status==='receipt_review'?'selected':''}>En revisión</option>
                             </select>
-                            <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-+2 py-1 rounded">Nota</button>
+                            <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-2 py-1 rounded">Nota</button>
                         </div>
                         <div class="flex justify-end items-center mt-1">${statusHtml}</div>
                     </div>
@@ -4302,19 +4305,22 @@
 
         // Override or extend history rendering if needed (existing code already uses purchase-history-list)
         // Add staff function to credit balance
-        window.creditUserBalance = async function(username, amount, accountIdInput) {
+        window.creditUserBalance = async function(username, amount, accountIdInput, currency) {
             const statusEl = document.getElementById('credit-status');
             const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
             const targetName = String(username || '').trim();
             const targetId = String(accountIdInput || document.getElementById('credit-account-id')?.value || '').trim().toUpperCase();
-            const value = Number(amount);
+            const raw = Number(amount);
+            const curr = currency || 'USDT';
+            const rate = (window.exchangeRates && window.exchangeRates[curr]) || 1;
+            const value = curr === 'USDT' ? raw : raw / rate;
             const users = window.ensureLocalAccountIds(JSON.parse(localStorage.getItem('kiwi_users') || '{}'));
             const staff = users[currentUser];
 
             if (!staff || !['owner','ceo'].includes(staff.role)) { setStatus('Sin permisos para acreditar saldo.'); return alert('Sin permisos'); }
             if (!targetName) { setStatus('Ingresá el nombre de usuario.'); return alert('Ingresá el nombre de usuario.'); }
             if (!targetId) { setStatus('Ingresá el ID de cuenta (KWS-...).'); return alert('Ingresá el ID de cuenta (KWS-...).'); }
-            if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) { setStatus('Ingresá un monto entero mayor que cero.'); return alert('El monto debe ser un número entero mayor que cero.'); }
+            if (!Number.isFinite(raw) || raw <= 0) { setStatus('Ingresá un monto mayor que cero.'); return alert('El monto debe ser mayor que cero.'); }
 
             if (!window.supabaseOnline || !supabaseClient) {
                 setStatus('No se acreditó. Supabase no está en línea.');
@@ -5818,19 +5824,26 @@
             const note = prompt('Nota para el cliente:');
             if (note === null) return;
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            const p = purchases.find(x => x.id === id);
-            if (!p) return;
+            const p = purchases.find(x => String(x.id) === String(id));
+            if (!p) return alert('Pedido no encontrado');
             p.notes = note;
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-            // Sync to Supabase so the client sees it
+            let synced = false;
             if (supabaseClient) {
                 try {
-                    await supabaseClient.from('compras').update({ notes: note }).eq('id', id);
-                } catch (e) { console.warn('No se pudo sincronizar nota', e); }
+                    const { error } = await supabaseClient.from('compras').update({ notes: note }).eq('id', id);
+                    if (error) {
+                        console.warn('Supabase note error:', error);
+                        alert('Nota guardada localmente. Error al sincronizar: ' + (error.message || 'revisá que la columna notes exista en compras'));
+                    } else synced = true;
+                } catch (e) { 
+                    console.warn('No se pudo sincronizar nota', e);
+                    alert('Nota guardada localmente. Error de conexión.');
+                }
             }
             if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-            alert('Nota guardada. El cliente la verá al recargar.');
+            if (synced) alert('Nota guardada y sincronizada. El cliente la verá al recargar.');
         };
 
 
