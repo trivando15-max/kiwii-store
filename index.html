@@ -4461,13 +4461,34 @@
 
             const isRobux = prod.category === 'roblox' && (prod.sub === 'robux_grupo' || prod.sub === 'robux_gamepass' || prod.sub === 'robux_plus');
 
-            if (isRobux) {
-                const msg = `Hola Kiwi Store!\nProducto: ${prod.title}\nPrecio: ${prod.price}\nDatos: ${targetUser}\nMétodo: ${method}`;
-                window.open(`https://wa.me/5491139172595?text=${encodeURIComponent(msg)}`, '_blank');
+            if (isRobux && prod.sub === 'robux_gamepass') {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                if (!users[currentUser]) return alert('Sesión inválida');
+                const usdtPrice = Number(prod.usdtPrice) || 0;
+                const bal = Number(users[currentUser].balance || 0);
+                if (bal < usdtPrice) return alert('Saldo insuficiente');
+                users[currentUser].balance = bal - usdtPrice;
+                localStorage.setItem('kiwi_users', JSON.stringify(users));
+                const order = {
+                    id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
+                    method: 'Vía Gamepass', date: new Date().toLocaleString('es-AR'),
+                    status: 'confirmed', targetUser, extra, category: 'roblox', sub: 'robux_gamepass', usdtPrice, notes: ''
+                };
+                const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+                purchases.push(order);
+                localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                const msg = 'Hola Kiwi Store!\nProducto: ' + prod.title + '\nPrecio: ' + prod.price + '\nUsuario: ' + targetUser + '\nLink: ' + (extra || 'No indicado') + '\nID: ' + order.id;
+                window.open('https://wa.me/5491139172595?text=' + encodeURIComponent(msg), '_blank');
                 window.closeCheckoutModal();
                 return;
             }
-
+            if (isRobux) {
+                const msg = 'Hola Kiwi Store!\nProducto: ' + prod.title + '\nPrecio: ' + prod.price + '\nDatos: ' + targetUser + '\nMétodo: ' + method;
+                window.open('https://wa.me/5491139172595?text=' + encodeURIComponent(msg), '_blank');
+                window.closeCheckoutModal();
+                return;
+            }
             const balance = window.getUserBalance(); // in USDT
             let priceNum = 0;
             if (Number.isFinite(Number(prod.usdtPrice)) && Number(prod.usdtPrice) > 0) {
@@ -5815,6 +5836,14 @@
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             const p = purchases.find(x => x.id === id);
             if (!p) return;
+            if (status === 'cancelled' && p.status !== 'cancelled') {
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                const u = users[p.user];
+                if (u && p.usdtPrice) {
+                    u.balance = (u.balance || 0) + Number(p.usdtPrice);
+                    localStorage.setItem('kiwi_users', JSON.stringify(users));
+                }
+            }
             p.status = status;
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
             if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
