@@ -1451,7 +1451,7 @@
                     if (localUsers['KenshinFu']) localUsers['KenshinFu'].role = 'ceo';
 
                     localStorage.setItem('kiwi_users', JSON.stringify(localUsers));
-                    if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                    if (typeof window.updateBalanceDisplay === 'function') setTimeout(window.updateBalanceDisplay, 100);
 
                     if (currentUser && (!localUsers[currentUser] || localUsers[currentUser].banned)) {
                         alert("⚠️ Tu sesión ha expirado porque la cuenta fue eliminada o suspendida por el Staff.");
@@ -1587,6 +1587,7 @@
                     try { currentUser = JSON.parse(saved); } catch(e) { currentUser = null; }
                 }
                 updateAuthUI();
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 if (typeof window.renderRobloxGroups === 'function') window.renderRobloxGroups();
                 window.supabaseOnline = await probeSupabase();
                 if (window.supabaseOnline) {
