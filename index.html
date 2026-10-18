@@ -1509,6 +1509,7 @@
                     claimedBy: r.claimedBy ?? r.claimed_by ?? loc.claimedBy ?? null,
                     targetUser: r.target_user ?? loc.targetUser ?? '',
                     extra: r.extra ?? loc.extra ?? '',
+                    notes: r.notes ?? loc.notes ?? '',
                     bulkOrderId: r.bulk_order_id ?? loc.bulkOrderId,
                     category: r.category ?? loc.category,
                     date: date, _synced: true
@@ -1524,7 +1525,7 @@
             if (typeof window.updateOrdersBadge === 'function') { try { window.updateOrdersBadge(); } catch (_) {} }
         };
         window.purchaseToRow = function(p, full) {
-            const row = { id: p.id, user_name: p.user, title: p.title, price: p.price, method: p.method || '', status: p.status || 'pending', target_user: p.targetUser || '', extra: p.extra || '' };
+            const row = { id: p.id, user_name: p.user, title: p.title, price: p.price, method: p.method || '', status: p.status || 'pending', target_user: p.targetUser || '', extra: p.extra || '', notes: p.notes || '' };
             if (full) { if (p.bulkOrderId != null) row.bulk_order_id = String(p.bulkOrderId); row.category = p.category || ''; row.date_str = p.date || ''; row.claimedBy = p.claimedBy || null; }
             return row;
         };
