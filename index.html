@@ -1388,6 +1388,7 @@
                 if (!data.accountId) { data.accountId = window.generateAccountId(); changed = true; }
             }
             if (changed) localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             return users;
         };
         window.copyMyAccountId = async function() {
@@ -1818,6 +1819,7 @@
             if (users['Kiwi_Store_Owner']) users['Kiwi_Store_Owner'].role = 'owner';
             if (users['KenshinFu']) users['KenshinFu'].role = 'ceo';
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
         }
 
         window.uploadProfilePic = function(event) {
@@ -4408,6 +4410,7 @@
                     role: finalName === 'Kiwi_Store_Owner' ? 'owner' : (finalName === 'KenshinFu' ? 'ceo' : (users[finalName]?.role || 'user'))
                 };
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
 
                 setStatus(`Listo: ${finalName} (${finalId}) → $${finalBalance.toLocaleString('es-AR')} ARS`);
                 alert(`Saldo acreditado correctamente.\nUsuario: ${finalName}\nID: ${finalId}\nNuevo saldo: $${finalBalance.toLocaleString('es-AR')} ARS`);
@@ -4452,6 +4455,7 @@
                 if (bal < usdtPrice) return alert('Saldo insuficiente');
                 users[currentUser].balance = bal - usdtPrice;
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 const order = {
                     id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
                     method: 'Vía Gamepass', date: new Date().toLocaleString('es-AR'),
@@ -4474,6 +4478,7 @@
                 if (bal < usdtPrice) return alert('Saldo insuficiente');
                 users[currentUser].balance = bal - usdtPrice;
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 const order = {
                     id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
                     method: prod.sub === 'robux_grupo' ? 'Vía Grupo' : 'Vía Plus',
@@ -4522,6 +4527,7 @@
                 if (!robloxUser) return alert('Ingresá tu usuario de Roblox');
                 users[currentUser].balance = bal - priceNumGP;
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
                 const order = {
@@ -4586,6 +4592,7 @@
                 if (users[currentUser]) {
                     users[currentUser].balance = (users[currentUser].balance || 0) - priceNum;
                     localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 }
 
                 const orderId = Date.now();
@@ -4765,6 +4772,7 @@
             if (users[currentUser]) {
                 users[currentUser].balance = (users[currentUser].balance || 0) - priceNum;
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             }
 
             const orderId = Date.now();
@@ -4944,6 +4952,7 @@
                             users[currentUser].ff_name = uname;
                             users[currentUser].ff_region = region;
                             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                         }
                     }
                     window.checkFreeFireDiscounts(uid);
@@ -5213,6 +5222,7 @@
             if (ffId) users[currentUser].ff_id = ffId;
             if (newPass) users[currentUser].password = newPass;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
 
             // Sincronizar email / password / foto en Supabase
             if (supabaseClient && window.supabaseOnline) {
@@ -5349,6 +5359,7 @@
             users[currentUser].balance = bal - priceNum;
             users[currentUser].ff_id = ffId;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             await window.syncBalanceToCloud(currentUser, users[currentUser].balance);
 
@@ -5438,6 +5449,7 @@
 
             users[currentUser].balance = bal - price;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
 
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -5493,6 +5505,7 @@
 
             users[currentUser].balance = bal - price;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
 
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -5522,6 +5535,7 @@
 
             users[currentUser].balance = bal - price;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
 
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -5713,6 +5727,7 @@
             if (ffId) users[currentUser].ff_id = ffId;
             if (newPass) users[currentUser].password = newPass;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             alert('Perfil actualizado');
         };
 
@@ -5847,6 +5862,7 @@
                 if (u && p.usdtPrice) {
                     u.balance = (u.balance || 0) + Number(p.usdtPrice);
                     localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 }
             }
             p.status = status;
@@ -5897,6 +5913,7 @@
             if (bal < priceNum) return alert('Saldo insuficiente');
             users[currentUser].balance = bal - priceNum;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             purchases.push({
@@ -5977,6 +5994,7 @@
             users[currentUser].twoFACode = code;
             users[currentUser].twoFAEnabled = true;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             alert('2FA activado. Código de prueba: ' + code + '\n(En producción se envía por email)');
         };
 
@@ -5994,6 +6012,7 @@ window.resetUser2FA = function(username) {
             users[username].twoFACode = code;
             users[username].twoFAEnabled = true;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
             document.getElementById('reset-2fa-status').textContent = 'Nuevo código: ' + code;
             alert('Código 2FA reseteado para ' + username + ': ' + code);
         };
