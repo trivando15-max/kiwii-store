@@ -174,7 +174,7 @@
 
                 <button onclick="window.openCurrencyModal()" class="h-10 border border-white/10 bg-white/[0.03] hover:border-white/25 text-white text-sm rounded-xl px-2.5 sm:px-3 font-rajdhani font-bold flex items-center gap-1.5 transition" title="Moneda">
                     <span id="currency-flag" class="text-base">🇦🇷</span>
-                    <span id="currency-code" class="hidden sm:inline">ARS</span>
+                    <span id="currency-code" class="hidden sm:inline">MONEDA</span>
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-60 hidden sm:inline"></i>
                 </button>
                 <span id="header-balance" class="hidden md:inline text-kiwi-gold font-orbitron font-bold text-sm px-1">$0</span>
@@ -1258,7 +1258,7 @@
         };
 
         // --- SISTEMA DE CONVERSION DE MONEDAS ---
-        window.currentCurrency = 'ARS';
+        window.currentCurrency = 'USDT';
         window.exchangeRates = {
             'ARS': 1642,
             'MXN': 18.87,
@@ -1624,6 +1624,7 @@
 
         window.selectCurrency = function(code, flag) {
             window.currentCurrency = code;
+            localStorage.setItem('kiwi_preferred_currency', code);
             document.getElementById('currency-code').textContent = code;
             document.getElementById('currency-flag').textContent = flag;
             
@@ -4267,10 +4268,13 @@
             const el = document.getElementById('user-balance-display');
             const el2 = document.getElementById('orders-balance-display');
             const headerBal = document.getElementById('header-balance');
-            const bal = window.getUserBalance();
-            const txt = '$' + bal.toLocaleString('es-AR');
-            if (el) el.textContent = txt + ' ARS';
-            if (el2) el2.textContent = txt + ' ARS';
+            const balUSDT = window.getUserBalance(); // stored in USDT
+            const rate = (window.exchangeRates && window.exchangeRates[window.currentCurrency]) || 1;
+            const converted = window.currentCurrency === 'USDT' ? balUSDT : balUSDT * rate;
+            const sym = window.currencySymbols[window.currentCurrency] || '';
+            const txt = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: 2}) + ' ' + window.currentCurrency;
+            if (el) el.textContent = txt;
+            if (el2) el2.textContent = txt;
             if (headerBal && currentUser) {
                 headerBal.textContent = txt;
                 headerBal.classList.remove('hidden');
@@ -4453,18 +4457,18 @@
                 return;
             }
 
-            const balance = window.getUserBalance();
+            const balance = window.getUserBalance(); // in USDT
             let priceNum = 0;
-            if (Number.isFinite(Number(prod.purchasePriceARS)) && Number(prod.purchasePriceARS) > 0) {
-                priceNum = Number(prod.purchasePriceARS);
-            } else if (Number.isFinite(Number(prod.usdtPrice)) && Number(prod.usdtPrice) > 0) {
-                priceNum = Math.round(Number(prod.usdtPrice) * 1600);
+            if (Number.isFinite(Number(prod.usdtPrice)) && Number(prod.usdtPrice) > 0) {
+                priceNum = Number(prod.usdtPrice);
+            } else if (Number.isFinite(Number(prod.purchasePriceARS)) && Number(prod.purchasePriceARS) > 0) {
+                priceNum = Number(prod.purchasePriceARS) / (window.exchangeRates.ARS || 1600);
             } else {
                 const arsMatch = (prod.price || '').toString().match(/\$\s*([\d.]+)\s*ARS/i);
-                if (arsMatch) priceNum = parseFloat(arsMatch[1].replace(/\./g, '')) || 0;
+                if (arsMatch) priceNum = (parseFloat(arsMatch[1].replace(/\./g, '')) || 0) / (window.exchangeRates.ARS || 1600);
                 else {
                     const priceMatch = (prod.price || '').toString().match(/([\d.]+)/);
-                    if (priceMatch) priceNum = parseFloat(priceMatch[0].replace(/\./g, '')) || 0;
+                    if (priceMatch) priceNum = (parseFloat(priceMatch[0].replace(/\./g, '')) || 0) / (window.exchangeRates.ARS || 1600);
                 }
             }
 
@@ -6009,6 +6013,18 @@ window.resetUser2FA = function(username) {
                 }
             });
         });
+
+
+        // Load preferred currency
+        (function() {
+            const pref = localStorage.getItem('kiwi_preferred_currency') || 'USDT';
+            const flags = { ARS: '🇦🇷', MXN: '🇲🇽', COP: '🇨🇴', PEN: '🇵🇪', USDT: '₮' };
+            window.currentCurrency = pref;
+            const codeEl = document.getElementById('currency-code');
+            const flagEl = document.getElementById('currency-flag');
+            if (codeEl) codeEl.textContent = pref;
+            if (flagEl) flagEl.textContent = flags[pref] || '₮';
+        })();
 
 </script>
 </body>
