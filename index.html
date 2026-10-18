@@ -1273,39 +1273,22 @@
         window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
 
         window.getConvertedPrice = function(prod) {
-            // Los precios de TikTok se basan en los precios publicados de Instagram +20%.
-            if (prod && prod.category === 'tiktok' && Number.isFinite(Number(prod.purchasePriceARS)) && window.currentCurrency === 'ARS') {
-                return `$${Number(prod.purchasePriceARS).toLocaleString('es-AR')} ARS`;
-            }
             let usdtVal = 0;
-            // Calcular valor en USDT
             if (prod.usdtPrice) {
-                usdtVal = prod.usdtPrice;
+                usdtVal = Number(prod.usdtPrice);
+            } else if (prod.purchasePriceARS) {
+                usdtVal = Number(prod.purchasePriceARS) / (window.exchangeRates.ARS || 1600);
             } else {
-                let match = prod.price.match(/\$([\d.]+)\s*ARS/);
-                if (match) {
-                    let arsVal = parseFloat(match[1].replace(/\./g, ''));
-                    usdtVal = arsVal / 1600; // Tasa base interna que venías usando
-                }
+                let match = (prod.price || '').match(/\$([\d.]+)\s*ARS/);
+                if (match) usdtVal = parseFloat(match[1].replace(/\./g, '')) / (window.exchangeRates.ARS || 1600);
             }
+            if (!usdtVal) return prod.price || '—';
 
-            if (window.currentCurrency === 'USDT') {
-                return `₮ ${(usdtVal).toFixed(2)} USDT`;
-            }
-
-            let converted = usdtVal * window.exchangeRates[window.currentCurrency];
-            let formatted = converted.toLocaleString('es-AR', { maximumFractionDigits: 2 });
-            let sym = window.currencySymbols[window.currentCurrency];
-            
-            // Mantener texto de "Robux"
-            if (prod.price.includes('Robux - ')) {
-                let prefix = prod.price.split(' - ')[0];
-                return `${prefix} - ${sym}${formatted} ${window.currentCurrency}`;
-            }
-            if (prod.price.includes('USDT - ')) {
-                return `${usdtVal} USDT - ${sym}${formatted} ${window.currentCurrency}`;
-            }
-            return `${sym}${formatted} ${window.currentCurrency}`;
+            if (window.currentCurrency === 'USDT') return usdtVal.toFixed(2) + ' USDT';
+            const rate = window.exchangeRates[window.currentCurrency] || 1;
+            const converted = usdtVal * rate;
+            const sym = window.currencySymbols[window.currentCurrency] || '';
+            return sym + converted.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ' + window.currentCurrency;
         };
 
         window.getConvertedVariantPrice = function(priceString) {
@@ -1692,7 +1675,7 @@
             }
             const priceEl = document.getElementById('modal-product-price');
             if (priceEl && window.currentActiveProduct) {
-                priceEl.textContent = window.currentActiveProduct.price || window.getConvertedPrice(window.currentActiveProduct) || '—';
+                priceEl.textContent = window.getConvertedPrice(window.currentActiveProduct) || window.currentActiveProduct.price || '—';
             }
             
             const prod = window.currentActiveProduct;
