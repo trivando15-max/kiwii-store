@@ -1831,7 +1831,9 @@
             if (users['Kiwi_Store_Owner']) users['Kiwi_Store_Owner'].role = 'owner';
             if (users['KenshinFu']) users['KenshinFu'].role = 'ceo';
             localStorage.setItem('kiwi_users', JSON.stringify(users));
-                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
+            if (currentUser && users[currentUser] && typeof window.syncBalanceToCloud === 'function') {
+                window.syncBalanceToCloud(currentUser, users[currentUser].balance || 0);
+            }
         }
 
         window.uploadProfilePic = function(event) {
