@@ -902,6 +902,7 @@
                     <span class="text-kiwi-gold text-[10px] font-bold">1 USDT</span>
                 </button>
             </div>
+            <button onclick="localStorage.setItem('kiwi_preferred_currency', window.currentCurrency); alert('Moneda preferida: ' + window.currentCurrency)" class="mt-4 w-full bg-kiwi-gold text-black font-bold py-2.5 rounded-xl text-sm">Guardar como preferida</button>
         </div>
     </div>
 
@@ -1626,6 +1627,8 @@
             window.currentCurrency = code;
             localStorage.setItem('kiwi_preferred_currency', code);
             document.getElementById('currency-code').textContent = code;
+            const headerBal = document.getElementById('header-balance');
+            if (headerBal && typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             document.getElementById('currency-flag').textContent = flag;
             
             // Actualizar interfaz del modal
@@ -1682,9 +1685,10 @@
             }
             if (!isCustom) { 
                 window.currentActiveProduct = window.products.find(p => p.id === productId); 
-                document.getElementById('modal-product-price').textContent = window.getConvertedPrice(window.currentActiveProduct);
-            } else {
-                document.getElementById('modal-product-price').textContent = window.currentActiveProduct.price;
+            }
+            const priceEl = document.getElementById('modal-product-price');
+            if (priceEl && window.currentActiveProduct) {
+                priceEl.textContent = window.getConvertedPrice(window.currentActiveProduct) || window.currentActiveProduct.price || '—';
             }
             
             const prod = window.currentActiveProduct;
@@ -5809,7 +5813,7 @@
             if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
         };
-        window.addOrderNote = function(id) {
+        window.addOrderNote = async function(id) {
             const note = prompt('Nota para el cliente:');
             if (note === null) return;
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -5817,8 +5821,15 @@
             if (!p) return;
             p.notes = note;
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            // Sync to Supabase so the client sees it
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('compras').update({ notes: note }).eq('id', id);
+                } catch (e) { console.warn('No se pudo sincronizar nota', e); }
+            }
             if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            alert('Nota guardada. El cliente la verá al recargar.');
         };
 
 
