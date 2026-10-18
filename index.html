@@ -4307,9 +4307,15 @@
             if (!targetId) { setStatus('Ingresá el ID de cuenta (KWS-...).'); return alert('Ingresá el ID de cuenta (KWS-...).'); }
             if (!Number.isFinite(raw) || raw <= 0) { setStatus('Ingresá un monto mayor que cero.'); return alert('El monto debe ser mayor que cero.'); }
 
-            if (!window.supabaseOnline || !supabaseClient) {
-                setStatus('No se acreditó. Supabase no está en línea.');
-                alert('NO SE ACREDITÓ NADA. Supabase no está disponible.');
+            if (!supabaseClient) {
+                createSupabaseClient();
+            }
+            if (!window.supabaseOnline) {
+                window.supabaseOnline = await probeSupabase();
+            }
+            if (!supabaseClient || !window.supabaseOnline) {
+                setStatus('No se acreditó. Supabase no responde.');
+                alert('NO SE ACREDITÓ NADA.\nSupabase no está disponible.\nRevisá la conexión o la Project URL en el código.');
                 return;
             }
 
