@@ -2677,11 +2677,11 @@
             { id: 205, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', price: '$55.200 ARS', emoji: '💎', tag: 'Mejor Oferta', popular: true },
 
             { id: 210, category: 'freefire', sub: 'limitado', title: '110 Diamantes (Limitado)', price: '$1.149 ARS', usdtPrice: 0.70, emoji: '🔥', popular: false, isLimited: true },
-            { id: 211, category: 'freefire', sub: 'limitado', title: '341 Diamantes (Limitado)', price: '$3.200 ARS', emoji: '🔥', popular: false, isLimited: true },
-            { id: 212, category: 'freefire', sub: 'limitado', title: '572 Diamantes (Limitado)', price: '$5.800 ARS', emoji: '🔥', popular: false, isLimited: true },
-            { id: 213, category: 'freefire', sub: 'limitado', title: '1.166 Diamantes (Limitado)', price: '$11.400 ARS', emoji: '🔥', popular: false, isLimited: true },
-            { id: 214, category: 'freefire', sub: 'limitado', title: '2.398 Diamantes (Limitado)', price: '$20.000 ARS', emoji: '🔥', tag: 'Más Elegido', popular: true, isLimited: true },
-            { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
+            { id: 211, category: 'freefire', sub: 'limitado', title: '341 Diamantes (Limitado)', price: '$3.200 ARS', usdtPrice: 2.00, emoji: '🔥', popular: false, isLimited: true },
+            { id: 212, category: 'freefire', sub: 'limitado', title: '572 Diamantes (Limitado)', price: '$5.800 ARS', usdtPrice: 3.63, emoji: '🔥', popular: false, isLimited: true },
+            { id: 213, category: 'freefire', sub: 'limitado', title: '1.166 Diamantes (Limitado)', price: '$11.400 ARS', usdtPrice: 7.13, emoji: '🔥', popular: false, isLimited: true },
+            { id: 214, category: 'freefire', sub: 'limitado', title: '2.398 Diamantes (Limitado)', price: '$20.000 ARS', usdtPrice: 12.50, emoji: '🔥', tag: 'Más Elegido', popular: true, isLimited: true },
+            { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', usdtPrice: 29.63, emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
 
             // FREE FIRE - PASES Y FRAGMENTOS
             { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
@@ -4542,7 +4542,7 @@
                 return;
             }
             if (balance < priceNum) {
-                alert('Saldo insuficiente. Tu saldo: $' + balance.toLocaleString('es-AR') + ' ARS\nPrecio: $' + priceNum.toLocaleString('es-AR') + ' ARS');
+                alert('Saldo insuficiente.\nTu saldo: ' + balance.toFixed(2) + ' USDT\nPrecio: ' + priceNum.toFixed(2) + ' USDT');
                 return;
             }
 
