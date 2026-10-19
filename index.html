@@ -2414,6 +2414,8 @@
         }
 
         function renderStaffCuentas(myRole) {
+            const adminBox = document.getElementById('admin-cuentas');
+            if (adminBox) adminBox.innerHTML = '<p class="text-xs text-gray-500 mb-2">Cuentas (desde Supabase)</p>';
             const container = document.getElementById('admin-users-list');
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
             container.innerHTML = '';
@@ -2579,6 +2581,8 @@
 
         function renderStaffCompras(myRole) {
             const container = document.getElementById('panel-compras');
+            const adminBox = document.getElementById('admin-compras');
+            if (adminBox && container) adminBox.innerHTML = container.innerHTML;
             let purchases = window.readPurchases();
             container.innerHTML = '';
 
@@ -5754,10 +5758,8 @@
             document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('admin-' + tab);
             if (target) target.classList.remove('hidden');
-            if (tab === 'cuentas' && typeof renderStaffCuentas === 'function') {
-                const box = document.getElementById('admin-cuentas');
-                if (box) box.innerHTML = '<p class="text-sm text-gray-400">Cargando cuentas...</p>';
-            }
+            if (tab === 'cuentas' && typeof renderStaffCuentas === 'function') renderStaffCuentas('owner');
+            if (tab === 'compras' && typeof renderStaffCompras === 'function') renderStaffCompras('owner');
         };
 
         window.goToAdminPanel = function() {
