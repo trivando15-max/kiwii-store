@@ -555,7 +555,10 @@
                 <button onclick="window.switchStaffTab('2fa')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">2FA</button>
             </div>
             <div id="admin-content">
-                <p class="text-gray-400 text-sm">Seleccioná una pestaña.</p>
+                <div id="admin-cuentas" class="admin-tab"></div>
+                <div id="admin-compras" class="admin-tab hidden"></div>
+                <div id="admin-saldo" class="admin-tab hidden"></div>
+                <div id="admin-2fa" class="admin-tab hidden"></div>
             </div>
         </div>
     </div>
@@ -5744,6 +5747,19 @@
 
         
         
+        
+        const _origSwitchStaffTab = window.switchStaffTab;
+        window.switchStaffTab = function(tab) {
+            if (typeof _origSwitchStaffTab === 'function') _origSwitchStaffTab(tab);
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('admin-' + tab);
+            if (target) target.classList.remove('hidden');
+            if (tab === 'cuentas' && typeof renderStaffCuentas === 'function') {
+                const box = document.getElementById('admin-cuentas');
+                if (box) box.innerHTML = '<p class="text-sm text-gray-400">Cargando cuentas...</p>';
+            }
+        };
+
         window.goToAdminPanel = function() {
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('catalog-view').classList.add('hidden');
@@ -5751,7 +5767,7 @@
             const panel = document.getElementById('admin-page');
             if (panel) panel.classList.remove('hidden');
             history.pushState({}, '', '/panel-admin');
-            window.toggleUserDrawer();
+            if (typeof window.switchStaffTab === 'function') window.switchStaffTab('cuentas');
         };
 
         window.goToCatalog = function() {
