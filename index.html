@@ -1270,6 +1270,18 @@
 
         window.openAuthModal = function(tab) {
             if (tab && typeof window.switchAuthTab === 'function') window.switchAuthTab(tab);
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
+            if (tab === 'login') {
+                if (tabRegister) tabRegister.style.display = 'none';
+                if (tabLogin) tabLogin.style.display = '';
+            } else if (tab === 'register') {
+                if (tabLogin) tabLogin.style.display = 'none';
+                if (tabRegister) tabRegister.style.display = '';
+            } else {
+                if (tabLogin) tabLogin.style.display = '';
+                if (tabRegister) tabRegister.style.display = '';
+            }
             const m = document.getElementById('auth-modal');
             if (!m) { alert('Modal de login no encontrado'); return; }
             const mc = document.getElementById('auth-modal-card');
