@@ -178,13 +178,10 @@
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-60 hidden sm:inline"></i>
                 </button>
                 <span id="header-balance" class="hidden md:inline text-kiwi-gold font-orbitron font-bold text-sm px-1">$0</span>
-<button id="register-main-btn" onclick="window.openAuthModal('register')" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
-                    <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">REGISTRARSE</span>
+<button id="register-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
+                    <i class="fa-solid fa-user-plus"></i> <span id="auth-btn-text" class="hidden sm:inline">INGRESAR</span>
                 </button>
-                <button id="login-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
-                    <i class="fa-solid fa-user"></i> <span id="user-display-name" class="hidden sm:inline">INICIAR SESIÓN</span>
-                </button>
-                <button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
+<button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
                     <i class="fa-solid fa-bars"></i>
                 </button>
             </div>
