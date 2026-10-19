@@ -181,7 +181,7 @@
                 <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="h-10 w-10 bg-green-600/90 hover:bg-green-600 text-white rounded-xl transition flex items-center justify-center" title="Atención WhatsApp">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
                 </a>
-                <button id="login-main-btn" onclick="window.goToProfile()" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
+                <button id="login-main-btn" onclick="window.openAuthModal()" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
                     <i class="fa-solid fa-user"></i> <span id="user-display-name" class="hidden sm:inline">INICIAR SESIÓN</span>
                 </button>
                 <button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
@@ -212,7 +212,7 @@
                     <h2 class="font-orbitron text-2xl font-black text-white">MI <span class="text-kiwi-red">PERFIL</span></h2>
                     <p class="text-xs text-gray-400 font-rajdhani">Cuenta y pedidos en un solo lugar</p>
                 </div>
-                <button onclick="window.closeOrdersPanel()" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('orders-panel').classList.add('hidden');" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> VOLVER
                 </button>
             </div>
