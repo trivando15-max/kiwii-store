@@ -178,13 +178,10 @@
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-60 hidden sm:inline"></i>
                 </button>
                 <span id="header-balance" class="hidden md:inline text-kiwi-gold font-orbitron font-bold text-sm px-1">$0</span>
-<button id="register-main-btn" onclick="window.openAuthModal('register')" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
-                    <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">REGISTRARSE</span>
+<button id="register-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
+                    <i class="fa-solid fa-user-plus"></i> <span id="auth-btn-text" class="hidden sm:inline">INGRESAR</span>
                 </button>
-                <button id="login-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
-                    <i class="fa-solid fa-user"></i> <span id="user-display-name" class="hidden sm:inline">INICIAR SESIÓN</span>
-                </button>
-                <button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
+<button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
                     <i class="fa-solid fa-bars"></i>
                 </button>
             </div>
@@ -962,7 +959,7 @@
 
     <!-- MODALES DE AUTH, PERFIL, ACCIONES, Y DRAWER USUARIO -->
     <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-4 sm:p-6 relative shadow-2xl transform transition-transform duration-300 scale-95 max-h-[90vh] overflow-hidden" id="auth-modal-card">
+        <div class="bg-kiwi-card border border-kiwi-border w-full max-w-md rounded-2xl p-4 sm:p-6 relative shadow-2xl transform transition-transform duration-300 scale-95 max-h-[90vh] overflow-y-auto" id="auth-modal-card">
             <button onclick="window.closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="font-orbitron text-xl font-bold text-center mb-1 text-white" id="auth-modal-title">Iniciar Sesión</h3>
             <p class="text-gray-400 text-center text-xs mb-6" id="auth-modal-desc">Ingresa para vincular tus compras y acceder a tu cuenta</p>
@@ -1873,8 +1870,8 @@
         window.closeCheckoutModal = function() { 
             const m = document.getElementById('checkout-modal');
             const mc = document.getElementById('checkout-modal-card');
-            mc.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => m.classList.add('hidden'), 300);
+            if (mc) mc.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { if (m) m.classList.add('hidden'); }, 300);
         };
 
         function reveal() {
@@ -1975,8 +1972,9 @@
         window.renderRobloxGroups = window.renderInlineRobloxGroups;
 
         function updateAuthUI() {
-            const btnText = document.getElementById('user-display-name');
-            const staffBtn = document.getElementById('staff-menu-btn');
+            const btnText = document.getElementById('user-display-name') || document.getElementById('auth-btn-text') || document.createElement('span');
+            const staffBtns = document.querySelectorAll('#staff-menu-btn');
+            const staffBtn = { classList: { add: c => staffBtns.forEach(b => b.classList.add(c)), remove: c => staffBtns.forEach(b => b.classList.remove(c)) } };
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             
             if (currentUser && usersDB[currentUser]) {
@@ -2085,7 +2083,7 @@
                 if (desc) desc.textContent = "Ingresa para vincular tus compras";
                 if (btnSection) btnSection.classList.remove('hidden');
                 if (profileSection) profileSection.classList.add('hidden');
-                if (typeof window.switchAuthTab === 'function') window.switchAuthTab('login');
+                if (typeof window.switchAuthTab === 'function') window.switchAuthTab(tab || 'login');
             }
 
             m.classList.remove('hidden');
@@ -2095,8 +2093,8 @@
         window.closeAuthModal = function() { 
             const m = document.getElementById('auth-modal');
             const mc = document.getElementById('auth-modal-card');
-            mc.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => m.classList.add('hidden'), 300);
+            if (mc) mc.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { if (m) m.classList.add('hidden'); }, 300);
         }
 
         // Esquema public.usuarios:
@@ -2186,9 +2184,9 @@
                 }
             }
             e.preventDefault();
-            const user = document.getElementById('reg-user').value.trim();
-            const pass = document.getElementById('reg-pass').value;
-            const pass2 = document.getElementById('reg-pass2').value;
+            const user = (document.getElementById('reg-user')?.value || '').trim();
+            const pass = document.getElementById('reg-pass')?.value || '';
+            const pass2 = document.getElementById('reg-pass2')?.value || '';
 
             if (pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
             if (!window.isStrongPassword(pass)) { alert("La contraseña debe tener al menos 8 caracteres y 1 número."); return; }
@@ -2246,7 +2244,7 @@
             localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
             if (typeof updateAuthUI === 'function') updateAuthUI();
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-            window.openAuthModal();
+            window.closeAuthModal();
             alert('Cuenta creada.\nUsuario: ' + user + '\nID: ' + newUser.accountId);
         }
 
@@ -2264,8 +2262,8 @@
                 }
             }
             e.preventDefault();
-            const userInput = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pass').value;
+            const userInput = (document.getElementById('login-user')?.value || '').trim();
+            const pass = document.getElementById('login-pass')?.value || '';
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!usersDB || typeof usersDB !== 'object') usersDB = {};
 
@@ -2319,7 +2317,7 @@
             localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
                         if (typeof updateAuthUI === 'function') updateAuthUI();
                         if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                        window.openAuthModal();
+                        window.closeAuthModal();
                         return;
                     }
                 }
@@ -2356,7 +2354,7 @@
             localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
                 if (typeof updateAuthUI === 'function') updateAuthUI();
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                window.openAuthModal();
+                window.closeAuthModal();
             } catch (err) {
                 console.error('Error iniciando sesión:', err);
                 alert('No se pudo iniciar sesión: ' + (err.message || 'Error desconocido'));
