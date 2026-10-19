@@ -387,7 +387,7 @@
                 <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-user text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Mi Perfil</span>
                 </button>
-                <button id="staff-menu-btn" onclick="history.pushState({}, '', '/panel-admin'); window.toggleStaffDrawer(); window.toggleUserDrawer();" class="hidden w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-gold transition text-gray-300 hover:text-white">
+                <button id="staff-menu-btn" onclick="window.goToAdminPanel();" class="hidden w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-gold transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-shield-halved text-xl text-kiwi-gold"></i> <span class="font-rajdhani font-bold">Panel Staff</span>
                 </button>
             </div>
@@ -539,6 +539,27 @@
 
         <!-- CATEGORY VIEW -->
         
+    
+    <div id="admin-page" class="hidden max-w-7xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-orbitron text-2xl font-black text-kiwi-gold">PANEL STAFF</h2>
+            <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('admin-page').classList.add('hidden'); document.getElementById('home-view').classList.remove('hidden');" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-gold text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> VOLVER
+            </button>
+        </div>
+        <div class="bg-[#0f0e0a] border border-kiwi-gold rounded-2xl p-4">
+            <div class="flex border-b border-kiwi-gold/30 mb-4">
+                <button onclick="window.switchStaffTab('cuentas')" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold">CUENTAS</button>
+                <button onclick="window.switchStaffTab('compras')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">COMPRAS</button>
+                <button onclick="window.switchStaffTab('saldo')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">SALDO</button>
+                <button onclick="window.switchStaffTab('2fa')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">2FA</button>
+            </div>
+            <div id="admin-content">
+                <p class="text-gray-400 text-sm">Seleccioná una pestaña.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="catalog-view" class="hidden max-w-7xl mx-auto px-4 py-10">
         <div class="flex items-center justify-between mb-8">
             <h2 class="font-orbitron text-3xl font-black text-white">CATÁLOGO</h2>
@@ -5722,6 +5743,17 @@
 
 
         
+        
+        window.goToAdminPanel = function() {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('catalog-view').classList.add('hidden');
+            document.getElementById('category-view').classList.add('hidden');
+            const panel = document.getElementById('admin-page');
+            if (panel) panel.classList.remove('hidden');
+            history.pushState({}, '', '/panel-admin');
+            window.toggleUserDrawer();
+        };
+
         window.goToCatalog = function() {
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('category-view').classList.add('hidden');
