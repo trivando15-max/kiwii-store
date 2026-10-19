@@ -2418,11 +2418,14 @@
 
         function renderStaffCuentas(myRole) {
             const adminBox = document.getElementById('admin-cuentas');
-            const container = adminBox || document.getElementById('admin-users-list');
+            let container = document.getElementById('admin-users-container');
+            if (!container && adminBox) {
+                adminBox.innerHTML = '<input id="admin-search-users" oninput="window.filterAdminUsers(this.value)" placeholder="Buscar usuario o ID..." class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white mb-3"><div id="admin-users-container"></div>';
+                container = document.getElementById('admin-users-container');
+            }
             if (!container) return;
-            container.innerHTML = '<p class="text-xs text-gray-500 mb-2">Cuentas</p>';
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
             container.innerHTML = '';
+            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
 
             for (const [username, data] of Object.entries(usersDB)) {
                 let roleClass = 'role-user'; let roleName = 'Usuario';
@@ -6035,23 +6038,27 @@
         });
 
 
-        window.setOrderStatus = function(id, status) {
+        window.setOrderStatus = async function(id, status) {
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            const p = purchases.find(x => x.id === id);
-            if (!p) return;
-            if (status === 'cancelled' && p.status !== 'cancelled') {
+            const p = purchases.find(x => String(x.id) === String(id));
+            if (!p) return alert('Pedido no encontrado');
+            if (status === 'cancelled' && p.status !== 'cancelled' && p.usdtPrice) {
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                 const u = users[p.user];
-                if (u && p.usdtPrice) {
-                    u.balance = (u.balance || 0) + Number(p.usdtPrice);
+                if (u) {
+                    u.balance = (Number(u.balance) || 0) + Number(p.usdtPrice);
                     localStorage.setItem('kiwi_users', JSON.stringify(users));
-                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
+                    if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(p.user, u.balance);
                 }
             }
             p.status = status;
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            if (supabaseClient && window.supabaseOnline) {
+                await supabaseClient.from('compras').update({ status }).eq('id', id);
+            }
             if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            alert('Estado actualizado a: ' + status);
         };
         window.addOrderNote = async function(id) {
             const note = prompt('Nota para el cliente:');
