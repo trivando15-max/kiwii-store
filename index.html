@@ -1498,7 +1498,6 @@
                         if (!u.role && loc.role) patch.role = loc.role;
                         // Rangos protegidos: Owner y CEO se asignan por nombre de usuario.
                         if (u.username === 'Kiwi_Store_Owner' && u.role !== 'owner') patch.role = 'owner';
-                        if (u.username === 'KenshinFu' && u.role !== 'ceo') patch.role = 'ceo';
                         if (!u.password && loc.password) patch.password = loc.password;
                         if (!u.email && loc.email) patch.email = loc.email;
                         if (Object.keys(patch).length > 0) {
@@ -1509,7 +1508,6 @@
 
                     // Mantener los rangos correctos también en la copia local.
                     if (localUsers['Kiwi_Store_Owner']) localUsers['Kiwi_Store_Owner'].role = 'owner';
-                    if (localUsers['KenshinFu']) localUsers['KenshinFu'].role = 'ceo';
 
                     localStorage.setItem('kiwi_users', JSON.stringify(localUsers));
                     if (typeof window.updateBalanceDisplay === 'function') setTimeout(window.updateBalanceDisplay, 100);
@@ -1890,7 +1888,6 @@
             // No crear usuarios administrativos con contraseñas predeterminadas.
             // Si ya existen localmente, asegurar sus rangos correctos.
             if (users['Kiwi_Store_Owner']) users['Kiwi_Store_Owner'].role = 'owner';
-            if (users['KenshinFu']) users['KenshinFu'].role = 'ceo';
             localStorage.setItem('kiwi_users', JSON.stringify(users));
             if (currentUser && users[currentUser] && typeof window.syncBalanceToCloud === 'function') {
                 window.syncBalanceToCloud(currentUser, users[currentUser].balance || 0);
@@ -2118,7 +2115,7 @@
             const out = localObj || {};
             out.email = cloud.email != null ? cloud.email : (out.email || '');
             if (cloud.password != null && cloud.password !== '') out.password = cloud.password;
-            out.role = cloud.username === 'Kiwi_Store_Owner' ? 'owner' : (cloud.username === 'KenshinFu' ? 'ceo' : (cloud.role || out.role || 'user'));
+            out.role = cloud.username === 'Kiwi_Store_Owner' ? 'owner' : (cloud.role || out.role || 'user');
             out.banned = cloud.banned === true || cloud.banned === 'true' || cloud.banned === true;
             out.profilePic = cloud.profile_pic != null ? cloud.profile_pic : (out.profilePic || '');
             out.balance = Number(cloud.balance ?? 0);
@@ -2129,12 +2126,12 @@
         window.ensureCloudUser = async function(username, accountId, extra = {}) {
             if (!supabaseClient || !window.supabaseOnline) return null;
             const desiredId = (accountId || window.generateAccountId()).trim();
-            const desiredRole = username === 'Kiwi_Store_Owner' ? 'owner' : (username === 'KenshinFu' ? 'ceo' : (extra.role || 'user'));
+            const desiredRole = username === 'Kiwi_Store_Owner' ? 'owner' : (extra.role || 'user');
             let row = await window.syncUserFromCloud(username);
             if (row) {
                 const patch = {};
                 if (!row.account_id) patch.account_id = desiredId;
-                if (!row.role || username === 'Kiwi_Store_Owner' || username === 'KenshinFu') patch.role = desiredRole;
+                if (!row.role || username === 'Kiwi_Store_Owner') patch.role = desiredRole;
                 if (extra.email != null && !row.email) patch.email = extra.email;
                 if (extra.password != null && !row.password) patch.password = extra.password;
                 if (extra.profile_pic != null && !row.profile_pic) patch.profile_pic = extra.profile_pic;
@@ -2303,7 +2300,6 @@
                         // Asegurar password local = la que usó
                         usersDB[uname].password = pass;
                         if (uname === 'Kiwi_Store_Owner') usersDB[uname].role = 'owner';
-                        if (uname === 'KenshinFu') usersDB[uname].role = 'ceo';
                         if (!usersDB[uname].accountId) {
                             usersDB[uname].accountId = window.generateAccountId();
                             await supabaseClient.from('usuarios')
@@ -2400,6 +2396,16 @@
             } else { drawer.classList.add('-translate-x-full'); }
         }
 
+        window.getMyStaffRole = function() {
+            try { const u = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); return (currentUser && u[currentUser] && u[currentUser].role) || 'user'; } catch (_) { return 'user'; }
+        };
+        window.canManageStaff = function() { return ['owner', 'ceo'].includes(window.getMyStaffRole()); };
+        window.denyIfNotManager = function() {
+            if (window.canManageStaff()) return false;
+            alert('Solo Owner y CEO pueden hacer esta acción.');
+            return true;
+        };
+
         window.switchStaffTab = function(tab) {
             const valid = ['cuentas', 'compras', 'saldo', '2fa'];
             if (!valid.includes(tab)) tab = 'cuentas';
@@ -2482,6 +2488,7 @@
 
         let targetManageUser = '';
         window.openActionModal = function(username, role, isBanned) {
+            if (window.denyIfNotManager()) return;
             targetManageUser = username;
             document.getElementById('action-username').textContent = username;
             const roleSelect = document.getElementById('action-role-select');
@@ -2510,6 +2517,7 @@
         window.closeActionModal = function() { document.getElementById('action-modal').classList.add('hidden'); }
 
         window.saveUserActions = async function() {
+            if (window.denyIfNotManager()) return;
             const newRole = document.getElementById('action-role-select').value;
             const newPass = document.getElementById('action-new-pass').value.trim();
             const newUsername = document.getElementById('action-new-username').value.trim();
@@ -2550,6 +2558,7 @@
         }
 
         window.toggleBanUser = async function() {
+            if (window.denyIfNotManager()) return;
             if (targetManageUser === currentUser) return;
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!usersDB[targetManageUser]) return;
@@ -2571,6 +2580,7 @@
         }
 
         window.deleteUserAction = async function() {
+            if (window.denyIfNotManager()) return;
             if(targetManageUser === currentUser) return;
             if(confirm("¿Estás 100% seguro de que deseas ELIMINAR permanentemente esta cuenta y todo su historial?")) {
                 const { error } = await supabaseClient.from('usuarios').delete().eq('username', targetManageUser);
@@ -2580,13 +2590,14 @@
         }
 
         window.deletePurchase = async function(id) {
+            if (window.denyIfNotManager()) return;
             if(confirm("¿Estás seguro de que deseas eliminar permanentemente esta compra del registro?")) {
                 const { error } = await supabaseClient.from('compras').delete().eq('id', id);
                 if (error) { alert("Error eliminando compra: " + error.message); return; }
                 let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
                 purchases = purchases.filter(p => String(p.id) !== String(id));
                 localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-                if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+                if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
                 if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             }
         };
@@ -2606,7 +2617,7 @@
         
         window.filterStaffPurchases = function(cat) {
             window.staffPurchaseFilter = cat;
-            if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
         };
 
         function renderStaffCompras(myRole) {
@@ -2646,7 +2657,7 @@
                             <select onchange="window.setOrderStatus(${p.id}, this.value)" class="bg-kiwi-dark border border-kiwi-border text-white text-xs rounded p-1">
                                 <option value="confirmed" ${p.status==='confirmed'?'selected':''}>En proceso</option>
                                 <option value="delivered" ${p.status==='delivered'?'selected':''}>Entregado</option>
-                                <option value="cancelled" ${p.status==='cancelled'?'selected':''}>Cancelado</option>
+                                ${(myRole === 'owner' || myRole === 'ceo') ? `<option value="cancelled" ${p.status==='cancelled'?'selected':''}>Cancelado</option>` : (p.status==='cancelled' ? '<option value="cancelled" selected disabled>Cancelado</option>' : '')}
                                 <option value="receipt_review" ${p.status==='receipt_review'?'selected':''}>En revisión</option>
                             </select>
                             <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-2 py-1 rounded">Nota</button>
@@ -4517,7 +4528,7 @@
                     ...(users[finalName] || {}),
                     accountId: finalId,
                     balance: finalBalance,
-                    role: finalName === 'Kiwi_Store_Owner' ? 'owner' : (finalName === 'KenshinFu' ? 'ceo' : (users[finalName]?.role || 'user'))
+                    role: finalName === 'Kiwi_Store_Owner' ? 'owner' : (users[finalName]?.role || 'user')
                 };
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
@@ -5797,8 +5808,18 @@
                     btn.classList.add('text-gray-500');
                 }
             });
-            if (tab === 'cuentas' && typeof renderStaffCuentas === 'function') renderStaffCuentas('owner');
-            if (tab === 'compras' && typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (tab === 'cuentas' && typeof renderStaffCuentas === 'function') renderStaffCuentas(window.getMyStaffRole());
+            if (tab === 'compras' && typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
+            const _canMng = window.canManageStaff();
+            document.querySelectorAll('#admin-page button').forEach(btn => {
+                const t = btn.textContent.trim().toLowerCase();
+                if (t === 'saldo' || t === '2fa') btn.classList.toggle('hidden', !_canMng);
+            });
+            if ((tab === 'saldo' || tab === '2fa') && !_canMng) {
+                document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+                const c = document.getElementById('admin-cuentas'); if (c) c.classList.remove('hidden');
+                return;
+            }
             if (tab === 'saldo') window.loadAdminSaldo();
             if (tab === '2fa') window.loadAdmin2FA();
         };
@@ -6062,6 +6083,7 @@
 
 
         window.setOrderStatus = async function(id, status) {
+            if (status === 'cancelled' && window.denyIfNotManager()) { if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole()); return; }
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             const p = purchases.find(x => String(x.id) === String(id));
             if (!p) return alert('Pedido no encontrado');
@@ -6079,7 +6101,7 @@
             if (supabaseClient && window.supabaseOnline) {
                 await supabaseClient.from('compras').update({ status }).eq('id', id);
             }
-            if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             alert('Estado actualizado a: ' + status);
         };
@@ -6104,7 +6126,7 @@
                     alert('Nota guardada localmente. Error de conexión.');
                 }
             }
-            if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             if (synced) alert('Nota guardada y sincronizada. El cliente la verá al recargar.');
         };
