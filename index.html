@@ -135,11 +135,11 @@
     </div>
 
     <div id="welcome-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 transition-opacity duration-500 hidden opacity-0">
-        <div class="bg-kiwi-card border border-kiwi-red w-full max-w-lg rounded-3xl p-8 relative shadow-[0_0_50px_rgba(255,30,39,0.3)] text-center transform scale-95 transition-transform duration-500">
+        <div class="bg-kiwi-card border border-kiwi-red w-full max-w-sm sm:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-8 relative shadow-[0_0_50px_rgba(255,30,39,0.3)] text-center transform scale-95 transition-transform duration-500">
             <button onclick="window.closeWelcomeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
-            <img src="images/Logo2.png" alt="Kiwii Store Logo" class="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-kiwi-red shadow-lg kiwi-float object-cover" onerror="this.onerror=null;this.src='images/placeholder.svg'">
-            <h2 class="font-orbitron text-3xl font-black text-white mb-2">¡BIENVENIDO A <span class="text-kiwi-red text-glow-red">KIWII STORE</span>!</h2>
-            <p class="text-gray-300 font-rajdhani text-lg mb-4">Tu aventura empieza aquí. Explora nuestro catálogo de Roblox, Free Fire, Streaming y más. Las mejores ofertas te están esperando.</p>
+            <img src="images/Logo2.png" alt="Kiwii Store Logo" class="w-20 h-20 sm:w-32 sm:h-32 mx-auto mb-3 sm:mb-4 rounded-full border-4 border-kiwi-red shadow-lg kiwi-float object-cover" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+            <h2 class="font-orbitron text-xl sm:text-3xl font-black text-white mb-2">¡BIENVENIDO A <span class="text-kiwi-red text-glow-red">KIWII STORE</span>!</h2>
+            <p class="text-gray-300 font-rajdhani text-sm sm:text-lg mb-3 sm:mb-4">Tu aventura empieza aquí. Explora nuestro catálogo de Roblox, Free Fire, Streaming y más. Las mejores ofertas te están esperando.</p>
             <p class="text-gray-200 font-rajdhani text-sm mb-4">¡Unite al canal de WhatsApp para no perderte ninguna actualización, para participar en <strong>SORTEOS</strong> o eventos!</p>
             <a href="https://whatsapp.com/channel/0029Vb61RkpAojYvxfMkQ72Y" target="_blank" class="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-xl transition mb-4 w-full">
                 <i class="fa-brands fa-whatsapp"></i> CANAL DE WHATSAPP
@@ -170,18 +170,15 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div class="flex items-center gap-1 sm:gap-2 shrink-0">
 
                 <button onclick="window.openCurrencyModal()" class="h-10 border border-white/10 bg-white/[0.03] hover:border-white/25 text-white text-sm rounded-xl px-2.5 sm:px-3 font-rajdhani font-bold flex items-center gap-1.5 transition" title="Moneda">
                     <span id="currency-flag" class="text-base">🇦🇷</span>
-                    <span id="currency-code" class="hidden sm:inline">MONEDA</span>
+                    <span id="currency-code">MONEDA</span>
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-60 hidden sm:inline"></i>
                 </button>
                 <span id="header-balance" class="hidden md:inline text-kiwi-gold font-orbitron font-bold text-sm px-1">$0</span>
-                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="h-10 w-10 bg-green-600/90 hover:bg-green-600 text-white rounded-xl transition flex items-center justify-center" title="Atención WhatsApp">
-                    <i class="fa-brands fa-whatsapp text-lg"></i>
-                </a>
-                <button id="register-main-btn" onclick="window.openAuthModal('register')" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
+<button id="register-main-btn" onclick="window.openAuthModal('register')" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
                     <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">REGISTRARSE</span>
                 </button>
                 <button id="login-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
@@ -574,7 +571,7 @@
 
     <div id="catalog-view" class="hidden max-w-7xl mx-auto px-4 py-10">
         <div class="flex items-center justify-between mb-8">
-            <h2 class="font-orbitron text-3xl font-black text-white">CATÁLOGO</h2>
+            <h2 class="font-orbitron text-xl sm:text-3xl font-black text-white">CATÁLOGO</h2>
             <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('catalog-view').classList.add('hidden'); document.getElementById('home-view').classList.remove('hidden');" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> VOLVER
             </button>
