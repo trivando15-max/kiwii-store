@@ -277,7 +277,16 @@
                     <div id="admin-users-list" class="space-y-2"></div>
                 </div>
 
-                <div id="panel-compras" class="space-y-3 hidden"></div>
+                <div id="panel-compras" class="space-y-3 hidden">
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button onclick="window.filterStaffPurchases('all')" class="text-xs bg-kiwi-dark border border-kiwi-border px-3 py-1 rounded">Todos</button>
+                        <button onclick="window.filterStaffPurchases('roblox')" class="text-xs bg-kiwi-dark border border-kiwi-border px-3 py-1 rounded">Roblox</button>
+                        <button onclick="window.filterStaffPurchases('freefire')" class="text-xs bg-kiwi-dark border border-kiwi-border px-3 py-1 rounded">Free Fire</button>
+                        <button onclick="window.filterStaffPurchases('streaming')" class="text-xs bg-kiwi-dark border border-kiwi-border px-3 py-1 rounded">Streaming</button>
+                        <button onclick="window.filterStaffPurchases('instagram')" class="text-xs bg-kiwi-dark border border-kiwi-border px-3 py-1 rounded">Redes</button>
+                    </div>
+                    <div id="staff-purchases-list"></div>
+                </div>
 
                 <div id="panel-saldo" class="space-y-3 hidden">
                     <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">ACREDITAR SALDO DE PRUEBA</h4>
@@ -438,7 +447,7 @@
                         <h2 class="font-orbitron text-3xl sm:text-4xl md:text-5xl font-black leading-[1.05] text-[#f3ead8]">Equipate. <span class="text-kiwi-red">Jugá.</span> Ganá.</h2>
                         <p class="text-gray-400 font-rajdhani text-base md:text-lg mt-3 max-w-lg">Recargas gamer, Robux, diamantes, streaming y redes sociales. Entrega rápida y pagos para toda Latam y Crypto.</p>
                         <div class="flex flex-wrap gap-3 mt-6">
-                            <a href="#home-categories" class="h-12 inline-flex items-center gap-2 bg-kiwi-red hover:bg-red-600 text-white font-orbitron font-bold text-sm px-6 rounded-xl transition shadow-[0_0_24px_rgba(225,29,42,0.45)]">Ver catálogo <i class="fa-solid fa-arrow-down text-xs"></i></a>
+                            <a onclick="window.goToCatalog(); return false;" class="h-12 inline-flex items-center gap-2 bg-kiwi-red hover:bg-red-600 text-white font-orbitron font-bold text-sm px-6 rounded-xl transition shadow-[0_0_24px_rgba(225,29,42,0.45)]">Ver catálogo <i class="fa-solid fa-arrow-down text-xs"></i></a>
                             <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="h-12 inline-flex items-center gap-2 border border-white/15 hover:border-white/35 bg-white/[0.03] text-white font-rajdhani font-bold text-sm px-5 rounded-xl transition"><i class="fa-brands fa-whatsapp text-green-400 text-base"></i> Hablar por WhatsApp</a>
                         </div>
                         <div class="flex flex-wrap gap-x-5 gap-y-2 mt-6 text-xs text-gray-500 font-rajdhani font-bold">
@@ -570,7 +579,39 @@
         </div>
 
         <!-- CATEGORY VIEW -->
-        <div id="category-view" class="hidden">
+        
+    <div id="catalog-view" class="hidden max-w-7xl mx-auto px-4 py-10">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="font-orbitron text-3xl font-black text-white">CATÁLOGO</h2>
+            <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('catalog-view').classList.add('hidden'); document.getElementById('home-view').classList.remove('hidden');" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> VOLVER
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <button onclick="window.goToCategory('roblox')" class="group bg-[#111217] border border-white/10 hover:border-kiwi-red rounded-2xl p-6 text-left transition hover:-translate-y-1">
+                <div class="w-12 h-12 bg-kiwi-red/20 rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-cube text-kiwi-red text-2xl"></i></div>
+                <h3 class="font-orbitron font-bold text-white text-lg">Roblox</h3>
+                <p class="text-xs text-gray-400 mt-1">Robux, Frutas y más</p>
+            </button>
+            <button onclick="window.goToCategory('freefire')" class="group bg-[#111217] border border-white/10 hover:border-kiwi-red rounded-2xl p-6 text-left transition hover:-translate-y-1">
+                <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-fire text-orange-400 text-2xl"></i></div>
+                <h3 class="font-orbitron font-bold text-white text-lg">Free Fire</h3>
+                <p class="text-xs text-gray-400 mt-1">Diamantes y Pases</p>
+            </button>
+            <button onclick="window.goToCategory('streaming')" class="group bg-[#111217] border border-white/10 hover:border-kiwi-red rounded-2xl p-6 text-left transition hover:-translate-y-1">
+                <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-tv text-purple-400 text-2xl"></i></div>
+                <h3 class="font-orbitron font-bold text-white text-lg">Streaming</h3>
+                <p class="text-xs text-gray-400 mt-1">Apps y Suscripciones</p>
+            </button>
+            <button onclick="window.goToCategory('instagram')" class="group bg-[#111217] border border-white/10 hover:border-kiwi-red rounded-2xl p-6 text-left transition hover:-translate-y-1">
+                <div class="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-4"><i class="fa-brands fa-instagram text-pink-400 text-2xl"></i></div>
+                <h3 class="font-orbitron font-bold text-white text-lg">Redes Sociales</h3>
+                <p class="text-xs text-gray-400 mt-1">Seguidores y Likes</p>
+            </button>
+        </div>
+    </div>
+
+    <div id="category-view" class="hidden">
             <button onclick="window.goBackToHome()" class="mb-6 bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border text-white px-5 py-2.5 rounded-xl transition flex items-center gap-2 font-rajdhani font-bold text-lg shadow-lg transform hover:-translate-x-1">
                 <i class="fa-solid fa-arrow-left"></i> VOLVER AL INICIO
             </button>
@@ -2538,6 +2579,12 @@
                 if (error) { alert("Error al acreditar: " + error.message); return; }
             }
         }
+
+        
+        window.filterStaffPurchases = function(cat) {
+            window.staffPurchaseFilter = cat;
+            if (typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+        };
 
         function renderStaffCompras(myRole) {
             const container = document.getElementById('panel-compras');
@@ -5706,6 +5753,20 @@
         document.addEventListener('DOMContentLoaded', window.handleCleanRoutes);
         if (document.readyState !== 'loading') setTimeout(window.handleCleanRoutes, 100);
 
+
+        
+        window.goToCatalog = function() {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('category-view').classList.add('hidden');
+            document.getElementById('catalog-view').classList.remove('hidden');
+            history.pushState({}, '', '/catalogo');
+        };
+        window.goToCategory = function(cat) {
+            const routes = { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
+            history.pushState({}, '', routes[cat] || '/catalogo');
+            document.getElementById('catalog-view').classList.add('hidden');
+            if (typeof window.filterCategory === 'function') window.filterCategory(cat);
+        };
 
         window.goToProfile = function() {
             if (!currentUser) {
