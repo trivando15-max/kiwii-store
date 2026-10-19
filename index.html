@@ -2038,7 +2038,7 @@
             }
         }
 
-        window.openAuthModal = function() {
+        window.openAuthModal = function(tab) {
             const m = document.getElementById('auth-modal');
             const mc = document.getElementById('auth-modal-card');
             if (!m) { alert('Modal no encontrado'); return; }
@@ -2048,7 +2048,12 @@
             const btnSection = document.getElementById('login-register-view');
             const profileSection = document.getElementById('user-profile-view');
 
-            if (currentUser) {
+            // Never show profile in auth modal
+            if (profileSection) profileSection.classList.add('hidden');
+            if (btnSection) btnSection.classList.remove('hidden');
+            if (tab && typeof window.switchAuthTab === 'function') window.switchAuthTab(tab);
+
+            if (false && currentUser) {
                 if (title) title.textContent = "Mi Perfil";
                 if (desc) desc.textContent = "Resumen de tu cuenta";
                 if (btnSection) btnSection.classList.add('hidden');
