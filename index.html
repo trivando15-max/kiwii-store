@@ -181,7 +181,10 @@
                 <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="h-10 w-10 bg-green-600/90 hover:bg-green-600 text-white rounded-xl transition flex items-center justify-center" title="Atención WhatsApp">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
                 </a>
-                <button id="login-main-btn" onclick="window.openAuthModal()" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
+                <button id="register-main-btn" onclick="window.openAuthModal('register')" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
+                    <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">REGISTRARSE</span>
+                </button>
+                <button id="login-main-btn" onclick="window.openAuthModal('login')" class="h-10 bg-kiwi-red hover:bg-red-600 text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5 shadow-[0_0_18px_rgba(225,29,42,0.35)]" title="Iniciar sesión">
                     <i class="fa-solid fa-user"></i> <span id="user-display-name" class="hidden sm:inline">INICIAR SESIÓN</span>
                 </button>
                 <button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
@@ -1265,7 +1268,8 @@
             if (drawer) drawer.classList.toggle('translate-x-full');
         };
 
-        window.openAuthModal = function() {
+        window.openAuthModal = function(tab) {
+            if (tab && typeof window.switchAuthTab === 'function') window.switchAuthTab(tab);
             const m = document.getElementById('auth-modal');
             if (!m) { alert('Modal de login no encontrado'); return; }
             const mc = document.getElementById('auth-modal-card');
