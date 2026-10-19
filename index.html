@@ -236,6 +236,9 @@
                     <input type="text" id="profile-ff-id-full" placeholder="ID Free Fire" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
                     <input type="password" id="profile-new-pass-full" placeholder="Nueva contraseña (dejar vacío para no cambiar)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
                     <button onclick="window.saveProfileFull()" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-sm">Guardar cambios</button>
+                    <button onclick="if(confirm('¿Cerrar sesión?')){localStorage.removeItem('kiwi_logged_user');localStorage.removeItem('kiwi_session_expiry');location.href='/inicio';}" class="w-full mt-2 bg-red-900/50 border border-red-700 hover:bg-red-900/70 text-red-300 font-bold py-2.5 rounded-xl text-sm transition">
+                        <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                    </button>
                 </div>
             </div>
             <h3 class="font-orbitron text-sm font-bold text-white mb-3">MIS PEDIDOS</h3>
@@ -1269,6 +1272,10 @@
         };
 
         window.openAuthModal = function(tab) {
+            const profileSection = document.getElementById('user-profile-view');
+            const btnSection = document.getElementById('login-register-view');
+            if (profileSection) profileSection.classList.add('hidden');
+            if (btnSection) btnSection.classList.remove('hidden');
             if (tab && typeof window.switchAuthTab === 'function') window.switchAuthTab(tab);
             const tabLogin = document.getElementById('tab-login');
             const tabRegister = document.getElementById('tab-register');
