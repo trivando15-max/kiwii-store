@@ -2415,8 +2415,9 @@
 
         function renderStaffCuentas(myRole) {
             const adminBox = document.getElementById('admin-cuentas');
-            if (adminBox) adminBox.innerHTML = '<p class="text-xs text-gray-500 mb-2">Cuentas (desde Supabase)</p>';
-            const container = document.getElementById('admin-users-list');
+            const container = adminBox || document.getElementById('admin-users-list');
+            if (!container) return;
+            container.innerHTML = '<p class="text-xs text-gray-500 mb-2">Cuentas</p>';
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
             container.innerHTML = '';
 
@@ -5760,6 +5761,46 @@
             if (target) target.classList.remove('hidden');
             if (tab === 'cuentas' && typeof renderStaffCuentas === 'function') renderStaffCuentas('owner');
             if (tab === 'compras' && typeof renderStaffCompras === 'function') renderStaffCompras('owner');
+            if (tab === 'saldo') window.loadAdminSaldo();
+            if (tab === '2fa') window.loadAdmin2FA();
+        };
+
+        
+        // Hide reviews on admin page
+        if (location.pathname === '/panel-admin') {
+            const rev = document.getElementById('discord-reviews');
+            if (rev) rev.style.display = 'none';
+        }
+
+        
+        window.loadAdminSaldo = function() {
+            const box = document.getElementById('admin-saldo');
+            if (!box) return;
+            box.innerHTML = `
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-400">Acreditar saldo</p>
+                    <input id="admin-credit-user" placeholder="Usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <input id="admin-credit-id" placeholder="ID de cuenta (KWS-...)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <input id="admin-credit-amount" type="number" placeholder="Monto" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <select id="admin-credit-currency" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                        <option value="USDT">USDT</option>
+                        <option value="ARS">ARS</option>
+                        <option value="MXN">MXN</option>
+                        <option value="COP">COP</option>
+                        <option value="PEN">PEN</option>
+                    </select>
+                    <button onclick="window.creditUserBalance(document.getElementById('admin-credit-user').value, document.getElementById('admin-credit-amount').value, document.getElementById('admin-credit-id').value, document.getElementById('admin-credit-currency').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar</button>
+                </div>`;
+        };
+        window.loadAdmin2FA = function() {
+            const box = document.getElementById('admin-2fa');
+            if (!box) return;
+            box.innerHTML = `
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-400">Resetear código 2FA</p>
+                    <input id="admin-reset-user" placeholder="Nombre de usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
+                    <button onclick="window.resetUser2FA(document.getElementById('admin-reset-user').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Resetear 2FA</button>
+                </div>`;
         };
 
         window.goToAdminPanel = function() {
