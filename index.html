@@ -1324,13 +1324,17 @@
 
         // --- SISTEMA DE CONVERSION DE MONEDAS ---
         window.currentCurrency = 'USDT';
+        // Tasas de respaldo (si /api/binance-p2p no responde): precio de COMPRA "Al instante" en la app de Binance
         window.exchangeRates = {
             'ARS': 1642,
-            'MXN': 18.87,
-            'COP': 3259,
-            'PEN': 3.45,
+            'MXN': 19.46,
+            'COP': 3306.6,
+            'PEN': 3.493,
             'USDT': 1
         };
+        // Margen sobre el precio P2P de compra (top 5 anuncios, método de pago local, ~10 USDT) que trae /api/binance-p2p.
+        // Iguala lo que cobra la app de Binance en "Al instante". 1.03 = +3%. Editá estos valores si cambia la diferencia.
+        window.KIWI_RATE_MARGIN = { ARS: 1.00, MXN: 1.0143, COP: 1.0343, PEN: 1.009 };
         window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
 
         window.getConvertedPrice = function(prod) {
@@ -6185,8 +6189,10 @@ window.resetUser2FA = function(username) {
                 try {
                     const res = await fetch('/api/binance-p2p?fiat=' + fiat);
                     const data = await res.json();
-                    if (data.rate && window.exchangeRates) {
-                        window.exchangeRates[fiat] = data.rate;
+                    const base = Number(data && data.rate);
+                    if (base > 0 && window.exchangeRates) {
+                        const m = Number((window.KIWI_RATE_MARGIN || {})[fiat]) || 1;
+                        window.exchangeRates[fiat] = Math.round(base * m * (base >= 100 ? 100 : 1000)) / (base >= 100 ? 100 : 1000);
                     }
                 } catch (e) {}
             }
