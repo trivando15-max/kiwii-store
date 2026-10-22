@@ -1460,6 +1460,68 @@
             catch (_) { prompt('Copiá tu ID de cuenta:', id); }
         };
 
+
+        // ===== v18: sesión segura (token del servidor) y llamadas RPC =====
+        window.kiwiToken = function() { return localStorage.getItem('kiwi_session_token') || ''; };
+        window.kiwiRpc = async function(fn, args) {
+            if (!supabaseClient || !window.supabaseOnline) throw new Error('Sin conexión con el servidor. Intentá de nuevo en unos segundos.');
+            const { data, error } = await supabaseClient.rpc(fn, args || {});
+            if (error) {
+                const msg = error.message || 'Error del servidor';
+                if (/Sesión inválida|vencida/i.test(msg)) window.kiwiForceLogout('Tu sesión venció. Volvé a iniciar sesión.');
+                throw new Error(msg);
+            }
+            if (data && typeof data === 'object' && data.error) throw new Error(data.error);
+            return data;
+        };
+        window.kiwiStaffRpc = function(fn, args) { return window.kiwiRpc(fn, Object.assign({ p_token: window.kiwiToken() }, args || {})); };
+        window._syncedBal = window._syncedBal || {};
+        window.kiwiStoreSession = function(res) {
+            if (!res || !res.token || !res.user) throw new Error('Respuesta de login inválida.');
+            const usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const uname = res.user.username;
+            const prevKey = Object.keys(usersDB).find(k => k.toLowerCase() === uname.toLowerCase());
+            const prev = prevKey ? usersDB[prevKey] : {};
+            if (prevKey && prevKey !== uname) delete usersDB[prevKey];
+            usersDB[uname] = window.applyCloudUserToLocal(prev || {}, res.user);
+            delete usersDB[uname].password;
+            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
+            localStorage.setItem('kiwi_session_token', res.token);
+            currentUser = uname;
+            localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
+            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 30*24*60*60*1000));
+            return uname;
+        };
+        window.kiwiForceLogout = function(msg) {
+            const had = !!currentUser;
+            currentUser = null;
+            localStorage.removeItem('kiwi_logged_user');
+            localStorage.removeItem('kiwi_session_token');
+            if (typeof updateAuthUI === 'function') { try { updateAuthUI(); } catch (_) {} }
+            if (had && msg) alert(msg);
+        };
+        // Al cerrar sesión por cualquier botón, invalidar también el token en el servidor
+        (function() {
+            const origRemove = Storage.prototype.removeItem;
+            Storage.prototype.removeItem = function(k) {
+                if (this === window.localStorage && k === 'kiwi_logged_user') {
+                    const t = window.localStorage.getItem('kiwi_session_token');
+                    if (t && supabaseClient && window.supabaseOnline) { try { supabaseClient.rpc('kiwi_logout', { p_token: t }).then(() => {}, () => {}); } catch (_) {} }
+                    origRemove.call(this, 'kiwi_session_token');
+                }
+                return origRemove.apply(this, arguments);
+            };
+        })();
+        // Borrar contraseñas que hayan quedado guardadas en este navegador por versiones anteriores
+        (function() {
+            try {
+                const u = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                let ch = false;
+                for (const k of Object.keys(u)) { if (u[k] && 'password' in u[k]) { delete u[k].password; ch = true; } }
+                if (ch) localStorage.setItem('kiwi_users', JSON.stringify(u));
+            } catch (_) {}
+        })();
+
         window.fetchInitialData = async function() {
             if (!supabaseClient || !window.supabaseOnline) {
                 console.warn('Supabase no está disponible; se conserva la información local.');
@@ -1467,14 +1529,13 @@
             }
             try {
                 // 1. Cargar Usuarios
-                const { data: usersData, error: errU } = await supabaseClient.from('usuarios').select('id, username, email, password, role, banned, profile_pic, balance, account_id');
+                const { data: usersData, error: errU } = await supabaseClient.from('usuarios').select('id, username, email, role, banned, profile_pic, balance, account_id');
                 if (errU) console.warn('Error leyendo usuarios:', errU);
                 if (usersData) {
                     let localUsers = JSON.parse(localStorage.getItem('kiwi_users')) || {};
                     usersData.forEach(u => {
                         const prev = localUsers[u.username] || {};
                         localUsers[u.username] = window.applyCloudUserToLocal({
-                            password: prev.password || '',
                             email: prev.email || '',
                             role: prev.role || 'user',
                             history: prev.history || [],
@@ -1483,29 +1544,12 @@
                             banned: !!prev.banned,
                             balance: prev.balance || 0
                         }, u);
-                        // Si la nube no trae password, conservar la local
-                        if (!u.password && prev.password) localUsers[u.username].password = prev.password;
                     });
 
                     for (const userData of Object.values(localUsers)) {
                         if (!userData.accountId) userData.accountId = window.generateAccountId();
                     }
-                    for (const u of (usersData || [])) {
-                        const loc = localUsers[u.username];
-                        if (!loc) continue;
-                        const patch = {};
-                        if (loc.accountId && !u.account_id) patch.account_id = loc.accountId;
-                        if (!u.role && loc.role) patch.role = loc.role;
-                        // Rangos protegidos: Owner y CEO se asignan por nombre de usuario.
-                        if (u.username === 'Kiwi_Store_Owner' && u.role !== 'owner') patch.role = 'owner';
-                        if (!u.password && loc.password) patch.password = loc.password;
-                        if (!u.email && loc.email) patch.email = loc.email;
-                        if (Object.keys(patch).length > 0) {
-                            const { error: idError } = await supabaseClient.from('usuarios').update(patch).eq('id', u.id);
-                            if (idError) console.warn('No se pudo actualizar usuario en nube:', idError);
-                        }
-                    }
-
+                    // v18: la web ya no escribe directo en 'usuarios' (IDs y rangos se completan en el servidor).
                     // Mantener los rangos correctos también en la copia local.
                     if (localUsers['Kiwi_Store_Owner']) localUsers['Kiwi_Store_Owner'].role = 'owner';
 
@@ -1580,10 +1624,10 @@
             if (!supabaseClient || !window.supabaseOnline) return;
             const list = window.readPurchases().filter(p => !p._synced && p.user);
             if (!list.length) return;
-            let { error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, true)));
+            let { error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, true)), { onConflict: 'id', ignoreDuplicates: true });
             if (error) {
                 console.warn('Upsert completo de compras falló, reintentando con columnas básicas:', error);
-                ({ error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, false))));
+                ({ error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, false)), { onConflict: 'id', ignoreDuplicates: true }));
             }
             if (error) { console.error('No se pudieron guardar compras en Supabase:', error); return; }
             const ids = new Set(list.map(p => String(p.id)));
@@ -1641,6 +1685,11 @@
                     localStorage.removeItem('kiwi_logged_user');
                     localStorage.removeItem('kiwi_session_expiry');
                 }
+                if (localStorage.getItem('kiwi_logged_user') && !localStorage.getItem('kiwi_session_token')) {
+                    // Sesión de una versión anterior (sin token): pedir login de nuevo
+                    localStorage.removeItem('kiwi_logged_user');
+                    window._kiwiNeedRelogin = true;
+                }
                 const saved = localStorage.getItem('kiwi_logged_user');
                 if (saved) {
                     try { currentUser = JSON.parse(saved); } catch(e) { currentUser = null; }
@@ -1652,6 +1701,12 @@
                 window.supabaseOnline = await probeSupabase();
                 if (window.supabaseOnline) {
                     createSupabaseClient();
+                    if (window.kiwiToken()) {
+                        window.kiwiRpc('kiwi_me', { p_token: window.kiwiToken() }).then(me => {
+                            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                            if (me && me.username) { users[me.username] = window.applyCloudUserToLocal(users[me.username] || {}, me); localStorage.setItem('kiwi_users', JSON.stringify(users)); updateAuthUI(); }
+                        }).catch(() => {});
+                    }
                     initRealtimePresence();
                     fetchInitialData();
                     initStaffRealtime();
@@ -2027,6 +2082,10 @@
                 if (tabRegister) tabRegister.classList.replace('text-gray-500', 'text-kiwi-red');
             } else if (tab === 'forgot' && forgotForm) {
                 forgotForm.classList.remove('hidden');
+            } else if (tab === 'forgot') {
+                if (loginForm) loginForm.classList.remove('hidden');
+                if (tabLogin) tabLogin.classList.replace('text-gray-500', 'text-kiwi-red');
+                window.handleRecover();
             }
         }
 
@@ -2096,7 +2155,7 @@
 
         // Esquema public.usuarios:
         // id, username, email, password, role, banned, profile_pic, balance, account_id
-        const USUARIO_CLOUD_SELECT = 'id, username, email, password, role, banned, profile_pic, balance, account_id';
+        const USUARIO_CLOUD_SELECT = 'id, username, email, role, banned, profile_pic, balance, account_id';
 
         window.syncUserFromCloud = async function(username) {
             if (!supabaseClient || !window.supabaseOnline || !username) return null;
@@ -2114,7 +2173,8 @@
             if (!cloud) return localObj;
             const out = localObj || {};
             out.email = cloud.email != null ? cloud.email : (out.email || '');
-            if (cloud.password != null && cloud.password !== '') out.password = cloud.password;
+            delete out.password;
+            if (cloud.username) window._syncedBal[cloud.username] = Number(cloud.balance ?? 0);
             out.role = cloud.username === 'Kiwi_Store_Owner' ? 'owner' : (cloud.role || out.role || 'user');
             out.banned = cloud.banned === true || cloud.banned === 'true' || cloud.banned === true;
             out.profilePic = cloud.profile_pic != null ? cloud.profile_pic : (out.profilePic || '');
@@ -2123,231 +2183,77 @@
             return out;
         };
 
-        window.ensureCloudUser = async function(username, accountId, extra = {}) {
-            if (!supabaseClient || !window.supabaseOnline) return null;
-            const desiredId = (accountId || window.generateAccountId()).trim();
-            const desiredRole = username === 'Kiwi_Store_Owner' ? 'owner' : (extra.role || 'user');
-            let row = await window.syncUserFromCloud(username);
-            if (row) {
-                const patch = {};
-                if (!row.account_id) patch.account_id = desiredId;
-                if (!row.role || username === 'Kiwi_Store_Owner') patch.role = desiredRole;
-                if (extra.email != null && !row.email) patch.email = extra.email;
-                if (extra.password != null && !row.password) patch.password = extra.password;
-                if (extra.profile_pic != null && !row.profile_pic) patch.profile_pic = extra.profile_pic;
-                if (row.banned == null) patch.banned = false;
-                if (Object.keys(patch).length > 0) {
-                    const { data, error } = await supabaseClient
-                        .from('usuarios')
-                        .update(patch)
-                        .eq('id', row.id)
-                        .select(USUARIO_CLOUD_SELECT)
-                        .single();
-                    if (error) throw error;
-                    row = data;
-                }
-                return row;
-            }
-            const payload = {
-                username,
-                balance: Number(extra.balance ?? 0),
-                account_id: desiredId,
-                role: desiredRole,
-                email: extra.email || '',
-                password: extra.password || '',
-                banned: false,
-                profile_pic: extra.profile_pic || ''
-            };
-            const { data, error } = await supabaseClient
-                .from('usuarios')
-                .insert([payload])
-                .select(USUARIO_CLOUD_SELECT)
-                .single();
-            if (error) throw error;
-            return data;
+        // v18: crear/editar usuarios solo por RPC en el servidor. Esto queda de solo lectura.
+        window.ensureCloudUser = async function(username) {
+            return await window.syncUserFromCloud(username);
         };
 
         window.handleRegister = async function(e) {
-            const emailEl = document.getElementById('reg-email');
-            if (!emailEl || !emailEl.value.trim()) { e.preventDefault(); alert('El correo es obligatorio'); return; }
-            const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
-            if (email) {
-                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                const taken = Object.values(users).some(u => (u.email || '').toLowerCase() === email);
-                if (taken) {
-                    e.preventDefault();
-                    alert('Ese Gmail ya está registrado. Usá otro o iniciá sesión.');
-                    return;
-                }
-            }
             e.preventDefault();
+            const email = (document.getElementById('reg-email')?.value || '').trim().toLowerCase();
             const user = (document.getElementById('reg-user')?.value || '').trim();
             const pass = document.getElementById('reg-pass')?.value || '';
             const pass2 = document.getElementById('reg-pass2')?.value || '';
-
+            if (!email) { alert('El correo es obligatorio'); return; }
             if (pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
             if (!window.isStrongPassword(pass)) { alert("La contraseña debe tener al menos 8 caracteres y 1 número."); return; }
             if (user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
-
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (usersDB[user]) { alert(`⚠️ El nombre de usuario "${user}" ya está en uso en este navegador.`); return; }
-
-            const accountId = window.generateAccountId();
+            if (!supabaseClient || !window.supabaseOnline) {
+                alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
+                return;
+            }
+            let res;
+            try {
+                res = await window.kiwiRpc('kiwi_register', { p_username: user, p_email: email, p_password: pass, p_account_id: window.generateAccountId() });
+                window.kiwiStoreSession(res);
+            } catch (err) {
+                console.error('Registro falló:', err);
+                alert('No se pudo crear la cuenta: ' + (err.message || 'Error de conexión'));
+                return;
+            }
+            // 2FA local (igual que antes)
             const twoFACode = Math.floor(100000 + Math.random() * 900000).toString();
-            const newUser = { password: pass, email, role: 'user', banned: false, profilePic: '', balance: 0, accountId, history: [], twoFAEnabled: true, twoFACode };
+            const usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (usersDB[currentUser]) { usersDB[currentUser].twoFAEnabled = true; usersDB[currentUser].twoFACode = twoFACode; usersDB[currentUser].history = usersDB[currentUser].history || []; }
+            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
             const msg = document.createElement('div');
-            msg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+            msg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
             msg.innerHTML = `
                 <div style="background:#111;color:#fff;padding:32px;border:3px solid #e11d2a;border-radius:16px;text-align:center;max-width:420px;width:100%">
                     <p style="font-size:22px;font-weight:bold;margin:0 0 8px">¡CÓDIGO 2FA IMPORTANTE!</p>
                     <p style="color:#f87171;font-size:14px;margin:0 0 16px">Guardalo ahora. Sin este código NO vas a poder entrar a tu cuenta.</p>
                     <div style="font-size:42px;letter-spacing:8px;color:#e11d2a;font-weight:bold;margin:12px 0">${twoFACode}</div>
                     <p style="font-size:13px;color:#aaa;margin:0 0 20px">Copialo y guardalo en un lugar seguro.</p>
-                    <button onclick="this.parentElement.parentElement.remove()" style="background:#e11d2a;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-weight:bold">Ya lo guardé</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background:#e11d2a;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-weight:bold;cursor:pointer">YA LO GUARDÉ</button>
                 </div>
             `;
             document.body.appendChild(msg);
-
-            if (!supabaseClient || !window.supabaseOnline) {
-                alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
-                return;
-            }
-            try {
-                const existing = await window.syncUserFromCloud(user);
-                if (existing) {
-                    alert(`El nombre de usuario "${user}" ya está registrado en la nube.`);
-                    return;
-                }
-                const inserted = await window.ensureCloudUser(user, accountId, {
-                    role: 'user',
-                    email,
-                    password: pass,
-                    balance: 0
-                });
-                newUser.accountId = inserted.account_id || accountId;
-                newUser.balance = Number(inserted.balance ?? 0);
-                newUser.role = inserted.role || 'user';
-                newUser.email = inserted.email || email;
-                usersDB[user] = newUser;
-                localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
-            } catch (err) {
-                console.error('Supabase register failed:', err);
-                alert('No se pudo crear la cuenta en Supabase: ' + (err.message || 'Error de conexión'));
-                return;
-            }
-
-            currentUser = user;
-            localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
-            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
             if (typeof updateAuthUI === 'function') updateAuthUI();
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             window.closeAuthModal();
-            alert('Cuenta creada.\nUsuario: ' + user + '\nID: ' + newUser.accountId);
+            alert('Cuenta creada.\nUsuario: ' + currentUser + '\nID: ' + (res.user.account_id || ''));
         }
 
         window.handleLogin = async function(e) {
-            const userEl = document.getElementById('login-user');
-            const user = userEl ? userEl.value.trim() : '';
-            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            const localUser = users[user] || users[Object.keys(users).find(k => k.toLowerCase() === user.toLowerCase())];
-            if (localUser && localUser.twoFAEnabled && localUser.twoFACode) {
-                const code = prompt('Ingresá tu código 2FA (lo recibiste al registrarte):');
-                if (!code || code !== localUser.twoFACode) {
-                    e.preventDefault();
-                    alert('Código 2FA incorrecto');
-                    return;
-                }
-            }
             e.preventDefault();
             const userInput = (document.getElementById('login-user')?.value || '').trim();
             const pass = document.getElementById('login-pass')?.value || '';
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (!usersDB || typeof usersDB !== 'object') usersDB = {};
-
+            if (!userInput || !pass) { alert('Completá usuario y contraseña.'); return; }
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const localUser = users[userInput] || users[Object.keys(users).find(k => k.toLowerCase() === userInput.toLowerCase())];
+            if (localUser && localUser.twoFAEnabled && localUser.twoFACode) {
+                const code = prompt('Ingresá tu código 2FA (lo recibiste al registrarte):');
+                if (!code || code !== localUser.twoFACode) { alert('Código 2FA incorrecto'); return; }
+            }
+            if (!supabaseClient || !window.supabaseOnline) {
+                alert('No hay conexión con el servidor. Intentá de nuevo en unos segundos.');
+                return;
+            }
             try {
-                // 1) Prioridad: autenticar contra Supabase (permite login en cualquier dispositivo)
-                if (supabaseClient && window.supabaseOnline) {
-                    const cloud = await window.syncUserFromCloud(userInput);
-                    if (cloud) {
-                        if (cloud.banned === true) {
-                            alert('🚫 Tu cuenta ha sido suspendida.');
-                            return;
-                        }
-                        const cloudPass = String(cloud.password ?? '');
-                        const localKey = Object.keys(usersDB).find(k => k.toLowerCase() === userInput.toLowerCase());
-                        const localPass = localKey ? String(usersDB[localKey].password ?? '') : '';
-
-                        // Validar contraseña: nube primero; si nube no tiene pass, usar local
-                        if (cloudPass !== '') {
-                            if (cloudPass !== pass) {
-                                alert('Contraseña incorrecta.');
-                                return;
-                            }
-                        } else if (localPass !== '') {
-                            if (localPass !== pass) {
-                                alert('Contraseña incorrecta.');
-                                return;
-                            }
-                            // Subir password local a la nube
-                            await supabaseClient.from('usuarios').update({ password: pass }).eq('id', cloud.id);
-                        } else {
-                            alert('Esta cuenta no tiene contraseña configurada. Contactá al staff.');
-                            return;
-                        }
-
-                        const uname = cloud.username;
-                        usersDB[uname] = window.applyCloudUserToLocal(usersDB[uname] || {}, cloud);
-                        // Asegurar password local = la que usó
-                        usersDB[uname].password = pass;
-                        if (uname === 'Kiwi_Store_Owner') usersDB[uname].role = 'owner';
-                        if (!usersDB[uname].accountId) {
-                            usersDB[uname].accountId = window.generateAccountId();
-                            await supabaseClient.from('usuarios')
-                                .update({ account_id: usersDB[uname].accountId })
-                                .eq('id', cloud.id);
-                        }
-                        localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
-
-                        currentUser = uname;
-                        localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
-            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
-                        if (typeof updateAuthUI === 'function') updateAuthUI();
-                        if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                        window.closeAuthModal();
-                        return;
-                    }
-                }
-
-                // 2) Fallback: solo local (sin fila en la nube)
-                const localUser = Object.keys(usersDB).find(k => k.toLowerCase() === userInput.toLowerCase());
-                if (!localUser) {
-                    alert('El usuario no existe. Registrate primero.');
-                    return;
-                }
-                if (usersDB[localUser].banned) { alert('🚫 Tu cuenta ha sido suspendida.'); return; }
-                if (String(usersDB[localUser].password ?? '') !== pass) { alert('Contraseña incorrecta.'); return; }
-
-                // Crear / sincronizar en la nube
-                if (supabaseClient && window.supabaseOnline) {
-                    try {
-                        if (!usersDB[localUser].accountId) usersDB[localUser].accountId = window.generateAccountId();
-                        const cloud = await window.ensureCloudUser(localUser, usersDB[localUser].accountId, {
-                            role: usersDB[localUser].role || 'user',
-                            email: usersDB[localUser].email || '',
-                            password: usersDB[localUser].password || pass,
-                            balance: usersDB[localUser].balance || 0,
-                            profile_pic: usersDB[localUser].profilePic || ''
-                        });
-                        if (cloud) usersDB[localUser] = window.applyCloudUserToLocal(usersDB[localUser], cloud);
-                        localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
-                    } catch (syncErr) {
-                        console.warn('Login local OK; sync de nube falló:', syncErr);
-                    }
-                }
-
-                currentUser = localUser;
-                localStorage.setItem('kiwi_logged_user', JSON.stringify(currentUser));
-            localStorage.setItem('kiwi_session_expiry', String(Date.now() + 24*60*60*1000));
+                // La contraseña se valida en el servidor (kiwi_login); nunca se descarga.
+                const res = await window.kiwiRpc('kiwi_login', { p_username: userInput, p_password: pass });
+                window.kiwiStoreSession(res);
+                const passEl = document.getElementById('login-pass'); if (passEl) passEl.value = '';
                 if (typeof updateAuthUI === 'function') updateAuthUI();
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 window.closeAuthModal();
@@ -2358,15 +2264,10 @@
         };
 
         window.handleRecover = function(e) {
-            e.preventDefault();
-            const user = document.getElementById('rec-user').value.trim();
-            const email = document.getElementById('rec-email').value.trim();
-            let usersDB = JSON.parse(localStorage.getItem('kiwi_users'));
-
-            if(usersDB[user] && usersDB[user].email === email) {
-                alert(`Tu contraseña es: ${usersDB[user].password}`);
-                window.switchAuthTab('login');
-            } else { alert("No se encontró la cuenta."); }
+            if (e) e.preventDefault();
+            // v18: las contraseñas nunca se muestran (están cifradas en el servidor).
+            alert('Por seguridad no podemos mostrar tu contraseña.\nEscribile al staff (Owner o CEO) por WhatsApp/Discord con tu usuario y tu ID de cuenta (KWS-...) para que te asignen una contraseña nueva. Después cambiala desde tu perfil.');
+            if (typeof window.switchAuthTab === 'function') window.switchAuthTab('login');
         }
 
         window.handleLogout = function() {
@@ -2524,27 +2425,20 @@
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!usersDB[targetManageUser]) { alert('Usuario no encontrado localmente.'); return; }
 
-            if (targetManageUser !== currentUser) usersDB[targetManageUser].role = newRole;
-            if (newPass !== '') usersDB[targetManageUser].password = newPass;
-
-            if (supabaseClient && window.supabaseOnline) {
-                try {
-                    const cloudName = targetManageUser;
-                    const patch = {};
-                    if (targetManageUser !== currentUser) patch.role = newRole;
-                    if (newPass !== '') patch.password = newPass;
-                    if (newUsername !== '' && newUsername !== targetManageUser) patch.username = newUsername;
-                    if (Object.keys(patch).length > 0) {
-                        const { error } = await supabaseClient.from('usuarios')
-                            .update(patch)
-                            .ilike('username', cloudName);
-                        if (error) { alert('Error al actualizar en Supabase: ' + error.message); return; }
-                    }
-                } catch (e) {
-                    alert('Error al sincronizar: ' + (e.message || e));
-                    return;
-                }
+            if (newPass !== '' && !window.isStrongPassword(newPass)) { alert('La contraseña debe tener al menos 8 caracteres y 1 número.'); return; }
+            try {
+                await window.kiwiStaffRpc('kiwi_staff_update_user', {
+                    p_target: targetManageUser,
+                    p_new_role: targetManageUser !== currentUser ? newRole : null,
+                    p_new_password: newPass !== '' ? newPass : null,
+                    p_new_username: (newUsername !== '' && newUsername !== targetManageUser) ? newUsername : null
+                });
+            } catch (e) {
+                alert('Error al actualizar: ' + (e.message || e));
+                return;
             }
+            if (targetManageUser !== currentUser) usersDB[targetManageUser].role = newRole;
+            delete usersDB[targetManageUser].password;
 
             if (newUsername !== '' && newUsername !== targetManageUser) {
                 usersDB[newUsername] = { ...usersDB[targetManageUser] };
@@ -2562,18 +2456,15 @@
             if (targetManageUser === currentUser) return;
             let usersDB = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!usersDB[targetManageUser]) return;
-            usersDB[targetManageUser].banned = !usersDB[targetManageUser].banned;
-            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
-
-            if (supabaseClient && window.supabaseOnline) {
-                try {
-                    await supabaseClient.from('usuarios')
-                        .update({ banned: !!usersDB[targetManageUser].banned })
-                        .ilike('username', targetManageUser);
-                } catch (e) {
-                    console.warn('No se pudo sincronizar ban:', e);
-                }
+            const newBanned = !usersDB[targetManageUser].banned;
+            try {
+                await window.kiwiStaffRpc('kiwi_staff_set_ban', { p_target: targetManageUser, p_banned: newBanned });
+            } catch (e) {
+                alert('No se pudo cambiar el ban: ' + (e.message || e));
+                return;
             }
+            usersDB[targetManageUser].banned = newBanned;
+            localStorage.setItem('kiwi_users', JSON.stringify(usersDB));
 
             window.closeActionModal();
             alert(usersDB[targetManageUser].banned ? 'Usuario baneado (nube + local).' : 'Usuario desbaneado (nube + local).');
@@ -2583,8 +2474,11 @@
             if (window.denyIfNotManager()) return;
             if(targetManageUser === currentUser) return;
             if(confirm("¿Estás 100% seguro de que deseas ELIMINAR permanentemente esta cuenta y todo su historial?")) {
-                const { error } = await supabaseClient.from('usuarios').delete().eq('username', targetManageUser);
-                if (error) { alert("Error eliminando en Supabase: " + error.message); return; }
+                try {
+                    await window.kiwiStaffRpc('kiwi_staff_delete_user', { p_target: targetManageUser });
+                } catch (e) { alert("Error eliminando la cuenta: " + (e.message || e)); return; }
+                const _u = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); delete _u[targetManageUser]; localStorage.setItem('kiwi_users', JSON.stringify(_u));
+                if (typeof renderStaffCuentas === 'function') renderStaffCuentas(window.getMyStaffRole());
                 window.closeActionModal();
             }
         }
@@ -2592,8 +2486,9 @@
         window.deletePurchase = async function(id) {
             if (window.denyIfNotManager()) return;
             if(confirm("¿Estás seguro de que deseas eliminar permanentemente esta compra del registro?")) {
-                const { error } = await supabaseClient.from('compras').delete().eq('id', id);
-                if (error) { alert("Error eliminando compra: " + error.message); return; }
+                try {
+                    await window.kiwiStaffRpc('kiwi_staff_delete_order', { p_id: String(id) });
+                } catch (e) { alert("Error eliminando compra: " + (e.message || e)); return; }
                 let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
                 purchases = purchases.filter(p => String(p.id) !== String(id));
                 localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
@@ -2603,14 +2498,16 @@
         };
 
         window.claimPurchase = async function(id) {
-            const { error } = await supabaseClient.from('compras').update({ status: 'claimed', claimedBy: currentUser }).eq('id', id);
-            if (error) { alert("Error al reclamar: " + error.message); return; }
+            try { await window.kiwiStaffRpc('kiwi_staff_order_status', { p_id: String(id), p_status: 'claimed', p_refund: 0 }); }
+            catch (e) { alert("Error al reclamar: " + (e.message || e)); return; }
+            if (typeof fetchInitialData === 'function') fetchInitialData();
         }
 
         window.accreditPurchase = async function(id) {
             if(confirm("¿Confirmas que el pago fue recibido y el producto entregado?")) {
-                const { error } = await supabaseClient.from('compras').update({ status: 'accredited' }).eq('id', id);
-                if (error) { alert("Error al acreditar: " + error.message); return; }
+                try { await window.kiwiStaffRpc('kiwi_staff_order_status', { p_id: String(id), p_status: 'accredited', p_refund: 0 }); }
+                catch (e) { alert("Error al acreditar: " + (e.message || e)); return; }
+                if (typeof fetchInitialData === 'function') fetchInitialData();
             }
         }
 
@@ -3332,10 +3229,8 @@
 
                         try {
                             if (supabaseClient) {
-                                supabaseClient.from('compras')
-                                    .update({ status: newStatus })
-                                    .eq('id', order.id)
-                                    .then(({ error }) => { if (error) console.warn('No se pudo actualizar estado en nube:', error); });
+                                window.kiwiStaffRpc('kiwi_order_provider_status', { p_id: String(order.id), p_status: newStatus })
+                                    .catch(error => console.warn('No se pudo actualizar estado en nube:', error));
                             }
                         } catch (_) {}
                     } else if (remoteStatus) {
@@ -4467,14 +4362,8 @@
                         }
                         // Usuario existe sin ID o con el mismo ID (case) → usar esa fila y completar ID si falta
                         if (!nameRow.account_id) {
-                            const { data: patched, error: patchErr } = await supabaseClient
-                                .from('usuarios')
-                                .update({ account_id: targetId })
-                                .eq('id', nameRow.id)
-                                .select('id, username, account_id, balance')
-                                .single();
-                            if (patchErr) throw patchErr;
-                            target = patched;
+                            // El ID se completa en el servidor al acreditar (kiwi_staff_credit)
+                            target = { ...nameRow, account_id: targetId };
                         } else {
                             target = nameRow;
                         }
@@ -4496,13 +4385,8 @@
                         setStatus('Cancelado.');
                         return;
                     }
-                    const { data: created, error: createErr } = await supabaseClient
-                        .from('usuarios')
-                        .insert([{ username: targetName, account_id: targetId, balance: 0 }])
-                        .select('id, username, account_id, balance')
-                        .single();
-                    if (createErr) throw createErr;
-                    target = created;
+                    // La cuenta se crea en el servidor al acreditar (kiwi_staff_credit)
+                    target = { username: targetName, account_id: targetId, balance: 0 };
                 }
 
                 if (!confirm('¿Acreditar ' + value.toFixed(2) + ' USDT a ' + target.username + '?\nID: ' + target.account_id + '\nSaldo actual: ' + Number(target.balance || 0).toFixed(2) + ' USDT')) {
@@ -4512,13 +4396,9 @@
 
                 setStatus('Procesando acreditación…');
                 const cloudBalance = Number(target.balance ?? 0);
-                const { data, error } = await supabaseClient
-                    .from('usuarios')
-                    .update({ balance: cloudBalance + value })
-                    .eq('id', target.id)
-                    .select('id, username, account_id, balance')
-                    .single();
-                if (error) throw error;
+                const data = await window.kiwiStaffRpc('kiwi_staff_credit', {
+                    p_username: target.username, p_account_id: target.account_id || targetId, p_amount: value
+                });
                 if (!data) throw new Error('Supabase no devolvió la fila actualizada.');
 
                 const finalName = data.username;
@@ -4753,7 +4633,7 @@
                             target_user: targetUser,
                             extra: extra,
                             bulk_order_id: String(bulkResult.orderId)
-                        }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
+                        }], { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4865,7 +4745,7 @@
                             status: 'delivered',
                             target_user: targetUser || '',
                             extra: keysText
-                        }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
+                        }], { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4927,7 +4807,7 @@
                         status: 'confirmed',
                         target_user: targetUser,
                         extra: extra
-                    }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
+                    }], { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                 }
             } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -5341,27 +5221,16 @@
             if (email) users[currentUser].email = email;
             if (phone) users[currentUser].phone = phone;
             if (ffId) users[currentUser].ff_id = ffId;
-            if (newPass) users[currentUser].password = newPass;
+            if (newPass && !window.isStrongPassword(newPass)) { alert('La contraseña debe tener al menos 8 caracteres y 1 número.'); return; }
             localStorage.setItem('kiwi_users', JSON.stringify(users));
-                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
-
-            // Sincronizar email / password / foto en Supabase
-            if (supabaseClient && window.supabaseOnline) {
-                try {
-                    const patch = {};
-                    if (email) patch.email = email;
-                    if (newPass) patch.password = newPass;
-                    if (users[currentUser].profilePic) patch.profile_pic = users[currentUser].profilePic;
-                    if (Object.keys(patch).length > 0) {
-                        const { error } = await supabaseClient.from('usuarios')
-                            .update(patch)
-                            .ilike('username', currentUser);
-                        if (error) console.warn('Perfil nube:', error);
-                    }
-                } catch (e) {
-                    console.warn('No se pudo sincronizar perfil:', e);
-                }
+            try {
+                await window.kiwiStaffRpc('kiwi_update_profile', { p_email: email || null, p_profile_pic: users[currentUser].profilePic || null });
+                if (newPass) await window.kiwiStaffRpc('kiwi_change_password', { p_new_password: newPass });
+            } catch (e) {
+                alert('No se pudo guardar en el servidor: ' + (e.message || e));
+                return;
             }
+            const np = document.getElementById('profile-new-pass'); if (np) np.value = '';
             alert('Perfil actualizado');
         };
 
@@ -5418,17 +5287,25 @@
             return Math.round(parseFloat(cleaned) || 0);
         };
 
+        // v18: la web solo puede DESCONTAR saldo propio (kiwi_spend_balance). Las sumas las hace el staff por RPC.
         window.syncBalanceToCloud = async function(username, newBalance) {
-            if (!supabaseClient || !window.supabaseOnline || !username) return false;
+            if (!supabaseClient || !window.supabaseOnline || !username || username !== currentUser || !window.kiwiToken()) return false;
+            const known = window._syncedBal[username];
+            const nb = Number(newBalance);
+            if (!Number.isFinite(nb) || !Number.isFinite(known)) return false;
+            const amount = Math.round((known - nb) * 1e6) / 1e6;
+            if (amount <= 0) return true;
+            window._syncedBal[username] = nb;
             try {
-                const { error } = await supabaseClient
-                    .from('usuarios')
-                    .update({ balance: Number(newBalance) })
-                    .ilike('username', username);
-                if (error) throw error;
+                const cloudBal = await window.kiwiRpc('kiwi_spend_balance', { p_token: window.kiwiToken(), p_amount: amount });
+                window._syncedBal[username] = Number(cloudBal);
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                if (users[username]) { users[username].balance = Number(cloudBal); localStorage.setItem('kiwi_users', JSON.stringify(users)); }
+                if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 return true;
             } catch (e) {
-                console.warn('No se pudo sincronizar saldo a Supabase:', e);
+                window._syncedBal[username] = known;
+                console.warn('No se pudo descontar saldo en Supabase:', e);
                 return false;
             }
         };
@@ -5955,10 +5832,16 @@
             if (email) users[currentUser].email = email;
             if (phone) users[currentUser].phone = phone;
             if (ffId) users[currentUser].ff_id = ffId;
-            if (newPass) users[currentUser].password = newPass;
+            if (newPass && !window.isStrongPassword(newPass)) { alert('La contraseña debe tener al menos 8 caracteres y 1 número.'); return; }
             localStorage.setItem('kiwi_users', JSON.stringify(users));
-                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
-            alert('Perfil actualizado');
+            (async () => {
+                try {
+                    await window.kiwiStaffRpc('kiwi_update_profile', { p_email: email || null, p_profile_pic: users[currentUser].profilePic || null });
+                    if (newPass) await window.kiwiStaffRpc('kiwi_change_password', { p_new_password: newPass });
+                    const np = document.getElementById('profile-new-pass-full'); if (np) np.value = '';
+                    alert('Perfil actualizado');
+                } catch (e) { alert('No se pudo guardar en el servidor: ' + (e.message || e)); }
+            })();
         };
 
 
@@ -6087,20 +5970,21 @@
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             const p = purchases.find(x => String(x.id) === String(id));
             if (!p) return alert('Pedido no encontrado');
-            if (status === 'cancelled' && p.status !== 'cancelled' && p.usdtPrice) {
+            const refund = (status === 'cancelled' && p.status !== 'cancelled' && p.usdtPrice) ? Number(p.usdtPrice) : 0;
+            try {
+                await window.kiwiStaffRpc('kiwi_staff_order_status', { p_id: String(id), p_status: status, p_refund: refund });
+            } catch (e) {
+                alert('No se pudo cambiar el estado: ' + (e.message || e));
+                if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
+                return;
+            }
+            if (refund > 0) {
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                 const u = users[p.user];
-                if (u) {
-                    u.balance = (Number(u.balance) || 0) + Number(p.usdtPrice);
-                    localStorage.setItem('kiwi_users', JSON.stringify(users));
-                    if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(p.user, u.balance);
-                }
+                if (u) { u.balance = (Number(u.balance) || 0) + refund; localStorage.setItem('kiwi_users', JSON.stringify(users)); }
             }
             p.status = status;
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-            if (supabaseClient && window.supabaseOnline) {
-                await supabaseClient.from('compras').update({ status }).eq('id', id);
-            }
             if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             alert('Estado actualizado a: ' + status);
@@ -6116,7 +6000,8 @@
             let synced = false;
             if (supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('compras').update({ notes: note }).eq('id', id);
+                    let error = null;
+                    try { await window.kiwiStaffRpc('kiwi_staff_order_note', { p_id: String(id), p_note: note }); } catch (e) { error = e; }
                     if (error) {
                         console.warn('Supabase note error:', error);
                         alert('Nota guardada localmente. Error al sincronizar: ' + (error.message || 'revisá que la columna notes exista en compras'));
