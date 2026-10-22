@@ -387,6 +387,9 @@
                 <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-user text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Mi Perfil</span>
                 </button>
+                <button onclick="window.openBalanceFromMenu();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
+                    <i class="fa-solid fa-wallet text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Cargar Saldo</span>
+                </button>
                 <button id="staff-menu-btn" onclick="window.goToAdminPanel();" class="hidden w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-gold transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-shield-halved text-xl text-kiwi-gold"></i> <span class="font-rajdhani font-bold">Panel Staff</span>
                 </button>
@@ -1052,7 +1055,7 @@
     
     <!-- MODAL CARGAR SALDO -->
     <div id="balance-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-6 relative">
+        <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-6 relative max-h-[92vh] overflow-y-auto">
             <button onclick="document.getElementById('balance-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="font-orbitron text-xl font-bold text-kiwi-gold mb-2">Cargar Saldo</h3>
             <select id="balance-currency" onchange="window.updateBalancePaymentInfo()" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mb-3">
@@ -1060,16 +1063,27 @@
                 <option value="MXN">Pesos Mexicanos (MXN)</option>
                 <option value="COP">Pesos Colombianos (COP)</option>
                 <option value="PEN">Soles Peruanos (PEN)</option>
-                <option value="USDT">USDT (Binance)</option>
+                <option value="USDT">USDT (Binance / Astropay)</option>
             </select>
             <div id="balance-payment-info" class="bg-kiwi-dark p-3 rounded-xl border border-kiwi-border mb-3 text-xs space-y-1">
                 <p class="text-kiwi-gold font-orbitron font-bold uppercase text-[11px]">Método de pago</p>
                 <p id="balance-payment-method" class="text-gray-300">Mercado Pago / Transferencia bancaria</p>
                 <p id="balance-payment-detail" class="text-gray-400">Titular: Iván Estrada</p>
             </div>
-            <p class="text-xs text-gray-400 mb-3">Enviá el comprobante por WhatsApp. Una vez confirmado se acredita a tu saldo.</p>
+            <div id="balance-commissions" class="bg-kiwi-dark p-3 rounded-xl border border-kiwi-border mb-3 text-xs">
+                <p class="text-kiwi-gold font-orbitron font-bold uppercase text-[11px] mb-2"><i class="fa-solid fa-percent mr-1"></i>Comisiones por método</p>
+                <ul class="space-y-1 font-rajdhani text-[13px]">
+                    <li id="comm-ARS" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">ARS</span><span class="text-kiwi-gold font-bold">0% COMISIÓN EXTRA</span></li>
+                    <li id="comm-MXN" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">MXN</span><span class="text-kiwi-gold font-bold">6% COMISIÓN EXTRA</span></li>
+                    <li id="comm-COP" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">COP</span><span class="text-kiwi-gold font-bold">4% COMISIÓN EXTRA</span></li>
+                    <li id="comm-PEN" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">PEN</span><span class="text-kiwi-gold font-bold">4% COMISIÓN EXTRA</span></li>
+                    <li id="comm-USDT" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">BINANCE / ASTROPAY</span><span class="text-kiwi-gold font-bold">1% COMISIÓN EXTRA</span></li>
+                </ul>
+            </div>
+            <p class="text-xs text-gray-400 mb-3">Enviá el comprobante por WhatsApp o Discord. Una vez confirmado se acredita a tu saldo.</p>
             <input type="number" id="balance-amount" placeholder="Monto en ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white mb-3">
-            <button onclick="window.requestBalanceLoad()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl">Solicitar Carga</button>
+            <button onclick="window.requestBalanceLoad()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl"><i class="fa-brands fa-whatsapp mr-1"></i>Solicitar Carga</button>
+            <a href="https://discord.gg/PS4AvPpKrh" target="_blank" rel="noopener noreferrer" class="mt-2 w-full flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3 rounded-xl transition"><i class="fa-brands fa-discord"></i>Solicitar saldo por Discord</a>
         </div>
     </div>
 
@@ -4224,8 +4238,8 @@
                 waLabel: 'PEN'
             },
             USDT: {
-                method: 'Binance Pay (USDT)',
-                detail: 'Pagá en USDT por Binance Pay. Confirmá el UID/usuario por WhatsApp.',
+                method: 'Binance Pay / Astropay (USDT)',
+                detail: 'Pagá en USDT por Binance Pay o Astropay. Confirmá el UID/usuario por WhatsApp o Discord.',
                 waLabel: 'USDT'
             }
         };
@@ -4239,6 +4253,21 @@
             if (methodEl) methodEl.textContent = info.method;
             if (detailEl) detailEl.textContent = info.detail;
             if (amountEl) amountEl.placeholder = 'Monto en ' + curr;
+            document.querySelectorAll('#balance-commissions .comm-row').forEach(li => {
+                const on = li.id === 'comm-' + curr;
+                li.classList.toggle('bg-kiwi-gold/10', on);
+                li.classList.toggle('border-kiwi-gold/60', on);
+                li.classList.toggle('border-transparent', !on);
+            });
+        };
+        window.openBalanceFromMenu = function() {
+            if (typeof window.toggleUserDrawer === 'function') window.toggleUserDrawer();
+            if (!currentUser) {
+                alert('Iniciá sesión para cargar saldo.');
+                if (typeof window.openAuthModal === 'function') window.openAuthModal('login');
+                return;
+            }
+            window.openBalanceModal();
         };
 
         window.openBalanceModal = function() {
