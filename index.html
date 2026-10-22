@@ -172,11 +172,6 @@
 
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
 
-                <button onclick="window.openCurrencyModal()" class="h-10 border border-white/10 bg-white/[0.03] hover:border-white/25 text-white text-sm rounded-xl px-2.5 sm:px-3 font-rajdhani font-bold flex items-center gap-1.5 transition" title="Moneda">
-                    <span id="currency-flag" class="text-base">🇦🇷</span>
-                    <span id="currency-code">MONEDA</span>
-                    <i class="fa-solid fa-chevron-down text-[10px] opacity-60 hidden sm:inline"></i>
-                </button>
                 <span id="header-balance" class="hidden md:inline text-kiwi-gold font-orbitron font-bold text-sm px-1">$0</span>
 <button id="register-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
                     <i class="fa-solid fa-user-plus"></i> <span id="auth-btn-text" class="hidden sm:inline">INGRESAR</span>
@@ -390,6 +385,10 @@
                 <button onclick="window.openBalanceFromMenu();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-wallet text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Cargar Saldo</span>
                 </button>
+                <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
+                    <i class="fa-solid fa-coins text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Moneda de los precios</span>
+                    <span class="ml-auto flex items-center gap-1 text-xs font-rajdhani font-bold text-gray-400"><span id="currency-flag" class="text-base">🇦🇷</span><span id="currency-code">MONEDA</span></span>
+                </button>
                 <button id="staff-menu-btn" onclick="window.goToAdminPanel();" class="hidden w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-gold transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-shield-halved text-xl text-kiwi-gold"></i> <span class="font-rajdhani font-bold">Panel Staff</span>
                 </button>
@@ -500,39 +499,39 @@
                 </h3>
                 <div class="max-w-3xl mx-auto space-y-3">
                     <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
-                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                            <h4 class="font-orbitron font-bold text-white">¿Cuánto tarda en llegar mi recarga o cuenta?</h4>
-                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between gap-3 p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Cómo comprar?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform flex-shrink-0"></i>
                         </button>
                         <div class="hidden px-5 pb-5">
-                            <p class="text-sm text-gray-300 font-rajdhani">Los servicios de Streaming, Diamantes de Free Fire y entrega de Frutas en Blox Fruits se entregan de 2 a 15 minutos tras verificar tu comprobante de pago por WhatsApp. Los Robux vía Gamepass demoran entre 5 a 7 días por políticas de Roblox.</p>
+                            <p class="text-sm text-gray-300 font-rajdhani">Primero regístrate o inicia sesión en caso de que ya tengas una cuenta, después toca las 3 rayitas blancas en la parte superior derecha y dale a "Cargar Saldo", selecciona la opción que se te haga más cómoda (Cargar por WhatsApp o Discord), sube el comprobante de pago y ¡el saldo se te acreditará! :)</p>
                         </div>
                     </div>
                     <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
-                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                            <h4 class="font-orbitron font-bold text-white">¿Cómo pago y confirmo mi compra?</h4>
-                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between gap-3 p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Puedo comprar/pagar con PESOS ARGENTINOS, MEXICANOS, COLOMBIANOS O CON SOLES PERUANOS?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform flex-shrink-0"></i>
                         </button>
                         <div class="hidden px-5 pb-5">
-                            <p class="text-sm text-gray-300 font-rajdhani">Es muy fácil. Al hacer clic en "Comprar Ahora", seleccioná tu método de pago según tu moneda. El sistema te mostrará los datos de transferencia. Hacés la transferencia y luego enviás el comprobante por nuestro WhatsApp oficial, o usás el saldo de la página si ya lo tenés cargado.</p>
+                            <p class="text-sm text-gray-300 font-rajdhani">Sí, si quieres ver los precios del catálogo en tu moneda local solo toca en las 3 rayitas blancas ubicadas en la parte superior derecha de la pantalla y dale a "Moneda de los precios" y pon de preferencia tu moneda local. Después para comprar solo tenés que cargar saldo y pagar.</p>
                         </div>
                     </div>
                     <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
-                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                            <h4 class="font-orbitron font-bold text-white">¿Qué pasa si me equivoco al escribir mi ID?</h4>
-                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between gap-3 p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿Son confiables?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform flex-shrink-0"></i>
                         </button>
                         <div class="hidden px-5 pb-5">
-                            <p class="text-sm text-gray-300 font-rajdhani">Es de extrema importancia revisar cuidadosamente tus datos (ID, nombre de usuario o link) antes de enviar el mensaje. Si el pago y la entrega se procesan a un ID incorrecto que tú proporcionaste, lamentablemente no podremos emitir reembolsos ni revertir la transacción, ya que los sistemas de recarga son irreversibles.</p>
+                            <p class="text-sm text-gray-300 font-rajdhani">Sí, tenemos ya un recorrido largo en el mercado de la venta de microtransacciones de ya 2 años, y contamos con 4.000 referencias de compra, ¡todas públicas en nuestro Discord!</p>
                         </div>
                     </div>
                     <div class="bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden">
-                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                            <h4 class="font-orbitron font-bold text-white">¿Cuáles son los horarios de atención?</h4>
-                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform"></i>
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="w-full flex items-center justify-between gap-3 p-5 text-left">
+                            <h4 class="font-orbitron font-bold text-white">¿En cuánto tiempo llega mi producto?</h4>
+                            <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform flex-shrink-0"></i>
                         </button>
                         <div class="hidden px-5 pb-5">
-                            <p class="text-sm text-gray-300 font-rajdhani">Nuestro equipo está disponible y respondiendo activamente en WhatsApp todos los días desde las 10:00 AM hasta las 22:00 PM (Hora Argentina). Puedes realizar compras fuera de este horario y dejarnos el comprobante, pero la entrega se procesará a primera hora del día siguiente.</p>
+                            <p class="text-sm text-gray-300 font-rajdhani">El plazo de entrega de los productos es bastante variable, pero tenemos entrega automática en los siguientes productos: Diamantes ILIMITADOS de Free Fire, suscripciones a streaming/IA, seguidores/likes/vistas de redes sociales. Los demás productos se estima una entrega de 1 a 24 horas en general.</p>
                         </div>
                     </div>
                 </div>
@@ -1081,7 +1080,8 @@
                 </ul>
             </div>
             <p class="text-xs text-gray-400 mb-3">Enviá el comprobante por WhatsApp o Discord. Una vez confirmado se acredita a tu saldo.</p>
-            <input type="number" id="balance-amount" placeholder="Monto en ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white mb-3">
+            <input type="number" id="balance-amount" oninput="window.updateBalanceTotal()" placeholder="Monto en ARS" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white mb-2">
+            <p id="balance-total-preview" class="text-xs text-gray-300 mb-3 font-rajdhani text-[13px]"></p>
             <button onclick="window.requestBalanceLoad()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl"><i class="fa-brands fa-whatsapp mr-1"></i>Solicitar Carga</button>
             <a href="https://discord.gg/PS4AvPpKrh" target="_blank" rel="noopener noreferrer" class="mt-2 w-full flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3 rounded-xl transition"><i class="fa-brands fa-discord"></i>Solicitar saldo por Discord</a>
         </div>
@@ -2779,7 +2779,6 @@
                 { name: "1 semana", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 1 semana — secretgpt.es"] },
                 { name: "2 semanas", price: "$9.600 ARS / 6 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 2 semanas — secretgpt.es"] },
                 { name: "1 mes", price: "$16.000 ARS / 10 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 1 mes — secretgpt.es"] },
-                { name: "Plus 4 months", price: "$52.800 ARS / 33 USDT", includes: ["Cuenta real ChatGPT Plus", "4 meses, cuenta real", "Garantía durante la vigencia", "Soporte y atención"] }
             ]},
             { id: 'claude', title: 'Claude', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Claude_AI_symbol.svg/960px-Claude_AI_symbol.svg.png', category: 'ai', variants: [
                 { name: "1 day", price: "$6.400 ARS / 4 USDT", includes: ["Acceso por tiempo limitado", "Checkeado", "Garantía del periodo", "Soporte"] },
@@ -2826,7 +2825,7 @@
 
                 let variantsOptions = `<option value="" disabled selected>Selecciona una variante...</option>`;
                 item.variants.forEach((v, i) => {
-                    let displayPrice = window.getConvertedVariantPrice(v.price);
+                    let displayPrice = window.getConvertedVariantPrice(v.price) + window.x2Label(v);
                     const stock = (typeof window.getResellmeStock === 'function')
                         ? window.getResellmeStock(item.id, v.name)
                         : null;
@@ -3010,7 +3009,6 @@
             'chatgpt::1 semana': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90003zknc7phw3vx2' },
             'chatgpt::2 semanas': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90004zknc0ap2yss4' },
             'chatgpt::1 mes': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90005zknc0p4z9s81' },
-            'chatgpt::Plus 4 months': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'chatgpt-4m-real-account' },
             'claude::1 day': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0k0jxxpcj6prcou6zr' },
             'claude::7 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jxzpcj6lul4ovci' },
             'claude::14 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy1pcj6p5lfhklo' },
@@ -3025,6 +3023,52 @@
             'duolingo::Lifetime': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'cmq8g2y7x00211465fw9qzh71' },
             'duolingo::Super GiftLink 12 months': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'var_sduo12m_on_duolingo_0001' }
         };
+
+        // v22: regla x2 según NUESTRO COSTO en ResellMe (precio proveedor, moneda que reporta la API: EUR)
+        //  costo < 0.75        → se piden 2 cuentas, precio de venta igual
+        //  0.75 <= costo < 1   → se piden 2 cuentas, precio de venta 2.5 USDT
+        //  costo >= 1          → 1 cuenta, precio igual
+        window.resellmeCostByVariantId = {}; // variant_id|product_id → costo proveedor
+        window.resellmeCostCurrency = 'EUR';
+        window.X2_PRICE_USDT = 2.5;
+        window.getResellmeCost = function(catalogId, variantName) {
+            const map = window.RESELLME_MAP[(catalogId || '') + '::' + (variantName || '')];
+            if (!map) return null;
+            const key = map.variant_id || map.product_id;
+            const c = window.resellmeCostByVariantId[key];
+            return (typeof c === 'number' && isFinite(c)) ? c : null;
+        };
+        // Excluidos de la regla x2 (cantidad 1, precio original). Clave: 'catalogId::variante' o variant_id de ResellMe.
+        window.X2_EXCLUDED = ['chatgpt::1 día'];
+        window.isX2Excluded = function(catalogId, variantName) {
+            const key = (catalogId || '') + '::' + (variantName || '');
+            const map = window.RESELLME_MAP[key];
+            return window.X2_EXCLUDED.includes(key) || !!(map && (window.X2_EXCLUDED.includes(map.variant_id) || window.X2_EXCLUDED.includes(map.product_id)));
+        };
+        window.resellmeTier = function(catalogId, variantName) {
+            if (window.isX2Excluded(catalogId, variantName)) return { cost: window.getResellmeCost(catalogId, variantName), qty: 1, tier: 0, priceUsdt: null };
+            const cost = window.getResellmeCost(catalogId, variantName);
+            if (cost === null || cost <= 0) return { cost, qty: 1, tier: 0, priceUsdt: null };
+            if (cost < 0.75) return { cost, qty: 2, tier: 1, priceUsdt: null };
+            if (cost < 1) return { cost, qty: 2, tier: 2, priceUsdt: window.X2_PRICE_USDT };
+            return { cost, qty: 1, tier: 3, priceUsdt: null };
+        };
+        window.formatVariantPriceString = function(usdt) {
+            const ars = Math.round(usdt * 1600);
+            return '$' + ars.toLocaleString('es-AR') + ' ARS / ' + usdt + ' USDT';
+        };
+        /** Aplica x2 y precio 2.5 USDT a las variantes según el costo cacheado */
+        window.applyResellmeCostTiers = function() {
+            (window.catalogVariant || []).forEach(item => {
+                (item.variants || []).forEach(v => {
+                    if (v.basePrice === undefined) v.basePrice = v.price;
+                    const t = window.resellmeTier(item.id, v.name);
+                    v.x2 = t.qty === 2;
+                    v.price = t.priceUsdt ? window.formatVariantPriceString(t.priceUsdt) : v.basePrice;
+                });
+            });
+        };
+        window.x2Label = function(v) { return (v && v.x2) ? ' · x2 cuentas' : ''; };
 
         window.resolveResellmeIds = function(prod) {
             if (!prod) return null;
@@ -3062,7 +3106,11 @@
                 if (!data || !Array.isArray(data.products)) return window.resellmeStockByVariantId;
 
                 const cache = {};
+                const costs = {};
+                if (data.currency) window.resellmeCostCurrency = data.currency;
                 for (const p of data.products) {
+                    if (typeof p.price === 'number') costs[p.id] = p.price;
+                    for (const v of (p.variants || [])) if (typeof v.price === 'number') costs[v.id] = v.price;
                     const vars = p.variants || [];
                     if (vars.length === 0) {
                         // producto sin variantes: stock a nivel producto
@@ -3076,6 +3124,8 @@
                     }
                 }
                 window.resellmeStockByVariantId = cache;
+                window.resellmeCostByVariantId = costs;
+                window.applyResellmeCostTiers();
                 window.resellmeStockLoadedAt = now;
                 return cache;
             } catch (e) {
@@ -3094,7 +3144,7 @@
                 // Reconstruir options con stock
                 let html = `<option value="" disabled selected>Selecciona una variante...</option>`;
                 item.variants.forEach((v, i) => {
-                    const displayPrice = window.getConvertedVariantPrice(v.price);
+                    const displayPrice = window.getConvertedVariantPrice(v.price) + window.x2Label(v);
                     const stock = window.getResellmeStock(item.id, v.name);
                     let stockLabel = '';
                     if (stock === null || stock === undefined) stockLabel = '';
@@ -3336,7 +3386,7 @@
             premium: {
                 label: 'Calidad Premium',
                 bullets: [
-                    'Garantía permanente de por vida',
+                    '3 Meses de garantía completa',
                     'Tardanza estimada: entre 10 minutos y 6 horas',
                     'Se garantiza que lleguen completos',
                     'Tasa de caídas: 0–5%',
@@ -4253,12 +4303,31 @@
             if (methodEl) methodEl.textContent = info.method;
             if (detailEl) detailEl.textContent = info.detail;
             if (amountEl) amountEl.placeholder = 'Monto en ' + curr;
+            if (typeof window.updateBalanceTotal === 'function') window.updateBalanceTotal();
             document.querySelectorAll('#balance-commissions .comm-row').forEach(li => {
                 const on = li.id === 'comm-' + curr;
                 li.classList.toggle('bg-kiwi-gold/10', on);
                 li.classList.toggle('border-kiwi-gold/60', on);
                 li.classList.toggle('border-transparent', !on);
             });
+        };
+        window.BALANCE_COMMISSION = { ARS: 0, MXN: 6, COP: 4, PEN: 4, USDT: 1 };
+        window.balanceCommissionCalc = function(amount, curr) {
+            const pct = window.BALANCE_COMMISSION[curr] || 0;
+            const a = Number(amount) || 0;
+            const total = a * (1 + pct / 100);
+            const dec = curr === 'USDT' || curr === 'PEN' ? 2 : (curr === 'MXN' ? 2 : 0);
+            const fmt = n => n.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: dec });
+            return { pct, amount: a, total, amountTxt: fmt(a), totalTxt: fmt(total) };
+        };
+        window.updateBalanceTotal = function() {
+            const el = document.getElementById('balance-total-preview');
+            if (!el) return;
+            const curr = document.getElementById('balance-currency')?.value || 'ARS';
+            const amt = Number(document.getElementById('balance-amount')?.value);
+            if (!amt || amt <= 0) { el.textContent = 'Comisión ' + (window.BALANCE_COMMISSION[curr] || 0) + '% — ingresá un monto para ver el total.'; return; }
+            const c = window.balanceCommissionCalc(amt, curr);
+            el.innerHTML = 'Total a pagar con comisión (' + c.pct + '%): <span class="text-kiwi-gold font-bold">' + c.totalTxt + ' ' + curr + '</span>';
         };
         window.openBalanceFromMenu = function() {
             if (typeof window.toggleUserDrawer === 'function') window.toggleUserDrawer();
@@ -4283,10 +4352,15 @@
             const curr = document.getElementById('balance-currency')?.value || 'ARS';
             if (!amount || amount <= 0) return alert('Monto inválido');
             const info = window.PAYMENT_BY_CURRENCY[curr] || window.PAYMENT_BY_CURRENCY.ARS;
+            const calc = window.balanceCommissionCalc(amount, curr);
+            const usersW = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const accId = (usersW[currentUser] && usersW[currentUser].accountId) || 'Sin ID';
             const msg =
                 `Hola Kiwi Store! Quiero cargar saldo a mi cuenta de la página.\n` +
                 `Usuario: ${currentUser}\n` +
-                `Monto: ${amount} ${curr}\n` +
+                `ID: ${accId}\n` +
+                `Monto: ${calc.amountTxt} ${curr}\n` +
+                `Total con comisión (${calc.pct}%): ${calc.totalTxt} ${curr}\n` +
                 `Método de pago: ${info.method}\n` +
                 `Adjunto comprobante.`;
             window.open(`https://wa.me/5491139172595?text=${encodeURIComponent(msg)}`, '_blank');
@@ -4300,6 +4374,13 @@
             return users[currentUser]?.balance || 0;
         };
 
+        window.formatUserBalance = function() {
+            const balUSDT = window.getUserBalance();
+            const rate = (window.exchangeRates && window.exchangeRates[window.currentCurrency]) || 1;
+            const converted = window.currentCurrency === 'USDT' ? balUSDT : balUSDT * rate;
+            const sym = window.currencySymbols[window.currentCurrency] || '';
+            return sym + converted.toLocaleString('es-AR', {maximumFractionDigits: 2}) + ' ' + window.currentCurrency;
+        };
         window.updateBalanceDisplay = function() {
             const el = document.getElementById('user-balance-display');
             const el2 = document.getElementById('orders-balance-display');
@@ -4676,7 +4757,7 @@
                     'ID de pedido: ' + orderId + '\n' +
                     'Ref. entrega: ' + bulkResult.orderId + '\n' +
                     'Cantidad: ' + quantity + '\n' +
-                    'Saldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS'
+                    'Saldo restante: ' + window.formatUserBalance()
                 );
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 if (typeof updateAuthUI === 'function') updateAuthUI();
@@ -4713,7 +4794,14 @@
                     submitBtnR.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entregando producto...';
                 }
 
-                const rmResult = await window.sendResellmeOrder(resellIds.product_id, resellIds.variant_id, 1);
+                if (!Object.keys(window.resellmeCostByVariantId).length) await window.fetchResellmeStock(true);
+                const rmTier = window.resellmeTier(prod.catalogId, prod.variantName);
+                if (rmTier.priceUsdt && Math.abs(Number(prod.usdtPrice) - rmTier.priceUsdt) > 0.001) {
+                    window.applyResellmeStockToUI();
+                    return alert('El precio de este producto se actualizó (' + rmTier.priceUsdt + ' USDT, x2 cuentas). Volvé a seleccionarlo para comprar.');
+                }
+                const rmQty = rmTier.qty;
+                const rmResult = await window.sendResellmeOrder(resellIds.product_id, resellIds.variant_id, rmQty);
 
                 if (submitBtnR) {
                     submitBtnR.disabled = false;
@@ -4739,15 +4827,17 @@
                     }
                 }
 
-                const keysText = (rmResult.keys && rmResult.keys.length)
-                    ? rmResult.keys.join('\n')
-                    : '(Sin keys en la respuesta — revisá el pedido más tarde)';
+                const rmKeys = (rmResult.keys || []).map(k => typeof k === 'string' ? k : JSON.stringify(k));
+                let keysText = !rmKeys.length
+                    ? '(Sin keys en la respuesta — revisá el pedido más tarde)'
+                    : (rmQty > 1 ? rmKeys.map((k, i) => 'Cuenta ' + (i + 1) + ':\n' + k).join('\n\n') : rmKeys.join('\n'));
+                if (rmQty > 1 && rmKeys.length && rmKeys.length < rmQty) keysText += '\n\n(Pedido x' + rmQty + ': llegaron ' + rmKeys.length + ' de ' + rmQty + ' cuentas, el resto aparecerá en el pedido o contactá soporte)';
 
                 const orderIdR = Date.now();
                 const orderR = {
                     id: orderIdR,
                     user: currentUser,
-                    title: prod.title,
+                    title: prod.title + (rmQty > 1 ? ' (x2 cuentas)' : ''),
                     price: prod.price,
                     method: 'Saldo Página',
                     date: new Date().toLocaleString('es-AR'),
@@ -4772,7 +4862,7 @@
                         supabaseClient.from('compras').upsert([{
                             id: orderIdR,
                             user_name: currentUser,
-                            title: prod.title,
+                            title: prod.title + (rmQty > 1 ? ' (x2 cuentas)' : ''),
                             price: prod.price,
                             method: 'Saldo Página',
                             status: 'delivered',
@@ -4788,7 +4878,7 @@
                     'ID pedido: ' + orderIdR + '\n\n' +
                     'DATOS DE ACCESO:\n' + keysText + '\n\n' +
                     'También los encontrás en Mis Pedidos.\n' +
-                    'Saldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS'
+                    'Saldo restante: ' + window.formatUserBalance()
                 );
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
                 if (typeof updateAuthUI === 'function') updateAuthUI();
@@ -4845,7 +4935,7 @@
             } catch (err) { console.warn('Supabase sync failed', err); }
 
             window.closeCheckoutModal();
-            alert('Pedido creado. Estado: Comprobante confirmado, en proceso de entregar el producto.\nSaldo restante: $' + window.getUserBalance().toLocaleString('es-AR') + ' ARS');
+            alert('Pedido creado. Estado: Comprobante confirmado, en proceso de entregar el producto.\nSaldo restante: ' + window.formatUserBalance());
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             if (typeof updateAuthUI === 'function') updateAuthUI();
         };
