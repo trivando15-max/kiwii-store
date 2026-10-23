@@ -8,5 +8,6 @@
     { "source": "/catalogo/redes-sociales", "destination": "/index.html" },
     { "source": "/perfil-y-pedidos", "destination": "/index.html" },
     { "source": "/panel-admin", "destination": "/index.html" }
+    { "source": "/sorteos-y-eventos", "destination": "/index.html" }
   ]
 }
