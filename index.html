@@ -212,8 +212,8 @@
             <!-- Evento general -->
             <section class="relative overflow-hidden rounded-2xl border border-kiwi-red/60 bg-gradient-to-br from-[#2a0306] via-kiwi-card to-black p-5 mb-5 shadow-[0_0_40px_rgba(255,30,39,0.15)]">
                 <div class="absolute -top-16 -right-16 w-48 h-48 bg-kiwi-red/20 rounded-full blur-3xl"></div>
-                <p class="relative text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Evento especial · Top compradores</p>
-                <h3 id="ev-name" class="relative font-orbitron text-lg sm:text-2xl font-black text-white mt-1">Cargando evento…</h3>
+                <p class="relative text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Evento especial KiwiiStore x LPMX</p>
+                <h3 id="ev-name" class="relative font-orbitron text-lg sm:text-2xl font-black text-white mt-1">Evento especial KiwiiStore x LPMX</h3>
                 <p id="ev-desc" class="relative text-sm text-gray-300 mt-2"></p>
                 <div id="ev-prizes" class="relative grid grid-cols-3 gap-2 mt-4"></div>
                 <div id="ev-countdown" class="relative mt-4"></div>
@@ -486,6 +486,91 @@
 
         <!-- HOME VIEW (VISTA INICIAL) -->
         <div id="home-view">
+            <!-- v26: banner evento (arriba de todo) -->
+            <style>
+                .kev{position:relative;overflow:hidden;border-radius:1.5rem;padding:2px;margin-bottom:1.5rem;background:linear-gradient(120deg,#ff1e27,#ffb800,#a020f0,#ff1e27);background-size:300% 300%;animation:kevBorder 6s linear infinite;box-shadow:0 0 28px rgba(255,30,39,.35),0 0 60px rgba(160,32,240,.22);}
+                .kev-in{position:relative;overflow:hidden;border-radius:calc(1.5rem - 2px);background:radial-gradient(70% 90% at 100% 0%,rgba(160,32,240,.45),transparent 60%),radial-gradient(60% 80% at 0% 100%,rgba(255,184,0,.22),transparent 65%),linear-gradient(135deg,#2a0306 0%,#12060f 55%,#07040a 100%);}
+                .kev-in::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-20deg);animation:kevShine 4.5s ease-in-out infinite;pointer-events:none;}
+                .kev-prize{background:linear-gradient(90deg,#ffe27a,#ffb800 40%,#ff5a3c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,184,0,.45));}
+                .kev-img{animation:kevFloat 5s ease-in-out infinite;filter:drop-shadow(0 0 26px rgba(255,184,0,.45)) drop-shadow(0 0 40px rgba(160,32,240,.35));}
+                .kev-bglogo{position:absolute;z-index:0;pointer-events:none;object-fit:contain;mix-blend-mode:screen;opacity:.3;filter:blur(3px) saturate(1.1);width:150%;max-width:none;left:-25%;top:-6%;-webkit-mask-image:radial-gradient(60% 60% at 50% 50%,#000 45%,transparent 100%);mask-image:radial-gradient(60% 60% at 50% 50%,#000 45%,transparent 100%);}
+                @media (min-width:768px){.kev-bglogo{width:115%;left:-12%;top:50%;transform:translateY(-50%)}}
+                .kev-bgfade{position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,rgba(10,4,10,.75) 0%,rgba(10,4,10,.45) 50%,rgba(10,4,10,.15) 100%);}
+                @media (max-width:767px){.kev-bgfade{background:linear-gradient(180deg,rgba(10,4,10,.2) 0%,rgba(10,4,10,.6) 40%,rgba(10,4,10,.8) 100%)}}
+                .kev-shield{mix-blend-mode:screen;aspect-ratio:1/1;filter:none;-webkit-mask-image:radial-gradient(closest-side,#000 80%,transparent 100%);mask-image:radial-gradient(closest-side,#000 80%,transparent 100%);animation-name:kevLogoFloat;}
+                .kev-logo{mix-blend-mode:screen;aspect-ratio:1537/1023;filter:none;-webkit-mask-image:radial-gradient(75% 72% at 50% 50%,#000 55%,transparent 100%);mask-image:radial-gradient(75% 72% at 50% 50%,#000 55%,transparent 100%);animation-name:kevLogoFloat;}
+                .kev-logo-wrap{position:relative;}.kev-logo-wrap::before{content:"";position:absolute;inset:18% 15%;background:radial-gradient(closest-side,rgba(255,30,39,.35),transparent);filter:blur(18px);pointer-events:none;}
+                @keyframes kevLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+                .kev-cta{animation:kevPulse 2s ease-in-out infinite;}
+                .kev-cd>div{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:.75rem;padding:.4rem 0;text-align:center;min-width:3.4rem}
+                @keyframes kevBorder{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+                @keyframes kevShine{0%,55%{left:-60%}100%{left:130%}}
+                @keyframes kevFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+                @keyframes kevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,30,39,.65)}50%{box-shadow:0 0 0 12px rgba(255,30,39,0)}}
+                /* v29: banner más grande en escritorio (móvil igual a v28) */
+                @media (min-width:768px) and (max-width:1023px){
+                    .kev-in{min-height:340px;padding:2.5rem!important}
+                    .kev-prize{font-size:4.75rem!important}
+                    .kev-shield{max-width:280px!important}
+                }
+                @media (min-width:1024px){
+                    .kev-in{min-height:460px;padding:3.5rem 4rem!important;gap:2.5rem!important;grid-template-columns:1fr minmax(0,460px)!important}
+                    .kev-in .kev-pill{font-size:13px!important;padding:.45rem 1rem!important}
+                    .kev-in .kev-pre{font-size:2.25rem!important;margin-top:1.25rem!important}
+                    .kev-prize{font-size:clamp(5.5rem,7.2vw,8.5rem)!important;line-height:1!important}
+                    .kev-in .kev-desc{font-size:1.25rem!important;max-width:34rem!important}
+                    .kev-cd{gap:.75rem!important;margin-top:1.5rem!important}
+                    .kev-cd>div{min-width:5.25rem;padding:.75rem 0;border-radius:1rem}
+                    .kev-cd>div>p:first-child{font-size:2rem!important}
+                    .kev-cd>div>p:last-child{font-size:12px!important}
+                    .kev-cta{height:4.25rem!important;font-size:1.25rem!important;padding:0 3rem!important;margin-top:2rem!important;border-radius:1.25rem!important}
+                    .kev-shield{max-width:400px!important}
+                }
+                @media (prefers-reduced-motion:reduce){.kev,.kev-in::after,.kev-img,.kev-cta{animation:none}}
+            </style>
+            <section class="kev" aria-label="Evento especial KiwiiStore x LPMX">
+                <div class="kev-in grid md:grid-cols-[1fr_auto] items-center gap-2 p-5 sm:p-7 md:p-9">
+                    <img src="/images/Logo.png" alt="" aria-hidden="true" class="kev-bglogo" onerror="this.style.display='none'">
+                    <div class="kev-bgfade" aria-hidden="true"></div>
+                    <div class="relative z-10 order-2 md:order-1">
+                        <span class="kev-pill inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-rajdhani font-bold uppercase tracking-[0.18em] text-[#ffd34d] bg-black/40 border border-[#ffb800]/40 px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-[#ff1e27] animate-pulse"></span> <span class="kev-label">Evento especial KiwiiStore x LPMX</span></span>
+                        <p class="kev-pre font-orbitron font-black text-white text-xl sm:text-2xl mt-3 leading-none">SORTEAMOS</p>
+                        <p class="kev-prize font-orbitron font-black text-5xl sm:text-6xl md:text-7xl leading-[1.02]">5.000 <span class="whitespace-nowrap">ROBUX</span></p>
+                        <p class="kev-desc font-rajdhani text-gray-300 text-sm sm:text-base mt-2 max-w-md">Cada compra suma puntos: más puntos, más chances. Además hay premios semanales.</p>
+                        <div id="kev-cd" class="kev-cd flex gap-2 mt-4 font-rajdhani"></div>
+                        <a href="/sorteos-y-eventos" onclick="window.goToEvents(); return false;" class="kev-cta mt-5 inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-gradient-to-r from-[#ff1e27] to-[#d4145a] hover:brightness-110 text-white font-orbitron font-black text-base px-8 h-14 rounded-2xl transition">PARTICIPAR <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="kev-logo-wrap relative z-10 order-1 md:order-2 flex justify-center p-2 md:p-6">
+                        <img src="/images/LPMX.png" alt="Comunidad LPMX" class="kev-img kev-shield block w-full max-w-[200px] sm:max-w-[240px] md:max-w-[300px] h-auto object-contain" onerror="this.style.display='none'">
+                    </div>
+                </div>
+            </section>
+            <script>
+            (function () {
+                var end = null;
+                function pad(n) { return String(n).padStart(2, '0'); }
+                function draw() {
+                    var el = document.getElementById('kev-cd'); if (!el) return;
+                    if (!end) { el.innerHTML = '<p class="text-xs text-gray-400"><i class="fa-regular fa-clock"></i> Fecha de cierre: se anuncia pronto.</p>'; return; }
+                    var left = end - Date.now();
+                    if (left <= 0) { el.innerHTML = '<p class="text-sm font-bold text-[#ffd34d]"><i class="fa-solid fa-flag-checkered"></i> Evento cerrado</p>'; return; }
+                    var parts = [[Math.floor(left / 864e5), 'Días'], [Math.floor(left / 36e5) % 24, 'Hs'], [Math.floor(left / 6e4) % 60, 'Min'], [Math.floor(left / 1e3) % 60, 'Seg']];
+                    el.innerHTML = parts.map(function (p) { return '<div><p class="font-orbitron text-lg sm:text-xl font-black text-white leading-none">' + pad(p[0]) + '</p><p class="text-[10px] text-gray-400 uppercase mt-1">' + p[1] + '</p></div>'; }).join('');
+                }
+                var tries = 0;
+                function load() {
+                    if (!(window.kiwiRpc && window.supabaseOnline)) { if (++tries < 30) setTimeout(load, 1000); draw(); return; }
+                    window.kiwiRpc('kiwi_event_public', { p_limit: 1 }).then(function (d) {
+                        var ev = d && d.event;
+                        end = ev && ev.ends_at ? new Date(ev.ends_at).getTime() : null;
+                        draw();
+                    }).catch(function () { draw(); });
+                }
+                window.kiwiHomeEventRefresh = load;
+                setInterval(draw, 1000);
+                window.addEventListener('load', function () { setTimeout(load, 800); });
+            })();
+            </script>
             <style>
                 .kiwi-hero-bg{background:
                     radial-gradient(60% 80% at 85% 40%, rgba(225,29,42,.28), transparent 60%),
@@ -497,9 +582,22 @@
                 @keyframes kiwiHeroFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(1deg)}}
                 .kiwi-hero-mascot{opacity:.42;filter:blur(1.5px) saturate(1.05) drop-shadow(0 0 40px rgba(225,29,42,.35));animation:kiwiHeroFloat 7s ease-in-out infinite;}
                 @media (max-width:767px){.kiwi-hero-mascot{opacity:.33;filter:blur(1.5px);left:-12%;}}
+                /* v27: hero destacado, complementario al banner del evento */
+                .khero{border:2px solid transparent;background:
+                    radial-gradient(60% 80% at 85% 40%, rgba(225,29,42,.28), transparent 60%) padding-box,
+                    radial-gradient(40% 60% at 10% 100%, rgba(120,0,10,.35), transparent 70%) padding-box,
+                    linear-gradient(180deg,#0b0b0f,#060608) padding-box,
+                    linear-gradient(120deg,#5a0a10,#ff1e27,#ff7a45,#ff1e27,#5a0a10) border-box;
+                    background-size:100% 100%,100% 100%,100% 100%,300% 300%;
+                    animation:kheroBorder 8s linear infinite, kheroGlow 4s ease-in-out infinite;}
+                .khero::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);background-size:250% 100%;animation:kheroShine 7s ease-in-out infinite;pointer-events:none;border-radius:inherit;}
+                @keyframes kheroBorder{0%{background-position:0 0,0 0,0 0,0% 50%}100%{background-position:0 0,0 0,0 0,300% 50%}}
+                @keyframes kheroGlow{0%,100%{box-shadow:0 0 22px rgba(225,29,42,.22)}50%{box-shadow:0 0 42px rgba(255,90,60,.38)}}
+                @keyframes kheroShine{0%,60%{background-position:150% 0}100%{background-position:-50% 0}}
+                @media (prefers-reduced-motion:reduce){.khero,.khero::after{animation:none}}
                 .kiwi-spark{position:absolute;width:3px;height:3px;border-radius:9999px;background:#ff3b45;box-shadow:0 0 8px #ff1e27;animation:kiwiSpark 3s ease-in-out infinite;}
             </style>
-            <section class="reveal relative rounded-3xl mb-8 md:mb-10 overflow-hidden border border-white/5 kiwi-hero-bg">
+            <section class="reveal relative rounded-3xl mb-8 md:mb-10 overflow-hidden kiwi-hero-bg khero">
                 <div class="absolute inset-0 kiwi-hero-grid"></div>
                 <svg class="absolute right-0 top-0 h-full w-2/3 opacity-60 pointer-events-none" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
                     <defs><filter id="kglow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
@@ -560,16 +658,6 @@
                 </div>
             </section>
 
-            <!-- v24: banner sorteos -->
-            <section class="mt-14 reveal">
-                <button onclick="window.goToEvents()" class="w-full text-left relative overflow-hidden rounded-2xl border border-kiwi-red/70 bg-gradient-to-r from-[#2a0306] via-kiwi-card to-black p-5 shadow-[0_0_30px_rgba(255,30,39,0.15)] hover:border-kiwi-red transition">
-                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-kiwi-red/20 rounded-full blur-3xl"></div>
-                    <p class="relative text-[11px] font-rajdhani font-bold tracking-[0.2em] text-kiwi-red uppercase">Evento especial · Comunidad México</p>
-                    <p class="relative font-orbitron text-lg sm:text-xl font-black text-white mt-1"><i class="fa-solid fa-gift text-kiwi-red"></i> SORTEAMOS 5.000 ROBUX</p>
-                    <p class="relative font-rajdhani text-sm text-gray-300 mt-1">Cada compra suma puntos. Más puntos = más chances. Además, premios semanales para el que más compre Robux y Diamantes.</p>
-                    <span class="relative inline-flex items-center gap-2 mt-3 bg-kiwi-red text-white font-orbitron text-xs font-bold px-4 py-2 rounded-xl">VER SORTEOS <i class="fa-solid fa-arrow-right"></i></span>
-                </button>
-            </section>
 
             <!-- FAQ -->
             
@@ -2050,14 +2138,28 @@
         };
 
         function reveal() {
-            var reveals = document.querySelectorAll(".reveal");
+            var reveals = document.querySelectorAll(".reveal:not(.active)");
             for (var i = 0; i < reveals.length; i++) {
                 var windowHeight = window.innerHeight;
                 var elementTop = reveals[i].getBoundingClientRect().top;
                 if (elementTop < windowHeight - 0) { reveals[i].classList.add("active"); }
             }
         }
-        window.addEventListener("scroll", reveal);
+        window.addEventListener("scroll", reveal, { passive: true });
+        // v26: el contenido nunca debe quedar invisible (pantalla negra en /inicio)
+        window.addEventListener("resize", reveal);
+        window.addEventListener("load", reveal);
+        window.addEventListener("pageshow", reveal);
+        document.addEventListener("visibilitychange", reveal);
+        if ('IntersectionObserver' in window) {
+            (function () {
+                var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('active'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px 80px 0px' });
+                function watch() { document.querySelectorAll('.reveal:not(.active)').forEach(function (el) { io.observe(el); }); }
+                document.addEventListener('DOMContentLoaded', watch); watch();
+                var mq = 0; new MutationObserver(function () { if (mq) return; mq = requestAnimationFrame(function () { mq = 0; watch(); reveal(); }); }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true });
+            })();
+        }
+        setTimeout(function () { document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('active'); }); }, 4000);
 
         function initDB() {
             let users = JSON.parse(localStorage.getItem('kiwi_users'));
