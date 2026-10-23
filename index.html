@@ -196,6 +196,71 @@
         </div>
     </div>
 
+    <!-- v24: SORTEOS Y EVENTOS -->
+    <div id="events-view" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
+        <div class="max-w-4xl mx-auto px-4 py-6 font-rajdhani">
+            <div class="flex items-center justify-between mb-5 gap-3">
+                <div>
+                    <p class="text-[11px] font-bold tracking-[0.2em] text-kiwi-red uppercase">Kiwii Store · Eventos</p>
+                    <h2 class="font-orbitron text-xl sm:text-2xl font-black text-white leading-tight">SORTEOS Y <span class="text-kiwi-red">EVENTOS</span></h2>
+                </div>
+                <button onclick="window.closeEventsView()" class="shrink-0 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> VOLVER
+                </button>
+            </div>
+
+            <!-- Evento general -->
+            <section class="relative overflow-hidden rounded-2xl border border-kiwi-red/60 bg-gradient-to-br from-[#2a0306] via-kiwi-card to-black p-5 mb-5 shadow-[0_0_40px_rgba(255,30,39,0.15)]">
+                <div class="absolute -top-16 -right-16 w-48 h-48 bg-kiwi-red/20 rounded-full blur-3xl"></div>
+                <p class="relative text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Evento especial · Top compradores</p>
+                <h3 id="ev-name" class="relative font-orbitron text-lg sm:text-2xl font-black text-white mt-1">Cargando evento…</h3>
+                <p id="ev-desc" class="relative text-sm text-gray-300 mt-2"></p>
+                <div id="ev-prizes" class="relative grid grid-cols-3 gap-2 mt-4"></div>
+                <div id="ev-countdown" class="relative mt-4"></div>
+                <div class="relative flex flex-wrap gap-2 mt-4 text-xs font-bold">
+                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-coins text-kiwi-red"></i> <span id="ev-rule-usdt">1 pt por cada 1 USDT</span></span>
+                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-user-check text-kiwi-red"></i> <span id="ev-rule-reg">+2 por estar registrado</span></span>
+                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-share-nodes text-kiwi-red"></i> <span id="ev-rule-ref">+1 por compartir tu link</span></span>
+                </div>
+            </section>
+
+            <!-- Mis puntos -->
+            <section id="ev-me" class="rounded-2xl border border-kiwi-border bg-kiwi-card p-5 mb-5"></section>
+
+            <!-- Ganadores del evento -->
+            <section id="ev-winners-wrap" class="hidden rounded-2xl border border-kiwi-gold/60 bg-kiwi-card p-5 mb-5">
+                <h4 class="font-orbitron text-sm font-bold text-kiwi-gold mb-3"><i class="fa-solid fa-trophy"></i> GANADORES DEL SORTEO</h4>
+                <div id="ev-winners" class="space-y-2"></div>
+            </section>
+
+            <!-- Ranking -->
+            <section class="rounded-2xl border border-kiwi-border bg-kiwi-card p-5 mb-5">
+                <div class="flex items-center justify-between mb-1">
+                    <h4 class="font-orbitron text-sm font-bold text-white"><i class="fa-solid fa-ranking-star text-kiwi-red"></i> RANKING</h4>
+                    <span class="text-[11px] text-gray-500 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> en vivo</span>
+                </div>
+                <p id="ev-stats" class="text-xs text-gray-400 mb-3"></p>
+                <div id="ev-leaderboard" class="space-y-2"></div>
+            </section>
+
+            <!-- Semanales -->
+            <section class="rounded-2xl border border-kiwi-border bg-kiwi-card p-5 mb-5">
+                <h4 class="font-orbitron text-sm font-bold text-white"><i class="fa-solid fa-calendar-week text-kiwi-red"></i> SORTEOS SEMANALES</h4>
+                <p id="wk-range" class="text-xs text-gray-400 mb-3">El que más compra en la semana (lunes a domingo, hora Argentina) se lleva el premio.</p>
+                <div id="wk-cards" class="grid sm:grid-cols-2 gap-3"></div>
+                <div id="wk-past-wrap" class="hidden mt-4">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Ganadores anteriores</p>
+                    <div id="wk-past" class="space-y-1"></div>
+                </div>
+            </section>
+
+            <!-- Staff (solo Owner / CEO; el servidor vuelve a verificarlo) -->
+            <section id="ev-staff" class="hidden rounded-2xl border border-kiwi-gold/60 bg-black/40 p-5 mb-8"></section>
+
+            <p class="text-[11px] text-gray-500 text-center mb-6">Los puntos se calculan en el servidor con tus compras válidas (no cuentan pedidos cancelados o reembolsados). Los pedidos nuevos suman cuando el staff los confirma.</p>
+        </div>
+    </div>
+
     <!-- APARTADO GESTIÓN DE PEDIDOS (CLIENTE) -->
     <div id="orders-panel" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
         <div class="max-w-4xl mx-auto px-4 py-8">
@@ -382,6 +447,10 @@
                 <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-user text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Mi Perfil</span>
                 </button>
+                <button onclick="window.toggleUserDrawer(); window.goToEvents();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-red/60 hover:border-kiwi-red transition text-gray-300 hover:text-white">
+                    <i class="fa-solid fa-gift text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Sorteos y Eventos</span>
+                    <span class="ml-auto text-[10px] font-orbitron font-bold bg-kiwi-red text-white px-2 py-0.5 rounded-full">NUEVO</span>
+                </button>
                 <button onclick="window.openBalanceFromMenu();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
                     <i class="fa-solid fa-wallet text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Cargar Saldo</span>
                 </button>
@@ -489,6 +558,17 @@
                         <p class="text-gray-400 text-sm">Tarifas regionales competitivas actualizadas.</p>
                     </div>
                 </div>
+            </section>
+
+            <!-- v24: banner sorteos -->
+            <section class="mt-14 reveal">
+                <button onclick="window.goToEvents()" class="w-full text-left relative overflow-hidden rounded-2xl border border-kiwi-red/70 bg-gradient-to-r from-[#2a0306] via-kiwi-card to-black p-5 shadow-[0_0_30px_rgba(255,30,39,0.15)] hover:border-kiwi-red transition">
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-kiwi-red/20 rounded-full blur-3xl"></div>
+                    <p class="relative text-[11px] font-rajdhani font-bold tracking-[0.2em] text-kiwi-red uppercase">Evento especial · Comunidad México</p>
+                    <p class="relative font-orbitron text-lg sm:text-xl font-black text-white mt-1"><i class="fa-solid fa-gift text-kiwi-red"></i> SORTEAMOS 5.000 ROBUX</p>
+                    <p class="relative font-rajdhani text-sm text-gray-300 mt-1">Cada compra suma puntos. Más puntos = más chances. Además, premios semanales para el que más compre Robux y Diamantes.</p>
+                    <span class="relative inline-flex items-center gap-2 mt-3 bg-kiwi-red text-white font-orbitron text-xs font-bold px-4 py-2 rounded-xl">VER SORTEOS <i class="fa-solid fa-arrow-right"></i></span>
+                </button>
             </section>
 
             <!-- FAQ -->
@@ -1584,7 +1664,7 @@
                 }
 
                 // 2. Cargar Compras
-                const { data: purchasesData, error: purchasesErr } = await supabaseClient.from('compras').select('*');
+                const { data: purchasesData, error: purchasesErr } = await window.kiwiFetchOrders();
                 if (purchasesErr) console.warn('No se pudieron leer compras de la nube:', purchasesErr);
                 if (Array.isArray(purchasesData)) {
                     window.mergeCloudPurchases(purchasesData);
@@ -1599,6 +1679,30 @@
             } catch (err) { console.error("Error sincronizando:", err); }
         };
 
+
+        // ===== v25: pedidos privados (todo por RPC con el token de sesión) =====
+        window.kiwiRpcMissing = e => /Could not find the function|does not exist|PGRST202|schema cache/i.test(String((e && e.message) || e || ''));
+        window.kiwiIsOrderStaff = function() { try { return ['owner', 'ceo', 'mod'].includes(String(window.getMyStaffRole() || '').toLowerCase()); } catch (_) { return false; } };
+        window.kiwiFetchOrders = async function() {
+            if (!window.kiwiToken() || typeof currentUser === 'undefined' || !currentUser) return { data: null, error: null };
+            const fn = window.kiwiIsOrderStaff() ? 'kiwi_staff_orders' : 'kiwi_my_orders';
+            try { return { data: await window.kiwiStaffRpc(fn, {}), error: null }; }
+            catch (e) {
+                if (window.kiwiRpcMissing(e)) return await supabaseClient.from('compras').select('*'); // SQL v25 todavía no aplicado
+                return { data: null, error: e };
+            }
+        };
+        window.kiwiUpsertOrders = async function(rows) {
+            if (!window.kiwiToken()) return { error: new Error('Sin sesión') };
+            try { await window.kiwiStaffRpc('kiwi_create_orders', { p_orders: rows }); return { error: null }; }
+            catch (e) {
+                if (window.kiwiRpcMissing(e)) return await supabaseClient.from('compras').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+                return { error: e };
+            }
+        };
+        setInterval(function() { // sin acceso directo a la tabla ya no llega el realtime de compras: el staff refresca cada 30 s
+            try { if (!document.hidden && window.supabaseOnline && window.kiwiIsOrderStaff() && typeof window.fetchInitialData === 'function') window.fetchInitialData(); } catch (_) {}
+        }, 30000);
 
         // ===== Sincronización de compras con Supabase (v15) =====
         window.sameUser = function(a, b) { return a != null && b != null && String(a).toLowerCase() === String(b).toLowerCase(); };
@@ -1640,12 +1744,12 @@
         };
         window.syncUnsyncedPurchases = async function() {
             if (!supabaseClient || !window.supabaseOnline) return;
-            const list = window.readPurchases().filter(p => !p._synced && p.user);
+            const list = window.readPurchases().filter(p => !p._synced && p.user && window.sameUser(p.user, currentUser));
             if (!list.length) return;
-            let { error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, true)), { onConflict: 'id', ignoreDuplicates: true });
+            let { error } = await window.kiwiUpsertOrders(list.map(p => window.purchaseToRow(p, true)));
             if (error) {
                 console.warn('Upsert completo de compras falló, reintentando con columnas básicas:', error);
-                ({ error } = await supabaseClient.from('compras').upsert(list.map(p => window.purchaseToRow(p, false)), { onConflict: 'id', ignoreDuplicates: true }));
+                ({ error } = await window.kiwiUpsertOrders(list.map(p => window.purchaseToRow(p, false))));
             }
             if (error) { console.error('No se pudieron guardar compras en Supabase:', error); return; }
             const ids = new Set(list.map(p => String(p.id)));
@@ -2222,7 +2326,7 @@
             }
             let res;
             try {
-                res = await window.kiwiRpc('kiwi_register', { p_username: user, p_email: email, p_password: pass, p_account_id: window.generateAccountId() });
+                res = await window.kiwiRpc('kiwi_register', { p_username: user, p_email: email, p_password: pass, p_account_id: window.generateAccountId(), ...(window.getKiwiRef && window.getKiwiRef() ? { p_ref: window.getKiwiRef() } : {}) });
                 window.kiwiStoreSession(res);
             } catch (err) {
                 console.error('Registro falló:', err);
@@ -4737,7 +4841,7 @@
 
                 try {
                     if (supabaseClient) {
-                        supabaseClient.from('compras').upsert([{
+                        window.kiwiUpsertOrders([{
                             id: orderId,
                             user_name: currentUser,
                             title: prod.title,
@@ -4747,7 +4851,7 @@
                             target_user: targetUser,
                             extra: extra,
                             bulk_order_id: String(bulkResult.orderId)
-                        }], { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
+                        }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4859,7 +4963,7 @@
 
                 try {
                     if (supabaseClient) {
-                        supabaseClient.from('compras').upsert([{
+                        window.kiwiUpsertOrders([{
                             id: orderIdR,
                             user_name: currentUser,
                             title: prod.title + (rmQty > 1 ? ' (x2 cuentas)' : ''),
@@ -4868,7 +4972,7 @@
                             status: 'delivered',
                             target_user: targetUser || '',
                             extra: keysText
-                        }], { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
+                        }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -4921,7 +5025,7 @@
 
             try {
                 if (supabaseClient) {
-                    supabaseClient.from('compras').upsert([{
+                    window.kiwiUpsertOrders([{
                         id: orderId,
                         user_name: currentUser,
                         title: prod.title,
@@ -4930,7 +5034,7 @@
                         status: 'confirmed',
                         target_user: targetUser,
                         extra: extra
-                    }], { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
+                    }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                 }
             } catch (err) { console.warn('Supabase sync failed', err); }
 
@@ -5780,6 +5884,9 @@
                     if (typeof window.goToProfile === 'function') window.goToProfile();
                 }, 400);
             }
+            if (path === '/sorteos-y-eventos') {
+                setTimeout(() => { if (typeof window.goToEvents === 'function') window.goToEvents(true); }, 400);
+            }
             if (path === '/panel-admin') {
                 setTimeout(() => {
                     if (typeof window.toggleStaffDrawer === 'function') window.toggleStaffDrawer();
@@ -6072,7 +6179,11 @@
             const orders = document.getElementById('orders-panel');
             const home = document.getElementById('home-view');
             const cat = document.getElementById('category-view');
-            if (path === '/' || path === '/inicio') {
+            const evv = document.getElementById('events-view');
+            if (evv && path !== '/sorteos-y-eventos') { evv.classList.add('hidden'); window.stopEventsRefresh && window.stopEventsRefresh(); }
+            if (path === '/sorteos-y-eventos') {
+                if (typeof window.goToEvents === 'function') window.goToEvents(true);
+            } else if (path === '/' || path === '/inicio') {
                 if (orders) orders.classList.add('hidden');
                 if (home) home.classList.remove('hidden');
                 if (cat) cat.classList.add('hidden');
@@ -6367,6 +6478,294 @@ window.resetUser2FA = function(username) {
             const btn = document.getElementById('staff-menu-btn');
             if (btn && u && ['owner','ceo','mod'].includes(u.role)) btn.classList.remove('hidden');
         })();
+
+</script>
+<script>
+// ===================== v24: SORTEOS Y EVENTOS =====================
+(function () {
+    // --- Referidos: guardar ?ref=KWS-XXXX al entrar ---
+    try {
+        const ref = new URLSearchParams(location.search).get('ref');
+        if (ref && /^KWS-[A-Z0-9]{4,16}$/i.test(ref.trim())) localStorage.setItem('kiwi_ref', ref.trim().toUpperCase());
+    } catch (e) {}
+    window.getKiwiRef = function () {
+        const r = localStorage.getItem('kiwi_ref') || '';
+        return /^KWS-[A-Z0-9]{4,16}$/.test(r) ? r : null;
+    };
+
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmtPts = n => Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+    const fmtPct = n => Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + '%';
+    const initials = u => String(u || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '?';
+    const fmtDate = d => { try { return new Date(d).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' (hora AR)'; } catch (e) { return ''; } };
+    const fmtDay = d => { try { const [y, m, dd] = String(d).slice(0, 10).split('-'); return dd + '/' + m; } catch (e) { return d; } };
+    const isManager = () => { try { return ['owner', 'ceo'].includes(String(window.getMyStaffRole && window.getMyStaffRole() || '').toLowerCase()); } catch (e) { return false; } };
+    const loggedUser = () => { try { return (typeof currentUser !== 'undefined' && currentUser) || null; } catch (e) { return null; } };
+    const refLink = id => 'https://kiwistore.lat/?ref=' + encodeURIComponent(id || '');
+    const medal = ['bg-kiwi-gold text-black', 'bg-gray-300 text-black', 'bg-amber-700 text-white'];
+
+    let evData = null, wkData = null, meData = null, refreshTimer = null, cdTimer = null;
+
+    function renderEvent() {
+        const ev = evData && evData.event;
+        const $ = id => document.getElementById(id);
+        if (!ev) {
+            $('ev-name').textContent = 'No hay un evento activo';
+            $('ev-desc').textContent = 'Pronto anunciamos el próximo. ¡Atento al Discord!';
+            $('ev-prizes').innerHTML = ''; $('ev-leaderboard').innerHTML = ''; $('ev-stats').textContent = '';
+            return;
+        }
+        $('ev-name').textContent = ev.name;
+        $('ev-desc').textContent = ev.description || '';
+        $('ev-rule-usdt').textContent = fmtPts(ev.points_per_usdt) + ' pt por cada 1 USDT';
+        $('ev-rule-reg').textContent = '+' + fmtPts(ev.register_points) + ' por estar registrado';
+        $('ev-rule-ref').textContent = '+' + fmtPts(ev.referral_points) + ' por compartir tu link';
+        const prizes = Array.isArray(ev.prizes) ? ev.prizes : [];
+        $('ev-prizes').className = 'relative grid gap-2 mt-4 ' + (prizes.length >= 3 ? 'grid-cols-3' : 'grid-cols-' + Math.max(1, prizes.length));
+        $('ev-prizes').innerHTML = prizes.map((p, i) => `
+            <div class="rounded-xl border ${i === 0 ? 'border-kiwi-gold bg-kiwi-gold/10' : 'border-kiwi-border bg-black/40'} p-3 text-center">
+                <p class="text-[10px] font-bold uppercase tracking-wider ${i === 0 ? 'text-kiwi-gold' : 'text-gray-400'}">${i + 1}° lugar</p>
+                <p class="font-orbitron text-sm sm:text-base font-black text-white mt-1 leading-tight">${esc(p)}</p>
+            </div>`).join('');
+        $('ev-stats').textContent = fmtPts(evData.participants) + ' participantes · ' + fmtPts(evData.total_points) + ' puntos en juego';
+        const lb = evData.leaderboard || [];
+        const me = (loggedUser() || '').toLowerCase();
+        $('ev-leaderboard').innerHTML = lb.length ? lb.map(r => `
+            <div class="flex items-center gap-3 rounded-xl px-3 py-2 ${String(r.username).toLowerCase() === me ? 'bg-kiwi-red/15 border border-kiwi-red/60' : 'bg-black/30 border border-kiwi-border'}">
+                <span class="w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black ${medal[r.rank - 1] || 'bg-kiwi-dark text-gray-300 border border-kiwi-border'}">${r.rank}</span>
+                <span class="w-9 h-9 shrink-0 rounded-full bg-kiwi-red/80 flex items-center justify-center font-orbitron text-xs font-bold text-white">${esc(initials(r.username))}</span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-white truncate">${esc(r.username)}</p>
+                    <p class="text-[11px] text-gray-400">${fmtPts(r.orders)} ${Number(r.orders) === 1 ? 'compra' : 'compras'} · ${fmtPct(r.chance)} de chance</p>
+                </div>
+                <span class="font-orbitron text-sm font-black text-kiwi-red whitespace-nowrap">${fmtPts(r.points)} pts</span>
+            </div>`).join('') : '<p class="text-sm text-gray-400">Todavía no hay participantes.</p>';
+        const w = evData.winners || [];
+        $('ev-winners-wrap').classList.toggle('hidden', !w.length);
+        $('ev-winners').innerHTML = w.map(x => `
+            <div class="flex items-center gap-3 rounded-xl bg-black/30 border border-kiwi-border px-3 py-2">
+                <span class="w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black ${medal[x.place - 1] || 'bg-kiwi-dark text-gray-300'}">${x.place}</span>
+                <p class="flex-1 min-w-0 font-bold text-white truncate">${esc(x.username)} <span class="text-[11px] text-gray-400 font-normal">· ${fmtPts(x.points)} pts (${fmtPct(x.chance)})</span></p>
+                <span class="text-sm font-bold text-kiwi-gold whitespace-nowrap">${esc(x.prize)}</span>
+            </div>`).join('') + (w[0] ? `<p class="text-[11px] text-gray-500 mt-1">Sorteado el ${esc(fmtDate(w[0].drawn_at))}</p>` : '');
+        renderCountdown();
+    }
+
+    function renderCountdown() {
+        const el = document.getElementById('ev-countdown');
+        const ev = evData && evData.event;
+        if (!el) return;
+        if (!ev || !ev.ends_at) { el.innerHTML = '<p class="text-xs text-gray-400"><i class="fa-regular fa-clock"></i> Fecha de cierre: se anuncia pronto.</p>'; return; }
+        const left = new Date(ev.ends_at).getTime() - Date.now();
+        if (left <= 0) { el.innerHTML = '<p class="text-sm font-bold text-kiwi-gold"><i class="fa-solid fa-flag-checkered"></i> Evento cerrado · ' + esc(fmtDate(ev.ends_at)) + '</p>'; return; }
+        const parts = [[Math.floor(left / 864e5), 'Días'], [Math.floor(left / 36e5) % 24, 'Horas'], [Math.floor(left / 6e4) % 60, 'Min'], [Math.floor(left / 1e3) % 60, 'Seg']];
+        el.innerHTML = '<div class="grid grid-cols-4 gap-2 max-w-xs">' + parts.map(([v, l]) => `<div class="rounded-lg bg-black/50 border border-kiwi-border py-2 text-center"><p class="font-orbitron text-lg font-black text-white">${String(v).padStart(2, '0')}</p><p class="text-[10px] text-gray-400 uppercase">${l}</p></div>`).join('') + '</div><p class="text-[11px] text-gray-400 mt-2">Cierra el ' + esc(fmtDate(ev.ends_at)) + '</p>';
+    }
+
+    function renderMe(targetId) {
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        if (!loggedUser()) {
+            el.innerHTML = `<h4 class="font-orbitron text-sm font-bold text-white mb-2"><i class="fa-solid fa-star text-kiwi-red"></i> MIS PUNTOS</h4>
+                <p class="text-sm text-gray-300 mb-3">Iniciá sesión o registrate para participar. Solo por registrarte ya sumás puntos.</p>
+                <button onclick="window.openAuthModal && window.openAuthModal()" class="bg-kiwi-red hover:bg-red-700 text-white font-orbitron text-xs font-bold px-4 py-2 rounded-xl">INGRESAR / REGISTRARME</button>`;
+            return;
+        }
+        if (!meData) { el.innerHTML = '<p class="text-sm text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> Calculando tus puntos…</p>'; return; }
+        if (meData.error) { el.innerHTML = '<p class="text-sm text-gray-400">No se pudieron cargar tus puntos: ' + esc(meData.error) + '</p>'; return; }
+        const link = refLink(meData.account_id);
+        const row = (l, v) => `<div class="flex justify-between text-sm"><span class="text-gray-400">${l}</span><span class="font-bold text-white">${v}</span></div>`;
+        el.innerHTML = `
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-orbitron text-sm font-bold text-white"><i class="fa-solid fa-star text-kiwi-red"></i> MIS PUNTOS</h4>
+                ${meData.rank ? `<span class="text-xs font-bold text-gray-300">Puesto #${meData.rank}</span>` : ''}
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="rounded-xl bg-black/40 border border-kiwi-border p-3 text-center"><p class="font-orbitron text-2xl font-black text-kiwi-red">${fmtPts(meData.points)}</p><p class="text-[11px] text-gray-400 uppercase">Puntos</p></div>
+                <div class="rounded-xl bg-black/40 border border-kiwi-border p-3 text-center"><p class="font-orbitron text-2xl font-black text-white">${meData.eligible ? fmtPct(meData.chance) : '—'}</p><p class="text-[11px] text-gray-400 uppercase">Chance de ganar</p></div>
+            </div>
+            <div class="space-y-1 mb-3">
+                ${row('Compras (' + fmtPts(meData.orders) + ') · ' + Number(meData.usdt || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' USDT', fmtPts(meData.purchase_points) + ' pts')}
+                ${row('Registro', '+' + fmtPts(meData.register_points) + ' pts')}
+                ${row('Link compartido', meData.referral_points > 0 ? '+' + fmtPts(meData.referral_points) + ' pts ✓' : 'pendiente')}
+            </div>
+            ${meData.eligible === false ? '<p class="text-xs text-kiwi-gold mb-3">Tu cuenta no participa del sorteo (staff o cuenta suspendida).</p>' : ''}
+            <p class="text-xs text-gray-400 mb-1">Tu link para compartir (sumás el punto cuando alguien se registra con él):</p>
+            <div class="flex gap-2">
+                <input readonly value="${esc(link)}" class="flex-1 min-w-0 bg-kiwi-dark border border-kiwi-border rounded-lg px-3 py-2 text-xs text-gray-200" onclick="this.select()">
+                <button onclick="window.copyKiwiRefLink(this)" data-link="${esc(link)}" class="shrink-0 bg-kiwi-red hover:bg-red-700 text-white text-xs font-bold px-3 rounded-lg"><i class="fa-regular fa-copy"></i> Copiar</button>
+            </div>
+            ${meData.referrals ? `<p class="text-[11px] text-gray-500 mt-1">${fmtPts(meData.referrals)} ${meData.referrals == 1 ? 'persona se registró' : 'personas se registraron'} con tu link.</p>` : ''}`;
+    }
+
+    window.copyKiwiRefLink = function (btn) {
+        const link = btn.getAttribute('data-link');
+        const done = () => { btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar'; }, 1800); };
+        if (navigator.clipboard) navigator.clipboard.writeText(link).then(done).catch(done); else done();
+    };
+
+    function renderWeekly() {
+        const cards = document.getElementById('wk-cards');
+        if (!cards) return;
+        if (!wkData) { cards.innerHTML = '<p class="text-sm text-gray-400">Cargando…</p>'; return; }
+        document.getElementById('wk-range').textContent = 'Semana del ' + fmtDay(wkData.week_start) + ' al ' + fmtDay(wkData.week_end) + ' (lunes a domingo, hora Argentina). El que más compra en cada categoría se lleva el premio.';
+        cards.innerHTML = (wkData.categories || []).map(c => {
+            const ld = c.leaders || [];
+            return `<div class="rounded-xl bg-black/30 border border-kiwi-border p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">${esc(c.name)}</p>
+                <p class="font-orbitron text-base font-black text-white">${esc(c.prize)}</p>
+                <div class="mt-3 space-y-1">${ld.length ? ld.map((l, i) => `<div class="flex items-center gap-2 text-sm"><span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${medal[i] || 'bg-kiwi-dark text-gray-300'}">${i + 1}</span><span class="flex-1 truncate ${i === 0 ? 'text-white font-bold' : 'text-gray-300'}">${esc(l.username)}</span><span class="text-xs text-kiwi-red font-bold">${fmtPts(l.points)} pts</span></div>`).join('')
+                    : '<p class="text-xs text-gray-500">Nadie compró todavía esta semana. ¡El primero se pone adelante!</p>'}</div>
+                ${isManager() ? `<button onclick="window.staffWeeklyClose('${esc(c.key)}')" class="mt-3 w-full text-xs font-bold border border-kiwi-gold text-kiwi-gold rounded-lg py-1.5 hover:bg-kiwi-gold hover:text-black">Cerrar semana y registrar ganador</button>` : ''}
+            </div>`;
+        }).join('') || '<p class="text-sm text-gray-400">No hay sorteos semanales activos.</p>';
+        const past = wkData.past_winners || [];
+        document.getElementById('wk-past-wrap').classList.toggle('hidden', !past.length);
+        document.getElementById('wk-past').innerHTML = past.map(p => `<div class="flex justify-between gap-2 text-xs border-b border-kiwi-border/50 py-1"><span class="text-gray-400 whitespace-nowrap">Sem. ${fmtDay(p.week_start)}</span><span class="flex-1 truncate text-white font-bold">${esc(p.username)}</span><span class="text-gray-300 truncate">${esc(p.name)} · ${esc(p.prize)}</span></div>`).join('');
+    }
+
+    function renderStaff() {
+        const el = document.getElementById('ev-staff');
+        if (!el) return;
+        if (!isManager()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+        el.classList.remove('hidden');
+        const ev = (evData && evData.event) || {};
+        const pr = Array.isArray(ev.prizes) ? ev.prizes : ['3.500 Robux', '1.000 Robux', '500 Robux'];
+        const toLocal = d => { if (!d) return ''; const t = new Date(new Date(d).getTime() - 3 * 36e5); return t.toISOString().slice(0, 16); };
+        const inp = 'w-full bg-kiwi-dark border border-kiwi-border rounded-lg px-3 py-2 text-sm text-white';
+        el.innerHTML = `
+            <h4 class="font-orbitron text-sm font-bold text-kiwi-gold mb-3"><i class="fa-solid fa-shield-halved"></i> STAFF · OWNER / CEO</h4>
+            <div class="space-y-2 text-sm">
+                <input id="evs-name" class="${inp}" placeholder="Nombre del evento" value="${esc(ev.name || '')}">
+                <textarea id="evs-desc" class="${inp}" rows="2" placeholder="Descripción">${esc(ev.description || '')}</textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="text-xs text-gray-400">Inicio (hora AR)<input id="evs-start" type="datetime-local" class="${inp}" value="${toLocal(ev.starts_at)}"></label>
+                    <label class="text-xs text-gray-400">Cierre (vacío = sin fecha)<input id="evs-end" type="datetime-local" class="${inp}" value="${toLocal(ev.ends_at)}"></label>
+                </div>
+                <div class="grid grid-cols-3 gap-2">${[0, 1, 2].map(i => `<input id="evs-p${i}" class="${inp}" placeholder="Premio ${i + 1}" value="${esc(pr[i] || '')}">`).join('')}</div>
+                <label class="flex items-center gap-2 text-xs text-gray-300"><input id="evs-past" type="checkbox" ${ev.count_past !== false ? 'checked' : ''}> Contar compras anteriores al inicio</label>
+                <label class="flex items-center gap-2 text-xs text-gray-300"><input id="evs-staff" type="checkbox" ${ev.exclude_staff !== false ? 'checked' : ''}> Excluir cuentas de staff</label>
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="window.staffEventSave()" class="bg-kiwi-gold text-black font-bold rounded-lg py-2">Guardar evento</button>
+                    <button onclick="window.staffEventDraw()" class="bg-kiwi-red text-white font-bold rounded-lg py-2"><i class="fa-solid fa-dice"></i> Sortear ganadores</button>
+                </div>
+                <p class="text-[11px] text-gray-500">El sorteo se hace en el servidor (aleatorio ponderado por puntos, ganadores distintos) y queda guardado y público.</p>
+                <details class="pt-2"><summary class="cursor-pointer text-xs font-bold text-gray-300">Agregar / editar sorteo semanal</summary>
+                    <div class="space-y-2 mt-2">
+                        <div class="grid grid-cols-2 gap-2"><input id="wks-key" class="${inp}" placeholder="clave (ej: valorant)"><input id="wks-name" class="${inp}" placeholder="Nombre visible"></div>
+                        <input id="wks-prize" class="${inp}" placeholder="Premio (ej: 1.000 VP)">
+                        <input id="wks-pat" class="${inp}" placeholder="Texto en el título, separado por comas (ej: valorant, vp)">
+                        <input id="wks-cat" class="${inp}" placeholder="Categoría de la tienda (opcional, ej: freefire)">
+                        <label class="flex items-center gap-2 text-xs text-gray-300"><input id="wks-active" type="checkbox" checked> Activo</label>
+                        <button onclick="window.staffWeeklySave()" class="w-full bg-kiwi-gold text-black font-bold rounded-lg py-2">Guardar sorteo semanal</button>
+                    </div>
+                </details>
+            </div>`;
+    }
+
+    const staffCall = async (fn, args, okMsg) => {
+        try { const r = await window.kiwiStaffRpc(fn, args); if (okMsg) alert(okMsg(r)); await loadEvents(); return r; }
+        catch (e) { alert('Error: ' + (e.message || e)); }
+    };
+    window.staffEventSave = function () {
+        const v = id => document.getElementById(id).value.trim();
+        const toIso = s => s ? new Date(s + ':00-03:00').toISOString() : '';
+        const prizes = [0, 1, 2].map(i => v('evs-p' + i)).filter(Boolean);
+        return staffCall('kiwi_staff_event_save', { p_event: {
+            id: evData && evData.event ? evData.event.id : null, name: v('evs-name'), description: v('evs-desc'),
+            starts_at: toIso(v('evs-start')), ends_at: toIso(v('evs-end')), prizes, active: true,
+            count_past: document.getElementById('evs-past').checked, exclude_staff: document.getElementById('evs-staff').checked } }, () => 'Evento guardado.');
+    };
+    window.staffEventDraw = async function () {
+        const hasW = evData && (evData.winners || []).length;
+        if (!confirm(hasW ? 'Este evento ya tiene ganadores. ¿Volver a sortear y reemplazarlos?' : '¿Sortear ahora los ganadores del evento? Queda público.')) return;
+        return staffCall('kiwi_staff_event_draw', { p_event_id: evData && evData.event ? evData.event.id : null, p_redraw: !!hasW },
+            r => 'Ganadores:\n' + (r || []).map(x => x.place + '° ' + x.username + ' — ' + x.prize).join('\n'));
+    };
+    window.staffWeeklyClose = function (key) {
+        const def = (() => { const d = new Date(wkData.week_start + 'T00:00:00'); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 10); })();
+        const wk = prompt('Lunes de la semana a cerrar (AAAA-MM-DD). Por defecto, la semana pasada:', def);
+        if (!wk) return;
+        return staffCall('kiwi_staff_weekly_close', { p_key: key, p_week_start: wk }, r => 'Ganador registrado: ' + r.username + ' (' + r.prize + ')');
+    };
+    window.staffWeeklySave = function () {
+        const v = id => document.getElementById(id).value.trim();
+        const list = s => s.split(',').map(x => x.trim()).filter(Boolean);
+        return staffCall('kiwi_staff_weekly_save', { p_key: v('wks-key'), p_name: v('wks-name'), p_prize: v('wks-prize'),
+            p_patterns: list(v('wks-pat')).map(x => x.includes('%') ? x : '%' + x + '%'), p_categories: list(v('wks-cat')).length ? list(v('wks-cat')) : null,
+            p_active: document.getElementById('wks-active').checked, p_sort: 10 }, () => 'Sorteo semanal guardado.');
+    };
+
+    async function loadMe() {
+        if (!loggedUser() || !window.kiwiToken()) { meData = null; return; }
+        try { meData = await window.kiwiStaffRpc('kiwi_my_points', {}); } catch (e) { meData = { error: e.message || 'error' }; }
+    }
+
+    async function loadEvents() {
+        const tasks = [
+            window.kiwiRpc('kiwi_event_public', { p_limit: 20 }).then(d => { evData = d; }).catch(e => { console.warn('eventos:', e); if (!evData) evData = { event: null }; }),
+            window.kiwiRpc('kiwi_weekly_public', { p_limit: 3 }).then(d => { wkData = d; }).catch(e => { console.warn('semanales:', e); }),
+            loadMe()
+        ];
+        await Promise.all(tasks);
+        renderEvent(); renderMe('ev-me'); renderWeekly();
+        const staffEl = document.getElementById('ev-staff');
+        if (!staffEl || !staffEl.contains(document.activeElement)) renderStaff();
+    }
+    window.loadKiwiEvents = loadEvents;
+
+    window.stopEventsRefresh = function () { clearInterval(refreshTimer); clearInterval(cdTimer); refreshTimer = cdTimer = null; };
+    window.goToEvents = function (fromRoute) {
+        const view = document.getElementById('events-view');
+        if (!view) return;
+        const orders = document.getElementById('orders-panel');
+        if (orders) orders.classList.add('hidden');
+        const drawer = document.getElementById('user-drawer');
+        if (drawer) drawer.classList.add('translate-x-full');
+        if (location.pathname !== '/sorteos-y-eventos') history.pushState({}, '', '/sorteos-y-eventos');
+        view.classList.remove('hidden');
+        view.scrollTop = 0;
+        renderMe('ev-me'); renderWeekly();
+        loadEvents();
+        window.stopEventsRefresh();
+        refreshTimer = setInterval(() => { if (!document.hidden) loadEvents(); }, 30000);
+        cdTimer = setInterval(renderCountdown, 1000);
+    };
+    window.closeEventsView = function () {
+        document.getElementById('events-view').classList.add('hidden');
+        window.stopEventsRefresh();
+        history.pushState({}, '', '/inicio');
+    };
+
+    // --- Tarjeta de puntos en el perfil ---
+    async function renderProfilePoints() {
+        const summary = document.getElementById('profile-summary-in-orders');
+        if (!summary || !loggedUser()) return;
+        let card = document.getElementById('profile-points-card');
+        if (!card) {
+            card = document.createElement('div');
+            card.id = 'profile-points-card';
+            card.className = 'bg-kiwi-card border border-kiwi-red/50 rounded-2xl p-5 mb-6 font-rajdhani';
+            summary.insertAdjacentElement('afterend', card);
+        }
+        card.innerHTML = '<p class="text-sm text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> Calculando tus puntos…</p>';
+        await loadMe();
+        if (!meData || meData.error) { card.classList.add('hidden'); return; }
+        card.classList.remove('hidden');
+        renderMe('profile-points-card');
+        card.insertAdjacentHTML('beforeend', '<button onclick="window.goToEvents()" class="mt-3 w-full border border-kiwi-red text-white font-orbitron text-xs font-bold rounded-xl py-2 hover:bg-kiwi-red transition">VER RANKING Y SORTEOS <i class="fa-solid fa-arrow-right"></i></button>');
+    }
+    const _origGoToProfile = window.goToProfile;
+    if (typeof _origGoToProfile === 'function') {
+        window.goToProfile = function () {
+            const view = document.getElementById('events-view');
+            if (view && loggedUser()) { view.classList.add('hidden'); window.stopEventsRefresh(); }
+            const r = _origGoToProfile.apply(this, arguments);
+            setTimeout(renderProfilePoints, 50);
+            return r;
+        };
+    }
+})();
 
 </script>
 </body>
