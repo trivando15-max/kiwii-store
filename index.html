@@ -196,6 +196,16 @@
         </div>
     </div>
 
+    <!-- v33: advertencia roja centrada -->
+    <div id="kiwi-warn-modal" class="fixed inset-0 bg-black/80 z-[200] hidden flex items-center justify-center p-4" onclick="if(event.target===this)window.kiwiWarnClose()">
+        <div class="bg-[#1a0707] border-2 border-red-500 w-full max-w-sm rounded-2xl p-6 text-center shadow-[0_0_40px_rgba(239,68,68,0.45)]">
+            <div class="mx-auto mb-3 w-14 h-14 rounded-full bg-red-600/20 border border-red-500 flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl"></i></div>
+            <h3 class="font-orbitron font-bold text-red-400 text-lg mb-2">ATENCIÓN</h3>
+            <p id="kiwi-warn-text" class="text-sm text-gray-100 whitespace-pre-line mb-5"></p>
+            <button onclick="window.kiwiWarnClose()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl transition">Entendido</button>
+        </div>
+    </div>
+
     <!-- v24: SORTEOS Y EVENTOS -->
     <div id="events-view" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
         <div class="max-w-4xl mx-auto px-4 py-6 font-rajdhani">
@@ -972,8 +982,8 @@
                     </div>
 
                     <!-- Columna derecha: ID + resumen -->
-                    <aside class="w-full lg:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-24">
-                        <div id="ff-id-checker" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
+                    <aside class="contents lg:block lg:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-24">
+                        <div id="ff-id-checker" class="hidden w-full order-first lg:order-none bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
                             <h4 class="font-orbitron text-sm font-bold text-white mb-3 flex items-center gap-2">
                                 ID de jugador <i class="fa-regular fa-circle-question text-gray-500 text-xs" title="Es el número de ID de tu cuenta de Free Fire (no el nombre)."></i>
                             </h4>
@@ -986,11 +996,8 @@
                             <div id="ff-id-result" class="mt-3 text-sm font-rajdhani hidden"></div>
                             <p class="text-[10px] text-gray-500 mt-2">El ID se guardará en tu cuenta para autocompletar en futuras compras.</p>
                         </div>
-<div id="ff-limited-result" class="mt-3 text-sm font-rajdhani hidden"></div>
-                            <p class="text-[10px] text-gray-500 mt-2">Solo consulta las ofertas limitadas disponibles para este ID.</p>
-                        </div>
 
-                        <div id="ff-summary" class="bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
+                        <div id="ff-summary" class="w-full bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
                             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 pb-2 mb-3">Resumen de compra</p>
                             <div id="ff-summary-body"></div>
                         </div>
@@ -4116,7 +4123,34 @@
                 if (idv && typeof window.checkFreeFireDiscounts === 'function') window.checkFreeFireDiscounts(idv);
             }
         };
+        // v33: advertencia roja centrada + ID verificado obligatorio
+        window.kiwiWarn = function(msg, afterClose) {
+            const m = document.getElementById('kiwi-warn-modal'), t = document.getElementById('kiwi-warn-text');
+            if (!m || !t) { alert(msg); return; }
+            t.textContent = msg; window._kiwiWarnAfter = afterClose || null;
+            m.classList.remove('hidden');
+        };
+        window.kiwiWarnClose = function() {
+            document.getElementById('kiwi-warn-modal')?.classList.add('hidden');
+            const f = window._kiwiWarnAfter; window._kiwiWarnAfter = null; if (typeof f === 'function') f();
+        };
+        window.ffIdIsVerified = function() {
+            const v = (document.getElementById('ff-check-id')?.value || '').replace(/\s+/g, '');
+            return !!(v && window.lastFFId && String(window.lastFFId) === v);
+        };
+        window.ffRequireVerifiedId = function() {
+            if (window.ffIdIsVerified()) return true;
+            window.kiwiWarn('Primero verificá tu ID de jugador.\nIngresá tu ID y tocá el botón verde ✓ antes de elegir una oferta.', function() {
+                const c = document.getElementById('ff-id-checker');
+                const i = document.getElementById('ff-check-id');
+                if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (i) setTimeout(() => i.focus({ preventScroll: true }), 300);
+            });
+            return false;
+        };
+
         window.ffSelectProduct = function(id) {
+            if (!window.ffRequireVerifiedId()) return;
             const prod = window.products.find(p => p.id === id);
             if (!prod) return;
             window.ffSelection = { kind: 'product', id: prod.id, title: prod.title, price: (prod.id === 221 && document.getElementById('booyah-price-display')) ? document.getElementById('booyah-price-display').textContent : window.getConvertedPrice(prod), usd: window.ffUsdOf(prod), img: prod.image ? window.imgPath(prod.image) : null, icon: (prod.sub === 'ilimitado' || prod.sub === 'limitado') ? 'fa-gem' : 'fa-ticket' };
@@ -5571,6 +5605,7 @@
         window.openCheckout = function(productId, isCustom) {
             const prod = window.products.find(p => p.id === productId);
             if (prod && prod.category === 'freefire') {
+                if (!window.ffRequireVerifiedId()) return;
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                 let savedId = currentUser ? (users[currentUser]?.ff_id || '') : '';
                 // Fallback: tomar el ID del verificador si está vacío
@@ -5651,7 +5686,11 @@
                 if (checker) ffId = checker.value.trim();
             }
             ffId = String(ffId).replace(/\s+/g, '');
-            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+            if (!ffId) return window.kiwiWarn('Verificá tu ID de Free Fire primero.');
+            if (!window.lastFFId || String(window.lastFFId) !== String(ffId).replace(/\s+/g, '')) {
+                document.getElementById('ff-confirm-modal').classList.add('hidden');
+                return window.kiwiWarn('Tu ID no está verificado.\nVerificalo con el botón verde ✓ antes de comprar.');
+            }
             if (!/^\d{5,15}$/.test(ffId)) {
                 return alert('El ID de Free Fire debe ser solo números (5 a 15 dígitos).\nNo uses el nombre del jugador (ej. HELLOKITTY8).');
             }
@@ -5665,6 +5704,37 @@
             if (bal < priceNum) {
                 document.getElementById('ff-confirm-modal').classList.add('hidden');
                 return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + priceNum.toFixed(2) + ' USDT');
+            }
+
+            // v32: diamantes LIMITADOS. Antes de cobrar: sin duplicados y oferta revalidada en el momento
+            if (prod.sub === 'limitado') {
+                const myPrev = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+                const dup = myPrev.some(o => o && o.category === 'freefire' && o.sub === 'limitado' && o.title === prod.title && String(o.targetUser) === ffId && o.status === 'confirmed');
+                if (dup) {
+                    document.getElementById('ff-confirm-modal').classList.add('hidden');
+                    return window.kiwiWarn('Ya tenés un pedido en proceso de este pack limitado para el ID ' + ffId + '.\nEsperá a que lo carguemos. Cada ID puede usar esta oferta una sola vez.');
+                }
+                let discounts = null;
+                try {
+                    const r = await fetch('/api/volsever?action=check-discounts&id=' + encodeURIComponent(ffId));
+                    const j = await r.json();
+                    if (j && j.status && j.data && Array.isArray(j.data.discount_items)) discounts = j.data.discount_items;
+                } catch (e) { console.warn('check-discounts', e); }
+                if (!discounts) {
+                    document.getElementById('ff-confirm-modal').classList.add('hidden');
+                    return window.kiwiWarn('No pudimos verificar si la oferta sigue disponible para tu ID. No se descontó saldo. Probá de nuevo en un momento.');
+                }
+                const numM = String(prod.title).match(/([\d.]+)/);
+                const dShown = numM ? parseInt(numM[1].replace(/\./g, ''), 10) : 0;
+                const bMap = { 110: 100, 341: 310, 572: 520, 1160: 1060, 1166: 1060, 2389: 2180, 2398: 2180, 6160: 5600, 5600: 5600 };
+                const dBase = bMap[dShown] || dShown;
+                const still = discounts.find(d => d.diamonds === dBase || d.diamonds === dShown);
+                window.ffAvailableDiscounts = discounts;
+                if (typeof window.applyLimitedAvailability === 'function') window.applyLimitedAvailability();
+                if (!(still && still.is_discount)) {
+                    document.getElementById('ff-confirm-modal').classList.add('hidden');
+                    return window.kiwiWarn('Esta oferta limitada ya no está disponible para el ID ' + ffId + '. No se descontó saldo.');
+                }
             }
 
             document.getElementById('ff-confirm-modal').classList.add('hidden');
