@@ -3883,7 +3883,7 @@
                     </div>
                 `;
             } else if (type === 'robux_plus') {
-                title = "Robux via Plus"; multiplier = 14.5; methodText = "Vía Plus";
+                title = "Robux via Plus"; multiplier = 14.4; methodText = "Vía Plus";
                 infoHtml = `
                     <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
                          <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
@@ -3975,7 +3975,7 @@
                 return alert('El monto mínimo es de 100 Robux');
             }
             // Calculate USDT price (0.075 per 10 Robux for grupo, adjust as needed)
-            const multiplier = subType === 'robux_gamepass' ? 0.057 : (subType === 'robux_plus' ? 0.08 : 0.075);
+            const multiplier = subType === 'robux_gamepass' ? 0.057 : (subType === 'robux_plus' ? 0.09 : 0.075);
             const usdtPrice = (amount / 10) * multiplier;
             const rate = window.exchangeRates[window.currentCurrency] || 1;
             const converted = window.currentCurrency === 'USDT' ? usdtPrice : usdtPrice * rate;
@@ -3999,7 +3999,9 @@
             // Abrir modal existente
             const modal = document.getElementById('checkout-modal');
             const titleEl = document.getElementById('checkout-product-title');
-            const priceEl = document.getElementById('checkout-product-price');
+            const priceEl = document.getElementById('checkout-product-price') || document.getElementById('modal-product-price');
+            const mTitle = document.getElementById('modal-product-title');
+            if (mTitle) mTitle.textContent = amount + ' Robux (' + methodText + ')';
             const userInput = document.getElementById('user-account-input');
             if (titleEl) titleEl.textContent = amount + ' Robux (' + methodText + ')';
             if (priceEl) priceEl.textContent = totalStr;
