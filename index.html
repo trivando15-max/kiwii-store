@@ -359,7 +359,7 @@
                 </div>
 
                 <div id="panel-saldo" class="space-y-3 hidden">
-                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">ACREDITAR SALDO DE PRUEBA</h4>
+                    <h4 class="font-orbitron text-sm text-kiwi-gold border-b border-kiwi-gold/30 pb-2">ACREDITAR / QUITAR SALDO</h4>
                     <p class="text-xs text-gray-300 leading-relaxed">Acredita saldo interno de Kiwii Store. Debés indicar el <strong>nombre de usuario</strong> y el <strong>ID de cuenta</strong> (ambos deben coincidir con la misma cuenta).</p>
                     <label for="credit-user" class="block text-xs text-gray-400">Nombre de usuario</label>
                     <input id="credit-user" autocomplete="off" placeholder="Nombre de usuario" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
@@ -375,6 +375,7 @@
                     </select>
                     <input id="credit-amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ej. 1.50" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
                     <button onclick="window.creditUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value, document.getElementById('credit-account-id').value, document.getElementById('credit-currency').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar saldo</button>
+                    <button onclick="window.debitUserBalance(document.getElementById('credit-user').value, document.getElementById('credit-amount').value, document.getElementById('credit-account-id').value, document.getElementById('credit-currency').value)" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm"><i class="fa-solid fa-minus mr-1"></i> Quitar saldo</button>
                     <p id="credit-status" role="status" class="text-xs text-gray-300"></p>
                     <p class="text-[11px] text-yellow-200/80">Por seguridad, esta acción queda limitada a Owner y CEO. Usuario e ID deben pertenecer a la misma cuenta.</p>
                 </div>
@@ -1577,9 +1578,9 @@
             document.body.appendChild(bar);
         }
 
-        async function probeSupabase() {
+        async function probeSupabaseOnce() {
             const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 4000);
+            const timer = setTimeout(() => ctrl.abort(), 8000);
             try {
                 const res = await fetch(supabaseUrl + '/auth/v1/health', {
                     signal: ctrl.signal,
@@ -1594,6 +1595,29 @@
                 return false;
             }
         }
+
+        // v34: reintenta una vez antes de dar a Supabase por caído (un fallo de red suelto ya no deja la sesión "sin conexión")
+        async function probeSupabase() {
+            if (await probeSupabaseOnce()) return true;
+            await new Promise(r => setTimeout(r, 1200));
+            return await probeSupabaseOnce();
+        }
+        // v34: reconexión automática + reintento de pedidos pendientes de subir
+        setInterval(async function() {
+            try {
+                if (document.hidden) return;
+                if (!window.supabaseOnline) {
+                    if (await probeSupabaseOnce()) {
+                        window.supabaseOnline = true;
+                        if (!supabaseClient) createSupabaseClient();
+                        const b = document.getElementById('supabase-offline-banner'); if (b) b.remove();
+                        if (typeof window.fetchInitialData === 'function') window.fetchInitialData();
+                    }
+                } else if (window.kiwiToken && window.kiwiToken() && typeof currentUser !== 'undefined' && currentUser && typeof window.syncUnsyncedPurchases === 'function') {
+                    window.syncUnsyncedPurchases();
+                }
+            } catch (_) {}
+        }, 20000);
 
         function createSupabaseClient() {
             try {
@@ -2429,6 +2453,9 @@
             if (pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
             if (!window.isStrongPassword(pass)) { alert("La contraseña debe tener al menos 8 caracteres y 1 número."); return; }
             if (user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
+            if (!supabaseClient || !window.supabaseOnline) {
+                try { window.supabaseOnline = await probeSupabase(); if (window.supabaseOnline && !supabaseClient) createSupabaseClient(); } catch (_) {}
+            }
             if (!supabaseClient || !window.supabaseOnline) {
                 alert('No se pudo conectar con Supabase. Revisá tu conexión e intentá nuevamente; la cuenta no fue creada.');
                 return;
@@ -4787,6 +4814,50 @@
         };
 
 
+        // v34: quitar saldo (Owner/CEO) por RPC kiwi_staff_debit
+        window.debitUserBalance = async function(username, amount, accountIdInput, currency) {
+            const statusEl = document.getElementById('credit-status');
+            const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+            const targetName = String(username || '').trim();
+            const targetId = String(accountIdInput || '').trim().toUpperCase();
+            const raw = Number(amount);
+            const curr = currency || 'USDT';
+            const rate = (window.exchangeRates && window.exchangeRates[curr]) || 1;
+            const value = curr === 'USDT' ? raw : raw / rate;
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            const staff = users[currentUser];
+            if (!staff || !['owner','ceo'].includes(staff.role)) { setStatus('Sin permisos para quitar saldo.'); return alert('Sin permisos'); }
+            if (!targetName) { setStatus('Ingresá el nombre de usuario.'); return alert('Ingresá el nombre de usuario.'); }
+            if (!targetId) { setStatus('Ingresá el ID de cuenta (KWS-...).'); return alert('Ingresá el ID de cuenta (KWS-...).'); }
+            if (!Number.isFinite(raw) || raw <= 0) { setStatus('Ingresá un monto mayor que cero.'); return alert('El monto debe ser mayor que cero.'); }
+            if (!supabaseClient) createSupabaseClient();
+            if (!window.supabaseOnline) window.supabaseOnline = await probeSupabase();
+            if (!supabaseClient || !window.supabaseOnline) { setStatus('No se quitó saldo. Supabase no responde.'); return alert('NO SE QUITÓ NADA.\nSupabase no está disponible.'); }
+            if (!confirm('¿QUITAR ' + value.toFixed(2) + ' USDT a ' + targetName + '?\nID: ' + targetId + '\nEsta acción descuenta el saldo del cliente.')) { setStatus('Cancelado.'); return; }
+            setStatus('Procesando…');
+            try {
+                const data = await window.kiwiStaffRpc('kiwi_staff_debit', { p_username: targetName, p_account_id: targetId, p_amount: value });
+                if (!data) throw new Error('Supabase no devolvió la fila actualizada.');
+                const finalName = data.username;
+                const finalBalance = Number(data.balance || 0);
+                users[finalName] = { ...(users[finalName] || {}), accountId: data.account_id || targetId, balance: finalBalance };
+                localStorage.setItem('kiwi_users', JSON.stringify(users));
+                if (window._syncedBal && currentUser && currentUser.toLowerCase() === finalName.toLowerCase()) window._syncedBal[currentUser] = finalBalance;
+                setStatus('Listo: se quitaron ' + value.toFixed(2) + ' USDT a ' + finalName + '. Saldo actual: ' + finalBalance.toFixed(2) + ' USDT');
+                alert('Saldo quitado correctamente.\nUsuario: ' + finalName + '\nSe descontó: ' + value.toFixed(2) + ' USDT\nSaldo actual: ' + finalBalance.toFixed(2) + ' USDT');
+                if (currentUser && currentUser.toLowerCase() === finalName.toLowerCase()) {
+                    if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
+                }
+                const amountInput = document.getElementById('credit-amount'); if (amountInput) amountInput.value = '';
+            } catch (error) {
+                console.error('Error quitando saldo:', error);
+                const msg = String(error?.message || error || 'Error desconocido');
+                setStatus('No se pudo quitar: ' + msg);
+                alert('NO SE QUITÓ SALDO\n\n' + msg);
+            }
+        };
+
         window.handlePurchaseSubmit = async function(e) {
             e.preventDefault();
             if (!currentUser) return alert('Iniciá sesión');
@@ -6140,6 +6211,7 @@
                         <option value="PEN">PEN</option>
                     </select>
                     <button onclick="window.creditUserBalance(document.getElementById('admin-credit-user').value, document.getElementById('admin-credit-amount').value, document.getElementById('admin-credit-id').value, document.getElementById('admin-credit-currency').value)" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar</button>
+                    <button onclick="window.debitUserBalance(document.getElementById('admin-credit-user').value, document.getElementById('admin-credit-amount').value, document.getElementById('admin-credit-id').value, document.getElementById('admin-credit-currency').value)" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm">Quitar saldo</button>
                 </div>`;
         };
         window.loadAdmin2FA = function() {
