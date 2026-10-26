@@ -116,6 +116,22 @@
         }
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style id="kiwi-perf">
+        /* v36: rendimiento. Se quitan las animaciones que repintan toda la pantalla en cada cuadro
+           (borde con degradado en movimiento, brillos, sombras pulsantes, logos flotando con filtros). */
+        .kev { animation: none !important; background-size: 100% 100% !important; }
+        .kev-in::after { display: none !important; }
+        .kev-img, .kev-shield, .kev-logo { animation: none !important; }
+        .kev-cta { animation: none !important; position: relative; }
+        .kev-cta::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid rgba(255,30,39,.75); pointer-events: none; animation: kevRing 2.2s ease-out infinite; will-change: transform, opacity; }
+        @keyframes kevRing { 0% { transform: scale(1); opacity: .8; } 70%, 100% { transform: scale(1.12, 1.3); opacity: 0; } }
+        .khero { animation: none !important; box-shadow: 0 0 30px rgba(225,29,42,.28); }
+        .khero::after { display: none !important; }
+        .kiwi-hero-mascot { animation: none !important; }
+        .kiwi-spark { animation: kiwiSpark 3s ease-in-out infinite; box-shadow: none !important; will-change: opacity; }
+        header.sticky { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgba(7,7,10,.97) !important; }
+        @media (prefers-reduced-motion: reduce) { .kev-cta::after, .kiwi-spark { animation: none !important; } }
+    </style>
 </head>
 <body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
 
@@ -541,7 +557,7 @@
             </style>
             <section class="kev" aria-label="Evento especial KiwiiStore x LPMX">
                 <div class="kev-in grid md:grid-cols-[1fr_auto] items-center gap-2 p-5 sm:p-7 md:p-9">
-                    <img src="/images/Logo.png" alt="" aria-hidden="true" class="kev-bglogo" onerror="this.style.display='none'">
+                    <img src="/images/Logo.png" alt="" aria-hidden="true" decoding="async" class="kev-bglogo" onerror="this.style.display='none'">
                     <div class="kev-bgfade" aria-hidden="true"></div>
                     <div class="relative z-10 order-2 md:order-1">
                         <span class="kev-pill inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-rajdhani font-bold uppercase tracking-[0.18em] text-[#ffd34d] bg-black/40 border border-[#ffb800]/40 px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-[#ff1e27] animate-pulse"></span> <span class="kev-label">Evento especial KiwiiStore x LPMX</span></span>
@@ -552,7 +568,7 @@
                         <a href="/sorteos-y-eventos" onclick="window.goToEvents(); return false;" class="kev-cta mt-5 inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-gradient-to-r from-[#ff1e27] to-[#d4145a] hover:brightness-110 text-white font-orbitron font-black text-base px-8 h-14 rounded-2xl transition">PARTICIPAR <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                     <div class="kev-logo-wrap relative z-10 order-1 md:order-2 flex justify-center p-2 md:p-6">
-                        <img src="/images/LPMX.png" alt="Comunidad LPMX" class="kev-img kev-shield block w-full max-w-[200px] sm:max-w-[240px] md:max-w-[300px] h-auto object-contain" onerror="this.style.display='none'">
+                        <img src="/images/LPMX.png" alt="Comunidad LPMX" decoding="async" fetchpriority="high" class="kev-img kev-shield block w-full max-w-[200px] sm:max-w-[240px] md:max-w-[300px] h-auto object-contain" onerror="this.style.display='none'">
                     </div>
                 </div>
             </section>
@@ -566,7 +582,9 @@
                     var left = end - Date.now();
                     if (left <= 0) { el.innerHTML = '<p class="text-sm font-bold text-[#ffd34d]"><i class="fa-solid fa-flag-checkered"></i> Evento cerrado</p>'; return; }
                     var parts = [[Math.floor(left / 864e5), 'Días'], [Math.floor(left / 36e5) % 24, 'Hs'], [Math.floor(left / 6e4) % 60, 'Min'], [Math.floor(left / 1e3) % 60, 'Seg']];
-                    el.innerHTML = parts.map(function (p) { return '<div><p class="font-orbitron text-lg sm:text-xl font-black text-white leading-none">' + pad(p[0]) + '</p><p class="text-[10px] text-gray-400 uppercase mt-1">' + p[1] + '</p></div>'; }).join('');
+                    var nums = el.querySelectorAll('[data-kcd]');
+                    if (nums.length === 4) { for (var i = 0; i < 4; i++) { var t = pad(parts[i][0]); if (nums[i].textContent !== t) nums[i].textContent = t; } return; }
+                    el.innerHTML = parts.map(function (p) { return '<div><p data-kcd class="font-orbitron text-lg sm:text-xl font-black text-white leading-none">' + pad(p[0]) + '</p><p class="text-[10px] text-gray-400 uppercase mt-1">' + p[1] + '</p></div>'; }).join('');
                 }
                 var tries = 0;
                 function load() {
@@ -578,7 +596,7 @@
                     }).catch(function () { draw(); });
                 }
                 window.kiwiHomeEventRefresh = load;
-                setInterval(draw, 1000);
+                setInterval(function () { if (!document.hidden) draw(); }, 1000);
                 window.addEventListener('load', function () { setTimeout(load, 800); });
             })();
             </script>
@@ -616,7 +634,7 @@
                     <path d="M600 160 L520 210 L545 220 L450 300" fill="none" stroke="#ff4d57" stroke-width="1" filter="url(#kglow)" opacity=".4"/>
                 </svg>
                 <div class="absolute inset-y-0 left-0 w-full md:w-[62%] pointer-events-none" aria-hidden="true" style="-webkit-mask-image:linear-gradient(90deg,#000 35%,transparent 95%);mask-image:linear-gradient(90deg,#000 35%,transparent 95%);">
-                    <img src="images/KiwiRobux.png" alt="" class="kiwi-hero-mascot absolute -left-6 md:left-0 bottom-[-6%] h-[115%] w-auto max-w-none object-contain" onerror="this.style.display='none'">
+                    <img src="images/KiwiRobux.png" alt="" decoding="async" class="kiwi-hero-mascot absolute -left-6 md:left-0 bottom-[-6%] h-[115%] w-auto max-w-none object-contain" onerror="this.style.display='none'">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-r from-[#060608]/40 via-[#060608]/55 to-transparent pointer-events-none"></div>
                 <span class="kiwi-spark" style="left:62%;top:18%"></span><span class="kiwi-spark" style="left:78%;top:70%;animation-delay:1s"></span><span class="kiwi-spark" style="left:92%;top:30%;animation-delay:2s"></span><span class="kiwi-spark" style="left:55%;top:82%;animation-delay:.5s"></span>
