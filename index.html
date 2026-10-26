@@ -1614,6 +1614,7 @@
                         if (typeof window.fetchInitialData === 'function') window.fetchInitialData();
                     }
                 } else if (window.kiwiToken && window.kiwiToken() && typeof currentUser !== 'undefined' && currentUser && typeof window.syncUnsyncedPurchases === 'function') {
+                    if (window.resumeCheckout) window.resumeCheckout();
                     window.syncUnsyncedPurchases();
                 }
             } catch (_) {}
@@ -1863,6 +1864,7 @@
         };
         window.syncUnsyncedPurchases = async function() {
             if (!supabaseClient || !window.supabaseOnline) return;
+            if (typeof window.spendPending === 'function' && window.spendPending()) { clearTimeout(window._purchaseDefer); window._purchaseDefer = setTimeout(() => window.syncUnsyncedPurchases(), 1500); return; } // v35: los pedidos viajan junto al cobro
             const list = window.readPurchases().filter(p => !p._synced && p.user && window.sameUser(p.user, currentUser));
             if (!list.length) return;
             let { error } = await window.kiwiUpsertOrders(list.map(p => window.purchaseToRow(p, true)));
@@ -1870,13 +1872,28 @@
                 console.warn('Upsert completo de compras falló, reintentando con columnas básicas:', error);
                 ({ error } = await window.kiwiUpsertOrders(list.map(p => window.purchaseToRow(p, false))));
             }
-            if (error) { console.error('No se pudieron guardar compras en Supabase:', error); return; }
+            if (error) {
+                console.error('No se pudieron guardar compras en Supabase:', error);
+                // v35: reintentos con espera (3s, 8s, 20s) para que un pedido pagado no quede solo en este navegador
+                window._purchaseRetryN = (window._purchaseRetryN || 0) + 1;
+                if (window._purchaseRetryN <= 3) setTimeout(() => window.syncUnsyncedPurchases(), [3000, 8000, 20000][window._purchaseRetryN - 1]);
+                return;
+            }
+            window._purchaseRetryN = 0;
             const ids = new Set(list.map(p => String(p.id)));
             const all = window.readPurchases().map(p => ids.has(String(p.id)) ? Object.assign(p, { _synced: true }) : p);
             window._purchaseSyncMuted = true;
             localStorage.setItem('kiwi_purchases', JSON.stringify(all));
             window._purchaseSyncMuted = false;
         };
+        // v35: si hay pedidos que todavía no llegaron a Supabase, avisar antes de cerrar la pestaña
+        window.addEventListener('beforeunload', function(e) {
+            try {
+                if (typeof currentUser === 'undefined' || !currentUser) return;
+                const pend = window.readPurchases().filter(p => !p._synced && p.user && window.sameUser(p.user, currentUser));
+                if (pend.length || (window.spendPending && window.spendPending())) { e.preventDefault(); e.returnValue = 'Tu pedido todavía se está guardando.'; return e.returnValue; }
+            } catch (_) {}
+        });
         (function() {
             // Cualquier flujo que guarde compras en localStorage dispara la subida a la nube.
             const origSet = Storage.prototype.setItem;
@@ -5733,17 +5750,84 @@
             const amount = Math.round((known - nb) * 1e6) / 1e6;
             if (amount <= 0) return true;
             window._syncedBal[username] = nb;
+            // v35: el descuento NO viaja solo. Se junta con los pedidos pendientes y se envía en un único paso
+            // (kiwi_checkout): o se guarda todo (saldo + pedido) o no se guarda nada y se reintenta.
+            const q = window._spendQ = window._spendQ || { amount: 0, timer: null, busy: false, failed: null, tries: 0 };
+            if (!q.loaded) { q.loaded = true; try { const sv = JSON.parse(localStorage.getItem('kiwi_pending_checkout') || 'null'); if (sv && sv.user === username && sv.id && !q.failed) q.failed = sv; } catch (_) {} }
+            q.amount += amount; q.user = username;
+            clearTimeout(q.timer);
+            q.timer = setTimeout(() => window.flushSpend(), 60);
+            return true;
+        };
+        window.resumeCheckout = function() { // v35: un cobro que quedó a medias (pestaña cerrada) se retoma con la misma solicitud, sin cobrar dos veces
             try {
-                const cloudBal = await window.kiwiRpc('kiwi_spend_balance', { p_token: window.kiwiToken(), p_amount: amount });
-                window._syncedBal[username] = Number(cloudBal);
+                const q = window._spendQ = window._spendQ || { amount: 0, timer: null, busy: false, failed: null, tries: 0 };
+                if (q.busy || q.failed || q.timer) return;
+                const sv = JSON.parse(localStorage.getItem('kiwi_pending_checkout') || 'null');
+                if (!sv || !sv.id || typeof currentUser === 'undefined' || sv.user !== currentUser) return;
+                q.failed = sv; q.user = sv.user; q.loaded = true;
+                window.flushSpend();
+            } catch (_) {}
+        };
+        setTimeout(function () { try { if (window.resumeCheckout) window.resumeCheckout(); } catch (_) {} }, 4000);
+        window.spendPending = function() { const q = window._spendQ; return !!(q && (q.amount > 0 || q.busy || q.failed || q.timer)); };
+        window.flushSpend = async function() {
+            const q = window._spendQ; if (!q || q.busy) return;
+            q.timer = null;
+            const username = q.user;
+            if (!q.failed && q.amount <= 0) return;
+            if (!q.failed) {
+                q.failed = { id: 'rq-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10), amount: Math.round(q.amount * 1e6) / 1e6 };
+                q.amount = 0;
+                q.failed.user = username;
+                try { localStorage.setItem('kiwi_pending_checkout', JSON.stringify(q.failed)); } catch (_) {}
+            }
+            const req = q.failed;
+            q.busy = true;
+            try {
+                if (!supabaseClient || !window.supabaseOnline || !window.kiwiToken()) throw new Error('Sin conexión con el servidor.');
+                const list = window.readPurchases().filter(pp => !pp._synced && pp.user && window.sameUser(pp.user, username));
+                const rows = list.map(pp => window.purchaseToRow(pp, true));
+                let r;
+                try { r = await window.kiwiRpc('kiwi_checkout', { p_token: window.kiwiToken(), p_request_id: req.id, p_amount: req.amount, p_orders: rows }); }
+                catch (e) {
+                    if (!window.kiwiRpcMissing(e)) throw e;
+                    // SQL v35 todavía no aplicado: camino anterior (descuento y pedidos por separado)
+                    r = { balance: await window.kiwiRpc('kiwi_spend_balance', { p_token: window.kiwiToken(), p_amount: req.amount }) };
+                    rows.length = 0;
+                }
+                if (rows.length) {
+                    const ids = new Set(list.map(pp => String(pp.id)));
+                    const all = window.readPurchases().map(pp => ids.has(String(pp.id)) ? Object.assign(pp, { _synced: true }) : pp);
+                    window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(all)); window._purchaseSyncMuted = false;
+                }
+                q.failed = null; q.tries = 0; localStorage.removeItem('kiwi_pending_checkout');
+                const cloudBal = Number(r.balance);
+                window._syncedBal[username] = cloudBal;
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-                if (users[username]) { users[username].balance = Number(cloudBal); localStorage.setItem('kiwi_users', JSON.stringify(users)); }
+                if (users[username]) { users[username].balance = cloudBal; localStorage.setItem('kiwi_users', JSON.stringify(users)); }
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-                return true;
             } catch (e) {
-                window._syncedBal[username] = known;
-                console.warn('No se pudo descontar saldo en Supabase:', e);
-                return false;
+                console.warn('Cobro/pedido no guardado todavía, se reintenta:', e);
+                if (/Saldo insuficiente|Monto inválido|Solicitud inválida|Sesión inválida|suspendida/i.test(String((e && e.message) || e))) {
+                    // rechazo definitivo del servidor: no reintentar el cobro
+                    q.failed = null; q.tries = 0; localStorage.removeItem('kiwi_pending_checkout');
+                    window._syncedBal[username] = Number(window._syncedBal[username]) + req.amount;
+                    try { // el pago fue rechazado: no dejar pedidos sin pagar y devolver el saldo local al real
+                        const keep = window.readPurchases().filter(pp => pp._synced || !(pp.user && window.sameUser(pp.user, username)));
+                        window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(keep)); window._purchaseSyncMuted = false;
+                        const us = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                        if (us[username]) { us[username].balance = window._syncedBal[username]; localStorage.setItem('kiwi_users', JSON.stringify(us)); }
+                        if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+                    } catch (_) {}
+                    alert('No se pudo completar el pago: ' + String((e && e.message) || e) + '\nNo se te cobró nada. Si ves el pedido, ignoralo y volvé a intentar.');
+                } else {
+                    q.tries++;
+                    q.timer = setTimeout(() => window.flushSpend(), Math.min(30000, 2000 * q.tries));
+                }
+            } finally {
+                q.busy = false;
+                if (!q.timer && (q.amount > 0 || q.failed)) q.timer = setTimeout(() => window.flushSpend(), 100);
             }
         };
 
