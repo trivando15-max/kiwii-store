@@ -134,6 +134,7 @@
         header.sticky { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgba(7,7,10,.97) !important; }
         @media (prefers-reduced-motion: reduce) { .kev-cta::after, .kiwi-spark { animation: none !important; } }
     </style>
+<style>body[data-kpage="otra"] #discord-reviews{display:none!important}</style>
 </head>
 <body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
 
@@ -2867,9 +2868,9 @@
             if (hit) return hit.category;
             const t = ((p && (p.title || '')) + ' ' + (p && (p.sub || p.category || '')) ).toLowerCase();
             if (/robux|roblox|blox ?fruit|gamepass|fruta/.test(t)) return 'roblox';
-            if (/mobile legends|mlbb|twilight|pase semanal de diamantes|\bus\b.*diamantes/.test(t)) return 'mlbb';
+            if (/mobile legends|mlbb|\bml\b|twilight|crepuscular|pase semanal|weekly|diamantes? ?\+ ?bonus|\bus\b.*diamantes/.test(t)) return 'mlbb';
             if (/pubg|\buc\b/.test(t)) return 'pubg';
-            if (/blood ?strike|\bgold\b|strike pass/.test(t)) return 'bloodstrike';
+            if (/blood ?strike|\bgold\b|strike pass|elite|élite/.test(t)) return 'bloodstrike';
             if (/free ?fire|diamante|tarjeta semanal|tarjeta mensual|booyah|fragmento/.test(t)) return 'freefire';
             if (/netflix|spotify|disney|hbo|\bmax\b|prime|youtube|chatgpt|crunchyroll|paramount|canva|streaming/.test(t)) return 'streaming';
             if (/seguidor|likes?|vistas|instagram|tiktok|redes/.test(t)) return 'instagram';
@@ -2882,20 +2883,16 @@
             let purchases = window.readPurchases();
             container.innerHTML = '';
 
-            if (purchases.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-xs text-center italic">No hay compras registradas.</p>';
-                if (adminBox) adminBox.innerHTML = container.innerHTML;
-                return;
-            }
 
             // v46: subcategorías por juego/categoría del catálogo
             const CATS = window.KIWI_COMPRAS_CATS;
             const counts = {}; purchases.forEach(p => { const c = window.kiwiPurchaseCat(p); counts[c] = (counts[c] || 0) + 1; });
             let sel = window.kiwiComprasCat || 'all';
-            if (sel !== 'all' && !counts[sel]) sel = 'all';
-            const chip = (k, label, n) => `<button onclick="window.kiwiSetComprasCat('${k}')" class="px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${sel === k ? 'bg-kiwi-gold text-black border-kiwi-gold' : 'bg-kiwi-dark text-gray-300 border-kiwi-border hover:border-kiwi-gold/60'}">${label} <span class="opacity-70">(${n})</span></button>`;
-            container.innerHTML = `<div class="flex flex-wrap gap-2 mb-3">${chip('all', 'Todas', purchases.length)}${CATS.filter(c => counts[c[0]]).map(c => chip(c[0], c[1], counts[c[0]])).join('')}</div>`;
+            if (sel !== 'all' && !CATS.some(c => c[0] === sel)) sel = 'all';
+            const chip = (k, label, n) => `<button onclick="window.kiwiSetComprasCat('${k}')" class="${n === 0 && sel !== k ? 'opacity-40 ' : ''}px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${sel === k ? 'bg-kiwi-gold text-black border-kiwi-gold' : 'bg-kiwi-dark text-gray-300 border-kiwi-border hover:border-kiwi-gold/60'}">${label} <span class="opacity-70">(${n})</span></button>`;
+            container.innerHTML = `<div class="flex flex-wrap gap-2 mb-3">${chip('all', 'Todas', purchases.length)}${CATS.map(c => chip(c[0], c[1], counts[c[0]] || 0)).join('')}</div>`;
             if (sel !== 'all') purchases = purchases.filter(p => window.kiwiPurchaseCat(p) === sel);
+            if (!purchases.length) container.innerHTML += `<p class="text-gray-500 text-xs text-center italic py-4">${sel === 'all' ? 'No hay compras registradas.' : 'Sin compras en esta categoría.'}</p>`;
 
             purchases.slice().reverse().forEach(p => {
                 let statusHtml = p.status === 'pending' ? `<button onclick="window.claimPurchase(${p.id})" class="bg-kiwi-gold hover:bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded transition">Reclamar</button>` : 
@@ -6489,11 +6486,24 @@
         };
 
         
-        // Hide reviews on admin page
-        if (location.pathname === '/panel-admin') {
+        // v48: reseñas de Discord SOLO en /inicio y /catalogo (controlado por ruta)
+        window.kiwiSyncPageWidgets = function () {
+            const path = (location.pathname.replace(/\/+$/, '') || '/').toLowerCase();
+            const page = (path === '/' || path === '/inicio') ? 'inicio' : (path === '/catalogo' ? 'catalogo' : 'otra');
+            document.body.setAttribute('data-kpage', page);
             const rev = document.getElementById('discord-reviews');
-            if (rev) rev.style.display = 'none';
-        }
+            if (rev) rev.style.display = page === 'otra' ? 'none' : '';
+        };
+        (function () {
+            ['pushState', 'replaceState'].forEach(fn => {
+                const orig = history[fn];
+                history[fn] = function () { const r = orig.apply(this, arguments); try { window.kiwiSyncPageWidgets(); } catch (e) {} return r; };
+            });
+            window.addEventListener('popstate', () => setTimeout(window.kiwiSyncPageWidgets, 0));
+            window.kiwiSyncPageWidgets();
+            document.addEventListener('DOMContentLoaded', window.kiwiSyncPageWidgets);
+            window.addEventListener('load', () => setTimeout(window.kiwiSyncPageWidgets, 500));
+        })();
 
         
         
