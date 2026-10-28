@@ -8,6 +8,21 @@
     { "source": "/catalogo/redes-sociales", "destination": "/index.html" },
     { "source": "/perfil-y-pedidos", "destination": "/index.html" },
     { "source": "/panel-admin", "destination": "/index.html" },
-    { "source": "/sorteos-y-eventos", "destination": "/index.html" }
+    { "source": "/sorteos-y-eventos", "destination": "/index.html" },
+
+    { "source": "/Roblox", "destination": "/index.html" },
+    { "source": "/roblox", "destination": "/index.html" },
+    { "source": "/FreeFire", "destination": "/index.html" },
+    { "source": "/freefire", "destination": "/index.html" },
+    { "source": "/Streaming", "destination": "/index.html" },
+    { "source": "/streaming", "destination": "/index.html" },
+    { "source": "/RedesSociales", "destination": "/index.html" },
+    { "source": "/redessociales", "destination": "/index.html" },
+    { "source": "/MobileLegends", "destination": "/index.html" },
+    { "source": "/mobilelegends", "destination": "/index.html" },
+    { "source": "/PubgMobile", "destination": "/index.html" },
+    { "source": "/pubgmobile", "destination": "/index.html" },
+    { "source": "/BloodStrike", "destination": "/index.html" },
+    { "source": "/bloodstrike", "destination": "/index.html" }
   ]
 }
