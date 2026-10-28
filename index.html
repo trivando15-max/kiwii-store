@@ -801,6 +801,27 @@
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">REDES SOCIALES</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Instagram & TikTok</p>
             </button>
+            <button onclick="window.goToCategory('mlbb')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
+                <div class="cat-bg" style="background:linear-gradient(135deg,#0c4a6e,#1e1b4b 60%,#0b0c10)"></div>
+                <div class="cat-bg-overlay"></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-shield-halved text-2xl" style="color:#38bdf8"></i></div>
+                <p class="relative z-10 font-orbitron font-bold text-white text-base">MOBILE LEGENDS</p>
+                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Diamantes y pases · Global y US</p>
+            </button>
+            <button onclick="window.goToCategory('pubg')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
+                <div class="cat-bg" style="background:linear-gradient(135deg,#78350f,#292524 60%,#0b0c10)"></div>
+                <div class="cat-bg-overlay"></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-parachute-box text-2xl" style="color:#f59e0b"></i></div>
+                <p class="relative z-10 font-orbitron font-bold text-white text-base">PUBG MOBILE</p>
+                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">UC al instante</p>
+            </button>
+            <button onclick="window.goToCategory('bloodstrike')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
+                <div class="cat-bg" style="background:linear-gradient(135deg,#7f1d1d,#1c1917 60%,#0b0c10)"></div>
+                <div class="cat-bg-overlay"></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-crosshairs text-2xl" style="color:#ef4444"></i></div>
+                <p class="relative z-10 font-orbitron font-bold text-white text-base">BLOOD STRIKE</p>
+                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Gold y Strike Pass</p>
+            </button>
         </div>
     </div>
 
@@ -905,6 +926,11 @@
                             <div id="ff-diamond-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
                         </section>
 
+                        <section id="ff-ra-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <h3 class="font-orbitron font-bold text-white text-sm md:text-base mb-1"><i class="fa-solid fa-ticket text-orange-400 mr-1"></i> Tarjetas y Pase</h3>
+                            <p class="text-[11px] text-emerald-400 font-rajdhani mb-4"><i class="fa-solid fa-bolt"></i> Entrega automática a tu ID</p>
+                            <div id="ff-ra-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                        </section>
                         <section id="ff-limited-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
                                 <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes Limitados <span class="text-orange-400 text-sm">(1 x ID)</span></h3>
@@ -1024,6 +1050,7 @@
                 </div>
             </div>
 
+            <div id="ra-shell" class="hidden"></div>
             <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden"></div>
             
             <div id="streaming-category-wrapper" class="hidden">
@@ -3014,6 +3041,119 @@
             { id: 424, category: 'tiktok', sub: 'likes', title: '100.000 Likes/Vistas', price: '30 USDT - $48.000 ARS', emoji: '👑', popular: true, tag: 'Mega VIP', usdtPrice: 30, purchasePriceARS: 48000 }
         ];
 
+        // ===== v37: PRODUCTOS DE RECARGAS AMÉRICA (entrega automática) =====
+        // v38: precio de venta = costo de Recargas América x 1,10 (10% de ganancia), redondeado hacia arriba al centavo.
+        // Los costos se actualizan solos desde /api/ra-prices al abrir la página (si falla, se usan los costos de abajo).
+        // v39: false = los diamantes ilimitados se entregan por /api/recargas como siempre. true = pasan por /api/ra (cobro en el servidor + validación de precio).
+        window.KIWI_FF_ILIMITADO_VIA_RA = false;
+        // v40: ganancia % por producto (id Recargas América → %). Respaldo: la tabla que manda está en api/_ra-lib.js (MARGINS) y llega por /api/ra-prices.
+        window.KIWI_RA_MARGINS = {
+          // Free Fire · Diamantes ilimitados (110 → 6.160)
+          5: 20, 6: 18, 7: 16, 8: 14, 9: 12, 10: 10,
+          // Free Fire · Tarjetas y Pase (por costo: Semanal Básica, Semanal, Booyah, Mensual)
+          1: 20, 2: 16.5, 4: 13.5, 3: 10,
+          // Blood Strike · Gold (100 → 5.000)
+          23: 20, 25: 18, 26: 16, 27: 14, 28: 12, 29: 10,
+          // Blood Strike · Pases (Lucky Chest, Level Up, Elite, Premium)
+          30: 20, 31: 16.5, 32: 13.5, 33: 10,
+          // PUBG Mobile · UC (60 → 8.100)
+          34: 20, 35: 18, 36: 16, 37: 14, 38: 12, 39: 10,
+          // Mobile Legends Global · diamantes + Pase Semanal + Twilight, ordenados por costo
+          249: 20, 250: 19, 251: 18, 252: 16.5, 253: 15.5, 254: 14.5, 255: 13.5, 256: 12, 257: 11, 258: 10,
+          // Mobile Legends US · diamantes + pases, ordenados por costo
+          259: 20, 260: 19, 261: 18, 262: 17.5, 263: 16.5, 264: 15.5, 265: 14.5, 266: 13.5, 267: 12.5, 268: 12, 269: 11, 270: 10
+        };
+        window.KIWI_RA_MARGIN = 1.10; // 1.10 = +10%. Si lo cambiás, cambiá también MARGIN en api/_ra-lib.js
+        window.KIWI_RA_ITEMS = [
+            // id tienda, id RA, categoría, sub, título, costo RA (USD), extras
+            // FREE FIRE · DIAMANTES ILIMITADOS (v39: precio = costo RA x 1,10; la entrega sigue por /api/recargas como antes)
+            { id: 200, ra: 5, category: 'freefire', sub: 'ilimitado', title: '110 Diamantes', cost: 0.6494, legacy: true },
+            { id: 201, ra: 6, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', cost: 1.9463, legacy: true },
+            { id: 202, ra: 7, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', cost: 3.2918, legacy: true },
+            { id: 203, ra: 8, category: 'freefire', sub: 'ilimitado', title: '1.166 Diamantes', cost: 6.1152, legacy: true },
+            { id: 204, ra: 9, category: 'freefire', sub: 'ilimitado', title: '2.398 Diamantes', cost: 12.1364, legacy: true },
+            { id: 205, ra: 10, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', cost: 30.8870, legacy: true },
+            // FREE FIRE (tarjetas y pase)
+            { id: 230, ra: 1, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal Básica', cost: 0.3535, emoji: '🎟️' },
+            { id: 231, ra: 2, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal', cost: 1.5150, emoji: '🎟️' },
+            { id: 232, ra: 3, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Mensual', cost: 7.0700, emoji: '🎫', tag: 'Más Elegido', popular: true },
+            { id: 221, ra: 4, category: 'freefire', sub: 'especiales', title: 'Pase Booyah Premium', cost: 2.1210, keep: true },
+            // BLOOD STRIKE
+            { id: 600, ra: 23, category: 'bloodstrike', sub: 'gold', title: '100 + 5 Gold', cost: 0.7172, emoji: '🪙' },
+            { id: 601, ra: 25, category: 'bloodstrike', sub: 'gold', title: '300 + 20 Gold', cost: 2.1515, emoji: '🪙' },
+            { id: 602, ra: 26, category: 'bloodstrike', sub: 'gold', title: '500 + 40 Gold', cost: 3.5859, emoji: '🪙' },
+            { id: 603, ra: 27, category: 'bloodstrike', sub: 'gold', title: '1.000 + 100 Gold', cost: 7.1693, emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 604, ra: 28, category: 'bloodstrike', sub: 'gold', title: '2.000 + 260 Gold', cost: 14.3385, emoji: '💰' },
+            { id: 605, ra: 29, category: 'bloodstrike', sub: 'gold', title: '5.000 + 800 Gold', cost: 35.8488, emoji: '💰', tag: 'Mejor Oferta', popular: true },
+            { id: 606, ra: 30, category: 'bloodstrike', sub: 'pases', title: 'Ultra Skin Lucky Chest', cost: 0.4293, emoji: '🎁' },
+            { id: 607, ra: 31, category: 'bloodstrike', sub: 'pases', title: 'Level Up Pass', cost: 1.6875, emoji: '🎖️' },
+            { id: 608, ra: 32, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Elite', cost: 3.3898, emoji: '🎖️' },
+            { id: 609, ra: 33, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Premium', cost: 7.4249, emoji: '🏆', tag: 'Premium', popular: true },
+            // PUBG MOBILE
+            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC (57 + 3)', cost: 0.8959, emoji: '🪙' },
+            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC (300 + 25)', cost: 4.5090, emoji: '🪙' },
+            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC (600 + 60)', cost: 9.0304, emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC (1.500 + 300)', cost: 22.5873, emoji: '💰' },
+            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC (3.000 + 850)', cost: 45.1820, emoji: '💰' },
+            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC (6.000 + 2.100)', cost: 90.3764, emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            // MOBILE LEGENDS (global)
+            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes (78 + 8)', cost: 1.1539, emoji: '💎' },
+            { id: 641, ra: 250, category: 'mlbb', sub: 'global', title: 'Pase Semanal de Diamantes', cost: 1.4592, emoji: '🎟️', tag: 'Popular', popular: true },
+            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes (156 + 16)', cost: 2.3103, emoji: '💎' },
+            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes (234 + 23)', cost: 3.4494, emoji: '💎' },
+            { id: 644, ra: 253, category: 'mlbb', sub: 'global', title: 'Twilight Pass', cost: 7.6209, emoji: '🌙' },
+            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes (625 + 81)', cost: 9.2364, emoji: '💎', tag: 'Más Elegido', popular: true },
+            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes (1.860 + 335)', cost: 27.7117, emoji: '💎' },
+            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes (3.099 + 589)', cost: 46.1870, emoji: '💎' },
+            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes (4.649 + 883)', cost: 69.2830, emoji: '💎' },
+            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes (7.740 + 1.548)', cost: 115.4725, emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            // MOBILE LEGENDS (cuentas región US)
+            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes (51 + 5) · US', cost: 0.8586, emoji: '💎' },
+            { id: 661, ra: 260, category: 'mlbb', sub: 'us', title: '112 Diamantes (102 + 10) · US', cost: 1.7173, emoji: '💎' },
+            { id: 662, ra: 261, category: 'mlbb', sub: 'us', title: 'Pase Semanal de Diamantes · US', cost: 1.7173, emoji: '🎟️' },
+            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes (253 + 25) · US', cost: 4.2931, emoji: '💎' },
+            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes (505 + 66) · US', cost: 8.5862, emoji: '💎' },
+            { id: 665, ra: 264, category: 'mlbb', sub: 'us', title: 'Twilight Pass · US', cost: 8.5862, emoji: '🌙' },
+            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes (1.010 + 182) · US', cost: 17.1700, emoji: '💎' },
+            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes (1.515 + 273) · US', cost: 25.7562, emoji: '💎' },
+            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes (2.525 + 480) · US', cost: 42.9262, emoji: '💎' },
+            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes (3.030 + 576) · US', cost: 51.5100, emoji: '💎' },
+            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes (4.008 + 802) · US', cost: 68.6800, emoji: '💎' },
+            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes (5.010 + 1.002) · US', cost: 85.8500, emoji: '👑' }
+        ];
+        window.kiwiRaSalePrice = function(it) {
+            const cost = Number(it.cost) || 0;
+            if (it.precio) return Math.max(Number(it.precio), Math.ceil(cost * 100) / 100);
+            const pm = Number((window.KIWI_RA_MARGINS || {})[it.ra]);
+            const m = (pm >= 0 && pm <= 200) ? 1 + pm / 100 : (Number(window.KIWI_RA_MARGIN) || 1.10);
+            return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100; // hacia arriba al centavo
+        };
+        window.KIWI_RA_MAP = {}; // id del catálogo → id de Recargas América
+        (function () {
+            const GAME = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG Mobile', mlbb: 'Mobile Legends' };
+            window.KIWI_RA_ITEMS.forEach(it => {
+                const usdt = window.kiwiRaSalePrice(it);
+                const ars = '$' + Math.round(usdt * 1600).toLocaleString('es-AR') + ' ARS';
+                const existing = window.products.find(p => p.id === it.id);
+                if (it.legacy) { // Diamantes ilimitados: solo cambia el precio; la compra sigue por el flujo de siempre (/api/recargas)
+                    if (window.KIWI_FF_ILIMITADO_VIA_RA) window.KIWI_RA_MAP[it.id] = it.ra;
+                    if (existing) Object.assign(existing, { usdtPrice: usdt, price: ars, raCost: it.cost, raLegacyId: it.ra });
+                    return;
+                }
+                window.KIWI_RA_MAP[it.id] = it.ra;
+                if (existing) { // Pase Booyah: mismo producto, ahora con entrega automática
+                    Object.assign(existing, { title: it.title, usdtPrice: usdt, price: ars, raId: it.ra, raCost: it.cost, autoDelivery: true });
+                    return;
+                }
+                window.products.push({
+                    id: it.id, category: it.category, sub: it.sub,
+                    title: (it.category === 'freefire' ? 'Free Fire · ' : GAME[it.category] + ' · ') + it.title,
+                    shortTitle: it.title, price: ars, usdtPrice: usdt, emoji: it.emoji || '💎',
+                    tag: it.tag, popular: !!it.popular, raId: it.ra, raCost: it.cost, autoDelivery: true
+                });
+            });
+        })();
+
         // --- CATALOGO CON VARIANTES ---
         window.catalogVariant = [
             { id: 'netflix', title: 'Netflix', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/960px-Netflix_2015_logo.svg.png', category: 'streaming', variants: [
@@ -4158,7 +4298,7 @@
                     <div class="aspect-[4/3] bg-gradient-to-b from-sky-500/10 to-transparent flex items-center justify-center p-2">${i < 6 ? `<img src="https://cdn-gop.garenanow.com/gop/app/0000/100/067/pricing_image_config/0000/000/00${(bm ? [100,310,520,1060,2180,5600].indexOf(bm[0]) : i) + 1}/logo.png" alt="${prod.title}" loading="lazy" class="w-full h-full object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.5)]">` : window.ffDiamondArt(i)}</div>
                     <div class="px-2 pb-3 pt-2 bg-[#20232b]">
                         <p class="font-bold text-white text-sm">${num.toLocaleString('es-AR')} <span class="text-[10px] font-normal text-gray-400">Diamantes</span></p>
-                        <p class="text-emerald-400 font-bold text-sm">${window.getConvertedPrice(prod)}</p>
+                        <p class="text-emerald-400 font-bold text-sm">${prod.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(prod)}</p>
                         <p class="text-[11px] text-gray-500">≈ $${window.ffUsdOf(prod).toFixed(2)} USD</p>
                     </div>
                 </button>`;
@@ -4288,7 +4428,7 @@
             const info = document.getElementById('category-info-container');
             if (info && category !== 'freefire') info.classList.add('hidden');
 
-            const routeMap = { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
+            const routeMap = window.KIWI_ROUTES || { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
             if (routeMap[category] && location.pathname !== routeMap[category]) {
                 history.pushState({}, '', routeMap[category]);
             }
@@ -4983,7 +5123,8 @@
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
                 if (!users[currentUser]) return alert('Sesión inválida');
                 const bal = Number(users[currentUser].balance || 0);
-                const priceNumGP = window.parsePriceARS ? window.parsePriceARS(window.currentActiveProduct.price) : 0;
+                const priceNumGP = Number(window.currentActiveProduct.usdtPrice) || 0; // v38: USDT (antes comparaba el texto en pesos)
+                if (!priceNumGP) return alert('No se pudo leer el precio del producto.');
                 if (bal < priceNumGP) return alert('Saldo insuficiente');
                 const robloxUser = (document.getElementById('user-account-input')?.value || '').trim();
                 const gamepassLink = (document.getElementById('extra-input')?.value || '').trim();
@@ -5005,6 +5146,7 @@
                     status: 'confirmed',
                     category: 'roblox',
                     sub: 'robux_gamepass',
+                    usdtPrice: priceNumGP,
                     notes: ''
                 };
                 purchases.push(order);
@@ -5868,6 +6010,11 @@
                 return alert('El ID de Free Fire debe ser solo números (5 a 15 dígitos).\nNo uses el nombre del jugador (ej. HELLOKITTY8).');
             }
             if (!currentUser) return alert('Iniciá sesión para comprar');
+            // v37: tarjetas y Pase Booyah → entrega automática Recargas América
+            if (window.KIWI_RA_MAP && window.KIWI_RA_MAP[prod.id] && typeof window.kiwiRaPurchase === 'function') {
+                document.getElementById('ff-confirm-modal').classList.add('hidden');
+                return window.kiwiRaPurchase(prod, { player_id: ffId, zone_id: '', name: window.lastFFName || '' });
+            }
 
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!users[currentUser]) return alert('Sesión inválida. Volvé a iniciar sesión.');
@@ -5913,6 +6060,7 @@
             document.getElementById('ff-confirm-modal').classList.add('hidden');
 
             // Diamantes ilimitados: API primero, saldo después
+            if (prod.sub === 'ilimitado' && prod.raUnavailable) return alert('Este paquete está agotado / no disponible por el momento.\nNO se descontó saldo.');
             if (prod.sub === 'ilimitado') {
                 alert('Enviando recarga a Free Fire…\nID: ' + ffId + '\nProducto: ' + prod.title);
                 const result = await window.buyWithRecargas(prod.title, ffId);
@@ -5946,13 +6094,14 @@
                 date: new Date().toLocaleDateString('es-AR'),
                 status: prod.sub === 'ilimitado' ? 'delivered' : 'confirmed',
                 category: 'freefire',
-                sub: prod.sub
+                sub: prod.sub,
+                usdtPrice: priceNum
             };
             purchases.push(order);
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
 
             if (prod.sub === 'ilimitado') {
-                alert('Recarga enviada correctamente.\nID: ' + ffId + '\nNuevo saldo: $' + users[currentUser].balance.toLocaleString('es-AR') + ' ARS');
+                alert('Recarga enviada correctamente.\nID: ' + ffId + '\nNuevo saldo: ' + Number(users[currentUser].balance).toFixed(2) + ' USDT');
             } else {
                 alert('Pedido creado. Estado: En proceso (entrega manual).\nID: ' + ffId);
             }
@@ -5964,7 +6113,9 @@
         // Precios base en ARS (saldo interno siempre en ARS)
         const FRAG_PRICE_PER_UNIT = 75;
         const BOX_PRICE_PER_UNIT = 500;
-        const BOOYAH_PRICE_ARS = 3300;
+        // v38: el saldo es en USDT. Los precios en ARS de esta sección se pasan a USDT con la tasa fija de la tienda (1 USDT = 1600 ARS)
+        window.kiwiArsToUsdt = function(ars) { return Math.round((Number(ars) || 0) / 1600 * 100) / 100; };
+        window.kiwiBooyahArs = function() { return Math.round((Number((window.products.find(p => p.id === 221) || {}).usdtPrice) || 2.7) * 1600); };
 
         // Convierte un monto ARS a la moneda seleccionada (solo visualización)
         window.formatArsAsCurrency = function(arsAmount) {
@@ -6014,8 +6165,9 @@
             if (!currentUser) return alert('Iniciá sesión');
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             const bal = users[currentUser]?.balance || 0;
-            const price = qty * FRAG_PRICE_PER_UNIT;
-            if (bal < price) return alert('Saldo insuficiente');
+            const priceArs = qty * FRAG_PRICE_PER_UNIT;
+            const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
+            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + Number(bal).toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
 
@@ -6029,7 +6181,8 @@
                 id: Date.now(),
                 user: currentUser,
                 title: 'Fragmentos Universales x' + qty,
-                price: '$' + price.toLocaleString('es-AR') + ' ARS',
+                price: '$' + priceArs.toLocaleString('es-AR') + ' ARS (' + price.toFixed(2) + ' USDT)',
+                usdtPrice: price,
                 targetUser: ffId,
                 date: new Date().toLocaleDateString('es-AR'),
                 status: 'confirmed',
@@ -6059,9 +6212,9 @@
 
         window.updateBooyahPrice = function() {
             const el = document.getElementById('booyah-price-display');
-            if (el) el.textContent = window.formatArsAsCurrency(BOOYAH_PRICE_ARS);
+            if (el) el.textContent = window.formatArsAsCurrency(window.kiwiBooyahArs());
             const usd = document.getElementById('booyah-usd-display');
-            if (usd) usd.textContent = '≈ $' + (BOOYAH_PRICE_ARS / 1600).toFixed(2) + ' USD';
+            if (usd) usd.textContent = '≈ $' + (window.kiwiBooyahArs() / 1600).toFixed(2) + ' USD';
         };
 
         window.buyBoxes = function() {
@@ -6070,8 +6223,9 @@
             if (!currentUser) return alert('Iniciá sesión');
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             const bal = users[currentUser]?.balance || 0;
-            const price = qty * BOX_PRICE_PER_UNIT;
-            if (bal < price) return alert('Saldo insuficiente');
+            const priceArs = qty * BOX_PRICE_PER_UNIT;
+            const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
+            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + Number(bal).toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
 
@@ -6085,7 +6239,8 @@
                 id: Date.now(),
                 user: currentUser,
                 title: 'Cajas de Fragmentos x' + qty,
-                price: '$' + price.toLocaleString('es-AR') + ' ARS',
+                price: '$' + priceArs.toLocaleString('es-AR') + ' ARS (' + price.toFixed(2) + ' USDT)',
+                usdtPrice: price,
                 targetUser: ffId,
                 date: new Date().toLocaleDateString('es-AR'),
                 status: 'confirmed',
@@ -6100,7 +6255,8 @@
             if (!currentUser) return alert('Iniciá sesión');
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             const bal = users[currentUser]?.balance || 0;
-            const price = BOOYAH_PRICE_ARS;
+            const priceArs = window.kiwiBooyahArs();
+            const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
             if (bal < price) return alert('Saldo insuficiente');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
@@ -6115,7 +6271,8 @@
                 id: Date.now(),
                 user: currentUser,
                 title: 'Pase Booyah',
-                price: '$' + price.toLocaleString('es-AR') + ' ARS',
+                price: '$' + priceArs.toLocaleString('es-AR') + ' ARS (' + price.toFixed(2) + ' USDT)',
+                usdtPrice: price,
                 targetUser: ffId,
                 date: new Date().toLocaleDateString('es-AR'),
                 status: 'confirmed',
@@ -6344,7 +6501,7 @@
             history.pushState({}, '', '/catalogo');
         };
         window.goToCategory = function(cat) {
-            const routes = { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
+            const routes = window.KIWI_ROUTES || { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
             history.pushState({}, '', routes[cat] || '/catalogo');
             document.getElementById('catalog-view').classList.add('hidden');
             if (typeof window.filterCategory === 'function') window.filterCategory(cat);
@@ -7116,5 +7273,311 @@ window.resetUser2FA = function(username) {
 })();
 
 </script>
+    <script>
+    // ===== v37: categorías Mobile Legends / PUBG Mobile / Blood Strike + entrega automática Recargas América + rutas =====
+    (function () {
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        window.KIWI_RA_GAMES = {
+            bloodstrike: { name: 'Blood Strike', icon: 'fa-crosshairs', color: '#ef4444', grad: 'from-red-900/60 via-[#1a0d10] to-kiwi-dark', desc: 'Gold y pases directo a tu ID', tabs: [['gold', 'Gold'], ['pases', 'Pases']], zone: false, help: 'Tu ID está en el perfil del juego (tocá tu avatar).' },
+            pubg: { name: 'PUBG Mobile', icon: 'fa-parachute-box', color: '#f59e0b', grad: 'from-amber-800/50 via-[#1a150a] to-kiwi-dark', desc: 'UC directo a tu ID', tabs: [['uc', 'UC']], zone: false, help: 'Tu ID de personaje está en tu perfil, debajo del nombre.' },
+            mlbb: { name: 'Mobile Legends', icon: 'fa-shield-halved', color: '#38bdf8', grad: 'from-sky-900/60 via-[#0b1422] to-kiwi-dark', desc: 'Diamantes y pases (Global y Región US)', tabs: [['global', 'Global'], ['us', 'Región US']], zone: true, help: 'En tu perfil verás algo como 123456789 (2001): el primer número es tu ID y el de paréntesis la Zona / Servidor.' }
+        };
+        window.KIWI_ROUTES = { roblox: '/Roblox', freefire: '/FreeFire', streaming: '/Streaming', instagram: '/RedesSociales', mlbb: '/MobileLegends', pubg: '/PubgMobile', bloodstrike: '/BloodStrike' };
+        const ALIASES = { '/catalogo/roblox': 'roblox', '/catalogo/free-fire': 'freefire', '/catalogo/suscripciones-ia': 'streaming', '/catalogo/redes-sociales': 'instagram', '/free-fire': 'freefire', '/mobile-legends': 'mlbb', '/mlbb': 'mlbb', '/pubg': 'pubg', '/pubg-mobile': 'pubg', '/blood-strike': 'bloodstrike', '/catalogo/mobile-legends': 'mlbb', '/catalogo/pubg-mobile': 'pubg', '/catalogo/blood-strike': 'bloodstrike' };
+        const TITLES = { roblox: 'Roblox y Blox Fruits', freefire: 'Free Fire', streaming: 'Streaming e IA', instagram: 'Redes Sociales', mlbb: 'Mobile Legends', pubg: 'PUBG Mobile', bloodstrike: 'Blood Strike' };
+        const DEFAULT_TITLE = document.title;
+        window.kiwiCatFromPath = function (path) {
+            const p = String(path || '').replace(/\/+$/, '').toLowerCase();
+            for (const k in window.KIWI_ROUTES) if (window.KIWI_ROUTES[k].toLowerCase() === p) return k;
+            return ALIASES[p] || null;
+        };
+        window.kiwiSetMeta = function (cat) {
+            const t = cat && TITLES[cat];
+            document.title = t ? (t + ' - Recargas | KIWII STORE') : DEFAULT_TITLE;
+            const d = document.querySelector('meta[name="description"]') || (function () { const m = document.createElement('meta'); m.name = 'description'; document.head.appendChild(m); return m; })();
+            d.content = t ? ('Comprá ' + t + ' en KIWII STORE: recargas al instante, pagos para toda Latam y Crypto.') : 'Robux, diamantes Free Fire, Mobile Legends, PUBG Mobile, Blood Strike, streaming y más.';
+            const og = document.querySelector('meta[property="og:title"]'); if (og) og.content = t ? (t + ' | KIWII STORE') : 'KIWII STORE - Recargas gamer al instante';
+        };
+
+        // ---- Navegación: filterCategory con URL linda, título y las 3 categorías nuevas ----
+        const origFilter = window.filterCategory;
+        window.filterCategory = function (category) {
+            const shell = document.getElementById('ra-shell');
+            if (shell) shell.classList.add('hidden');
+            const isGame = !!window.KIWI_RA_GAMES[category];
+            origFilter(isGame ? '__ra__' : category);
+            const route = window.KIWI_ROUTES[category];
+            if (route && window.kiwiCatFromPath(location.pathname) !== category) history.pushState({}, '', route);
+            window.currentCatalogCategory = category;
+            window.kiwiSetMeta(category);
+            if (isGame) {
+                const g = window.KIWI_RA_GAMES[category];
+                document.getElementById('category-title').innerHTML = `<i class="fa-solid ${g.icon}" style="color:${g.color}"></i> ${g.name.toUpperCase()}`;
+                const grid = document.getElementById('product-grid'); if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
+                window.raRenderGame(category);
+            }
+        };
+        window.goToCategory = function (cat) {
+            document.getElementById('catalog-view').classList.add('hidden');
+            window.filterCategory(cat);
+        };
+        const origHome = window.goBackToHome;
+        window.goBackToHome = function () { window.kiwiSetMeta(null); const s = document.getElementById('ra-shell'); if (s) s.classList.add('hidden'); return origHome.apply(this, arguments); };
+        window.addEventListener('popstate', function () {
+            const cat = window.kiwiCatFromPath(location.pathname);
+            if (cat) { if (window.currentCatalogCategory !== cat || document.getElementById('category-view').classList.contains('hidden')) { document.getElementById('catalog-view')?.classList.add('hidden'); window.filterCategory(cat); } }
+            else { window.kiwiSetMeta(null); const s = document.getElementById('ra-shell'); if (s && !/^\/catalogo/i.test(location.pathname)) s.classList.add('hidden'); }
+        });
+        // Carga directa: kiwistore.lat/BloodStrike, /bloodstrike, /FreeFire, etc.
+        (function () {
+            const cat = window.kiwiCatFromPath(location.pathname);
+            if (!cat) return;
+            const canon = window.KIWI_ROUTES[cat];
+            history.replaceState({}, '', canon);
+            setTimeout(() => { document.getElementById('catalog-view')?.classList.add('hidden'); window.filterCategory(cat); }, 350);
+        })();
+
+        // ---- Vista de juego (Mobile Legends / PUBG / Blood Strike) ----
+        window.raState = { cat: null, tab: null, sel: null, verified: {} };
+        const savedIds = () => { try { return JSON.parse(localStorage.getItem('kiwi_ra_ids') || '{}'); } catch (_) { return {}; } };
+        window.raRenderGame = function (cat) {
+            const g = window.KIWI_RA_GAMES[cat]; const shell = document.getElementById('ra-shell');
+            if (!g || !shell) return;
+            const st = window.raState;
+            if (st.cat !== cat) { st.cat = cat; st.tab = g.tabs[0][0]; st.sel = null; }
+            const sv = savedIds()[cat] || {};
+            shell.innerHTML = `
+            <div class="rounded-2xl border border-white/5 bg-gradient-to-r ${g.grad} p-5 md:p-7 mb-6 flex items-center gap-4 overflow-hidden relative">
+                <div class="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-black/50 border border-white/15 flex items-center justify-center"><i class="fa-solid ${g.icon} text-2xl md:text-3xl" style="color:${g.color}"></i></div>
+                <div class="min-w-0"><h3 class="font-orbitron font-black text-white text-lg md:text-2xl">${g.name}</h3><p class="text-xs md:text-sm text-gray-300 font-rajdhani">${g.desc} · <span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt"></i> Entrega automática</span></p></div>
+                <i class="fa-solid ${g.icon} absolute -right-4 -bottom-6 text-[120px] opacity-[0.06] text-white pointer-events-none"></i>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
+                <div class="order-2 lg:order-1 bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                    <div id="ra-tabs" class="flex flex-wrap gap-2 mb-4">${g.tabs.map(([k, l]) => `<button type="button" onclick="window.raSetTab('${k}')" class="ra-tab px-4 py-2 rounded-xl text-sm font-rajdhani font-bold border transition ${st.tab === k ? 'bg-white/10 border-white/40 text-white' : 'bg-kiwi-dark border-white/5 text-gray-400 hover:text-white'}">${l}</button>`).join('')}</div>
+                    ${cat === 'mlbb' && st.tab === 'us' ? '<p class="text-[11px] text-amber-300 mb-3 font-rajdhani"><i class="fa-solid fa-circle-info"></i> Región US: solo para cuentas creadas en Estados Unidos. Si no sabés tu región, elegí Global.</p>' : ''}
+                    <div id="ra-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+                </div>
+                <aside class="order-1 lg:order-2 space-y-4 lg:sticky lg:top-24">
+                    <div class="bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 pb-2 mb-3">Datos de tu cuenta</p>
+                        <label class="text-xs text-gray-400 font-bold">ID de usuario</label>
+                        <input id="ra-player-id" inputmode="numeric" autocomplete="off" value="${esc(sv.player || '')}" oninput="window.raIdChanged()" placeholder="Ej: 123456789" class="mt-1 mb-3 w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
+                        ${g.zone ? `<label class="text-xs text-gray-400 font-bold">Zona / Servidor</label><input id="ra-zone-id" inputmode="numeric" autocomplete="off" value="${esc(sv.zone || '')}" oninput="window.raIdChanged()" placeholder="Ej: 2001" class="mt-1 mb-3 w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">` : ''}
+                        <button type="button" onclick="window.raVerify()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-user-check mr-1"></i> Verificar ID</button>
+                        <p id="ra-verify-msg" class="text-xs mt-2 min-h-[1rem]"></p>
+                        <p class="text-[11px] text-gray-500 mt-1"><i class="fa-regular fa-circle-question"></i> ${g.help}</p>
+                    </div>
+                    <div id="ra-summary" class="bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-5">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 pb-2 mb-3">Resumen de compra</p>
+                        <div id="ra-summary-body"></div>
+                    </div>
+                </aside>
+            </div>`;
+            shell.classList.remove('hidden');
+            window.raRenderGrid(); window.raRenderSummary(); window.raShowVerified();
+        };
+        window.raSetTab = function (k) { window.raState.tab = k; window.raState.sel = null; window.raRenderGame(window.raState.cat); };
+        window.raRenderGrid = function () {
+            const st = window.raState, grid = document.getElementById('ra-grid'); if (!grid) return;
+            const items = window.products.filter(p => p.category === st.cat && p.sub === st.tab);
+            grid.innerHTML = items.map(p => `
+                <button type="button" data-ra-id="${p.id}" onclick="window.raSelect(${p.id})" class="ra-card relative text-center rounded-xl overflow-hidden border transition ${st.sel === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
+                    ${p.popular && p.tag ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">${esc(p.tag)}</span>` : ''}
+                    <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-white/5 to-transparent">${p.emoji}</div>
+                    <div class="px-2 pb-3 pt-2 bg-[#20232b]">
+                        <p class="font-bold text-white text-xs sm:text-sm leading-tight min-h-[2.2em]">${esc(p.shortTitle || p.title)}</p>
+                        <p class="text-emerald-400 font-bold text-sm mt-1">${p.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(p)}</p>
+                        <p class="text-[11px] text-gray-500">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p>
+                    </div>
+                </button>`).join('');
+        };
+        window.raSelect = function (id) {
+            window.raState.sel = id;
+            document.querySelectorAll('#ra-grid .ra-card').forEach(c => { const on = Number(c.dataset.raId) === id; c.classList.toggle('border-white/60', on); c.classList.toggle('bg-[#262a33]', on); c.classList.toggle('border-white/5', !on); });
+            window.raRenderSummary();
+            if (window.innerWidth < 1024) document.getElementById('ra-summary')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+        const readIds = () => ({ player: (document.getElementById('ra-player-id')?.value || '').replace(/\s+/g, ''), zone: (document.getElementById('ra-zone-id')?.value || '').replace(/\s+/g, '') });
+        window.raIdChanged = function () {
+            const st = window.raState, v = readIds(), all = savedIds();
+            all[st.cat] = v; try { localStorage.setItem('kiwi_ra_ids', JSON.stringify(all)); } catch (_) {}
+            window.raShowVerified(); window.raRenderSummary();
+        };
+        window.raShowVerified = function () {
+            const st = window.raState, v = readIds(), m = document.getElementById('ra-verify-msg'); if (!m) return;
+            const r = st.verified[st.cat + ':' + v.player + ':' + v.zone];
+            m.innerHTML = r ? (r.name ? `<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> Cuenta: <b>${esc(r.name)}</b></span>` : '<span class="text-gray-400"><i class="fa-solid fa-circle-info"></i> No se pudo mostrar el nombre, pero podés comprar igual. Revisá bien tu ID.</span>') : '';
+        };
+        window.raVerify = async function () {
+            const st = window.raState, g = window.KIWI_RA_GAMES[st.cat], v = readIds(), m = document.getElementById('ra-verify-msg');
+            if (!/^\d{4,20}$/.test(v.player)) { m.innerHTML = '<span class="text-red-400">Ingresá tu ID (solo números).</span>'; return; }
+            if (g.zone && !/^\d{1,8}$/.test(v.zone)) { m.innerHTML = '<span class="text-red-400">Ingresá tu Zona / Servidor (solo números).</span>'; return; }
+            const prod = window.products.find(p => p.id === st.sel) || window.products.find(p => p.category === st.cat && p.raId);
+            m.innerHTML = '<span class="text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> Verificando…</span>';
+            let name = null;
+            try {
+                const r = await fetch('/api/ra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'validate', product_id: prod.raId, player_id: v.player, zone_id: v.zone }) });
+                const j = await r.json(); if (j && j.account_name) name = j.account_name;
+            } catch (_) {}
+            st.verified[st.cat + ':' + v.player + ':' + v.zone] = { name };
+            window.raShowVerified(); window.raRenderSummary();
+        };
+        window.raRenderSummary = function () {
+            const st = window.raState, body = document.getElementById('ra-summary-body'); if (!body) return;
+            const p = window.products.find(x => x.id === st.sel);
+            if (!p) { body.innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-cart-shopping text-gray-500 text-2xl mb-3"></i><p class="font-bold text-white text-sm">Sin ítems seleccionados</p><p class="text-xs text-gray-500 mt-1">Elegí un producto para ver el resumen acá.</p></div>'; return; }
+            const v = readIds(), g = window.KIWI_RA_GAMES[st.cat];
+            body.innerHTML = `
+                <div class="flex items-center gap-3"><div class="w-14 h-14 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 flex items-center justify-center text-3xl">${p.emoji}</div>
+                <div class="min-w-0"><p class="font-bold text-white text-sm leading-tight">${esc(p.title)}</p><p class="text-[11px] text-gray-500">ID: ${v.player ? esc(v.player) : '<span class="text-amber-400">sin ingresar</span>'}${g.zone ? ' · Zona: ' + (v.zone ? esc(v.zone) : '<span class="text-amber-400">sin ingresar</span>') : ''}</p></div></div>
+                <div class="flex items-end justify-between border-t border-white/5 mt-4 pt-3"><span class="text-xs text-gray-400 uppercase tracking-wider">Total</span><div class="text-right"><p class="text-emerald-400 font-bold text-lg leading-none">${window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500 mt-1">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p></div></div>
+                ${p.raUnavailable ? '<button disabled class="mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed">Agotado / No disponible</button>' : '<button onclick="window.raBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>'}`;
+        };
+        window.raBuySelection = function () {
+            const st = window.raState, g = window.KIWI_RA_GAMES[st.cat], v = readIds();
+            const p = window.products.find(x => x.id === st.sel); if (!p) return;
+            if (!/^\d{4,20}$/.test(v.player)) return window.kiwiWarn('Ingresá tu ID de ' + g.name + ' (solo números) antes de comprar.', () => document.getElementById('ra-player-id')?.focus());
+            if (g.zone && !/^\d{1,8}$/.test(v.zone)) return window.kiwiWarn('Ingresá tu Zona / Servidor de Mobile Legends (el número entre paréntesis en tu perfil).', () => document.getElementById('ra-zone-id')?.focus());
+            if (typeof currentUser === 'undefined' || !currentUser) { if (typeof window.openAuthModal === 'function') window.openAuthModal(); else alert('Iniciá sesión para comprar'); return; }
+            const r = st.verified[st.cat + ':' + v.player + ':' + v.zone];
+            window.raConfirm(p, { player_id: v.player, zone_id: g.zone ? v.zone : '', name: r && r.name ? r.name : '' });
+        };
+        window.raConfirm = function (p, data) {
+            let m = document.getElementById('ra-confirm-modal');
+            if (!m) { m = document.createElement('div'); m.id = 'ra-confirm-modal'; m.className = 'fixed inset-0 bg-black/80 z-[95] hidden flex items-center justify-center p-4'; document.body.appendChild(m); }
+            window._raPending = { p, data };
+            m.innerHTML = `<div class="bg-kiwi-card border border-emerald-500/50 w-full max-w-sm rounded-2xl p-6 text-center">
+                <h3 class="font-orbitron font-bold text-white mb-2">Confirmar compra</h3>
+                <div class="text-left space-y-1 text-sm text-gray-300 mb-4"><p><strong>Producto:</strong> ${esc(p.title)}</p><p><strong>Precio:</strong> <span class="text-kiwi-gold font-bold">${window.getConvertedPrice(p)}</span></p><p><strong>ID:</strong> ${esc(data.player_id)}${data.zone_id ? ' · <strong>Zona:</strong> ' + esc(data.zone_id) : ''}</p>${data.name ? `<p><strong>Nombre:</strong> ${esc(data.name)}</p>` : ''}<p class="text-xs text-gray-400 pt-2">Se descuenta de tu saldo y se envía automáticamente. Revisá que el ID sea correcto: una recarga enviada no se puede devolver.</p></div>
+                <div class="flex gap-3"><button onclick="document.getElementById('ra-confirm-modal').classList.add('hidden')" class="flex-1 bg-gray-700 text-white py-2 rounded-xl">Cancelar</button><button id="ra-confirm-btn" onclick="window.raConfirmGo()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-xl">Comprar</button></div></div>`;
+            m.classList.remove('hidden');
+        };
+        window.raConfirmGo = function () {
+            const x = window._raPending; document.getElementById('ra-confirm-modal')?.classList.add('hidden');
+            if (x) window.kiwiRaPurchase(x.p, x.data);
+        };
+
+        // ---- Compra con entrega automática: cobro + pedido en el servidor (atómico) y después Recargas América ----
+        window._raBusy = false;
+        window.kiwiRaPurchase = async function (prod, data) {
+            if (window._raBusy) return alert('Ya hay una compra en curso. Esperá unos segundos.');
+            if (typeof currentUser === 'undefined' || !currentUser) return alert('Iniciá sesión para comprar');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return alert('Sesión inválida. Volvé a iniciar sesión.');
+            const price = Number(prod.usdtPrice) || 0;
+            if (!price || !prod.raId) return alert('Producto no disponible.');
+            if (prod.raUnavailable) return alert('Este producto está agotado / no disponible por el momento.');
+            const bal = Number(users[currentUser].balance || 0);
+            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
+            if (typeof window.spendPending === 'function' && window.spendPending()) { if (window.flushSpend) window.flushSpend(); return alert('Estamos guardando una compra anterior. Probá de nuevo en unos segundos.'); }
+            if (!window.kiwiToken()) return alert('Tu sesión venció. Volvé a iniciar sesión.');
+            window._raBusy = true;
+            const user = currentUser;
+            const orderId = Date.now();
+            const order = { id: orderId, user, title: prod.title, price: prod.price, method: 'Saldo (entrega automática)', date: new Date().toLocaleString('es-AR'), status: 'confirmed', targetUser: 'ID ' + data.player_id + (data.zone_id ? ' · Zona ' + data.zone_id : ''), extra: 'AUTO-RA producto #' + prod.raId, category: prod.category, sub: prod.sub, usdtPrice: price, notes: '' };
+            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, product_id: prod.raId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
+            let j = null;
+            try {
+                for (let i = 0; i < 3 && !j; i++) { // si se corta la conexión se reintenta con la MISMA solicitud: nunca cobra ni recarga dos veces
+                    try {
+                        const r = await fetch('/api/ra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const t = await r.json().catch(() => null);
+                        if (t && !(t.retry && i < 2)) j = t; else if (!t && r.status < 500) j = { success: false, stage: 'checkout', error: 'HTTP ' + r.status };
+                    } catch (_) {}
+                    if (!j && i < 2) await new Promise(res => setTimeout(res, 2500));
+                }
+            } finally { window._raBusy = false; }
+            if (!j) return alert('No pudimos confirmar la compra por un problema de conexión.\nRevisá "Mis pedidos" en unos minutos: si aparece, ya está en proceso; si no aparece, no se te cobró nada.');
+            if (!j.charged) {
+                if (j.code === 'PRICE_CHANGED' || j.code === 'PRODUCT_INACTIVE') { try { await window.kiwiRaLoadPrices(true); } catch (_) {} }
+                if (j.code === 'PRICE_CHANGED' && Number(j.price) > 0) { prod.usdtPrice = Number(j.price); prod.price = '$' + Math.round(prod.usdtPrice * 1600).toLocaleString('es-AR') + ' ARS'; try { window.raRenderGrid(); window.raRenderSummary(); window.renderFFRa(); } catch (_) {} } // precio que confirmó el servidor
+                if (j.code === 'PRICE_CHANGED') return alert('El precio de este producto se actualizó.\nNO se descontó saldo. Revisá el nuevo precio y volvé a comprar.');
+                if (j.code === 'PRODUCT_INACTIVE') return alert('Este producto está agotado / no disponible por el momento.\nNO se descontó saldo.');
+                if (j.code === 'SQL_MISSING') console.warn('Falta SQL v35 (kiwi_checkout)');
+                return alert('No se completó la compra y NO se descontó saldo.\nMotivo: ' + (j.error || 'error desconocido'));
+            }
+            // Cobrado y pedido guardado en el servidor: reflejarlo en este navegador
+            const nb = Number(j.balance);
+            if (Number.isFinite(nb)) { window._syncedBal[user] = nb; const us = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); if (us[user]) { us[user].balance = nb; localStorage.setItem('kiwi_users', JSON.stringify(us)); } }
+            if (j.success && j.delivered !== false) { order.status = 'delivered'; order.notes = 'Entregado automáticamente'; }
+            order._synced = true;
+            const list = window.readPurchases(); list.push(order);
+            window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(list)); window._purchaseSyncMuted = false;
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
+            if (j.success) alert((j.delivered === false ? 'Recarga en camino (puede tardar unos minutos).' : '¡Recarga enviada!') + '\n' + prod.title + '\n' + order.targetUser + '\nNuevo saldo: ' + (Number.isFinite(nb) ? nb.toFixed(2) + ' USDT' : '—'));
+            else alert('Tu pago quedó registrado y el pedido está EN PROCESO.\nLa entrega automática no se completó (' + (j.error || 'sin respuesta') + '), así que lo revisamos y lo cargamos a mano a la brevedad.\nPedido #' + orderId);
+        };
+
+        // ---- Free Fire: tarjetas semanales/mensual y Pase Booyah por Recargas América ----
+        window.renderFFRa = function () {
+            const grid = document.getElementById('ff-ra-grid'); if (!grid) return;
+            grid.innerHTML = window.products.filter(p => p.category === 'freefire' && p.sub === 'ra_tarjetas').map(p => `
+                <button type="button" data-ff-id="${p.id}" onclick="window.ffSelectProduct(${p.id})" class="ff-card ff-ra-card relative text-center rounded-xl overflow-hidden border transition ${window.ffSelection && window.ffSelection.id === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
+                    ${p.popular && p.tag ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">${esc(p.tag)}</span>` : ''}
+                    <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-orange-500/10 to-transparent">${p.emoji}</div>
+                    <div class="px-2 pb-3 pt-2 bg-[#20232b]"><p class="font-bold text-white text-sm">${esc(p.shortTitle)}</p><p class="text-emerald-400 font-bold text-sm">${p.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p></div>
+                </button>`).join('');
+            const panel = document.getElementById('ff-ra-panel'); if (panel) panel.classList.remove('hidden');
+        };
+        const origFFAll = window.renderFFAll;
+        window.renderFFAll = function () { const r = origFFAll.apply(this, arguments); try { window.renderFFRa(); } catch (_) {} return r; };
+        const origSel = window.ffSelectProduct;
+        window.ffSelectProduct = function (id) {
+            const r = origSel.apply(this, arguments);
+            document.querySelectorAll('#ff-ra-grid .ff-card').forEach(c => { const on = window.ffSelection && Number(c.dataset.ffId) === window.ffSelection.id; c.classList.toggle('border-white/60', !!on); c.classList.toggle('bg-[#262a33]', !!on); c.classList.toggle('border-white/5', !on); });
+            return r;
+        };
+        const origHideFF = window.hideFreeFireSpecialsUI;
+        if (typeof origHideFF === 'function') window.hideFreeFireSpecialsUI = function () { document.getElementById('ff-ra-panel')?.classList.add('hidden'); return origHideFF.apply(this, arguments); };
+        // Pase Booyah: ahora con entrega automática (mismo flujo de ID verificado y confirmación)
+        window.buyBooyahPass = function () {
+            if (!window.ffRequireVerifiedId()) return;
+            window.openCheckout(221);
+        };
+        // Precios en pantalla al cambiar de moneda
+        const origUpd = window.selectCurrency;
+        if (typeof origUpd === 'function') window.selectCurrency = function () { const r = origUpd.apply(this, arguments); try { if (window.raState.cat && !document.getElementById('ra-shell').classList.contains('hidden')) { window.raRenderGrid(); window.raRenderSummary(); } if (!document.getElementById('ff-ra-panel')?.classList.contains('hidden')) window.renderFFRa(); } catch (_) {} return r; };
+
+        // ---- v38: precios automáticos desde Recargas América (/api/ra-prices). Si falla, quedan los costos guardados. ----
+        window.kiwiRaApplyPrices = function (data) {
+            if (!data || typeof data !== 'object' || !data.costs) return 0;
+            const m = Number(data.margin);
+            if (m >= 1 && m <= 3) window.KIWI_RA_MARGIN = m;
+            if (data.margins && typeof data.margins === 'object') Object.keys(data.margins).forEach(k => { const v = Number(data.margins[k]); if (v >= 0 && v <= 200) window.KIWI_RA_MARGINS[k] = v; });
+            const inactive = new Set((data.inactive || []).map(Number));
+            let n = 0;
+            window.KIWI_RA_ITEMS.forEach(it => {
+                const p = window.products.find(x => x.id === it.id); if (!p) return;
+                const c = Number(data.costs[it.ra]);
+                if (c > 0 && c < 10000) it.cost = c;
+                const usdt = window.kiwiRaSalePrice(it);
+                p.raCost = it.cost; p.usdtPrice = usdt; p.price = '$' + Math.round(usdt * 1600).toLocaleString('es-AR') + ' ARS';
+                p.raUnavailable = inactive.has(it.ra); n++;
+            });
+            try { if (window.raState && window.raState.cat && !document.getElementById('ra-shell')?.classList.contains('hidden')) { window.raRenderGrid(); window.raRenderSummary(); } } catch (_) {}
+            try { if (!document.getElementById('ff-ra-panel')?.classList.contains('hidden')) window.renderFFRa(); } catch (_) {}
+            try { if (typeof window.updateBooyahPrice === 'function') window.updateBooyahPrice(); } catch (_) {}
+            try { if (document.getElementById('ff-diamond-grid') && typeof window.renderFFDiamonds === 'function') window.renderFFDiamonds(window.products.filter(p => p.category === 'freefire' && p.sub === 'ilimitado'), 'ff-diamond-grid'); } catch (_) {}
+            try { if (window.ffSelection && window.ffSelection.id && typeof window.renderFFSummary === 'function') { const fp = window.products.find(x => x.id === window.ffSelection.id); if (fp && fp.raId) { window.ffSelection.price = window.getConvertedPrice(fp); window.ffSelection.usd = fp.usdtPrice; window.renderFFSummary(); } } } catch (_) {}
+            return n;
+        };
+        window.kiwiRaLoadPrices = async function (fresh) {
+            const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+            try {
+                const r = await fetch('/api/ra-prices' + (fresh ? '?t=' + Date.now() : ''), { signal: ctrl.signal });
+                if (!r.ok) return false;
+                const j = await r.json();
+                if (!j || !j.success) return false;
+                window.kiwiRaApplyPrices(j); return true;
+            } catch (_) { return false; } finally { clearTimeout(t); }
+        };
+        const startPrices = () => setTimeout(() => window.kiwiRaLoadPrices(false), 300);
+        if (document.readyState === 'complete') startPrices(); else window.addEventListener('load', startPrices);
+        setInterval(() => { if (!document.hidden) window.kiwiRaLoadPrices(false); }, 10 * 60 * 1000);
+    })();
+    </script>
 </body>
 </html>
