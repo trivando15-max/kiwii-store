@@ -102,8 +102,10 @@
         .role-client { color: #6ee7b7; background-color: rgba(5, 150, 105, 0.15); border: 1px solid #10b981; }
         .role-user { color: #9ca3af; background-color: transparent; border: 1px solid transparent; }
     
-        .cat-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(3px) brightness(0.55); transform:scale(1.05); z-index:0; }
-        .cat-bg-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.15)); z-index:1; }
+        .cat-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:brightness(0.9) saturate(1.1); transform:scale(1.02); z-index:0; transition:transform .3s; }
+        .group:hover .cat-bg { transform:scale(1.07); }
+        .cat-bg-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%); z-index:1; }
+        .cat-bg-overlay ~ p { text-shadow:0 1px 3px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.6); }
 
         /* Mobile improvements */
         @media (max-width: 640px) {
@@ -776,14 +778,14 @@
             <button onclick="window.goToCategory('roblox')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
                 <div class="cat-bg" style="background-image:url('https://i.blogs.es/d16e63/apps.60351.13510798883386282.19007972-a8b6-4cc7-ba5d-ba9311808f97.17104978-8755-4bc8-a873-988455ce4f46/1366_2000.jpg')"></div>
                 <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="w-8 h-8 brightness-0 invert" alt="Roblox"></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl overflow-hidden border border-white/20 shadow-lg mb-4"><img src="/images/icon-roblox.webp" class="w-full h-full object-cover" alt="Roblox" loading="lazy"></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">ROBLOX</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Robux & Blox Fruits</p>
             </button>
             <button onclick="window.goToCategory('freefire')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
                 <div class="cat-bg" style="background-image:url('https://i.blogs.es/7595ea/free-fire/1366_2000.jpg')"></div>
                 <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-fire text-orange-400 text-2xl"></i></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl overflow-hidden border border-white/20 shadow-lg mb-4"><img src="/images/icon-freefire.webp" class="w-full h-full object-cover" alt="Free Fire" loading="lazy"></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">FREE FIRE</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Diamantes y Pases</p>
             </button>
@@ -804,21 +806,21 @@
             <button onclick="window.goToCategory('mlbb')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
                 <div class="cat-bg" style="background-image:url('/images/cat-mobilelegends.webp')"></div>
                 <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-shield-halved text-2xl" style="color:#38bdf8"></i></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl overflow-hidden border border-white/20 shadow-lg mb-4"><img src="/images/icon-mobilelegends.webp" class="w-full h-full object-cover" alt="Mobile Legends" loading="lazy"></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">MOBILE LEGENDS</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Diamantes y pases · Global y US</p>
             </button>
             <button onclick="window.goToCategory('pubg')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background:linear-gradient(135deg,#78350f,#292524 60%,#0b0c10)"></div>
+                <div class="cat-bg" style="background-image:url('/images/cat-pubg.webp')"></div>
                 <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-parachute-box text-2xl" style="color:#f59e0b"></i></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl overflow-hidden border border-white/20 shadow-lg mb-4"><img src="/images/icon-pubg.webp" class="w-full h-full object-cover" alt="PUBG Mobile" loading="lazy"></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">PUBG MOBILE</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">UC al instante</p>
             </button>
             <button onclick="window.goToCategory('bloodstrike')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
                 <div class="cat-bg" style="background-image:url('/images/cat-bloodstrike.webp')"></div>
                 <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-crosshairs text-2xl" style="color:#ef4444"></i></div>
+                <div class="relative z-10 w-14 h-14 rounded-xl overflow-hidden border border-white/20 shadow-lg mb-4"><img src="/images/icon-bloodstrike.webp" class="w-full h-full object-cover" alt="Blood Strike" loading="lazy"></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">BLOOD STRIKE</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Gold y Strike Pass</p>
             </button>
@@ -3129,7 +3131,7 @@
             return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100; // hacia arriba al centavo
         };
         // v41: imagen de cada producto (id Recargas América → archivo en /images, .webp). Si falta, se muestra el emoji.
-        window.KIWI_RA_IMG = { 23: 'bs-gold-1', 25: 'bs-gold-2', 26: 'bs-gold-3', 27: 'bs-gold-4', 28: 'bs-gold-5', 29: 'bs-gold-6', 30: 'bs-pass-luckychest', 31: 'bs-pass-levelup', 32: 'bs-pass-elite', 33: 'bs-pass-premium', 249: 'mlbb-diamonds-1', 250: 'mlbb-weekly-pass', 251: 'mlbb-diamonds-2', 252: 'mlbb-diamonds-3', 253: 'mlbb-twilight-pass', 254: 'mlbb-diamonds-4', 255: 'mlbb-diamonds-5', 256: 'mlbb-diamonds-5', 257: 'mlbb-diamonds-6', 258: 'mlbb-diamonds-6', 259: 'mlbb-diamonds-1', 260: 'mlbb-diamonds-2', 261: 'mlbb-weekly-pass', 262: 'mlbb-diamonds-3', 263: 'mlbb-diamonds-4', 264: 'mlbb-twilight-pass', 265: 'mlbb-diamonds-5', 266: 'mlbb-diamonds-5', 267: 'mlbb-diamonds-6', 268: 'mlbb-diamonds-6', 269: 'mlbb-diamonds-6', 270: 'mlbb-diamonds-6' };
+        window.KIWI_RA_IMG = { 23: 'bs-gold-1', 25: 'bs-gold-2', 26: 'bs-gold-3', 27: 'bs-gold-4', 28: 'bs-gold-5', 29: 'bs-gold-6', 30: 'bs-pass-luckychest', 31: 'bs-pass-levelup', 32: 'bs-pass-elite', 33: 'bs-pass-premium', 249: 'mlbb-d1', 250: 'mlbb-weekly-pass', 251: 'mlbb-d1', 252: 'mlbb-d2', 253: 'mlbb-twilight-pass', 254: 'mlbb-d5', 255: 'mlbb-d5', 256: 'mlbb-d6', 257: 'mlbb-d7', 258: 'mlbb-d7', 259: 'mlbb-d1', 260: 'mlbb-d1', 261: 'mlbb-weekly-pass', 262: 'mlbb-d2', 263: 'mlbb-d5', 264: 'mlbb-twilight-pass', 265: 'mlbb-d5', 266: 'mlbb-d6', 267: 'mlbb-d6', 268: 'mlbb-d7', 269: 'mlbb-d7', 270: 'mlbb-d7' };
         window.kiwiRaImg = function (p) { const n = p && (window.KIWI_RA_IMG || {})[p.raId]; return n ? '/images/' + n + '.webp' : ''; };
         window.kiwiRaThumb = function (p, cls) { const u = window.kiwiRaImg(p); return u ? `<img src="${u}" alt="" loading="lazy" class="${cls}" onerror="this.replaceWith(document.createTextNode('${p.emoji || ''}'))">` : (p.emoji || ''); };
         window.KIWI_RA_MAP = {}; // id del catálogo → id de Recargas América
@@ -7391,7 +7393,12 @@ window.resetUser2FA = function(username) {
         window.raSetTab = function (k) { window.raState.tab = k; window.raState.sel = null; window.raRenderGame(window.raState.cat); };
         window.raRenderGrid = function () {
             const st = window.raState, grid = document.getElementById('ra-grid'); if (!grid) return;
-            const items = window.products.filter(p => p.category === st.cat && p.sub === st.tab);
+            const items = window.products.filter(p => p.category === st.cat && p.sub === st.tab)
+            if (st.cat === 'mlbb') {
+                // v42: diamantes de menor a mayor, luego Twilight y Pase Semanal
+                const ord = p => { const t = (p.title||p.name||'').toLowerCase(); if (/twilight|crepuscular/.test(t)) return [1, 0]; if (/pase|pass/.test(t)) return [1, 1]; return [0, parseInt(String(t).replace(/\./g,'').match(/\d+/)||[0], 10)]; };
+                items.sort((a, b) => { const x = ord(a), y = ord(b); return x[0] - y[0] || x[1] - y[1]; });
+            }
             grid.innerHTML = items.map(p => `
                 <button type="button" data-ra-id="${p.id}" onclick="window.raSelect(${p.id})" class="ra-card relative text-center rounded-xl overflow-hidden border transition ${st.sel === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
                     ${p.popular && p.tag ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">${esc(p.tag)}</span>` : ''}
