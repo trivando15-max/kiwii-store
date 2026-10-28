@@ -517,6 +517,80 @@
         <div id="home-view">
             <!-- v26: banner evento (arriba de todo) -->
             <style>
+                .kiwi-hero-bg{background:
+                    radial-gradient(60% 80% at 85% 40%, rgba(225,29,42,.28), transparent 60%),
+                    radial-gradient(40% 60% at 10% 100%, rgba(120,0,10,.35), transparent 70%),
+                    linear-gradient(180deg,#0b0b0f,#060608);}
+                .kiwi-hero-grid{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:36px 36px;
+                    -webkit-mask-image:radial-gradient(80% 90% at 70% 40%,#000 30%,transparent 80%);mask-image:radial-gradient(80% 90% at 70% 40%,#000 30%,transparent 80%);}
+                @keyframes kiwiSpark{0%,100%{opacity:.15}50%{opacity:.9}}
+                @keyframes kiwiHeroFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(1deg)}}
+                .kiwi-hero-mascot{opacity:.42;filter:blur(1.5px) saturate(1.05) drop-shadow(0 0 40px rgba(225,29,42,.35));animation:kiwiHeroFloat 7s ease-in-out infinite;}
+                @media (max-width:767px){.kiwi-hero-mascot{opacity:.33;filter:blur(1.5px);left:-12%;}}
+
+                /* v47: kiwi más visible con aura */
+                .kiwi-hero-mascot{opacity:.95!important;filter:brightness(1.12) saturate(1.15) drop-shadow(0 0 18px rgba(255,90,40,.85)) drop-shadow(0 0 48px rgba(225,29,42,.7)) drop-shadow(0 0 90px rgba(255,170,40,.35))!important;}
+                .kiwi-aura{position:absolute;left:-8%;bottom:-10%;width:85%;aspect-ratio:1;border-radius:50%;
+                    background:radial-gradient(circle at 50% 55%,rgba(255,200,80,.45) 0%,rgba(255,110,40,.38) 22%,rgba(225,29,42,.32) 42%,rgba(120,0,10,.18) 62%,transparent 72%);
+                    filter:blur(14px);animation:kiwiAura 3.2s ease-in-out infinite;}
+                .kiwi-aura::after{content:"";position:absolute;inset:12%;border-radius:50%;border:2px solid rgba(255,140,60,.35);box-shadow:0 0 40px rgba(255,80,40,.55),inset 0 0 40px rgba(255,80,40,.4);animation:kiwiAuraRing 3.2s ease-in-out infinite;}
+                @keyframes kiwiAura{0%,100%{opacity:.75;transform:scale(.96)}50%{opacity:1;transform:scale(1.05)}}
+                @keyframes kiwiAuraRing{0%,100%{opacity:.4;transform:scale(.92)}50%{opacity:.85;transform:scale(1.06)}}
+                .khero-shade{background:linear-gradient(90deg,rgba(6,6,8,0) 0%,rgba(6,6,8,.05) 30%,rgba(6,6,8,.45) 55%,rgba(6,6,8,.2) 85%,transparent 100%);}
+                .khero .max-w-xl h2,.khero .max-w-xl p,.khero .max-w-xl span{text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 18px rgba(0,0,0,.7);}
+                @media (max-width:767px){
+                    .kiwi-hero-mascot{opacity:.55!important}
+                    .kiwi-aura{width:120%;left:-30%;opacity:.7}
+                    .khero-shade{background:linear-gradient(180deg,rgba(6,6,8,.15),rgba(6,6,8,.5))}
+                }
+                @media (prefers-reduced-motion:reduce){.kiwi-aura,.kiwi-aura::after{animation:none}}
+                /* v27: hero destacado, complementario al banner del evento */
+                .khero{border:2px solid transparent;background:
+                    radial-gradient(60% 80% at 85% 40%, rgba(225,29,42,.28), transparent 60%) padding-box,
+                    radial-gradient(40% 60% at 10% 100%, rgba(120,0,10,.35), transparent 70%) padding-box,
+                    linear-gradient(180deg,#0b0b0f,#060608) padding-box,
+                    linear-gradient(120deg,#5a0a10,#ff1e27,#ff7a45,#ff1e27,#5a0a10) border-box;
+                    background-size:100% 100%,100% 100%,100% 100%,300% 300%;
+                    animation:kheroBorder 8s linear infinite, kheroGlow 4s ease-in-out infinite;}
+                .khero::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);background-size:250% 100%;animation:kheroShine 7s ease-in-out infinite;pointer-events:none;border-radius:inherit;}
+                @keyframes kheroBorder{0%{background-position:0 0,0 0,0 0,0% 50%}100%{background-position:0 0,0 0,0 0,300% 50%}}
+                @keyframes kheroGlow{0%,100%{box-shadow:0 0 22px rgba(225,29,42,.22)}50%{box-shadow:0 0 42px rgba(255,90,60,.38)}}
+                @keyframes kheroShine{0%,60%{background-position:150% 0}100%{background-position:-50% 0}}
+                @media (prefers-reduced-motion:reduce){.khero,.khero::after{animation:none}}
+                .kiwi-spark{position:absolute;width:3px;height:3px;border-radius:9999px;background:#ff3b45;box-shadow:0 0 8px #ff1e27;animation:kiwiSpark 3s ease-in-out infinite;}
+            </style>
+            <section class="reveal relative rounded-3xl mb-8 md:mb-10 overflow-hidden kiwi-hero-bg khero">
+                <div class="absolute inset-0 kiwi-hero-grid"></div>
+                <svg class="absolute right-0 top-0 h-full w-2/3 opacity-60 pointer-events-none" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
+                    <defs><filter id="kglow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                    <path d="M600 20 L470 120 L520 130 L380 260 L430 265 L300 400" fill="none" stroke="#e11d2a" stroke-width="1.6" filter="url(#kglow)" opacity=".55"/>
+                    <path d="M600 160 L520 210 L545 220 L450 300" fill="none" stroke="#ff4d57" stroke-width="1" filter="url(#kglow)" opacity=".4"/>
+                </svg>
+                <div class="absolute inset-y-0 left-0 w-full md:w-[62%] pointer-events-none" aria-hidden="true" style="-webkit-mask-image:linear-gradient(90deg,#000 35%,transparent 95%);mask-image:linear-gradient(90deg,#000 35%,transparent 95%);">
+                    <div class="kiwi-aura" aria-hidden="true"></div>
+                    <img src="images/KiwiRobux.png" alt="" decoding="async" class="kiwi-hero-mascot absolute -left-6 md:left-0 bottom-[-6%] h-[115%] w-auto max-w-none object-contain" onerror="this.style.display='none'">
+                </div>
+                <div class="khero-shade absolute inset-0 pointer-events-none"></div>
+                <span class="kiwi-spark" style="left:62%;top:18%"></span><span class="kiwi-spark" style="left:78%;top:70%;animation-delay:1s"></span><span class="kiwi-spark" style="left:92%;top:30%;animation-delay:2s"></span><span class="kiwi-spark" style="left:55%;top:82%;animation-delay:.5s"></span>
+
+                <div class="relative flex items-center min-h-[380px] md:min-h-[440px] p-6 sm:p-8 md:p-12 md:pl-[30%]">
+                    <div class="max-w-xl">
+                        <span class="inline-flex items-center gap-2 text-[11px] font-rajdhani font-bold uppercase tracking-[0.2em] text-kiwi-red bg-kiwi-red/10 border border-kiwi-red/30 px-3 py-1 rounded-full mb-4"><i class="fa-solid fa-shield-halved"></i> 100% oficial & seguro</span>
+                        <h2 class="khero-title font-orbitron text-[1.65rem] sm:text-4xl md:text-[2.75rem] font-black leading-[1.08] text-[#f3ead8] uppercase break-words">Tu sitio de recargas <span class="text-kiwi-red">más barato</span> del mercado</h2>
+                        <p class="text-gray-400 font-rajdhani text-base md:text-lg mt-3 max-w-lg">Recargas gamer, Robux, diamantes, streaming y redes sociales. Entrega rápida y pagos para toda Latam y Crypto.</p>
+                        <style>.khero-btns{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}.khero-btns .khero-btn{width:100%;height:4rem;white-space:nowrap}@media(min-width:640px){.khero-btns{flex-direction:row}.khero-btns .khero-btn{width:auto;height:4.5rem}}</style><div class="khero-btns">
+                            <a onclick="window.goToCatalog(); return false;" href="/catalogo" class="khero-btn w-full sm:w-auto h-16 sm:h-[4.5rem] inline-flex justify-center items-center gap-3 bg-kiwi-red hover:bg-red-500 text-white font-orbitron font-black text-lg sm:text-xl px-8 sm:px-10 rounded-2xl transition border-2 border-red-400/60 shadow-[0_0_36px_rgba(225,29,42,0.75)] hover:shadow-[0_0_52px_rgba(255,40,50,0.95)] hover:-translate-y-0.5 cursor-pointer">Ver catálogo <i class="fa-solid fa-arrow-down text-base"></i></a>
+                            <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="khero-btn w-full sm:w-auto h-16 sm:h-[4.5rem] inline-flex justify-center items-center gap-3 bg-[#16a34a] hover:bg-[#22c55e] text-white font-orbitron font-black text-lg sm:text-xl px-8 sm:px-10 rounded-2xl transition border-2 border-green-300/50 shadow-[0_0_32px_rgba(34,197,94,0.6)] hover:shadow-[0_0_48px_rgba(34,197,94,0.85)] hover:-translate-y-0.5"><i class="fa-brands fa-whatsapp text-2xl sm:text-3xl"></i> Hablar por WhatsApp</a>
+                        </div>
+                        <div class="flex flex-wrap gap-x-5 gap-y-2 mt-6 text-xs text-gray-500 font-rajdhani font-bold">
+                            <span><i class="fa-solid fa-bolt text-kiwi-red mr-1"></i> Entrega en minutos</span>
+                            <span><i class="fa-solid fa-headset text-kiwi-red mr-1"></i> Soporte 24/7</span>
+                            <span><i class="fa-solid fa-earth-americas text-kiwi-red mr-1"></i> Pagos Latam & Crypto</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <style>
                 .kev{position:relative;overflow:hidden;border-radius:1.5rem;padding:2px;margin-bottom:1.5rem;background:linear-gradient(120deg,#ff1e27,#ffb800,#a020f0,#ff1e27);background-size:300% 300%;animation:kevBorder 6s linear infinite;box-shadow:0 0 28px rgba(255,30,39,.35),0 0 60px rgba(160,32,240,.22);}
                 .kev-in{position:relative;overflow:hidden;border-radius:calc(1.5rem - 2px);background:radial-gradient(70% 90% at 100% 0%,rgba(160,32,240,.45),transparent 60%),radial-gradient(60% 80% at 0% 100%,rgba(255,184,0,.22),transparent 65%),linear-gradient(135deg,#2a0306 0%,#12060f 55%,#07040a 100%);}
                 .kev-in::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-20deg);animation:kevShine 4.5s ease-in-out infinite;pointer-events:none;}
@@ -602,62 +676,7 @@
                 window.addEventListener('load', function () { setTimeout(load, 800); });
             })();
             </script>
-            <style>
-                .kiwi-hero-bg{background:
-                    radial-gradient(60% 80% at 85% 40%, rgba(225,29,42,.28), transparent 60%),
-                    radial-gradient(40% 60% at 10% 100%, rgba(120,0,10,.35), transparent 70%),
-                    linear-gradient(180deg,#0b0b0f,#060608);}
-                .kiwi-hero-grid{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:36px 36px;
-                    -webkit-mask-image:radial-gradient(80% 90% at 70% 40%,#000 30%,transparent 80%);mask-image:radial-gradient(80% 90% at 70% 40%,#000 30%,transparent 80%);}
-                @keyframes kiwiSpark{0%,100%{opacity:.15}50%{opacity:.9}}
-                @keyframes kiwiHeroFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(1deg)}}
-                .kiwi-hero-mascot{opacity:.42;filter:blur(1.5px) saturate(1.05) drop-shadow(0 0 40px rgba(225,29,42,.35));animation:kiwiHeroFloat 7s ease-in-out infinite;}
-                @media (max-width:767px){.kiwi-hero-mascot{opacity:.33;filter:blur(1.5px);left:-12%;}}
-                /* v27: hero destacado, complementario al banner del evento */
-                .khero{border:2px solid transparent;background:
-                    radial-gradient(60% 80% at 85% 40%, rgba(225,29,42,.28), transparent 60%) padding-box,
-                    radial-gradient(40% 60% at 10% 100%, rgba(120,0,10,.35), transparent 70%) padding-box,
-                    linear-gradient(180deg,#0b0b0f,#060608) padding-box,
-                    linear-gradient(120deg,#5a0a10,#ff1e27,#ff7a45,#ff1e27,#5a0a10) border-box;
-                    background-size:100% 100%,100% 100%,100% 100%,300% 300%;
-                    animation:kheroBorder 8s linear infinite, kheroGlow 4s ease-in-out infinite;}
-                .khero::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);background-size:250% 100%;animation:kheroShine 7s ease-in-out infinite;pointer-events:none;border-radius:inherit;}
-                @keyframes kheroBorder{0%{background-position:0 0,0 0,0 0,0% 50%}100%{background-position:0 0,0 0,0 0,300% 50%}}
-                @keyframes kheroGlow{0%,100%{box-shadow:0 0 22px rgba(225,29,42,.22)}50%{box-shadow:0 0 42px rgba(255,90,60,.38)}}
-                @keyframes kheroShine{0%,60%{background-position:150% 0}100%{background-position:-50% 0}}
-                @media (prefers-reduced-motion:reduce){.khero,.khero::after{animation:none}}
-                .kiwi-spark{position:absolute;width:3px;height:3px;border-radius:9999px;background:#ff3b45;box-shadow:0 0 8px #ff1e27;animation:kiwiSpark 3s ease-in-out infinite;}
-            </style>
-            <section class="reveal relative rounded-3xl mb-8 md:mb-10 overflow-hidden kiwi-hero-bg khero">
-                <div class="absolute inset-0 kiwi-hero-grid"></div>
-                <svg class="absolute right-0 top-0 h-full w-2/3 opacity-60 pointer-events-none" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
-                    <defs><filter id="kglow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-                    <path d="M600 20 L470 120 L520 130 L380 260 L430 265 L300 400" fill="none" stroke="#e11d2a" stroke-width="1.6" filter="url(#kglow)" opacity=".55"/>
-                    <path d="M600 160 L520 210 L545 220 L450 300" fill="none" stroke="#ff4d57" stroke-width="1" filter="url(#kglow)" opacity=".4"/>
-                </svg>
-                <div class="absolute inset-y-0 left-0 w-full md:w-[62%] pointer-events-none" aria-hidden="true" style="-webkit-mask-image:linear-gradient(90deg,#000 35%,transparent 95%);mask-image:linear-gradient(90deg,#000 35%,transparent 95%);">
-                    <img src="images/KiwiRobux.png" alt="" decoding="async" class="kiwi-hero-mascot absolute -left-6 md:left-0 bottom-[-6%] h-[115%] w-auto max-w-none object-contain" onerror="this.style.display='none'">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-r from-[#060608]/40 via-[#060608]/55 to-transparent pointer-events-none"></div>
-                <span class="kiwi-spark" style="left:62%;top:18%"></span><span class="kiwi-spark" style="left:78%;top:70%;animation-delay:1s"></span><span class="kiwi-spark" style="left:92%;top:30%;animation-delay:2s"></span><span class="kiwi-spark" style="left:55%;top:82%;animation-delay:.5s"></span>
-
-                <div class="relative flex items-center min-h-[380px] md:min-h-[440px] p-6 sm:p-8 md:p-12 md:pl-[30%]">
-                    <div class="max-w-xl">
-                        <span class="inline-flex items-center gap-2 text-[11px] font-rajdhani font-bold uppercase tracking-[0.2em] text-kiwi-red bg-kiwi-red/10 border border-kiwi-red/30 px-3 py-1 rounded-full mb-4"><i class="fa-solid fa-shield-halved"></i> 100% oficial & seguro</span>
-                        <h2 class="font-orbitron text-3xl sm:text-4xl md:text-5xl font-black leading-[1.05] text-[#f3ead8]">Equipate. <span class="text-kiwi-red">Jugá.</span> Ganá.</h2>
-                        <p class="text-gray-400 font-rajdhani text-base md:text-lg mt-3 max-w-lg">Recargas gamer, Robux, diamantes, streaming y redes sociales. Entrega rápida y pagos para toda Latam y Crypto.</p>
-                        <div class="flex flex-wrap gap-3 mt-6">
-                            <a onclick="window.goToCatalog(); return false;" class="h-12 inline-flex items-center gap-2 bg-kiwi-red hover:bg-red-600 text-white font-orbitron font-bold text-sm px-6 rounded-xl transition shadow-[0_0_24px_rgba(225,29,42,0.45)]">Ver catálogo <i class="fa-solid fa-arrow-down text-xs"></i></a>
-                            <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="h-12 inline-flex items-center gap-2 border border-white/15 hover:border-white/35 bg-white/[0.03] text-white font-rajdhani font-bold text-sm px-5 rounded-xl transition"><i class="fa-brands fa-whatsapp text-green-400 text-base"></i> Hablar por WhatsApp</a>
-                        </div>
-                        <div class="flex flex-wrap gap-x-5 gap-y-2 mt-6 text-xs text-gray-500 font-rajdhani font-bold">
-                            <span><i class="fa-solid fa-bolt text-kiwi-red mr-1"></i> Entrega en minutos</span>
-                            <span><i class="fa-solid fa-headset text-kiwi-red mr-1"></i> Soporte 24/7</span>
-                            <span><i class="fa-solid fa-earth-americas text-kiwi-red mr-1"></i> Pagos Latam & Crypto</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            
 
             <!-- CATEGORÍAS -->
             <!-- POR QUÉ ELEGIRNOS -->
@@ -2839,17 +2858,44 @@
             if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
         };
 
+        window.KIWI_COMPRAS_CATS = [['roblox','Roblox'],['freefire','Free Fire'],['mlbb','Mobile Legends'],['pubg','PUBG Mobile'],['bloodstrike','Blood Strike'],['streaming','Streaming'],['instagram','Redes Sociales'],['otros','Otros']];
+        window.kiwiPurchaseCat = function (p) {
+            const known = ['roblox','freefire','mlbb','pubg','bloodstrike','streaming','instagram'];
+            if (p && known.includes(p.category)) return p.category;
+            const tt = String(p && p.title || '').trim().toLowerCase();
+            const hit = tt && (window.products || []).find(x => known.includes(x.category) && [x.title, x.shortTitle].some(v => v && String(v).trim().toLowerCase() === tt));
+            if (hit) return hit.category;
+            const t = ((p && (p.title || '')) + ' ' + (p && (p.sub || p.category || '')) ).toLowerCase();
+            if (/robux|roblox|blox ?fruit|gamepass|fruta/.test(t)) return 'roblox';
+            if (/mobile legends|mlbb|twilight|pase semanal de diamantes|\bus\b.*diamantes/.test(t)) return 'mlbb';
+            if (/pubg|\buc\b/.test(t)) return 'pubg';
+            if (/blood ?strike|\bgold\b|strike pass/.test(t)) return 'bloodstrike';
+            if (/free ?fire|diamante|tarjeta semanal|tarjeta mensual|booyah|fragmento/.test(t)) return 'freefire';
+            if (/netflix|spotify|disney|hbo|\bmax\b|prime|youtube|chatgpt|crunchyroll|paramount|canva|streaming/.test(t)) return 'streaming';
+            if (/seguidor|likes?|vistas|instagram|tiktok|redes/.test(t)) return 'instagram';
+            return 'otros';
+        };
+        window.kiwiSetComprasCat = function (c) { window.kiwiComprasCat = c; if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole()); };
         function renderStaffCompras(myRole) {
             const container = document.getElementById('panel-compras');
             const adminBox = document.getElementById('admin-compras');
-            if (adminBox && container) adminBox.innerHTML = container.innerHTML;
             let purchases = window.readPurchases();
             container.innerHTML = '';
 
             if (purchases.length === 0) {
                 container.innerHTML = '<p class="text-gray-500 text-xs text-center italic">No hay compras registradas.</p>';
+                if (adminBox) adminBox.innerHTML = container.innerHTML;
                 return;
             }
+
+            // v46: subcategorías por juego/categoría del catálogo
+            const CATS = window.KIWI_COMPRAS_CATS;
+            const counts = {}; purchases.forEach(p => { const c = window.kiwiPurchaseCat(p); counts[c] = (counts[c] || 0) + 1; });
+            let sel = window.kiwiComprasCat || 'all';
+            if (sel !== 'all' && !counts[sel]) sel = 'all';
+            const chip = (k, label, n) => `<button onclick="window.kiwiSetComprasCat('${k}')" class="px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${sel === k ? 'bg-kiwi-gold text-black border-kiwi-gold' : 'bg-kiwi-dark text-gray-300 border-kiwi-border hover:border-kiwi-gold/60'}">${label} <span class="opacity-70">(${n})</span></button>`;
+            container.innerHTML = `<div class="flex flex-wrap gap-2 mb-3">${chip('all', 'Todas', purchases.length)}${CATS.filter(c => counts[c[0]]).map(c => chip(c[0], c[1], counts[c[0]])).join('')}</div>`;
+            if (sel !== 'all') purchases = purchases.filter(p => window.kiwiPurchaseCat(p) === sel);
 
             purchases.slice().reverse().forEach(p => {
                 let statusHtml = p.status === 'pending' ? `<button onclick="window.claimPurchase(${p.id})" class="bg-kiwi-gold hover:bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded transition">Reclamar</button>` : 
@@ -2885,6 +2931,7 @@
                     </div>
                 `;
             });
+            if (adminBox) adminBox.innerHTML = container.innerHTML;
         }
 
         function renderStaffChat(myRole) {
