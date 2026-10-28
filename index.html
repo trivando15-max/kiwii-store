@@ -192,6 +192,20 @@
 .kcal-input{width:100%;min-height:44px;background:#111217;border:1px solid rgba(59,130,246,.5);border-radius:10px;padding:6px 10px;color:#fff;font-size:14px}
 .kcal-res.hidden{display:none}.kcal-res{flex-basis:100%;display:inline-block;max-width:100%;font-size:13px;font-weight:700;color:#4ade80;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);border-radius:12px;padding:6px 10px}
 </style>
+<style>
+/* v52 */
+.ktb{display:flex;flex-direction:column;align-items:center;gap:1px;margin:6px;padding:4px 6px;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:800;font-size:11px;line-height:1.15;text-align:center;letter-spacing:.02em}
+.ktb small{font-weight:600;font-size:10px;opacity:.9;letter-spacing:0}
+.ktb-m{color:#1a1200;background:#f59e0b;border:1px solid #fbbf24}
+.ktb-a{color:#4ade80;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);font-size:10.5px;padding:2px 6px}
+.krx-buy + .ktb, div > .ktb:first-child{margin:0 0 10px}
+#ff-summary-body > .ktb, #ra-summary-body > .ktb{margin:10px 0 0}
+#product-grid > div > .ktb{margin:10px 0 0}
+.kby-opt{display:flex;flex-direction:column;background:#111318;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:10px}
+.kby-manual{border-color:rgba(245,158,11,.35)}
+.ff-ra-card img, .ra-card img{object-fit:contain}
+</style>
+<style>.kcat-ico{width:44px;height:44px;border-radius:12px;object-fit:cover;border:1px solid rgba(255,255,255,.2);box-shadow:0 4px 14px rgba(0,0,0,.4);flex-shrink:0}@media(max-width:640px){.kcat-ico{width:36px;height:36px;border-radius:10px}}</style>
 </head>
 <body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
 
@@ -916,7 +930,7 @@
             </button>
 
             <div id="category-header-banner" class="reveal mb-8 p-5 md:p-8 rounded-2xl border border-kiwi-border bg-gradient-to-r from-kiwi-card to-kiwi-dark shadow-xl flex items-center gap-4">
-                <h2 id="category-title" class="font-orbitron text-2xl md:text-3xl font-black text-white uppercase flex items-center gap-3">CATEGORÍA</h2>
+                <div class="min-w-0 flex-1"><h2 id="category-title" class="font-orbitron text-2xl md:text-3xl font-black text-white uppercase flex items-center gap-3">CATEGORÍA</h2><p id="category-subtitle" class="hidden mt-1 text-xs md:text-sm text-gray-300 font-rajdhani"></p></div>
             </div>
 
             <!-- ROBLOX TABS -->
@@ -1018,6 +1032,49 @@
                             <p class="text-[11px] text-emerald-400 font-rajdhani mb-4"><i class="fa-solid fa-bolt"></i> Entrega automática a tu ID</p>
                             <div id="ff-ra-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
                         </section>
+
+                        <!-- PASE BOOYAH (v52: instantáneo por Recargas América + opción con carga manual) -->
+                        <section id="ff-booyah-card" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Pase Booyah</h3>
+                            <p class="text-xs text-gray-400 mb-4">Elegí cómo querés recibirlo.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="kby-opt kby-auto">
+                                    <button type="button" id="ff-booyah-select" data-ff-id="221" onclick="window.ffSelectProduct(221)" class="ff-card group w-full bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
+                                        <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-3">
+                                            <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                        </div>
+                                        <div class="px-2 pb-3 pt-2 bg-[#20232b]">
+                                            <p class="font-bold text-white text-sm">Pase Booyah · instantáneo</p>
+                                            <p id="booyah-price-display" class="text-emerald-400 font-bold text-sm">$3.300 ARS</p>
+                                            <p id="booyah-usd-display" class="text-[11px] text-gray-500">≈ $2.00 USD</p>
+                                        </div>
+                                    </button>
+                                    <ul class="text-xs text-gray-400 space-y-1 font-rajdhani my-3">
+                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se envía directo a tu ID de Free Fire.</li>
+                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se descuenta de tu saldo al confirmar.</li>
+                                    </ul>
+                                    <button onclick="window.buyBooyahPass()" class="w-full min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-bolt mr-1"></i> Comprar Pase (instantáneo)</button>
+                                </div>
+                                <div class="kby-opt kby-manual">
+                                    <button type="button" id="ff-booyah-manual-select" data-ff-id="680" onclick="window.ffSelectProduct(680)" class="ff-card group w-full bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
+                                        <div class="h-28 flex items-center justify-center bg-gradient-to-b from-amber-500/15 to-transparent p-3">
+                                            <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah con carga manual" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                        </div>
+                                        <div class="px-2 pb-3 pt-2 bg-[#20232b]">
+                                            <p class="font-bold text-white text-sm">Pase Booyah · carga manual</p>
+                                            <p id="booyah-manual-price-display" class="text-emerald-400 font-bold text-sm">$3.200 ARS</p>
+                                            <p class="text-[11px] text-gray-500">≈ $2.00 USD</p>
+                                        </div>
+                                    </button>
+                                    <ul class="text-xs text-gray-400 space-y-1 font-rajdhani my-3">
+                                        <li><i class="fa-solid fa-user-clock text-amber-400 mr-1"></i> Carga manual: un miembro del staff lo carga en tu ID.</li>
+                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se descuenta de tu saldo al confirmar.</li>
+                                    </ul>
+                                    <button onclick="window.buyBooyahManual()" class="w-full min-h-[44px] bg-amber-500 hover:bg-amber-400 text-black font-bold px-4 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-user-clock mr-1"></i> Comprar Pase (carga manual)</button>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="kdel-head kdel-head-manual">🕒 Cargas manuales <span>Un miembro del staff la carga manualmente</span></div>
                         <section id="ff-limited-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
                                 <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes Limitados <span class="text-orange-400 text-sm">(1 x ID)</span></h3>
@@ -1025,31 +1082,6 @@
                             </div>
                             <p id="ff-limited-note" class="text-[11px] text-gray-500 font-rajdhani mb-4">Verificá tu ID para ver qué packs limitados tenés disponibles.</p>
                             <div id="ff-limited-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
-                        </section>
-
-                        <div class="kdel-head kdel-head-manual">🕒 Cargas manuales <span>Un miembro del staff la carga manualmente</span></div>
-                        <!-- PASE BOOYAH -->
-                        <section id="ff-booyah-card" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
-                            <h3 class="font-orbitron font-bold text-white text-base md:text-lg mb-4">Pase Booyah</h3>
-                            <div class="flex flex-col sm:flex-row items-stretch gap-4">
-                                <button type="button" id="ff-booyah-select" onclick="window.ffSelectProduct(221)" class="ff-card group w-44 mx-auto sm:mx-0 bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
-                                    <div class="aspect-square flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-4">
-                                        <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
-                                    </div>
-                                    <div class="px-2 pb-3 pt-2 bg-[#20232b]">
-                                        <p class="font-bold text-white text-sm">Pase Booyah</p>
-                                        <p id="booyah-price-display" class="text-emerald-400 font-bold text-sm">$3.300 ARS</p>
-                                        <p id="booyah-usd-display" class="text-[11px] text-gray-500">≈ $2.00 USD</p>
-                                    </div>
-                                </button>
-                                <div class="flex-1 flex flex-col justify-between gap-3">
-                                    <ul class="text-xs text-gray-400 space-y-1.5 font-rajdhani">
-                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se envía directo a tu ID de Free Fire.</li>
-                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se descuenta de tu saldo al confirmar.</li>
-                                    </ul>
-                                    <button onclick="window.buyBooyahPass()" class="self-start bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar Pase</button>
-                                </div>
-                            </div>
                         </section>
 
                         <!-- CALCULADORA FRAGMENTOS UNIVERSALES -->
@@ -3116,6 +3148,7 @@
             { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', usdtPrice: 29.63, emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
 
             // FREE FIRE - PASES Y FRAGMENTOS
+            { id: 680, category: 'freefire', sub: 'booyah_manual', title: 'Pase Booyah (carga manual)', price: '$3.200 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', usdtPrice: 2.0, manualDelivery: true },
             { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
             { id: 222, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1', price: '$75 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 0.045 },
             { id: 223, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x10', price: '$750 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 0.45 },
@@ -3244,7 +3277,7 @@
             return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100; // hacia arriba al centavo
         };
         // v41: imagen de cada producto (id Recargas América → archivo en /images, .webp). Si falta, se muestra el emoji.
-        window.KIWI_RA_IMG = { 1: 'ff-tarjeta-semanal-basica', 2: 'ff-tarjeta-semanal', 3: 'ff-tarjeta-mensual', 34: 'pubg-uc-1', 35: 'pubg-uc-2', 36: 'pubg-uc-3', 37: 'pubg-uc-4', 38: 'pubg-uc-5', 39: 'pubg-uc-6', 23: 'bs-gold-1', 25: 'bs-gold-2', 26: 'bs-gold-3', 27: 'bs-gold-4', 28: 'bs-gold-5', 29: 'bs-gold-6', 30: 'bs-pass-luckychest', 31: 'bs-pass-levelup', 32: 'bs-pass-elite', 33: 'bs-pass-premium', 249: 'mlbb-d1', 250: 'mlbb-weekly-pass', 251: 'mlbb-d1', 252: 'mlbb-d2', 253: 'mlbb-twilight-pass', 254: 'mlbb-d5', 255: 'mlbb-d5', 256: 'mlbb-d6', 257: 'mlbb-d7', 258: 'mlbb-d7', 259: 'mlbb-d1', 260: 'mlbb-d1', 261: 'mlbb-weekly-pass', 262: 'mlbb-d2', 263: 'mlbb-d5', 264: 'mlbb-twilight-pass', 265: 'mlbb-d5', 266: 'mlbb-d6', 267: 'mlbb-d6', 268: 'mlbb-d7', 269: 'mlbb-d7', 270: 'mlbb-d7' };
+        window.KIWI_RA_IMG = { 1: 'ff-tarjeta-semanal-basica', 2: 'ff-tarjeta-semanal-v3', 3: 'ff-tarjeta-mensual-v3', 34: 'pubg-uc-1', 35: 'pubg-uc-2', 36: 'pubg-uc-3', 37: 'pubg-uc-4', 38: 'pubg-uc-5', 39: 'pubg-uc-6', 23: 'bs-gold-1', 25: 'bs-gold-2', 26: 'bs-gold-3', 27: 'bs-gold-4', 28: 'bs-gold-5', 29: 'bs-gold-6', 30: 'bs-pass-luckychest', 31: 'bs-pass-levelup', 32: 'bs-pass-elite', 33: 'bs-pass-premium', 249: 'mlbb-d1', 250: 'mlbb-weekly-pass', 251: 'mlbb-d1', 252: 'mlbb-d2', 253: 'mlbb-twilight-pass', 254: 'mlbb-d5', 255: 'mlbb-d5', 256: 'mlbb-d6', 257: 'mlbb-d7', 258: 'mlbb-d7', 259: 'mlbb-d1', 260: 'mlbb-d1', 261: 'mlbb-weekly-pass', 262: 'mlbb-d2', 263: 'mlbb-d5', 264: 'mlbb-twilight-pass', 265: 'mlbb-d5', 266: 'mlbb-d6', 267: 'mlbb-d6', 268: 'mlbb-d7', 269: 'mlbb-d7', 270: 'mlbb-d7' };
         window.kiwiRaImg = function (p) { const n = p && (window.KIWI_RA_IMG || {})[p.raId]; return n ? '/images/' + n + '.webp' : ''; };
         window.kiwiRaThumb = function (p, cls) { const u = window.kiwiRaImg(p); return u ? `<img src="${u}" alt="" loading="lazy" class="${cls}" onerror="this.replaceWith(document.createTextNode('${p.emoji || ''}'))">` : (p.emoji || ''); };
         window.KIWI_RA_MAP = {}; // id del catálogo → id de Recargas América
@@ -4170,8 +4203,9 @@
         // v49: tipo de entrega (fuente única)
         window.KIWI_DELIVERY = {
             manualCategories: ['roblox'],
-            manualRegex: /fragmento|caja de fragmento|cajas? de evolutiv|evolutiv|booyah|booya/i,
-            manualIds: [221, 222, 223, 224, 225, 226, 227, 228]
+            // v52: el Pase Booyah de Recargas América (id 221) es instantáneo; el manual es el id 680. Diamantes Limitados = manual.
+            manualRegex: /fragmento|caja de fragmento|cajas? de evolutiv|evolutiv|carga manual|\blimitad[oa]s?\b/i,
+            manualIds: [210, 211, 212, 213, 214, 215, 222, 223, 224, 225, 226, 227, 228, 229, 680]
         };
         window.kiwiDeliveryType = function (p) {
             if (!p) return 'auto';
@@ -4187,7 +4221,7 @@
         window.kiwiCategoryDelivery = function (cat) { return cat === 'roblox' ? ['manual'] : (cat === 'freefire' ? ['auto', 'manual'] : ['auto']); };
         window.kiwiDeliveryBadge = function (t, long) {
             return t === 'manual'
-                ? `<span class="kdel-badge kdel-manual" title="Un miembro del staff la carga manualmente">🕒 Carga manual${long ? ' · Un miembro del staff la carga manualmente' : ''}</span>`
+                ? `<span class="kdel-badge kdel-manual" title="Un miembro del staff la carga manualmente">🕒 CARGA MANUAL${long ? ' · Un miembro del staff la carga manualmente' : ''}</span>`
                 : `<span class="kdel-badge kdel-auto" title="Se entrega automáticamente">⚡ Entrega instantánea</span>`;
         };
 
@@ -4589,7 +4623,7 @@
             const prod = window.products.find(p => p.id === id);
             if (!prod) return;
             window.ffSelection = { kind: 'product', id: prod.id, title: prod.title, price: (prod.id === 221 && document.getElementById('booyah-price-display')) ? document.getElementById('booyah-price-display').textContent : window.getConvertedPrice(prod), usd: window.ffUsdOf(prod), img: prod.image ? window.imgPath(prod.image) : null, icon: (prod.sub === 'ilimitado' || prod.sub === 'limitado') ? 'fa-gem' : 'fa-ticket' };
-            document.querySelectorAll('#ff-diamond-grid .ff-card, #ff-limited-grid .ff-card, #ff-booyah-select').forEach(c => {
+            document.querySelectorAll('#ff-diamond-grid .ff-card, #ff-limited-grid .ff-card, #ff-booyah-select, #ff-booyah-manual-select').forEach(c => {
                 const on = Number(c.dataset.ffId || (c.id === 'ff-booyah-select' ? 221 : 0)) === id;
                 c.classList.toggle('border-white/60', on); c.classList.toggle('bg-[#262a33]', on);
                 c.classList.toggle('border-white/5', !on);
@@ -4615,6 +4649,7 @@
             if (s.kind === 'frag') return window.buyFragments();
             if (s.kind === 'box') return window.buyBoxes();
             if (s.id === 221) return window.buyBooyahPass();
+            if (s.id === 680) return window.buyBooyahManual();
             window.openCheckout(s.id);
         };
         window.renderFFSummary = function() {
@@ -6450,6 +6485,42 @@
             if (el) el.textContent = window.formatArsAsCurrency(window.kiwiBooyahArs());
             const usd = document.getElementById('booyah-usd-display');
             if (usd) usd.textContent = '≈ $' + (window.kiwiBooyahArs() / 1600).toFixed(2) + ' USD';
+            const bm = document.getElementById('booyah-manual-price-display'), pm = window.products.find(p => p.id === 680);
+            if (bm && pm) bm.textContent = window.getConvertedPrice(pm);
+        };
+
+        // v52: Pase Booyah con carga manual (2 USDT). NO pasa por /api/ra: descuenta saldo y crea el pedido para el staff (igual que Fragmentos).
+        window.BOOYAH_MANUAL_ID = 680;
+        window.buyBooyahManual = function() {
+            if (!window.ffRequireVerifiedId()) return;
+            if (!currentUser) return alert('Iniciá sesión');
+            const prod = window.products.find(p => p.id === window.BOOYAH_MANUAL_ID);
+            if (!prod) return alert('Producto no disponible');
+            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+            if (!users[currentUser]) return alert('Sesión inválida');
+            const bal = Number(users[currentUser].balance || 0);
+            const price = Number(prod.usdtPrice) || 2;
+            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
+            const ffId = users[currentUser].ff_id;
+            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
+            const priceStr = window.getConvertedPrice(prod);
+            if (!window.confirm('Pase Booyah (carga manual)\nPrecio: ' + priceStr + ' (' + price.toFixed(2) + ' USDT)\nID: ' + ffId + '\n\n🕒 CARGA MANUAL: un miembro del staff lo carga manualmente.\n¿Confirmás la compra?')) return;
+            users[currentUser].balance = bal - price;
+            localStorage.setItem('kiwi_users', JSON.stringify(users));
+            if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            const order = {
+                id: Date.now(), user: currentUser, title: 'Pase Booyah (carga manual)',
+                price: /USDT/.test(priceStr) ? priceStr : priceStr + ' (' + price.toFixed(2) + ' USDT)', usdtPrice: price, targetUser: ffId,
+                date: new Date().toLocaleString('es-AR'), status: 'confirmed', category: 'freefire', sub: 'booyah_manual',
+                productId: window.BOOYAH_MANUAL_ID, delivery: 'manual', method: 'Saldo (carga manual)', notes: ''
+            };
+            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+            purchases.push(order);
+            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            alert('Pedido de Pase Booyah (carga manual) creado.\nUn miembro del staff lo carga manualmente en tu ID.');
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            return order;
         };
 
         window.buyBoxes = function() {
@@ -7535,6 +7606,9 @@ window.resetUser2FA = function(username) {
     // ===== v37: categorías Mobile Legends / PUBG Mobile / Blood Strike + entrega automática Recargas América + rutas =====
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // v53: íconos de categoría (mismos que las tarjetas del catálogo)
+        window.KIWI_CAT_ICONS = { roblox: '/images/icon-roblox.webp', freefire: '/images/icon-freefire.webp', bloodstrike: '/images/icon-bloodstrike.webp', pubg: '/images/icon-pubg.webp', mlbb: '/images/icon-mobilelegends.webp' };
+        window.kiwiCatIcon = function (cat, alt) { const u = window.KIWI_CAT_ICONS[cat]; return u ? `<img src="${u}" alt="${alt || ''}" class="kcat-ico" onerror="this.style.display='none'">` : ''; };
         window.KIWI_RA_GAMES = {
             bloodstrike: { name: 'Blood Strike', icon: 'fa-crosshairs', color: '#ef4444', grad: 'from-red-900/60 via-[#1a0d10] to-kiwi-dark', desc: 'Gold y pases directo a tu ID', tabs: [['gold', 'Gold'], ['pases', 'Pases']], zone: false, help: 'Tu ID está en el perfil del juego (tocá tu avatar).' },
             pubg: { name: 'PUBG Mobile', icon: 'fa-parachute-box', color: '#f59e0b', grad: 'from-amber-800/50 via-[#1a150a] to-kiwi-dark', desc: 'UC directo a tu ID', tabs: [['uc', 'UC']], zone: false, help: 'Tu ID de personaje está en tu perfil, debajo del nombre.' },
@@ -7570,10 +7644,15 @@ window.resetUser2FA = function(username) {
             window.kiwiSetMeta(category);
             if (isGame) {
                 const g = window.KIWI_RA_GAMES[category];
-                document.getElementById('category-title').innerHTML = `<i class="fa-solid ${g.icon}" style="color:${g.color}"></i> ${g.name.toUpperCase()}`;
+                document.getElementById('category-title').innerHTML = `${window.kiwiCatIcon(category, g.name) || `<i class="fa-solid ${g.icon}" style="color:${g.color}"></i>`} ${g.name.toUpperCase()}`;
                 const grid = document.getElementById('product-grid'); if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
                 window.raRenderGame(category);
             }
+            // v53: un solo encabezado (ícono nuevo + subtítulo + color del juego)
+            const hb = document.getElementById('category-header-banner'), sub = document.getElementById('category-subtitle'), tt = document.getElementById('category-title');
+            if (hb) { hb.dataset.base = hb.dataset.base || hb.className; hb.className = hb.dataset.base + (isGame ? ' kcat-grad ' + window.KIWI_RA_GAMES[category].grad : ''); if (isGame) hb.classList.remove('from-kiwi-card'); }
+            if (sub) { if (isGame) { sub.innerHTML = `${window.KIWI_RA_GAMES[category].desc} · <span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt"></i> Entrega automática</span>`; sub.classList.remove('hidden'); } else { sub.innerHTML = ''; sub.classList.add('hidden'); } }
+            if (tt && !isGame && window.KIWI_CAT_ICONS[category]) { const ic = tt.querySelector('i'); if (ic) ic.outerHTML = window.kiwiCatIcon(category, category); }
         };
         window.goToCategory = function (cat) {
             document.getElementById('catalog-view').classList.add('hidden');
@@ -7605,11 +7684,6 @@ window.resetUser2FA = function(username) {
             if (st.cat !== cat) { st.cat = cat; st.tab = g.tabs[0][0]; st.sel = null; }
             const sv = savedIds()[cat] || {};
             shell.innerHTML = `
-            <div class="rounded-2xl border border-white/5 bg-gradient-to-r ${g.grad} p-5 md:p-7 mb-6 flex items-center gap-4 overflow-hidden relative">
-                <div class="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-black/50 border border-white/15 flex items-center justify-center"><i class="fa-solid ${g.icon} text-2xl md:text-3xl" style="color:${g.color}"></i></div>
-                <div class="min-w-0"><h3 class="font-orbitron font-black text-white text-lg md:text-2xl">${g.name}</h3><p class="text-xs md:text-sm text-gray-300 font-rajdhani">${g.desc} · <span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt"></i> Entrega automática</span></p></div>
-                <i class="fa-solid ${g.icon} absolute -right-4 -bottom-6 text-[120px] opacity-[0.06] text-white pointer-events-none"></i>
-            </div>
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
                 <div class="order-2 lg:order-1 bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                     <div id="ra-tabs" class="flex flex-wrap gap-2 mb-4">${g.tabs.map(([k, l]) => `<button type="button" onclick="window.raSetTab('${k}')" class="ra-tab px-4 py-2 rounded-xl text-sm font-rajdhani font-bold border transition ${st.tab === k ? 'bg-white/10 border-white/40 text-white' : 'bg-kiwi-dark border-white/5 text-gray-400 hover:text-white'}">${l}</button>`).join('')}</div>
@@ -7864,7 +7938,7 @@ window.resetUser2FA = function(username) {
             const note = document.getElementById('kdel-filter-note');
             if (note) {
                 note.classList.toggle('hidden', f === 'all');
-                note.textContent = f === 'manual' ? 'Cargas manuales: todo Roblox, y en Free Fire los Fragmentos, Cajas de Fragmentos y el Pase Booyah. Un miembro del staff las carga manualmente.'
+                note.textContent = f === 'manual' ? 'Cargas manuales: todo Roblox, y en Free Fire los Diamantes Limitados, Fragmentos, Cajas de Fragmentos y el Pase Booyah con carga manual. Un miembro del staff las carga manualmente.'
                     : 'Entrega instantánea: se acredita automáticamente. Free Fire tiene ambos tipos (diamantes y tarjetas son instantáneos).';
             }
         };
@@ -7878,7 +7952,7 @@ window.resetUser2FA = function(username) {
             const t = document.getElementById('category-title'); if (!t) return;
             let b = document.getElementById('kdel-banner-badges');
             const cat = window.currentCatalogCategory;
-            if (!b) { b = document.createElement('div'); b.id = 'kdel-banner-badges'; b.className = 'flex flex-wrap gap-2 ml-auto'; t.parentNode.appendChild(t.nextSibling && false || b); }
+            if (!b) { b = document.createElement('div'); b.id = 'kdel-banner-badges'; b.className = 'flex flex-wrap gap-2 ml-auto'; document.getElementById('category-header-banner').appendChild(b); }
             b.innerHTML = cat ? window.kiwiCategoryDelivery(cat).map(x => window.kiwiDeliveryBadge(x)).join('') : '';
         }
         document.addEventListener('DOMContentLoaded', function () {
@@ -7889,6 +7963,44 @@ window.resetUser2FA = function(username) {
             if (t) new MutationObserver(syncBanner).observe(t, { childList: true, characterData: true, subtree: true });
             const bn = document.getElementById('category-header-banner'); if (bn) bn.classList.add('flex-wrap');
         });
+    })();
+    </script>
+
+    <script>
+    // v52: insignia por producto (🕒 CARGA MANUAL / ⚡ Entrega instantánea)
+    (function () {
+        const M = '<div class="ktb ktb-m">🕒 CARGA MANUAL<small>Un miembro del staff la carga manualmente</small></div>';
+        const A = '<div class="ktb ktb-a">⚡ Entrega instantánea</div>';
+        const typeOfId = id => { const p = (window.products || []).find(x => x.id === Number(id)); return p ? window.kiwiDeliveryType(p) : null; };
+        const html = t => t === 'manual' ? M : (t ? A : '');
+        function put(el, t, where) {
+            if (!el || !t) return;
+            const prev = el.querySelector(':scope > .ktb');
+            if (prev && prev.dataset.t === t) return;
+            if (prev) prev.remove();
+            el.insertAdjacentHTML(where || 'beforeend', html(t));
+            const b = el.querySelector(':scope > .ktb'); if (b) b.dataset.t = t;
+        }
+        function run() {
+            document.querySelectorAll('[data-ff-id], [data-ra-id]').forEach(c => put(c, typeOfId(c.dataset.ffId || c.dataset.raId)));
+            document.querySelectorAll('#product-grid > div').forEach(c => {
+                if (c.querySelector('#blox-market, .krx-wrap')) return;
+                const b = c.querySelector('button[onclick*="("]'); const m = b && String(b.getAttribute('onclick')).match(/\((\d+)\)/);
+                if (!m) return;
+                put(c, typeOfId(m[1]));
+            });
+            document.querySelectorAll('#bm-grid > *').forEach(c => put(c, 'manual'));
+            document.querySelectorAll('.krx-buy').forEach(b => put(b.parentElement, 'manual', 'afterbegin'));
+            ['ff-fragments-calculator', 'ff-boxes-calculator'].forEach(id => { const s = document.getElementById(id); if (s) put(s, 'manual', 'afterbegin'); });
+            const fs = document.getElementById('ff-summary-body'), sel = window.ffSelection;
+            if (fs) put(fs, sel ? ((sel.kind === 'frag' || sel.kind === 'box') ? 'manual' : typeOfId(sel.id)) : null);
+            const rs = document.getElementById('ra-summary-body');
+            if (rs && window.raState && window.raState.sel) put(rs, typeOfId(window.raState.sel));
+        }
+        window.kiwiTileBadges = run;
+        let q = 0;
+        function sched() { if (q) return; q = requestAnimationFrame(() => { q = 0; try { run(); } catch (e) {} }); }
+        document.addEventListener('DOMContentLoaded', () => { run(); new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); });
     })();
     </script>
 </body>
