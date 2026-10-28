@@ -802,7 +802,7 @@
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Instagram & TikTok</p>
             </button>
             <button onclick="window.goToCategory('mlbb')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background:linear-gradient(135deg,#0c4a6e,#1e1b4b 60%,#0b0c10)"></div>
+                <div class="cat-bg" style="background-image:url('/images/cat-mobilelegends.webp')"></div>
                 <div class="cat-bg-overlay"></div>
                 <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-shield-halved text-2xl" style="color:#38bdf8"></i></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">MOBILE LEGENDS</p>
@@ -816,7 +816,7 @@
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">UC al instante</p>
             </button>
             <button onclick="window.goToCategory('bloodstrike')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background:linear-gradient(135deg,#7f1d1d,#1c1917 60%,#0b0c10)"></div>
+                <div class="cat-bg" style="background-image:url('/images/cat-bloodstrike.webp')"></div>
                 <div class="cat-bg-overlay"></div>
                 <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-crosshairs text-2xl" style="color:#ef4444"></i></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">BLOOD STRIKE</p>
@@ -826,8 +826,8 @@
     </div>
 
     <div id="category-view" class="hidden">
-            <button onclick="window.goBackToHome()" class="mb-6 bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border text-white px-5 py-2.5 rounded-xl transition flex items-center gap-2 font-rajdhani font-bold text-lg shadow-lg transform hover:-translate-x-1">
-                <i class="fa-solid fa-arrow-left"></i> VOLVER AL INICIO
+            <button onclick="window.kiwiBackToCatalog()" class="mb-6 bg-kiwi-dark hover:bg-kiwi-red border border-kiwi-border text-white px-5 py-2.5 rounded-xl transition flex items-center gap-2 font-rajdhani font-bold text-lg shadow-lg transform hover:-translate-x-1">
+                <i class="fa-solid fa-arrow-left"></i> VOLVER AL CATÁLOGO
             </button>
 
             <div id="category-header-banner" class="reveal mb-8 p-5 md:p-8 rounded-2xl border border-kiwi-border bg-gradient-to-r from-kiwi-card to-kiwi-dark shadow-xl flex items-center gap-4">
@@ -3128,6 +3128,10 @@
             const m = (pm >= 0 && pm <= 200) ? 1 + pm / 100 : (Number(window.KIWI_RA_MARGIN) || 1.10);
             return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100; // hacia arriba al centavo
         };
+        // v41: imagen de cada producto (id Recargas América → archivo en /images, .webp). Si falta, se muestra el emoji.
+        window.KIWI_RA_IMG = { 23: 'bs-gold-1', 25: 'bs-gold-2', 26: 'bs-gold-3', 27: 'bs-gold-4', 28: 'bs-gold-5', 29: 'bs-gold-6', 30: 'bs-pass-luckychest', 31: 'bs-pass-levelup', 32: 'bs-pass-elite', 33: 'bs-pass-premium', 249: 'mlbb-diamonds-1', 250: 'mlbb-weekly-pass', 251: 'mlbb-diamonds-2', 252: 'mlbb-diamonds-3', 253: 'mlbb-twilight-pass', 254: 'mlbb-diamonds-4', 255: 'mlbb-diamonds-5', 256: 'mlbb-diamonds-5', 257: 'mlbb-diamonds-6', 258: 'mlbb-diamonds-6', 259: 'mlbb-diamonds-1', 260: 'mlbb-diamonds-2', 261: 'mlbb-weekly-pass', 262: 'mlbb-diamonds-3', 263: 'mlbb-diamonds-4', 264: 'mlbb-twilight-pass', 265: 'mlbb-diamonds-5', 266: 'mlbb-diamonds-5', 267: 'mlbb-diamonds-6', 268: 'mlbb-diamonds-6', 269: 'mlbb-diamonds-6', 270: 'mlbb-diamonds-6' };
+        window.kiwiRaImg = function (p) { const n = p && (window.KIWI_RA_IMG || {})[p.raId]; return n ? '/images/' + n + '.webp' : ''; };
+        window.kiwiRaThumb = function (p, cls) { const u = window.kiwiRaImg(p); return u ? `<img src="${u}" alt="" loading="lazy" class="${cls}" onerror="this.replaceWith(document.createTextNode('${p.emoji || ''}'))">` : (p.emoji || ''); };
         window.KIWI_RA_MAP = {}; // id del catálogo → id de Recargas América
         (function () {
             const GAME = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG Mobile', mlbb: 'Mobile Legends' };
@@ -6500,6 +6504,13 @@
             document.getElementById('catalog-view').classList.remove('hidden');
             history.pushState({}, '', '/catalogo');
         };
+        // v41: botón "Volver al catálogo" de las páginas de juego/categoría
+        window.kiwiBackToCatalog = function() {
+            try { if (typeof window.kiwiSetMeta === 'function') window.kiwiSetMeta(null); } catch (_) {}
+            const s = document.getElementById('ra-shell'); if (s) s.classList.add('hidden');
+            window.goToCatalog();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
         window.goToCategory = function(cat) {
             const routes = window.KIWI_ROUTES || { roblox: '/catalogo/roblox', freefire: '/catalogo/free-fire', streaming: '/catalogo/suscripciones-IA', instagram: '/catalogo/redes-sociales' };
             history.pushState({}, '', routes[cat] || '/catalogo');
@@ -7384,7 +7395,7 @@ window.resetUser2FA = function(username) {
             grid.innerHTML = items.map(p => `
                 <button type="button" data-ra-id="${p.id}" onclick="window.raSelect(${p.id})" class="ra-card relative text-center rounded-xl overflow-hidden border transition ${st.sel === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
                     ${p.popular && p.tag ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">${esc(p.tag)}</span>` : ''}
-                    <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-white/5 to-transparent">${p.emoji}</div>
+                    <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-white/5 to-transparent p-2">${window.kiwiRaThumb(p, 'max-h-full max-w-full object-contain drop-shadow-lg')}</div>
                     <div class="px-2 pb-3 pt-2 bg-[#20232b]">
                         <p class="font-bold text-white text-xs sm:text-sm leading-tight min-h-[2.2em]">${esc(p.shortTitle || p.title)}</p>
                         <p class="text-emerald-400 font-bold text-sm mt-1">${p.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(p)}</p>
@@ -7429,7 +7440,7 @@ window.resetUser2FA = function(username) {
             if (!p) { body.innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-cart-shopping text-gray-500 text-2xl mb-3"></i><p class="font-bold text-white text-sm">Sin ítems seleccionados</p><p class="text-xs text-gray-500 mt-1">Elegí un producto para ver el resumen acá.</p></div>'; return; }
             const v = readIds(), g = window.KIWI_RA_GAMES[st.cat];
             body.innerHTML = `
-                <div class="flex items-center gap-3"><div class="w-14 h-14 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 flex items-center justify-center text-3xl">${p.emoji}</div>
+                <div class="flex items-center gap-3"><div class="w-14 h-14 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 flex items-center justify-center text-3xl overflow-hidden">${window.kiwiRaThumb(p, 'w-full h-full object-contain p-1')}</div>
                 <div class="min-w-0"><p class="font-bold text-white text-sm leading-tight">${esc(p.title)}</p><p class="text-[11px] text-gray-500">ID: ${v.player ? esc(v.player) : '<span class="text-amber-400">sin ingresar</span>'}${g.zone ? ' · Zona: ' + (v.zone ? esc(v.zone) : '<span class="text-amber-400">sin ingresar</span>') : ''}</p></div></div>
                 <div class="flex items-end justify-between border-t border-white/5 mt-4 pt-3"><span class="text-xs text-gray-400 uppercase tracking-wider">Total</span><div class="text-right"><p class="text-emerald-400 font-bold text-lg leading-none">${window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500 mt-1">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p></div></div>
                 ${p.raUnavailable ? '<button disabled class="mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed">Agotado / No disponible</button>' : '<button onclick="window.raBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>'}`;
