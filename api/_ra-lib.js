@@ -42,6 +42,14 @@ function raKey() {
 const marginOf = (id) => { const p = Number(MARGINS[id]); return p >= 0 && p <= 200 ? 1 + p / 100 : MARGIN; };
 // precio de venta = costo × (1 + margen del producto), hacia arriba al centavo. Sin id usa el 10% por defecto.
 const salePrice = (cost, id) => Math.ceil(Math.round(cost * (id != null ? marginOf(id) : MARGIN) * 1e6) / 1e4 - 1e-9) / 100;
+// v60: precio de revendedor → se achica solo el margen (factor 0.5 = Nivel 1, 0.25 = Nivel 2). Nunca por debajo del costo.
+const RESELLER_FACTOR = { 1: 0.5, 2: 0.25 };
+const resellerSalePrice = (cost, id, level) => {
+  const f = RESELLER_FACTOR[level];
+  if (!f) return salePrice(cost, id);
+  const m = 1 + ((id != null ? marginOf(id) : MARGIN) - 1) * f;
+  return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100;
+};
 
 function isInactive(p) {
   if (!p) return true;
@@ -88,4 +96,4 @@ async function getCosts(opts) {
 }
 function _resetCache() { cache = null; inflight = null; }
 
-module.exports = { RA_BASE, MARGIN, MARGINS, marginOf, TOLERANCE, FALLBACK, IDS, raKey, salePrice, getCosts, _resetCache };
+module.exports = { RA_BASE, MARGIN, MARGINS, marginOf, TOLERANCE, FALLBACK, IDS, raKey, salePrice, resellerSalePrice, RESELLER_FACTOR, getCosts, _resetCache };
