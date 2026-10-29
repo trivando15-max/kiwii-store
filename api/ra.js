@@ -1,7 +1,7 @@
-// KIWII STORE v40 - Proxy seguro para Recargas América (Vercel serverless, Node 18+, sin dependencias)
+// KIWII STORE v60 - Proxy seguro para Recargas América (Vercel serverless, Node 18+, sin dependencias)
 // Acciones (POST JSON):
 //   { action:'validate', product_id, player_id, zone_id? }                -> verifica la cuenta (solo informativo)
-//   { action:'buy', token, request_id, amount, order:{id,title,price,date_str}, product_id, player_id, zone_id? }
+//   { action:'buy', token, request_id, amount, reseller?:1, order:{id,title,price,date_str}, product_id, player_id, zone_id? }
 //        1) cobra el saldo y guarda el pedido en Supabase en UN paso (kiwi_checkout, con el token del cliente)
 //        2) recién después compra en Recargas América con Idempotency-Key = "kiwii-<id del pedido>"
 //   { action:'order', order_id }                                          -> estado de un pedido de RA
@@ -113,9 +113,22 @@ module.exports = async function handler(req, res) {
   const live = await lib.getCosts();
   if ((live.inactive || []).includes(pid)) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
   const cost = Number(live.costs[pid]) || ALLOWED[pid];
-  const expected = lib.salePrice(cost, pid); // v40: margen propio de cada producto
-  if (amount + 1e-9 < cost || amount < expected * (1 - lib.TOLERANCE) - 1e-9 || amount > expected * (1 + lib.TOLERANCE) + 0.01) {
-    return send(res, 409, { success: false, stage: 'checkout', code: 'PRICE_CHANGED', price: expected, error: 'El precio cambió. Actualizá la página (nuevo precio: ' + expected.toFixed(2) + ' USDT).' });
+  const publicPrice = lib.salePrice(cost, pid); // v40: margen propio de cada producto
+  const fits = (exp) => !(amount + 1e-9 < cost || amount < exp * (1 - lib.TOLERANCE) - 1e-9 || amount > exp * (1 + lib.TOLERANCE) + 0.01);
+  // v60: precio de revendedor. Se verifica el plan EN EL SERVIDOR (kiwi_reseller_status con el token del cliente).
+  // Si el plan no está activo o la consulta falla, se usa el precio público.
+  let expected = publicPrice, resellerLevel = 0;
+  if (b.reseller) {
+    try {
+      const st = await supaRpc('kiwi_reseller_status', { p_token: token });
+      const j = st.ok ? st.json : null;
+      const lvl = j && j.ok && j.active ? Number(j.level) || 0 : 0;
+      if (lvl >= 1) { resellerLevel = Math.min(2, lvl); expected = lib.resellerSalePrice(cost, pid, resellerLevel); }
+    } catch (_) { /* precio público */ }
+  }
+  if (!fits(expected)) {
+    if (resellerLevel && fits(publicPrice)) { expected = publicPrice; resellerLevel = 0; } // pagó el precio público: se acepta
+    else return send(res, 409, { success: false, stage: 'checkout', code: 'PRICE_CHANGED', price: expected, reseller_level: resellerLevel, error: 'El precio cambió. Actualizá la página (nuevo precio: ' + expected.toFixed(2) + ' USDT).' });
   }
 
   const target = 'ID ' + pl.player + (pl.zone ? ' · Zona ' + pl.zone : '');
@@ -126,7 +139,7 @@ module.exports = async function handler(req, res) {
     method: 'Saldo (entrega automática)',
     status: 'confirmed',
     target_user: target,
-    extra: 'AUTO-RA producto #' + pid + ' · ' + target + (order.name ? ' · Nombre: ' + clean(order.name, 60) : '') + ' · Si sigue "en proceso", revisá el pedido kiwii-' + orderId + ' en el panel de Recargas América antes de cargarlo a mano.',
+    extra: 'AUTO-RA producto #' + pid + (resellerLevel ? ' · Revendedor N' + resellerLevel : '') + ' · ' + target + (order.name ? ' · Nombre: ' + clean(order.name, 60) : '') + ' · Si sigue "en proceso", revisá el pedido kiwii-' + orderId + ' en el panel de Recargas América antes de cargarlo a mano.',
     category: CATEGORY_OF(pid),
     date_str: clean(order.date_str, 60)
   };
