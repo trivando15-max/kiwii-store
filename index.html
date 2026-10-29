@@ -571,9 +571,10 @@
                     <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Sorteos y eventos</span><span class="block text-[11px] text-gray-400">Participá y ganá</span></span><span class="text-[10px] font-orbitron font-bold bg-kiwi-red text-white px-2 py-0.5 rounded-full">NUEVO</span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
-                <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border ">
+                <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border">
                     <span class="kd-ico kd-gold"><i class="fa-solid fa-coins"></i></span>
-                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Moneda de los precios</span><span class="block text-[11px] text-gray-400">Cambiá cómo ves los precios</span></span><span class="flex items-center gap-1 text-xs font-rajdhani font-bold text-gray-300"><span id="currency-flag" class="text-base">🇦🇷</span><span id="currency-code">MONEDA</span></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Cambiar moneda de precios</span><span class="block text-[11px] text-gray-400">Ver precios en ARS, MXN, COP, PEN o USDT</span></span>
+                    <span class="flex flex-col items-center gap-0.5 rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span id="currency-flag"></span><span id="currency-code" class="text-[10px] font-orbitron font-bold text-gray-200">USDT</span></span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
                 <button id="staff-menu-btn" onclick="window.goToAdminPanel();" class="kd-btn hidden w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-gold/60">
@@ -1252,75 +1253,50 @@
     <div id="currency-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
         <div class="bg-[#0f111a] border border-[#2a2e40] w-full max-w-lg rounded-3xl p-6 relative shadow-2xl transform scale-95 transition-transform duration-300" id="currency-modal-card">
             <button onclick="window.closeCurrencyModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h2 class="font-orbitron font-black text-2xl text-white mb-1">Moneda</h2>
-            <p class="text-gray-400 text-sm mb-5 font-rajdhani">Elige en qué moneda querés ver los precios.</p>
-            
-            <div class="bg-[#151825] border border-[#222635] rounded-xl p-3 mb-5 flex items-center gap-2 text-xs">
+            <h2 class="font-orbitron font-black text-xl sm:text-2xl text-white mb-1"><i class="fa-solid fa-coins text-kiwi-gold mr-2"></i>Cambiar moneda de los precios</h2>
+            <p class="text-gray-300 text-sm mb-4 font-rajdhani">Elegí en qué moneda querés <b class="text-white">ver los precios</b> de toda la tienda. Solo cambia cómo se muestran, no tu saldo.</p>
+
+            <div class="bg-[#151825] border border-[#222635] rounded-xl p-3 mb-4 flex items-center gap-2 text-xs">
                 <span class="text-green-500 text-[10px]"><i class="fa-solid fa-circle"></i></span>
                 <span class="text-gray-200 font-bold font-rajdhani tracking-wide">Tasa del P2P de Binance</span>
                 <span class="ml-auto text-blue-400 text-[10px] font-bold">Actualizado ahora</span>
             </div>
 
-            <div id="currency-options" class="grid grid-cols-2 gap-3">
-                <!-- ARS -->
-                <button id="curr-card-ARS" onclick="window.selectCurrency('ARS', '🇦🇷')" class="curr-card border border-kiwi-red bg-kiwi-red/10 rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-2xl font-black text-white font-orbitron">AR</span>
-                        <div class="flex flex-col">
-                            <span class="text-white font-bold text-sm leading-none">ARS</span>
-                            <span class="text-gray-400 text-[10px] leading-none mt-1">Peso argentino</span>
-                        </div>
-                    </div>
-                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">Argentina</span>
-                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 1.642 ARS</span>
+            <div id="currency-options" class="grid grid-cols-2 gap-2.5">
+                <button id="curr-card-ARS" onclick="window.selectCurrency('ARS', '')" class="curr-card border-2 border-kiwi-gold bg-kiwi-gold/10 rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/ar.png" srcset="https://flagcdn.com/w80/ar.png 2x" alt="ARS" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">ARS</span><span class="block text-[11px] text-gray-400">Peso argentino</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 1.642 ARS</span>
                 </button>
-                <!-- MXN -->
-                <button id="curr-card-MXN" onclick="window.selectCurrency('MXN', '🇲🇽')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-2xl font-black text-white font-orbitron">MX</span>
-                        <div class="flex flex-col">
-                            <span class="text-white font-bold text-sm leading-none">MXN</span>
-                            <span class="text-gray-400 text-[10px] leading-none mt-1">Peso mexicano</span>
-                        </div>
-                    </div>
-                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">México</span>
-                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 18,87 MXN</span>
+                <button id="curr-card-MXN" onclick="window.selectCurrency('MXN', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/mx.png" srcset="https://flagcdn.com/w80/mx.png 2x" alt="MXN" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">MXN</span><span class="block text-[11px] text-gray-400">Peso mexicano</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 18,87 MXN</span>
                 </button>
-                <!-- COP -->
-                <button id="curr-card-COP" onclick="window.selectCurrency('COP', '🇨🇴')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-2xl font-black text-white font-orbitron">CO</span>
-                        <div class="flex flex-col">
-                            <span class="text-white font-bold text-sm leading-none">COP</span>
-                            <span class="text-gray-400 text-[10px] leading-none mt-1">Peso colombiano</span>
-                        </div>
-                    </div>
-                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">Colombia</span>
-                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 3.259 COP</span>
+                <button id="curr-card-COP" onclick="window.selectCurrency('COP', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/co.png" srcset="https://flagcdn.com/w80/co.png 2x" alt="COP" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">COP</span><span class="block text-[11px] text-gray-400">Peso colombiano</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3.259 COP</span>
                 </button>
-                <!-- PEN -->
-                <button id="curr-card-PEN" onclick="window.selectCurrency('PEN', '🇵🇪')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-2xl font-black text-white font-orbitron">PE</span>
-                        <div class="flex flex-col">
-                            <span class="text-white font-bold text-sm leading-none">PEN</span>
-                            <span class="text-gray-400 text-[10px] leading-none mt-1">Sol</span>
-                        </div>
-                    </div>
-                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">Perú</span>
-                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT ≈ 3,45 PEN</span>
+                <button id="curr-card-PEN" onclick="window.selectCurrency('PEN', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/pe.png" srcset="https://flagcdn.com/w80/pe.png 2x" alt="PEN" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">PEN</span><span class="block text-[11px] text-gray-400">Sol peruano</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3,45 PEN</span>
                 </button>
-                <!-- USDT -->
-                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '🪙')" class="curr-card border border-kiwi-border bg-kiwi-dark rounded-2xl p-4 text-left transition flex flex-col relative overflow-hidden hover:border-gray-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="w-8 h-6 bg-green-500 rounded flex items-center justify-center font-bold text-white text-sm mr-1 shadow-lg">₮</div>
-                        <div class="flex flex-col">
-                            <span class="text-white font-bold text-sm leading-none">USDT</span>
-                            <span class="text-gray-400 text-[10px] leading-none mt-1">Tether</span>
-                        </div>
-                    </div>
-                    <span class="text-gray-300 text-xs font-rajdhani mb-2 mt-2">USDT</span>
-                    <span class="text-kiwi-gold text-[10px] font-bold">1 USDT</span>
+                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 col-span-2">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><span style="width:36px;height:27px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:20px;display:flex;align-items:center;justify-content:center">₮</span></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">USDT</span><span class="block text-[11px] text-gray-400">Tether (dólar digital)</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT</span>
                 </button>
             </div>
             <button onclick="localStorage.setItem('kiwi_preferred_currency', window.currentCurrency); alert('Moneda preferida: ' + window.currentCurrency)" class="mt-4 w-full bg-kiwi-gold text-black font-bold py-2.5 rounded-xl text-sm">Guardar como preferida</button>
@@ -2212,6 +2188,15 @@ window.balShowStaff = function (on) {
             } catch (e) { console.error('Error iniciando DB o Supabase:', e); }
         };
 
+        // --- BANDERAS EN IMAGEN (los emoji de bandera se ven como letras en Windows) ---
+        window.kiFlag = function (code, w) {
+            w = w || 28; const h = Math.round(w * 0.75);
+            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe' }[code];
+            if (iso) return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + code + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle;box-shadow:0 1px 4px rgba(0,0,0,.5)">';
+            if (code === 'USDT') return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:' + Math.round(h * 0.75) + 'px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">₮</span>';
+            return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#2563eb;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:' + Math.round(h * 0.7) + 'px;vertical-align:middle"><i class="fa-solid fa-globe"></i></span>';
+        };
+
         // --- FUNCIONES DE MONEDA ---
         window.openCurrencyModal = function() {
             const m = document.getElementById('currency-modal');
@@ -2238,17 +2223,17 @@ window.balShowStaff = function (on) {
             document.getElementById('currency-code').textContent = code;
             const headerBal = document.getElementById('header-balance');
             if (headerBal && typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-            document.getElementById('currency-flag').textContent = flag;
+            document.getElementById('currency-flag').innerHTML = window.kiFlag(code, 22);
             
             // Actualizar interfaz del modal
             document.querySelectorAll('.curr-card').forEach(c => {
-                c.classList.remove('border-kiwi-red', 'bg-kiwi-red/10');
+                c.classList.remove('border-kiwi-gold', 'bg-kiwi-gold/10');
                 c.classList.add('border-kiwi-border', 'bg-kiwi-dark');
             });
             let activeCard = document.getElementById('curr-card-' + code);
             if(activeCard) {
                 activeCard.classList.remove('border-kiwi-border', 'bg-kiwi-dark');
-                activeCard.classList.add('border-kiwi-red', 'bg-kiwi-red/10');
+                activeCard.classList.add('border-kiwi-gold', 'bg-kiwi-gold/10');
             }
 
             window.closeCurrencyModal();
@@ -7379,7 +7364,7 @@ window.resetUser2FA = function(username) {
             const codeEl = document.getElementById('currency-code');
             const flagEl = document.getElementById('currency-flag');
             if (codeEl) codeEl.textContent = pref;
-            if (flagEl) flagEl.textContent = flags[pref] || '₮';
+            if (flagEl) flagEl.innerHTML = window.kiFlag(pref, 22);
         })();
 
 
@@ -8106,7 +8091,8 @@ window.resetUser2FA = function(username) {
         const K = window.KPAY = { cfg: null, method: null, topup: null, timer: null, poll: null };
         const ICON = { usdt: 'fa-solid fa-coins', binance_pay: 'fa-solid fa-wallet', ar_transfer: 'fa-solid fa-building-columns',
                        mx_nu: 'fa-solid fa-credit-card', co_bancolombia: 'fa-solid fa-landmark', pe_yape: 'fa-solid fa-mobile-screen' };
-        const FLAG = { usdt: '🌎', binance_pay: '🌎', ar_transfer: '🇦🇷', mx_nu: '🇲🇽', co_bancolombia: '🇨🇴', pe_yape: '🇵🇪' };
+        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN' };
+        const FLAG = new Proxy({}, { get: (_, id) => window.kiFlag(FLAGC[id] || 'XX', 22) });
         const REF_LABEL = { usdt: 'TxID / Hash de la transacción', binance_pay: 'ID de orden de Binance Pay',
                             ar_transfer: 'Número de operación / comprobante', mx_nu: 'Clave de rastreo / folio',
                             co_bancolombia: 'Número de comprobante', pe_yape: 'Número de operación' };
@@ -8159,13 +8145,14 @@ window.resetUser2FA = function(username) {
             stopTimers(); steps(0);
             const ms = (K.cfg && K.cfg.methods) || [];
             body(`
-                <p class="text-sm text-gray-300 mb-3">¿Cómo querés pagar? El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago.</p>
+                <p class="text-sm text-white font-bold mb-1">1. Elegí cómo querés pagar</p>
+                <p class="text-xs text-gray-300 mb-3">El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago.</p>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                 ${ms.length ? ms.map(m => `
-                    <button onclick="window.kpayPick('${m.id}')" class="kpay-m bg-kiwi-dark border-2 border-kiwi-border hover:border-kiwi-gold rounded-xl p-3 min-h-[88px] text-left transition active:scale-95">
-                        <div class="flex items-center justify-between"><i class="${ICON[m.id]} text-kiwi-gold text-xl"></i><span class="text-lg">${FLAG[m.id]}</span></div>
-                        <p class="font-bold text-white text-sm mt-2 leading-tight">${esc(m.label)}</p>
-                        <p class="text-[11px] text-gray-400">${m.currency}${m.commission_pct ? ' · comisión ' + m.commission_pct + '%' : ' · sin comisión'}</p>
+                    <button onclick="window.kpayPick('${m.id}')" class="kpay-m flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 min-h-[72px] text-left transition active:scale-95 hover:border-kiwi-gold">
+                        <span class="flex-shrink-0">${window.kiFlag(FLAGC[m.id] || 'XX', 32)}</span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-[13px]">${esc(m.label)}</span>
+                        <span class="block text-[11px] text-gray-400"><i class="${ICON[m.id]} text-kiwi-gold mr-1"></i>${m.currency}${m.commission_pct ? ' · comisión ' + m.commission_pct + '%' : ' · sin comisión'}</span></span>
                     </button>`).join('') : '<p class="col-span-2 text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">Las recargas automáticas todavía no están activas. Podés cargar por WhatsApp.</p>'}
                 </div>
                 <button onclick="window.kpayClose(); window.openBalanceModal && window.openBalanceModal()" class="w-full border border-kiwi-border text-gray-300 rounded-xl py-3 text-sm mb-4"><i class="fa-brands fa-whatsapp mr-1"></i>Prefiero cargar por WhatsApp (manual)</button>
