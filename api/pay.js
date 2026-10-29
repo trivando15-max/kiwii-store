@@ -192,7 +192,7 @@ async function checkBinancePay(topup, orderId) {
   const created = Date.parse(topup.created_at);
   const r = await binanceGet('/sapi/v1/pay/transactions', { startTime: created - 5 * 60000, endTime: Date.now(), limit: 100 });
   const list = r.ok && r.json && Array.isArray(r.json.data) ? r.json.data : null;
-  if (!list) return { found: false, error: 'binance pay ' + r.status };
+  if (!list) return { found: false, error: 'binance pay ' + r.status + (r.json && (r.json.msg || r.json.message) ? ': ' + clean(r.json.msg || r.json.message, 120) : '') };
   const inc = list.filter(x => Number(x.amount) > 0 && String(x.currency).toUpperCase() === 'USDT' && Number(x.transactionTime) >= created - 5 * 60000);
   let t = orderId ? inc.find(x => normTx(x.transactionId) === normTx(orderId) || normTx(x.orderId) === normTx(orderId)) : null;
   if (!t) {
@@ -218,7 +218,9 @@ async function verifyTopup(topup) {
     res = await checkBinancePay(topup, ref);
   }
   if (!res.found || res.verdict === 'wait') {
-    const out = await supaRpc('kiwi_pay_mark', { p_id: topup.id, p_status: null, p_note: res.note || null, p_received: null });
+    let note = res.note || (res.error ? 'Binance respondió con error (' + res.error + '). Revisá permisos de la API key.' : null);
+    if (note && topup.note && String(topup.note).indexOf(note) >= 0) note = null;   // no repetir la misma nota
+    const out = await supaRpc('kiwi_pay_mark', { p_id: topup.id, p_status: null, p_note: note, p_received: null });
     return out;
   }
   if (res.verdict === 'ok') {
@@ -332,11 +334,38 @@ async function handler(req, res) {
     if (action === 'confirm') {
       let proof = typeof body.proof === 'string' && /^data:image\/(png|jpe?g|webp);base64,/.test(body.proof) ? body.proof : null;
       if (proof && proof.length > 700000) proof = null;
-      const r = await supaRpc('kiwi_pay_submit', { p_token: token, p_id: Number(body.id), p_reference: clean(body.reference, 120),
+      const refIn = clean(body.reference, 120);
+      { // el método real sale de la recarga guardada, no del cliente
+        const cur = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
+        const k = cur && METHODS[cur.method] && METHODS[cur.method].kind;
+        if (cur && cur.method === 'binance_pay' && refIn.replace(/\s/g, '').length < 8) throw new Error('Pegá el ID de orden de Binance Pay (lo ves en el detalle del pago, en tu historial de Binance Pay).');
+        if (cur && cur.method === 'usdt' && refIn.length < 10) throw new Error('Pegá el TxID / Hash de tu envío.');
+      }
+      const r = await supaRpc('kiwi_pay_submit', { p_token: token, p_id: Number(body.id), p_reference: refIn,
         p_payer_name: clean(body.payer_name, 80), p_proof: proof });
       let t = r.topup;
       if (t && METHODS[t.method] && METHODS[t.method].kind !== 'notif') t = await verifyTopup(t);
       return send(res, 200, { ok: true, topup: t });
+    }
+    if (action === 'staffverify') {
+      // Solo staff (owner/ceo): la base valida el token. Verifica ahora las recargas "verificando" y devuelve un diagnóstico.
+      const list = await supaRpc('kiwi_pay_staff_list', { p_token: token, p_status: 'submitted', p_method: null, p_limit: 20 });
+      const results = [];
+      for (const t of (list.topups || []).slice(0, 8)) {
+        if (!METHODS[t.method] || METHODS[t.method].kind === 'notif') continue;
+        try { const o = await verifyTopup(t); results.push({ id: t.id, status: o && o.status, note: o && o.note }); }
+        catch (e) { results.push({ id: t.id, error: clean(e.message, 160) }); }
+      }
+      let diag = null;
+      if (body.diag) {
+        const r = await binanceGet('/sapi/v1/pay/transactions', { startTime: Date.now() - 24 * 3600 * 1000, endTime: Date.now(), limit: 100 });
+        const arr = r.json && Array.isArray(r.json.data) ? r.json.data : null;
+        diag = { http: r.status, ok: r.ok, code: r.json && r.json.code, msg: clean(r.json && (r.json.msg || r.json.message), 200),
+                 total_24h: arr ? arr.length : null,
+                 recibidos: arr ? arr.filter(x => Number(x.amount) > 0).map(x => ({ monto: Number(x.amount), moneda: x.currency, hace_min: Math.round((Date.now() - Number(x.transactionTime)) / 60000) })).slice(0, 10) : null,
+                 claves: arr && arr[0] ? Object.keys(arr[0]) : null };
+      }
+      return send(res, 200, { ok: true, results, diag });
     }
     if (action === 'check') {
       let t = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
