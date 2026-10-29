@@ -1,7 +1,9 @@
-// KIWII STORE v54 - Recargas de saldo automáticas (Vercel serverless, Node 18+, sin dependencias)
+// KIWII STORE v60 - Recargas de saldo automáticas (Vercel serverless, Node 18+, sin dependencias)
 // UNA sola función con acciones (?action=... o { action } en el JSON):
 //   GET  config                                  -> métodos activos y datos para pagar (salen de variables de entorno)
-//   POST create  { token, method, usdt }         -> crea la recarga con monto único y tasa congelada
+//   POST create  { token, method, usdt, purpose? } -> crea la recarga con monto único y tasa congelada
+//                purpose:'reseller' = recarga del Panel de revendedores (mínimo 50 USDT, suma al plan)
+//   POST reseller { token }                      -> estado del plan de revendedor (kiwi_reseller_status)
 //   POST confirm { token, id, reference, payer_name?, proof? } -> "Ya pagué" (+ verificación automática USDT/Binance Pay)
 //   POST check   { token, id }                   -> vuelve a verificar / devuelve el estado
 //   POST notif   (header x-pay-secret)           -> notificación reenviada por el celular (transferencias)
@@ -290,6 +292,8 @@ function safeEq(a, b) {
   return x.length > 0 && x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 
+const RESELLER_MIN_USDT = 50; // v60: mínimo de una recarga de revendedor
+
 // ---------- Router ----------
 async function handler(req, res) {
   try {
@@ -322,14 +326,20 @@ async function handler(req, res) {
       const cfg = publicConfig();
       if (!cfg.methods.find(m => m.id === method)) return send(res, 400, { error: 'Método no disponible.' });
       const usdt = Math.round(Number(body.usdt) * 100) / 100;
-      if (!(usdt >= cfg.min_usdt) || usdt > cfg.max_usdt) return send(res, 400, { error: 'El monto debe estar entre ' + cfg.min_usdt + ' y ' + cfg.max_usdt + ' USDT.' });
+      const purpose = body.purpose === 'reseller' ? 'reseller' : 'normal';
+      const minU = purpose === 'reseller' ? Math.max(RESELLER_MIN_USDT, cfg.min_usdt) : cfg.min_usdt;
+      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT.' });
       const cur = METHODS[method].currency;
       const rate = await getRate(cur);
       if (!rate) return send(res, 503, { error: 'No pudimos obtener la cotización. Probá en un minuto.' });
       const qv = quote(method, usdt, rate);
       const r = await supaRpc('kiwi_pay_create', { p_token: token, p_method: method, p_usdt: usdt, p_currency: cur, p_base: qv.base,
-        p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: cfg.minutes, p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2 });
+        p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: cfg.minutes, p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2, p_purpose: purpose });
       return send(res, 200, { ok: true, topup: r.topup, account: cfg.methods.find(m => m.id === method).account });
+    }
+    if (action === 'reseller') {
+      const r = await supaRpc('kiwi_reseller_status', { p_token: token });
+      return send(res, 200, r);
     }
     if (action === 'confirm') {
       let proof = typeof body.proof === 'string' && /^data:image\/(png|jpe?g|webp);base64,/.test(body.proof) ? body.proof : null;
