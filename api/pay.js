@@ -241,7 +241,7 @@ const DEFAULT_APPS = {
   'com.bcp.innovacxion.yapeapp': 'pe_yape',
 };
 const CUR_OF = { ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN' };
-const INCOMING = /(recibiste|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido)/i;
+const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido)/i;
 const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr)/i;
 
 // "$ 16.501", "16.501,50", "$1,234.56", "S/ 35.5", "COP 32.001" -> número
@@ -341,6 +341,9 @@ async function handler(req, res) {
         if (cur && cur.method === 'binance_pay' && refIn.replace(/\s/g, '').length < 8) throw new Error('Pegá el ID de orden de Binance Pay (lo ves en el detalle del pago, en tu historial de Binance Pay).');
         if (cur && cur.method === 'usdt' && refIn.length < 10) throw new Error('Pegá el TxID / Hash de tu envío.');
       }
+      { const cur2 = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
+        if (cur2 && METHODS[cur2.method] && METHODS[cur2.method].kind === 'notif' && clean(body.payer_name, 80).length < 3)
+          throw new Error('Escribí el nombre completo de quien hizo la transferencia, tal como figura en el comprobante.'); }
       const r = await supaRpc('kiwi_pay_submit', { p_token: token, p_id: Number(body.id), p_reference: refIn,
         p_payer_name: clean(body.payer_name, 80), p_proof: proof });
       let t = r.topup;
