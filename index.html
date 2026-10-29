@@ -206,6 +206,37 @@
 .ff-ra-card img, .ra-card img{object-fit:contain}
 </style>
 <style>.kcat-ico{width:44px;height:44px;border-radius:12px;object-fit:cover;border:1px solid rgba(255,255,255,.2);box-shadow:0 4px 14px rgba(0,0,0,.4);flex-shrink:0}@media(max-width:640px){.kcat-ico{width:36px;height:36px;border-radius:10px}}</style>
+<style id="v59-mobile-compact">
+/* v59: inicio más compacto y con aire en celulares */
+@media (max-width:639px){
+  #catalog-section{padding-top:1rem!important;padding-left:.875rem!important;padding-right:.875rem!important}
+  #home-view .khero{margin-bottom:1.25rem!important;border-radius:1.25rem!important}
+  #home-view .khero>div.relative{min-height:0!important;padding:1.25rem 1.1rem!important}
+  #home-view .khero .max-w-xl>span{font-size:9px!important;padding:.2rem .6rem!important;margin-bottom:.7rem!important;letter-spacing:.14em!important}
+  #home-view .khero-title{font-size:1.3rem!important;line-height:1.15!important}
+  #home-view .khero .max-w-xl>p{font-size:.85rem!important;line-height:1.35!important;margin-top:.55rem!important}
+  #home-view .khero-btns{gap:.6rem!important;margin-top:1.1rem!important}
+  #home-view .khero-btns .khero-btn{height:2.9rem!important;font-size:.9rem!important;gap:.5rem!important;border-radius:.85rem!important;padding:0 1rem!important}
+  #home-view .khero .max-w-xl>div:last-child{margin-top:.9rem!important;gap:.4rem 1rem!important;font-size:10px!important}
+  #home-view .kev{margin-bottom:1.1rem!important;border-radius:1.25rem!important}
+  #home-view .kev-in{padding:1rem!important;border-radius:calc(1.25rem - 2px)!important}
+  #home-view .kev-in .kev-pill{font-size:9px!important;padding:.2rem .6rem!important}
+  #home-view .kev-pre{font-size:1rem!important;margin-top:.5rem!important}
+  #home-view .kev-prize{font-size:2.4rem!important}
+  #home-view .kev-desc{font-size:.85rem!important;margin-top:.35rem!important}
+  #home-view .kev-shield{max-width:120px!important}
+  #home-view .kev-logo-wrap{padding:0!important}
+  #home-view .kev-cd{gap:.4rem!important;margin-top:.7rem!important}
+  #home-view .kev-cd>div{min-width:2.9rem!important;padding:.25rem 0!important;border-radius:.6rem!important}
+  #home-view .kev-cd>div>p:first-child{font-size:1.05rem!important}
+  #home-view .kev-cd>div>p:last-child{font-size:9px!important}
+  #home-view .kev-cta{height:2.7rem!important;font-size:.85rem!important;margin-top:.8rem!important;padding:0 1rem!important}
+  /* el saldo no se superpone con el logo: en celular va dentro del menú */
+  #header-balance{display:none!important}
+}
+.ki-mobile-bal{display:none}
+@media (max-width:639px){.ki-mobile-bal{display:flex}}
+</style>
 </head>
 <body class="animated-bg min-h-screen flex flex-col justify-between relative z-10 overflow-x-hidden">
 
@@ -554,6 +585,10 @@
                 <button onclick="window.toggleUserDrawer()" class="h-9 w-9 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
+            <div class="ki-mobile-bal items-center justify-between rounded-2xl border border-kiwi-gold/40 bg-kiwi-gold/10 px-4 py-3 mb-5">
+                <span class="text-xs font-orbitron font-bold text-gray-300"><i class="fa-solid fa-wallet text-kiwi-gold mr-1"></i>MI SALDO</span>
+                <span class="js-bal font-orbitron font-black text-kiwi-gold text-sm">—</span>
+            </div>
             <h4 class="kd-sec">MI CUENTA</h4>
             <div class="space-y-2.5 mb-6">
                 <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border ">
@@ -569,6 +604,11 @@
                 <button onclick="window.toggleUserDrawer(); window.goToEvents();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-red/60">
                     <span class="kd-ico kd-red"><i class="fa-solid fa-gift"></i></span>
                     <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Sorteos y eventos</span><span class="block text-[11px] text-gray-400">Participá y ganá</span></span><span class="text-[10px] font-orbitron font-bold bg-kiwi-red text-white px-2 py-0.5 rounded-full">NUEVO</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
+                </button>
+                <button onclick="window.goToResellerPanel();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-gold/60 shadow-[0_0_18px_rgba(255,183,3,0.18)]">
+                    <span class="kd-ico kd-gold"><i class="fa-solid fa-crown"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Panel de revendedores</span><span id="kd-reseller-sub" class="block text-[11px] text-gray-400">Precios especiales recargando 50+ USDT</span></span><span class="text-[10px] font-orbitron font-bold bg-kiwi-gold text-black px-2 py-0.5 rounded-full">NUEVO</span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
                 <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border">
@@ -774,6 +814,12 @@
                 window.addEventListener('load', function () { setTimeout(load, 800); });
             })();
             </script>
+            <!-- v60: acceso al Panel de revendedores -->
+            <a href="/Panel-de-revendedores" onclick="window.goToResellerPanel(); return false;" class="mt-4 flex items-center gap-3 rounded-2xl border border-kiwi-gold/50 bg-gradient-to-r from-[#2a1f00] to-kiwi-card px-4 py-3 hover:border-kiwi-gold transition">
+                <span class="w-10 h-10 shrink-0 rounded-xl bg-kiwi-gold/15 border border-kiwi-gold/40 flex items-center justify-center text-kiwi-gold"><i class="fa-solid fa-crown"></i></span>
+                <span class="flex-1 min-w-0 leading-tight font-rajdhani"><span class="block font-bold text-white text-base">¿Revendés? Sumate al Panel de revendedores</span><span class="block text-xs text-gray-400">Descuentos en Roblox, recargas y redes desde 50 USDT</span></span>
+                <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
+            </a>
             
 
             <!-- CATEGORÍAS -->
@@ -1021,12 +1067,12 @@
                 <p class="text-sm text-gray-200 mb-3">Misma calidad para todos los paquetes:</p>
                 <div class="mb-4">
                     <label for="social-like-type-select" class="block text-xs text-gray-300 font-rajdhani font-bold mb-2">¿Qué querés comprar?</label>
-                    <select id="social-like-type-select" class="w-full bg-kiwi-dark border border-pink-500/40 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-pink-500">
+                    <select id="social-like-type-select" onchange="window.kiwiSocialLVRefresh && window.kiwiSocialLVRefresh()" class="w-full bg-kiwi-dark border border-pink-500/40 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-pink-500">
                         <option value="" selected disabled>Seleccioná Likes o Vistas...</option>
                         <option value="Likes">Likes</option>
                         <option value="Vistas">Vistas</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-2">Los precios son iguales; esta opción solo identifica el servicio en tu pedido.</p>
+                    <p class="text-xs text-gray-500 mt-2">Likes y Vistas tienen precios distintos: elegí uno y cada paquete te muestra el precio exacto.</p>
                 </div>
                 <ul class="space-y-2 text-sm text-gray-300">
                     <li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-400 mt-1"></i><span>Calidad Alta</span></li>
@@ -3330,7 +3376,10 @@ window.balShowStaff = function (on) {
             const cost = Number(it.cost) || 0;
             if (it.precio) return Math.max(Number(it.precio), Math.ceil(cost * 100) / 100);
             const pm = Number((window.KIWI_RA_MARGINS || {})[it.ra]);
-            const m = (pm >= 0 && pm <= 200) ? 1 + pm / 100 : (Number(window.KIWI_RA_MARGIN) || 1.10);
+            let m = (pm >= 0 && pm <= 200) ? 1 + pm / 100 : (Number(window.KIWI_RA_MARGIN) || 1.10);
+            // v60: revendedor → margen ×0,5 (Nivel 1) o ×0,25 (Nivel 2)
+            const rf = window.kiwiReseller ? window.kiwiReseller.marginFactor('ra') : 1;
+            if (rf < 1) m = 1 + (m - 1) * rf;
             return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100; // hacia arriba al centavo
         };
         // v41: imagen de cada producto (id Recargas América → archivo en /images, .webp). Si falta, se muestra el emoji.
@@ -4020,11 +4069,74 @@ window.balShowStaff = function (on) {
             }
         };
 
+        // ===== v60: PRECIOS DE REDES SOCIALES (tabla editable) =====
+        // costo: USD cada 1000 unidades (proveedor BulkMedya, id de servicio). margen: % según tamaño del paquete.
+        // Regla: precio = costo × cantidad/1000 × (1 + margen) → redondeo hacia arriba al centavo → mínimo 0,30 USDT.
+        window.KIWI_SOCIAL_PRICING = {
+            minimo: 0.30,
+            costos: {
+                'ig_seg_baja':    { servicio: 15234, usdPor1000: 0.17 },
+                'ig_seg_media':   { servicio: 15217, usdPor1000: 1.00 },
+                'ig_seg_premium': { servicio: 2004,  usdPor1000: 3.00 },
+                'ig_likes':       { servicio: 18105, usdPor1000: 0.14 },
+                'ig_vistas':      { servicio: 6821,  usdPor1000: 0.006 },
+                'tt_likes':       { servicio: 16216, usdPor1000: 0.5085 },
+                'tt_vistas':      { servicio: 18527, usdPor1000: 0.0057 }
+            },
+            margenes: { 100: 50, 500: 40, 1000: 30, 2000: 28, 5000: 25, 10000: 20, 20000: 18, 50000: 15, 100000: 12 }
+        };
+        window.kiwiSocialQty = function (prod) {
+            const m = String(prod && prod.title || '').match(/^([\d.]+)/);
+            return m ? parseInt(m[1].replace(/\./g, ''), 10) : 0;
+        };
+        window.kiwiSocialMargin = function (qty) {
+            const M = window.KIWI_SOCIAL_PRICING.margenes;
+            const ks = Object.keys(M).map(Number).sort((a, b) => a - b);
+            let pick = ks[0];
+            ks.forEach(k => { if (qty >= k) pick = k; });
+            return M[pick];
+        };
+        // clave de costo: 'ig_seg_baja' | 'ig_likes' | 'tt_vistas' ...
+        window.kiwiSocialKey = function (prod, variant) {
+            if (!prod) return null;
+            if (prod.category === 'instagram' && prod.sub === 'seguidores') return 'ig_seg_' + (variant || 'baja');
+            if (prod.sub === 'likes' && (prod.category === 'instagram' || prod.category === 'tiktok')) {
+                const t = /vista/i.test(String(variant || '')) ? 'vistas' : 'likes';
+                return (prod.category === 'instagram' ? 'ig_' : 'tt_') + t;
+            }
+            return null;
+        };
+        // marginFactor: 1 = público, 0.5 = revendedor Nivel 1, 0.25 = Nivel 2
+        window.kiwiSocialPriceRaw = function (key, qty, marginFactor) {
+            const C = window.KIWI_SOCIAL_PRICING, c = C.costos[key];
+            if (!c || !qty) return 0;
+            const f = marginFactor == null ? 1 : marginFactor;
+            const raw = c.usdPor1000 * qty / 1000 * (1 + window.kiwiSocialMargin(qty) * f / 100);
+            const cents = Math.ceil(Math.round(raw * 1e6) / 1e4);
+            return Math.max(C.minimo, cents / 100);
+        };
+        window.kiwiSocialPrice = function (prod, variant, marginFactor) {
+            if (marginFactor == null) marginFactor = window.kiwiReseller ? window.kiwiReseller.marginFactor('social') : 1;
+            return window.kiwiSocialPriceRaw(window.kiwiSocialKey(prod, variant), window.kiwiSocialQty(prod), marginFactor);
+        };
+        // Recalcula usdtPrice/price "desde" de todos los paquetes sociales
+        window.kiwiSocialApplyPrices = function () {
+            const rate = 1600;
+            (window.products || []).forEach(p => {
+                const key = window.kiwiSocialKey(p);
+                if (!key) return;
+                const isF = p.sub === 'seguidores';
+                const desde = isF ? window.kiwiSocialPrice(p, 'baja') : Math.min(window.kiwiSocialPrice(p, 'Likes'), window.kiwiSocialPrice(p, 'Vistas'));
+                p.usdtPrice = desde;
+                p.purchasePriceARS = Math.round(desde * rate);
+                p.price = `${desde} USDT - $${p.purchasePriceARS.toLocaleString('es-AR')} ARS`;
+            });
+        };
+        window.kiwiSocialApplyPrices();
+
         window.getInstagramFollowerVariant = function(prod, quality) {
-            const factor = quality === 'baja' ? 0.4 : quality === 'premium' ? 1.4 : 1;
-            const baseUsdt = Number(prod.usdtPrice || 0);
-            const usdtPrice = Math.round(baseUsdt * factor * 100) / 100;
-            const purchasePriceARS = Math.round(baseUsdt * 1600 * factor);
+            const usdtPrice = window.kiwiSocialPrice(prod, quality);
+            const purchasePriceARS = Math.round(usdtPrice * 1600);
             return {
                 ...prod,
                 title: `${prod.title} - ${window.instagramFollowerQualityInfo[quality].label}`,
@@ -4032,7 +4144,8 @@ window.balShowStaff = function (on) {
                 usdtPrice,
                 purchasePriceARS,
                 igQuality: quality,
-                baseProductId: prod.id
+                baseProductId: prod.id,
+                resellerLevel: window.kiwiReseller ? window.kiwiReseller.activeLevel() : 0
             };
         };
 
@@ -4075,16 +4188,16 @@ window.balShowStaff = function (on) {
             const select = document.getElementById('social-like-type-select');
             if (!prod) return alert('No se pudo cargar el paquete.');
             if (!select || !select.value) return alert('Elegí si querés Likes o Vistas antes de continuar.');
-            const usdt = Number(prod.usdtPrice || 0);
-            const purchasePriceARS = Number.isFinite(Number(prod.purchasePriceARS)) && Number(prod.purchasePriceARS) > 0
-                ? Number(prod.purchasePriceARS)
-                : Math.round(usdt * 1600);
+            const usdt = window.kiwiSocialPrice(prod, select.value);
+            const purchasePriceARS = Math.round(usdt * 1600);
             window.currentActiveProduct = {
                 ...prod,
                 title: `${prod.title} (${select.value})`,
+                price: `${usdt} USDT - $${purchasePriceARS.toLocaleString('es-AR')} ARS`,
                 socialLikeType: select.value,
                 purchasePriceARS,
-                usdtPrice: usdt
+                usdtPrice: usdt,
+                resellerLevel: window.kiwiReseller ? window.kiwiReseller.activeLevel() : 0
             };
             window.openCheckout(null, true);
         };
@@ -4312,6 +4425,7 @@ window.balShowStaff = function (on) {
         };
 
         window.renderRobuxCalculator = function(type) {
+            window.kiwiRobuxSub = type;
             const container = document.getElementById('product-grid');
             let title = ""; let infoHtml = ""; let multiplier = 12; let methodText = "";
             document.getElementById('category-info-container').classList.add('hidden');
@@ -4481,7 +4595,8 @@ window.balShowStaff = function (on) {
             if (kbuy) { kbuy.disabled = false; kbuy.classList.remove('opacity-50', 'cursor-not-allowed'); }
             const kab = document.getElementById('krx-amount-big'); if (kab) kab.textContent = amount.toLocaleString('es-AR');
             const arsTotal = (amount / 10) * multiplier * 10;
-            const usdtTotal = document.getElementById('krx-mayor-box') ? window.krxMayorUsdt(amount) : arsTotal / 1600;
+            let usdtTotal = document.getElementById('krx-mayor-box') ? window.krxMayorUsdt(amount) : arsTotal / 1600;
+            if (window.kiwiReseller) usdtTotal = window.kiwiReseller.robuxPrice(usdtTotal, window.kiwiRobuxSub);
             
             let finalConverted = window.currentCurrency === 'USDT' ? usdtTotal : usdtTotal * window.exchangeRates[window.currentCurrency];
             
@@ -4509,7 +4624,8 @@ window.balShowStaff = function (on) {
             if (isMayor) methodText = window.KRX_MAYOR_LABEL;
             // Calculate USDT price (0.075 per 10 Robux for grupo, adjust as needed)
             const multiplier = subType === 'robux_gamepass' ? 0.057 : (subType === 'robux_plus' ? 0.09 : 0.075);
-            const usdtPrice = isMayor ? window.krxMayorUsdt(amount) : (amount / 10) * multiplier;
+            const usdtPublic = isMayor ? window.krxMayorUsdt(amount) : (amount / 10) * multiplier;
+            const usdtPrice = window.kiwiReseller ? window.kiwiReseller.robuxPrice(usdtPublic, subType) : usdtPublic;
             const rate = window.exchangeRates[window.currentCurrency] || 1;
             const converted = window.currentCurrency === 'USDT' ? usdtPrice : usdtPrice * rate;
             const sym = window.currencySymbols[window.currentCurrency] || '';
@@ -4519,7 +4635,8 @@ window.balShowStaff = function (on) {
                 title: amount + ' Robux (' + methodText + ')',
                 price: totalStr,
                 usdtPrice: usdtPrice,
-                isLimited: false, category: 'roblox', sub: subType, wholesale: isMayor
+                isLimited: false, category: 'roblox', sub: subType, wholesale: isMayor,
+                resellerLevel: (window.kiwiReseller && usdtPrice < usdtPublic) ? window.kiwiReseller.activeLevel() : 0
             };
 
             if (subType === 'robux_gamepass') {
@@ -4979,6 +5096,8 @@ window.balShowStaff = function (on) {
             const container = document.getElementById('product-grid');
             const priceOf = p => String(window.getConvertedPrice(p)).split(' - ').pop();
             const usdOf = p => Number(p.usdtPrice || 0);
+            const lvType = () => { const el = document.getElementById('social-like-type-select'); return el && el.value ? el.value : ''; };
+            const lvPrice = p => { const t = lvType(); if (!t) return 'desde ' + priceOf(p); return String(window.getConvertedPrice({ usdtPrice: window.kiwiSocialPrice(p, t) })).split(' - ').pop(); };
             const cards = items.map(prod => {
                 const isIgF = prod.category === 'instagram' && prod.sub === 'seguidores';
                 const isLV = (prod.category === 'instagram' || prod.category === 'tiktok') && prod.sub === 'likes';
@@ -4995,8 +5114,9 @@ window.balShowStaff = function (on) {
                     </div>
                     <div class="px-4 pb-4 pt-2 flex flex-col gap-2 flex-1 bg-[#20232b]">
                         <div class="text-center">
-                            <p class="text-emerald-400 font-bold text-base leading-tight" id="ig-price-${prod.id}">${isIgF ? 'Elegí una calidad' : priceOf(prod)}</p>
-                            <p class="text-[11px] text-gray-500">${isIgF ? 'desde ' : ''}≈ $${usdOf(prod).toFixed(2)} USD</p>
+                            <p class="text-emerald-400 font-bold text-base leading-tight" id="ig-price-${prod.id}">${isIgF ? 'Elegí una calidad' : (isLV ? lvPrice(prod) : priceOf(prod))}</p>
+                            <p class="text-[11px] text-gray-500" id="ig-usd-${prod.id}">${isIgF || (isLV && !lvType()) ? 'desde ' : ''}≈ $${(isLV && lvType() ? window.kiwiSocialPrice(prod, lvType()) : usdOf(prod)).toFixed(2)} USD</p>
+                            ${isLV ? `<p class="text-[10px] text-gray-400 mt-0.5">❤️ Likes ${window.kiwiSocialPrice(prod, 'Likes').toFixed(2)} · 👁️ Vistas ${window.kiwiSocialPrice(prod, 'Vistas').toFixed(2)} USDT</p>` : ''}
                         </div>
                         ${isIgF ? `
                         <div class="text-left">
@@ -5033,6 +5153,19 @@ window.balShowStaff = function (on) {
                 </div>`;
         };
 
+
+        window.kiwiSocialLVRefresh = function () {
+            const el = document.getElementById('social-like-type-select');
+            const t = el && el.value ? el.value : '';
+            (window.products || []).forEach(p => {
+                if (p.sub !== 'likes' || (p.category !== 'instagram' && p.category !== 'tiktok')) return;
+                const pe = document.getElementById('ig-price-' + p.id), ue = document.getElementById('ig-usd-' + p.id);
+                if (!pe) return;
+                const v = t ? window.kiwiSocialPrice(p, t) : Number(p.usdtPrice);
+                pe.textContent = (t ? '' : 'desde ') + String(window.getConvertedPrice({ usdtPrice: v })).split(' - ').pop();
+                if (ue) ue.textContent = (t ? '' : 'desde ') + '≈ $' + v.toFixed(2) + ' USD';
+            });
+        };
 
         // === SISTEMA DE PEDIDOS Y SALDO ===
         window.PAYMENT_BY_CURRENCY = {
@@ -5562,7 +5695,9 @@ window.balShowStaff = function (on) {
                     bulkServiceId: bulkServiceId,
                     quantity: quantity,
                     igQuality: prod.igQuality || null,
-                    socialLikeType: prod.socialLikeType || null
+                    socialLikeType: prod.socialLikeType || null,
+                    usdtPrice: priceNum,
+                    resellerLevel: prod.resellerLevel || 0
                 };
 
                 let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -5746,7 +5881,9 @@ window.balShowStaff = function (on) {
                 targetUser: targetUser || 'N/A',
                 extra: extra || '',
                 category: prod.category,
-                sub: prod.sub || ''
+                sub: prod.sub || '',
+                usdtPrice: priceNum,
+                resellerLevel: prod.resellerLevel || 0
             };
 
             let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -7191,6 +7328,7 @@ window.balShowStaff = function (on) {
                 status: 'confirmed',
                 category: 'roblox',
                 sub: subType,
+                usdtPrice: priceNum,
                 notes: ''
             });
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
@@ -7889,7 +8027,7 @@ window.resetUser2FA = function(username) {
             const user = currentUser;
             const orderId = Date.now();
             const order = { id: orderId, user, title: prod.title, price: prod.price, method: 'Saldo (entrega automática)', date: new Date().toLocaleString('es-AR'), status: 'confirmed', targetUser: 'ID ' + data.player_id + (data.zone_id ? ' · Zona ' + data.zone_id : ''), extra: 'AUTO-RA producto #' + prod.raId, category: prod.category, sub: prod.sub, usdtPrice: price, notes: '' };
-            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, product_id: prod.raId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
+            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, reseller: (window.kiwiReseller && window.kiwiReseller.activeLevel()) ? 1 : 0, product_id: prod.raId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
             let j = null;
             try {
                 for (let i = 0; i < 3 && !j; i++) { // si se corta la conexión se reintenta con la MISMA solicitud: nunca cobra ni recarga dos veces
@@ -8131,9 +8269,13 @@ window.resetUser2FA = function(username) {
             try { navigator.clipboard.writeText(txt).then(done, done); } catch (_) { done(); }
         };
         function stopTimers() { clearInterval(K.timer); clearInterval(K.poll); K.timer = K.poll = null; }
-        window.kpayClose = function () { stopTimers(); document.getElementById('kpay-modal').classList.add('hidden'); };
-        window.kpayOpen = async function () {
+        window.kpayClose = function () { stopTimers(); document.getElementById('kpay-modal').classList.add('hidden'); if (K.purpose === 'reseller' && window.kiwiReseller) window.kiwiReseller.refresh(); };
+        // v60: kpayOpen({ purpose: 'reseller' }) → recarga del Panel de revendedores (mínimo 50 USDT)
+        const RES_MIN = 50;
+        const kMin = () => K.purpose === 'reseller' ? Math.max(RES_MIN, K.cfg.min_usdt || 1) : (K.cfg.min_usdt || 1);
+        window.kpayOpen = async function (opts) {
             if (typeof currentUser !== 'undefined' && !currentUser) return say('Iniciá sesión primero');
+            K.purpose = (opts && opts.purpose === 'reseller') ? 'reseller' : 'normal';
             document.getElementById('kpay-modal').classList.remove('hidden');
             const act = JSON.parse(localStorage.getItem('kpay_active') || 'null');
             steps(0); body('<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando…</p>');
@@ -8148,6 +8290,7 @@ window.resetUser2FA = function(username) {
             stopTimers(); steps(0);
             const ms = (K.cfg && K.cfg.methods) || [];
             body(`
+                ${K.purpose === 'reseller' ? '<div class="mb-3 rounded-xl border border-kiwi-gold/60 bg-kiwi-gold/10 p-3 text-xs text-kiwi-gold font-bold"><i class="fa-solid fa-crown mr-1"></i>Recarga de revendedor: mínimo 50 USDT. Suma a tu plan y se acredita como saldo normal.</div>' : ''}
                 <p class="text-sm text-white font-bold mb-1">1. Elegí cómo querés pagar</p>
                 <p class="text-xs text-gray-300 mb-3">El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago.</p>
                 <div class="grid grid-cols-2 gap-2 mb-4">
@@ -8177,15 +8320,15 @@ window.resetUser2FA = function(username) {
         }
         window.kpayPick = function (id) {
             K.method = K.cfg.methods.find(m => m.id === id); steps(1);
-            const m = K.method, min = K.cfg.min_usdt || 1;
+            const m = K.method, min = kMin(), res = K.purpose === 'reseller';
             body(`
                 <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
                 <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
                 <label class="block text-xs text-gray-400 mb-1 mt-3">¿Cuánto saldo querés cargar? (USDT)</label>
-                <input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">
-                <div class="grid grid-cols-4 gap-2 mt-2">${[1, 5, 10, 20].filter(v => v >= min).map(v => `<button onclick="document.getElementById('kpay-usdt').value=${v};window.kpayEst()" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v}</button>`).join('')}</div>
+                <input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">
+                <div class="grid ${res ? 'grid-cols-2' : 'grid-cols-4'} gap-2 mt-2">${(res ? [50, 150] : [1, 5, 10, 20]).filter(v => v >= min).map(v => `<button onclick="document.getElementById('kpay-usdt').value=${v};window.kpayEst()" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v}</button>`).join('')}</div>
                 <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
-                <p class="text-[11px] text-gray-500 text-center">Mínimo ${min} USDT. El monto exacto a pagar se fija en el siguiente paso.</p>
+                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}Mínimo ${min} USDT. El monto exacto a pagar se fija en el siguiente paso.</p>
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
             window.kpayEst();
         };
@@ -8197,10 +8340,10 @@ window.resetUser2FA = function(username) {
         };
         window.kpayCreate = async function () {
             const v = Number(document.getElementById('kpay-usdt').value);
-            if (!(v >= (K.cfg.min_usdt || 1))) return say('El mínimo es ' + (K.cfg.min_usdt || 1) + ' USDT');
+            if (!(v >= kMin())) return say('El mínimo es ' + kMin() + ' USDT');
             const b = document.getElementById('kpay-go'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
-                const r = await api('create', { method: K.method.id, usdt: v });
+                const r = await api('create', { method: K.method.id, usdt: v, purpose: K.purpose || 'normal' });
                 K.topup = r.topup; K.account = r.account;
                 localStorage.setItem('kpay_active', JSON.stringify({ id: r.topup.id, t: Date.now(), account: r.account }));
                 renderPay();
@@ -8497,6 +8640,292 @@ window.resetUser2FA = function(username) {
     };
     setTimeout(check, 6000);
     setInterval(check, 60000);
+})();
+</script>
+<script>
+(function(){var h=document.getElementById('header-balance');if(!h)return;
+function sync(){document.querySelectorAll('.js-bal').forEach(function(e){e.textContent=h.textContent||'—'})}
+new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:true});sync();})();
+</script>
+<!-- ===== v60: PANEL DE REVENDEDORES + motor de descuentos ===== -->
+<div id="reseller-view" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto"></div>
+<div id="reseller-chip" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] pointer-events-auto">
+    <button onclick="window.goToResellerPanel()" class="flex items-center gap-2 rounded-full border border-kiwi-gold/70 bg-black/85 px-4 py-2 text-xs font-orbitron font-bold text-kiwi-gold shadow-[0_0_18px_rgba(255,183,3,0.35)]"><i class="fa-solid fa-crown"></i><span id="reseller-chip-text">Modo revendedor</span></button>
+</div>
+<script>
+(function () {
+    'use strict';
+    // ---------- Tabla de descuentos (editable) ----------
+    window.KIWI_RESELLER_CFG = {
+        refreshMs: 3 * 60 * 1000,          // re-chequeo con el servidor
+        marginFactor: { 1: 0.5, 2: 0.25 }, // RA automáticos y redes: se achica el margen
+        roblox: {                           // % de descuento sobre el precio público
+            fruits: { 1: 5, 2: 7 }, gamepasses: { 1: 5, 2: 7 },     // Blox Fruits (frutas y gamepasses del juego)
+            robux_grupo: { 1: 5, 2: 7 }, robux_gamepass: { 1: 5, 2: 7 }, robux_plus: { 1: 8, 2: 10 }
+        },
+        manual: { 1: 10, 2: 10 },          // productos de entrega manual (no Roblox, no redes)
+        level1Total: 50, level2Single: 150, cycleDays: 21, windowDays: 7
+    };
+    const C = window.KIWI_RESELLER_CFG;
+    const LS = 'kiwi_reseller_on';
+    const R = window.kiwiReseller = {
+        status: null, loading: false, error: '',
+        on: localStorage.getItem(LS) === '1'
+    };
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const logged = () => (typeof currentUser !== 'undefined' && !!currentUser) && !!(window.kiwiToken && window.kiwiToken());
+    const r2 = x => Math.round(x * 100) / 100;
+
+    R.level = () => (R.status && R.status.active) ? Math.min(2, Number(R.status.level) || 0) : 0;
+    R.activeLevel = () => (R.on && logged()) ? R.level() : 0;
+    R.marginFactor = function () { const l = R.activeLevel(); return l ? C.marginFactor[l] : 1; };
+    R.isSocial = p => p && (p.category === 'instagram' || p.category === 'tiktok');
+    R.isRa = p => p && (p.raId || p.raLegacyId || (window.KIWI_RA_ITEMS || []).some(it => it.id === p.id));
+    // % para productos de precio fijo (Roblox / manual). 0 = sin descuento
+    R.pctFor = function (p, level) {
+        const l = level == null ? R.activeLevel() : level;
+        if (!l || !p) return 0;
+        if (p.category === 'roblox') { const t = C.roblox[p.sub]; return t ? t[l] : 0; }
+        if (R.isSocial(p) || R.isRa(p)) return 0;
+        if (['streaming', 'ia', 'suscripciones'].includes(p.category)) return 0;
+        if (window.kiwiDeliveryType && window.kiwiDeliveryType(p) === 'manual') return C.manual[l];
+        return 0;
+    };
+    R.discount = function (pub, pct) {
+        if (!pct) return pub;
+        const raw = pub * (1 - pct / 100);
+        let d = r2(raw);
+        if (d >= pub) d = Number(raw.toFixed(4));
+        return d;
+    };
+    R.robuxPrice = function (usdt, sub) {
+        const l = R.activeLevel(); const t = C.roblox[sub];
+        return (l && t) ? r2(usdt * (1 - t[l] / 100)) : usdt;
+    };
+    const pubUsdtOf = p => {
+        if (p.usdtPrice) return Number(p.usdtPrice);
+        if (p.purchasePriceARS) return Number(p.purchasePriceARS) / ((window.exchangeRates || {}).ARS || 1600);
+        const m = String(p.price || '').match(/\$([\d.]+)\s*ARS/);
+        return m ? parseFloat(m[1].replace(/\./g, '')) / ((window.exchangeRates || {}).ARS || 1600) : 0;
+    };
+    // ---------- Aplicar precios (una sola fuente: base pública guardada en prod._pub) ----------
+    R.applyAll = function () {
+        const lvl = R.activeLevel();
+        (window.products || []).forEach(p => {
+            if (R.isSocial(p) || R.isRa(p)) return;
+            const isTarget = p.category === 'roblox' || (window.kiwiDeliveryType && window.kiwiDeliveryType(p) === 'manual');
+            if (!isTarget) return;
+            if (!p._pub) p._pub = { usdtPrice: p.usdtPrice, price: p.price, purchasePriceARS: p.purchasePriceARS };
+            // restaurar precio público
+            if (p._pub.usdtPrice === undefined) delete p.usdtPrice; else p.usdtPrice = p._pub.usdtPrice;
+            p.price = p._pub.price; p.purchasePriceARS = p._pub.purchasePriceARS;
+            if (p.purchasePriceARS === undefined) delete p.purchasePriceARS;
+            p.pubUsdt = pubUsdtOf(p);
+            p.resellerLevel = 0;
+            const pct = R.pctFor(p, lvl);
+            if (!pct || !p.pubUsdt) return;
+            const d = R.discount(p.pubUsdt, pct);
+            p.usdtPrice = d; p.resellerLevel = lvl; p.resellerPct = pct;
+            const ratio = d / p.pubUsdt;
+            p.price = String(p._pub.price || '').replace(/\$([\d.]+)(\s*ARS)/, (m0, n, suf) => '$' + Math.round(parseFloat(n.replace(/\./g, '')) * ratio).toLocaleString('es-AR') + suf);
+            if (p.purchasePriceARS) p.purchasePriceARS = Math.round(p.purchasePriceARS * ratio);
+        });
+        try { window.kiwiSocialApplyPrices && window.kiwiSocialApplyPrices(); } catch (_) {}
+        try {
+            // RA: kiwiRaSalePrice ya lee el factor; se re-aplica con los costos actuales
+            const items = window.KIWI_RA_ITEMS || [];
+            if (items.length && window.kiwiRaApplyPrices) {
+                const costs = {}, inactive = [];
+                items.forEach(it => { costs[it.ra] = it.cost; const pp = (window.products || []).find(x => x.id === it.id); if (pp && pp.raUnavailable) inactive.push(it.ra); });
+                window.kiwiRaApplyPrices({ costs, inactive });
+            }
+        } catch (_) {}
+        R.renderChip();
+        R.rerender();
+    };
+    // ---------- Re-dibujar la vista abierta ----------
+    let last = null, depth = 0;
+    ['renderProducts', 'renderBloxMarket', 'renderSocial', 'renderFFAll', 'renderRobuxCalculator'].forEach(name => {
+        const orig = window[name]; if (typeof orig !== 'function') return;
+        window[name] = function () {
+            if (!depth) last = { name, args: Array.from(arguments) };
+            depth++;
+            try { return orig.apply(this, arguments); } finally { depth--; }
+        };
+    });
+    R.rerender = function () {
+        const cat = document.getElementById('category-view');
+        if (!last || !cat || cat.classList.contains('hidden')) return;
+        try {
+            const keepType = (document.getElementById('social-like-type-select') || {}).value;
+            const amt = (document.getElementById('custom-robux-amount') || {}).value;
+            window[last.name].apply(window, last.args);
+            if (keepType && window.kiwiSocialLVRefresh) window.kiwiSocialLVRefresh();
+            const ai = document.getElementById('custom-robux-amount');
+            if (ai && amt) { ai.value = amt; ai.dispatchEvent(new Event('input', { bubbles: true })); }
+        } catch (_) {}
+    };
+    // ---------- Servidor ----------
+    R.refresh = async function () {
+        if (!logged()) { R.status = null; R.error = ''; R.afterStatus(); return null; }
+        R.loading = true;
+        try {
+            const st = window.KIWI_RESELLER_MOCK ? await window.KIWI_RESELLER_MOCK() : await window.kiwiRpc('kiwi_reseller_status', { p_token: window.kiwiToken() });
+            R.status = st && st.ok ? st : null; R.error = '';
+        } catch (e) {
+            R.error = /Could not find the function|PGRST202|does not exist/i.test(e.message || '') ? 'Falta aplicar el SQL v60 en Supabase.' : (e.message || 'Sin conexión');
+            if (/Sesión/i.test(e.message || '')) R.status = null;
+        } finally { R.loading = false; }
+        R.afterStatus();
+        return R.status;
+    };
+    R.afterStatus = function () {
+        // sin sesión no se toca la preferencia (activeLevel ya da 0); solo se apaga si el servidor confirma que no hay plan
+        if (R.on && !R.loading && logged() && !R.level() && !R.error) {
+            const wasOn = R.on; R.on = false; localStorage.setItem(LS, '0');
+            if (wasOn && logged()) R.notice = 'Tu plan de revendedor no está activo: se apagaron los descuentos.';
+        }
+        R.applyAll();
+        R.renderPanel();
+    };
+    R.setOn = function (v) {
+        if (v && !R.level()) { R.renderPanel(); return; }
+        R.on = !!v; localStorage.setItem(LS, R.on ? '1' : '0');
+        R.applyAll(); R.renderPanel();
+    };
+    R.renderChip = function () {
+        const chip = document.getElementById('reseller-chip'); if (!chip) return;
+        const l = R.activeLevel();
+        const panelOpen = !document.getElementById('reseller-view').classList.contains('hidden');
+        chip.classList.toggle('hidden', !l || panelOpen);
+        const t = document.getElementById('reseller-chip-text'); if (t) t.textContent = 'Modo revendedor Nivel ' + l;
+        const dc = document.getElementById('kd-reseller-sub'); if (dc) dc.textContent = l ? ('Modo revendedor Nivel ' + l + ' activo') : 'Precios especiales recargando 50+ USDT';
+    };
+    // ---------- Panel ----------
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+    const bar = (val, goal, color, label) => {
+        const pct = Math.max(0, Math.min(100, (Number(val) || 0) / goal * 100));
+        return `<div class="mb-3"><div class="flex justify-between text-xs mb-1"><span class="text-gray-300 font-bold">${label}</span><span class="text-white font-bold">${Number(val || 0).toFixed(2)} / ${goal} USDT</span></div>
+            <div class="h-3 rounded-full bg-black/50 border border-white/10 overflow-hidden"><div class="h-full rounded-full ${color}" style="width:${pct}%"></div></div></div>`;
+    };
+    let cdTimer = null;
+    function countdownText() {
+        const s = R.status; if (!s || !s.active || !s.cycle_end) return '';
+        let sec = Math.max(0, Math.floor((new Date(s.cycle_end) - Date.now()) / 1000));
+        const d = Math.floor(sec / 86400); sec -= d * 86400; const h = Math.floor(sec / 3600); sec -= h * 3600; const m = Math.floor(sec / 60);
+        return `${d}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`;
+    }
+    R.renderPanel = function () {
+        const v = document.getElementById('reseller-view'); if (!v || v.classList.contains('hidden')) return;
+        const s = R.status, lvl = R.level(), isLogged = logged();
+        let lockReason = '';
+        if (!isLogged) lockReason = 'Iniciá sesión para activar el modo revendedor.';
+        else if (R.error && !s) lockReason = R.error;
+        else if (!lvl) lockReason = 'Necesitás recargar al menos 50 USDT desde este panel (Nivel 1) para desbloquearlo.';
+        const on = R.activeLevel() > 0;
+        const benefits = [
+            ['fa-gamepad', 'Blox Fruits (frutas y gamepasses)', '−5% · Nivel 2: −7%'],
+            ['fa-users', 'Robux vía Grupo y por Gamepass', '−5% · Nivel 2: −7%'],
+            ['fa-star', 'Roblox Plus', '−8% · Nivel 2: −10%'],
+            ['fa-bolt', 'Recargas automáticas (Free Fire, PUBG, Blood Strike, MLBB)', 'Margen a la mitad · Nivel 2: a un cuarto'],
+            ['fa-hand-holding-hand', 'Productos de entrega manual', '−10%'],
+            ['fa-hashtag', 'Seguidores, likes y vistas', 'Margen a la mitad · Nivel 2: a un cuarto'],
+            ['fa-tv', 'Streaming e IA', 'Próximamente descuentos…']
+        ];
+        const statusHtml = !isLogged ? `
+            <div class="rounded-2xl border border-white/10 bg-kiwi-card p-5 text-center">
+                <i class="fa-solid fa-lock text-kiwi-gold text-2xl mb-2"></i>
+                <p class="text-white font-bold">Iniciá sesión para ver tu plan y recargar saldo de revendedor.</p>
+                <button onclick="window.closeResellerPanel(); window.openAuthModal && window.openAuthModal()" class="mt-3 w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl">Iniciar sesión</button>
+            </div>` : `
+            <div class="rounded-2xl border ${lvl ? 'border-kiwi-gold/70 shadow-[0_0_30px_rgba(255,183,3,0.15)]' : 'border-white/10'} bg-kiwi-card p-5">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <div><p class="text-[11px] uppercase tracking-widest text-gray-400 font-bold">Tu plan</p>
+                    <p class="font-orbitron font-black text-2xl ${lvl ? 'text-kiwi-gold' : 'text-gray-300'}">${lvl ? 'NIVEL ' + lvl : 'SIN PLAN'}</p></div>
+                    <span class="text-[11px] font-bold px-3 py-1 rounded-full border ${lvl ? 'border-green-400/60 text-green-300 bg-green-500/10' : 'border-gray-500/50 text-gray-400'}">${R.loading && !s ? 'Cargando…' : lvl ? 'ACTIVO' : 'INACTIVO'}</span>
+                </div>
+                ${R.notice ? `<p class="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl p-2 mb-3">${esc(R.notice)}</p>` : ''}
+                ${R.error ? `<p class="text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-2 mb-3">${esc(R.error)}</p>` : ''}
+                <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+                    <div class="rounded-xl bg-black/40 border border-white/10 p-3"><p class="text-[10px] uppercase text-gray-400 font-bold">Vence</p><p class="text-white font-bold">${s && s.active ? fmtDate(s.cycle_end) : '—'}</p></div>
+                    <div class="rounded-xl bg-black/40 border border-white/10 p-3"><p class="text-[10px] uppercase text-gray-400 font-bold">Tiempo restante</p><p id="rs-cd" class="text-white font-bold font-orbitron text-sm">${countdownText() || '—'}</p></div>
+                </div>
+                <p class="text-xs text-gray-400 mb-2">Cargado en este ciclo: <b class="text-white">${Number(s && s.loaded || 0).toFixed(2)} USDT</b>${s && s.max_single ? ` · mayor recarga: <b class="text-white">${Number(s.max_single).toFixed(2)}</b>` : ''}</p>
+                ${bar(s && s.loaded, C.level1Total, 'bg-gradient-to-r from-green-500 to-emerald-300', 'Nivel 1 · suma del ciclo')}
+                ${bar(s && s.max_single, C.level2Single, 'bg-gradient-to-r from-amber-500 to-yellow-300', 'Nivel 2 · una sola recarga')}
+                ${s && s.active ? `<div class="rounded-xl ${s.window_open ? 'border border-kiwi-gold/50 bg-kiwi-gold/10' : 'bg-black/30 border border-white/10'} p-3 text-xs text-gray-300">
+                    ${s.window_open ? `<b class="text-kiwi-gold">¡Ventana de renovación abierta!</b> Lo que cargues ahora suma para el próximo ciclo: <b class="text-white">${Number(s.next_cycle_loaded || 0).toFixed(2)} / 50 USDT</b>${s.next_level ? ' → renovás con Nivel ' + s.next_level : ''}.`
+                    : `La ventana de renovación se abre el <b class="text-white">${fmtDate(s.window_start)}</b> (últimos 7 días del ciclo).`}</div>` : ''}
+                <button onclick="window.kiwiResellerTopup()" class="mt-4 w-full bg-gradient-to-r from-kiwi-gold to-amber-400 text-black font-orbitron font-black py-4 rounded-xl text-base shadow-[0_0_20px_rgba(255,183,3,0.35)]"><i class="fa-solid fa-bolt mr-1"></i> RECARGAR SALDO</button>
+                <p class="text-[11px] text-gray-500 text-center mt-2">Mínimo 50 USDT. Se acredita como saldo normal para comprar en la tienda.</p>
+            </div>
+            <div class="rounded-2xl border ${on ? 'border-green-400/70 bg-green-500/10' : 'border-white/10 bg-kiwi-card'} p-5 mt-4">
+                <button ${lockReason ? 'disabled' : ''} onclick="window.kiwiReseller.setOn(${on ? 'false' : 'true'})" class="w-full flex items-center justify-between gap-3 ${lockReason ? 'opacity-60 cursor-not-allowed' : ''}" aria-pressed="${on}">
+                    <span class="text-left"><span class="block font-orbitron font-black text-white text-base leading-tight">ACTIVAR DESCUENTOS DE REVENDEDOR</span>
+                    <span class="block text-xs ${on ? 'text-green-300' : 'text-gray-400'} mt-1">${on ? 'Activado: estás viendo precios de revendedor Nivel ' + R.activeLevel() : lockReason ? '' : 'Apagado: estás viendo precios públicos'}</span></span>
+                    <span class="relative shrink-0 w-16 h-9 rounded-full ${on ? 'bg-green-500' : 'bg-gray-700'} transition"><span class="absolute top-1 ${on ? 'left-8' : 'left-1'} w-7 h-7 rounded-full bg-white shadow transition-all flex items-center justify-center text-[11px] ${on ? 'text-green-600' : 'text-gray-500'}"><i class="fa-solid ${lockReason ? 'fa-lock' : on ? 'fa-check' : 'fa-power-off'}"></i></span></span>
+                </button>
+                ${lockReason ? `<p class="mt-3 text-xs text-yellow-200 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-2"><i class="fa-solid fa-lock mr-1"></i>${esc(lockReason)}</p>` : ''}
+            </div>`;
+        v.innerHTML = `
+        <div class="max-w-xl mx-auto px-4 py-6 font-rajdhani">
+            <div class="flex items-center justify-between mb-5 gap-3">
+                <div><p class="text-[11px] font-bold tracking-[0.2em] text-kiwi-gold uppercase">Kiwii Store · Revendedores</p>
+                <h2 class="font-orbitron text-xl font-black text-white leading-tight">PANEL DE <span class="text-kiwi-gold">REVENDEDORES</span></h2></div>
+                <button onclick="window.closeResellerPanel()" class="shrink-0 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-gold text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> VOLVER</button>
+            </div>
+            ${statusHtml}
+            <section class="rounded-2xl border border-white/10 bg-kiwi-card p-5 mt-4">
+                <h3 class="font-orbitron font-bold text-white text-sm mb-3"><i class="fa-solid fa-gift text-kiwi-gold mr-1"></i> BENEFICIOS</h3>
+                <ul class="space-y-2">${benefits.map(b => `<li class="flex items-start gap-3 rounded-xl bg-black/30 border border-white/5 p-3"><i class="fa-solid ${b[0]} text-kiwi-gold mt-1 w-4 text-center"></i><span class="flex-1 min-w-0"><span class="block text-white font-bold text-sm leading-tight">${b[1]}</span><span class="block text-xs ${/Próximamente/.test(b[2]) ? 'text-gray-500 italic' : 'text-green-300'}">${b[2]}</span></span></li>`).join('')}</ul>
+            </section>
+            <section class="rounded-2xl border border-white/10 bg-kiwi-card p-5 mt-4 mb-10">
+                <h3 class="font-orbitron font-bold text-white text-sm mb-3"><i class="fa-solid fa-list-check text-kiwi-gold mr-1"></i> REQUISITOS</h3>
+                <ul class="space-y-2 text-sm text-gray-300 list-disc pl-5">
+                    <li><b class="text-white">Nivel 1:</b> recargas desde este panel que sumen <b class="text-white">50 USDT o más</b> en el ciclo.</li>
+                    <li><b class="text-white">Nivel 2:</b> <b class="text-white">una sola recarga</b> de 150 USDT o más.</li>
+                    <li>Cada ciclo dura <b class="text-white">21 días</b> desde tu primera recarga del panel.</li>
+                    <li>Lo que cargues en los <b class="text-white">últimos 7 días</b> suma para el ciclo siguiente (podés juntar, por ejemplo 25 + 25). Si llegás a 50 USDT, el nuevo ciclo arranca solo al vencer; si no, el acceso se corta.</li>
+                    <li>Las recargas normales de saldo <b class="text-white">no cuentan</b> para el plan.</li>
+                </ul>
+            </section>
+        </div>`;
+    };
+    window.kiwiResellerTopup = function () {
+        if (!logged()) return alert('Iniciá sesión primero');
+        if (window.kpayOpen) window.kpayOpen({ purpose: 'reseller' });
+    };
+    window.goToResellerPanel = function () {
+        const v = document.getElementById('reseller-view'); if (!v) return;
+        ['orders-panel', 'events-view'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hidden'); });
+        if (window.stopEventsRefresh) window.stopEventsRefresh();
+        const drawer = document.getElementById('user-drawer'); if (drawer) drawer.classList.add('translate-x-full');
+        if (location.pathname !== '/Panel-de-revendedores') history.pushState({}, '', '/Panel-de-revendedores');
+        v.classList.remove('hidden'); v.scrollTop = 0;
+        R.renderPanel(); R.renderChip(); R.refresh();
+        clearInterval(cdTimer); cdTimer = setInterval(() => { const e = document.getElementById('rs-cd'); if (e) e.textContent = countdownText() || '—'; }, 30000);
+    };
+    window.closeResellerPanel = function (noPush) {
+        const v = document.getElementById('reseller-view'); if (v) v.classList.add('hidden');
+        clearInterval(cdTimer); R.renderChip();
+        if (!noPush) history.pushState({}, '', '/inicio');
+    };
+    const isPanelPath = () => (location.pathname.replace(/\/+$/, '') || '/').toLowerCase() === '/panel-de-revendedores';
+    window.addEventListener('popstate', () => { if (isPanelPath()) window.goToResellerPanel(); else window.closeResellerPanel(true); });
+    function boot() {
+        ['goToEvents', 'goToProfile', 'filterCategory', 'goToAdminPanel'].forEach(n => {
+            const orig = window[n]; if (typeof orig !== 'function') return;
+            window[n] = function () { const v = document.getElementById('reseller-view'); if (v && !v.classList.contains('hidden')) window.closeResellerPanel(true); return orig.apply(this, arguments); };
+        });
+        if (isPanelPath()) setTimeout(window.goToResellerPanel, 450);
+        R.applyAll();
+        setTimeout(() => R.refresh(), 1500);
+        setInterval(() => { if (!document.hidden && logged()) R.refresh(); }, C.refreshMs);
+        // al cerrar sesión / cambiar de usuario
+        let lastTok = window.kiwiToken ? window.kiwiToken() : '';
+        setInterval(() => { const t = window.kiwiToken ? window.kiwiToken() : ''; if (t !== lastTok) { lastTok = t; R.status = null; R.refresh(); } }, 4000);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
 </body>
