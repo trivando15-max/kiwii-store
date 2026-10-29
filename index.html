@@ -402,7 +402,7 @@
                         <p class="text-xs text-gray-400 uppercase font-orbitron">Saldo disponible</p>
                         <p class="text-xl font-orbitron font-black text-kiwi-gold" id="orders-balance-display">$0 ARS</p>
                     </div>
-                    <button onclick="window.openBalanceModal()" class="bg-kiwi-gold text-black font-bold px-4 py-2 rounded-xl text-sm">Cargar Saldo</button>
+                    <button onclick="window.kpayOpen()" class="bg-kiwi-gold text-black font-bold px-4 py-3 rounded-xl text-sm"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</button>
                 </div>
             </div>
             <div id="client-orders-list" class="space-y-3"></div>
@@ -845,6 +845,7 @@
                 <button onclick="window.switchStaffTab('compras')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">COMPRAS</button>
                 <button onclick="window.switchStaffTab('saldo')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">SALDO</button>
                 <button onclick="window.switchStaffTab('2fa')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">2FA</button>
+                <button onclick="window.switchStaffTab('pagos')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">PAGOS</button>
             </div>
             <div id="admin-content">
                 <div id="admin-cuentas" class="admin-tab">
@@ -854,6 +855,7 @@
                 <div id="admin-compras" class="admin-tab hidden"></div>
                 <div id="admin-saldo" class="admin-tab hidden"></div>
                 <div id="admin-2fa" class="admin-tab hidden"></div>
+                <div id="admin-pagos" class="admin-tab hidden"></div>
             </div>
         </div>
     </div>
@@ -1375,7 +1377,7 @@
                 <div class="bg-kiwi-dark border border-kiwi-gold/40 rounded-xl p-4 mb-5">
                     <p class="text-xs text-gray-400 uppercase font-orbitron">Saldo en Página</p>
                     <p class="text-2xl font-orbitron font-black text-kiwi-gold" id="user-balance-display">$0 ARS</p>
-                    <button onclick="window.openBalanceModal()" class="mt-2 text-xs bg-kiwi-gold text-black font-bold px-3 py-1 rounded">Cargar Saldo</button>
+                    <button onclick="window.kpayOpen()" class="mt-2 text-sm bg-kiwi-gold text-black font-bold px-4 py-2 rounded-lg"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</button>
                 </div>
                 <h4 class="font-orbitron font-bold text-sm text-gray-300 mb-3 uppercase mt-2">Editar Perfil</h4>
                 <div class="space-y-2 mb-4">
@@ -1397,7 +1399,8 @@
     <div id="balance-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-6 relative max-h-[92vh] overflow-y-auto">
             <button onclick="document.getElementById('balance-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-orbitron text-xl font-bold text-kiwi-gold mb-2">Cargar Saldo</h3>
+            <h3 class="font-orbitron text-xl font-bold text-kiwi-gold mb-2">Cargar Saldo (manual)</h3>
+            <button onclick="document.getElementById('balance-modal').classList.add('hidden'); window.kpayOpen()" class="w-full bg-kiwi-gold/15 border border-kiwi-gold text-kiwi-gold font-bold rounded-xl py-3 mb-3 text-sm"><i class="fa-solid fa-bolt mr-1"></i>Recarga automática (USDT, Binance Pay, alias, Nu, Bancolombia, Yape)</button>
             <select id="balance-currency" onchange="window.updateBalancePaymentInfo()" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mb-3">
                 <option value="ARS">Pesos Argentinos (ARS)</option>
                 <option value="MXN">Pesos Mexicanos (MXN)</option>
@@ -8001,6 +8004,341 @@ window.resetUser2FA = function(username) {
         let q = 0;
         function sched() { if (q) return; q = requestAnimationFrame(() => { q = 0; try { run(); } catch (e) {} }); }
         document.addEventListener('DOMContentLoaded', () => { run(); new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); });
+    })();
+    </script>
+    <!-- ===== v54: RECARGA AUTOMÁTICA DE SALDO ===== -->
+    <div id="kpay-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[120] hidden flex items-center justify-center p-3">
+        <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-5 relative max-h-[94vh] overflow-y-auto">
+            <button onclick="window.kpayClose()" class="absolute top-3 right-3 w-10 h-10 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="font-orbitron text-lg font-bold text-kiwi-gold mb-1"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</h3>
+            <div id="kpay-steps" class="flex gap-1 mb-4"></div>
+            <div id="kpay-body"></div>
+        </div>
+    </div>
+    <script>
+    (function () {
+        const API = '/api/pay';
+        const K = window.KPAY = { cfg: null, method: null, topup: null, timer: null, poll: null };
+        const ICON = { usdt: 'fa-solid fa-coins', binance_pay: 'fa-solid fa-wallet', ar_transfer: 'fa-solid fa-building-columns',
+                       mx_nu: 'fa-solid fa-credit-card', co_bancolombia: 'fa-solid fa-landmark', pe_yape: 'fa-solid fa-mobile-screen' };
+        const FLAG = { usdt: '🌎', binance_pay: '🌎', ar_transfer: '🇦🇷', mx_nu: '🇲🇽', co_bancolombia: '🇨🇴', pe_yape: '🇵🇪' };
+        const REF_LABEL = { usdt: 'TxID / Hash de la transacción', binance_pay: 'ID de orden de Binance Pay (opcional)',
+                            ar_transfer: 'Número de operación / comprobante', mx_nu: 'Clave de rastreo / folio',
+                            co_bancolombia: 'Número de comprobante', pe_yape: 'Número de operación' };
+        const ST = { pending: ['Esperando tu pago', 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', 'fa-hourglass-half'],
+                     submitted: ['Verificando…', 'bg-blue-500/20 text-blue-300 border-blue-500/40', 'fa-magnifying-glass'],
+                     review: ['En revisión del staff', 'bg-orange-500/20 text-orange-300 border-orange-500/40', 'fa-user-shield'],
+                     credited: ['¡Acreditado!', 'bg-green-500/20 text-green-300 border-green-500/40', 'fa-circle-check'],
+                     expired: ['Vencido', 'bg-gray-500/20 text-gray-300 border-gray-500/40', 'fa-clock'],
+                     rejected: ['Rechazado', 'bg-red-500/20 text-red-300 border-red-500/40', 'fa-circle-xmark'] };
+        window.KPAY_STATUS = ST;
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const fmt = (n, cur) => {
+            const d = cur === 'ARS' || cur === 'COP' ? 0 : 2;
+            return (cur === 'PEN' ? 'S/ ' : cur === 'USDT' ? '' : '$ ') + Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ' + cur;
+        };
+        const plain = (n, cur) => cur === 'ARS' || cur === 'COP' ? String(Math.round(n)) : Number(n).toFixed(2);
+        async function api(action, data) {
+            const r = await fetch(API + '?action=' + action, action === 'config' ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.assign({ token: window.kiwiToken ? window.kiwiToken() : '' }, data || {})) });
+            let j = {}; try { j = await r.json(); } catch (_) {}
+            if (!r.ok || j.error) throw new Error(j.error || ('Error ' + r.status));
+            return j;
+        }
+        const say = (m) => (window.showKiwiAlert ? window.showKiwiAlert(m) : alert(m));
+        function steps(n) {
+            const names = ['Método', 'Monto', 'Pagar', 'Listo'];
+            document.getElementById('kpay-steps').innerHTML = names.map((t, i) =>
+                `<div class="flex-1 text-center"><div class="h-1.5 rounded-full ${i <= n ? 'bg-kiwi-gold' : 'bg-kiwi-border'}"></div><p class="text-[10px] mt-1 ${i <= n ? 'text-kiwi-gold' : 'text-gray-500'} font-orbitron">${t}</p></div>`).join('');
+        }
+        const body = h => { document.getElementById('kpay-body').innerHTML = h; };
+        window.kpayCopy = function (txt, el) {
+            const done = () => { if (el) { const o = el.innerHTML; el.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => el.innerHTML = o, 1400); } };
+            try { navigator.clipboard.writeText(txt).then(done, done); } catch (_) { done(); }
+        };
+        function stopTimers() { clearInterval(K.timer); clearInterval(K.poll); K.timer = K.poll = null; }
+        window.kpayClose = function () { stopTimers(); document.getElementById('kpay-modal').classList.add('hidden'); };
+        window.kpayOpen = async function () {
+            if (typeof currentUser !== 'undefined' && !currentUser) return say('Iniciá sesión primero');
+            document.getElementById('kpay-modal').classList.remove('hidden');
+            const act = JSON.parse(localStorage.getItem('kpay_active') || 'null');
+            steps(0); body('<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando…</p>');
+            try { K.cfg = await api('config'); } catch (e) { K.cfg = { methods: [], min_usdt: 1 }; }
+            if (act && act.id && Date.now() - act.t < 3 * 3600e3) {
+                try { const r = await api('check', { id: act.id }); if (r.topup && !['credited', 'rejected'].includes(r.topup.status)) { K.topup = r.topup; K.account = act.account; K.method = K.cfg.methods.find(m => m.id === r.topup.method); return r.topup.status === 'pending' ? renderPay() : renderStatus(); } } catch (_) {}
+                localStorage.removeItem('kpay_active');
+            }
+            renderMethods();
+        };
+        function renderMethods() {
+            stopTimers(); steps(0);
+            const ms = (K.cfg && K.cfg.methods) || [];
+            body(`
+                <p class="text-sm text-gray-300 mb-3">¿Cómo querés pagar? El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago.</p>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                ${ms.length ? ms.map(m => `
+                    <button onclick="window.kpayPick('${m.id}')" class="kpay-m bg-kiwi-dark border-2 border-kiwi-border hover:border-kiwi-gold rounded-xl p-3 min-h-[88px] text-left transition active:scale-95">
+                        <div class="flex items-center justify-between"><i class="${ICON[m.id]} text-kiwi-gold text-xl"></i><span class="text-lg">${FLAG[m.id]}</span></div>
+                        <p class="font-bold text-white text-sm mt-2 leading-tight">${esc(m.label)}</p>
+                        <p class="text-[11px] text-gray-400">${m.currency}${m.commission_pct ? ' · comisión ' + m.commission_pct + '%' : ' · sin comisión'}</p>
+                    </button>`).join('') : '<p class="col-span-2 text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">Las recargas automáticas todavía no están activas. Podés cargar por WhatsApp.</p>'}
+                </div>
+                <button onclick="window.kpayClose(); window.openBalanceModal && window.openBalanceModal()" class="w-full border border-kiwi-border text-gray-300 rounded-xl py-3 text-sm mb-4"><i class="fa-brands fa-whatsapp mr-1"></i>Prefiero cargar por WhatsApp (manual)</button>
+                <h4 class="font-orbitron text-xs text-gray-400 uppercase mb-2">Mis recargas</h4>
+                <div id="kpay-hist" class="space-y-2 text-xs"><p class="text-gray-500">Cargando…</p></div>`);
+            loadHistory();
+        }
+        async function loadHistory() {
+            const box = document.getElementById('kpay-hist'); if (!box) return;
+            try {
+                const list = window.KPAY_MOCK_HIST || await window.kiwiRpc('kiwi_pay_my', { p_token: window.kiwiToken() });
+                box.innerHTML = (list || []).length ? list.slice(0, 10).map(t => {
+                    const s = ST[t.status] || ST.pending;
+                    return `<div class="flex items-center justify-between bg-kiwi-dark border border-kiwi-border rounded-lg p-2">
+                        <div><p class="text-white font-bold">${Number(t.usdt).toFixed(2)} USDT <span class="text-gray-500 font-normal">· ${fmt(t.pay_amount, t.currency)}</span></p>
+                        <p class="text-gray-500">#${t.id} · ${new Date(t.created_at).toLocaleString('es-AR')}</p></div>
+                        <span class="px-2 py-1 rounded-full border text-[10px] ${s[1]}">${s[0]}</span></div>`; }).join('') : '<p class="text-gray-500">Todavía no hiciste recargas.</p>';
+            } catch (e) { box.innerHTML = '<p class="text-gray-500">No se pudo cargar el historial.</p>'; }
+        }
+        window.kpayPick = function (id) {
+            K.method = K.cfg.methods.find(m => m.id === id); steps(1);
+            const m = K.method, min = K.cfg.min_usdt || 1;
+            body(`
+                <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
+                <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
+                <label class="block text-xs text-gray-400 mb-1 mt-3">¿Cuánto saldo querés cargar? (USDT)</label>
+                <input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">
+                <div class="grid grid-cols-4 gap-2 mt-2">${[1, 5, 10, 20].filter(v => v >= min).map(v => `<button onclick="document.getElementById('kpay-usdt').value=${v};window.kpayEst()" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v}</button>`).join('')}</div>
+                <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
+                <p class="text-[11px] text-gray-500 text-center">Mínimo ${min} USDT. El monto exacto a pagar se fija en el siguiente paso.</p>
+                <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
+            window.kpayEst();
+        };
+        window.kpayBack = renderMethods;
+        window.kpayEst = function () {
+            const m = K.method, v = Number(document.getElementById('kpay-usdt').value) || 0, el = document.getElementById('kpay-est');
+            const r = m.currency === 'USDT' ? 1 : Number((window.exchangeRates || {})[m.currency]) || 0;
+            el.innerHTML = v > 0 && r ? 'Vas a pagar aprox. <b class="text-kiwi-gold">' + fmt(v * (1 + m.commission_pct / 100) * r, m.currency) + '</b>' : '';
+        };
+        window.kpayCreate = async function () {
+            const v = Number(document.getElementById('kpay-usdt').value);
+            if (!(v >= (K.cfg.min_usdt || 1))) return say('El mínimo es ' + (K.cfg.min_usdt || 1) + ' USDT');
+            const b = document.getElementById('kpay-go'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try {
+                const r = await api('create', { method: K.method.id, usdt: v });
+                K.topup = r.topup; K.account = r.account;
+                localStorage.setItem('kpay_active', JSON.stringify({ id: r.topup.id, t: Date.now(), account: r.account }));
+                renderPay();
+            } catch (e) { say(e.message); b.disabled = false; b.textContent = 'Continuar'; }
+        };
+        function tip(id) {
+            return {
+                usdt: 'Mandá <b>solo USDT</b> por la red indicada. Si tu exchange cobra comisión de retiro, sumala: tiene que <b>llegar</b> el monto exacto.',
+                binance_pay: 'En Binance: <b>Pagar → Enviar → Pay ID</b>. Moneda <b>USDT</b> y el monto exacto.',
+                ar_transfer: 'Transferí desde tu banco o Mercado Pago al alias. <b>Respetá los últimos dígitos</b>: así reconocemos tu pago.',
+                mx_nu: 'Transferencia SPEI a la CLABE de Nu. Escribí el monto con los <b>centavos exactos</b>.',
+                co_bancolombia: 'Transferí desde Bancolombia o Nequi. <b>Respetá los últimos pesos</b> del monto.',
+                pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.'
+            }[id] || '';
+        }
+        function renderPay() {
+            stopTimers(); steps(2);
+            const t = K.topup, m = K.method || { id: t.method, label: t.method };
+            const acc = (K.account || (m.account) || []);
+            body(`
+                <div class="bg-gradient-to-br from-kiwi-gold/20 to-transparent border-2 border-kiwi-gold rounded-2xl p-4 text-center mb-3">
+                    <p class="text-xs text-gray-300 uppercase font-orbitron">Pagá exactamente</p>
+                    <p class="text-3xl font-orbitron font-black text-kiwi-gold my-1" id="kpay-amt">${fmt(t.pay_amount, t.currency)}</p>
+                    <button onclick="window.kpayCopy('${plain(t.pay_amount, t.currency)}', this)" class="bg-kiwi-gold text-black font-bold rounded-lg px-4 py-2 text-sm"><i class="fa-regular fa-copy mr-1"></i>Copiar monto</button>
+                    <p class="text-xs text-gray-300 mt-2">Recibís <b class="text-white">${Number(t.usdt).toFixed(2)} USDT</b> de saldo</p>
+                </div>
+                <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 mb-3 space-y-2">
+                    <p class="text-xs text-kiwi-gold font-orbitron uppercase">${FLAG[m.id] || ''} ${esc(m.label)}</p>
+                    ${acc.map(([k, v]) => `<div class="flex items-center justify-between gap-2"><div class="min-w-0"><p class="text-[11px] text-gray-500">${esc(k)}</p><p class="text-white font-bold text-sm break-all">${esc(v)}</p></div>
+                        <button onclick="window.kpayCopy('${esc(v).replace(/'/g, '')}', this)" class="shrink-0 border border-kiwi-border rounded-lg px-3 py-2 text-xs text-gray-200"><i class="fa-regular fa-copy"></i></button></div>`).join('')}
+                </div>
+                <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id)}</p>
+                <p class="text-center text-sm text-gray-300 mb-3">Tiempo para pagar: <b id="kpay-cd" class="text-white font-orbitron">--:--</b></p>
+                <button onclick="window.kpayPaid()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl text-base"><i class="fa-solid fa-check mr-1"></i>Ya pagué</button>
+                <button onclick="localStorage.removeItem('kpay_active'); window.kpayBack()" class="w-full text-xs text-gray-500 mt-3 py-2">Cancelar y elegir otro método</button>`);
+            const tick = () => {
+                const s = Math.max(0, Math.floor((Date.parse(t.expires_at) - Date.now()) / 1000));
+                const el = document.getElementById('kpay-cd'); if (!el) return stopTimers();
+                el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+                if (s <= 0) el.textContent = 'vencido';
+            };
+            tick(); K.timer = setInterval(tick, 1000);
+        }
+        window.kpayPaid = function () {
+            const t = K.topup, isT = !['usdt', 'binance_pay'].includes(t.method);
+            body(`
+                <button onclick="window.kpayResume()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Volver a los datos de pago</button>
+                <p class="text-sm text-gray-300 mb-3">Pagaste <b class="text-kiwi-gold">${fmt(t.pay_amount, t.currency)}</b>. Completá esto para encontrar tu pago más rápido:</p>
+                <label class="block text-xs text-gray-400 mb-1">${REF_LABEL[t.method]}${t.method === 'usdt' ? ' *' : ''}</label>
+                <input id="kpay-ref" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-3 text-white mb-3" placeholder="${t.method === 'usdt' ? 'Ej: 9f3c…a71b' : 'Opcional pero ayuda'}">
+                ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre de quien pagó (opcional)</label>
+                <input id="kpay-name" class="w-full bg-kiwi-dark border-2 border-kiwi-border rounded-xl p-3 text-white mb-3" placeholder="Como figura en el banco">` : ''}
+                <label class="block text-xs text-gray-400 mb-1">Foto del comprobante (opcional)</label>
+                <input id="kpay-proof" type="file" accept="image/*" class="w-full text-xs text-gray-300 mb-1">
+                <p class="text-[11px] text-gray-500 mb-4">El comprobante solo ayuda al staff: el saldo se acredita cuando el pago aparece en la cuenta.</p>
+                <button id="kpay-send" onclick="window.kpaySubmit()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl text-base">Enviar</button>`);
+        };
+        window.kpayResume = renderPay;
+        function shrink(file) {
+            return new Promise(res => {
+                if (!file) return res(null);
+                const img = new Image(), url = URL.createObjectURL(file);
+                img.onload = () => { const sc = Math.min(1, 1000 / Math.max(img.width, img.height)); const c = document.createElement('canvas');
+                    c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.6)); };
+                img.onerror = () => res(null); img.src = url;
+            });
+        }
+        window.kpaySubmit = async function () {
+            const ref = (document.getElementById('kpay-ref').value || '').trim();
+            if (K.topup.method === 'usdt' && ref.length < 10) return say('Pegá el TxID / Hash de tu envío (lo ves en el detalle del retiro).');
+            const b = document.getElementById('kpay-send'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando…';
+            try {
+                const proof = await shrink((document.getElementById('kpay-proof').files || [])[0]);
+                const r = await api('confirm', { id: K.topup.id, reference: ref, payer_name: (document.getElementById('kpay-name') || {}).value || '', proof });
+                K.topup = r.topup; renderStatus();
+            } catch (e) { say(e.message); b.disabled = false; b.textContent = 'Enviar'; }
+        };
+        function renderStatus() {
+            stopTimers(); steps(3);
+            const t = K.topup, s = ST[t.status] || ST.pending;
+            const msg = {
+                submitted: 'Estamos buscando tu pago. Suele tardar <b>1 a 5 minutos</b>. Podés cerrar esta ventana: el saldo aparece solo.',
+                pending: 'Todavía no marcaste el pago.',
+                review: 'Tu pago necesita una revisión del staff (por ejemplo, el monto no coincidió). Te acreditamos apenas lo confirmemos.',
+                credited: 'Se sumaron <b class="text-green-300">' + Number(t.credited_usdt || t.usdt).toFixed(2) + ' USDT</b> a tu saldo.',
+                expired: 'Pasó el tiempo para pagar. Si ya pagaste, escribinos por WhatsApp con el comprobante.',
+                rejected: 'El staff rechazó esta recarga. ' + esc(t.note || '')
+            }[t.status] || '';
+            body(`
+                <div class="text-center py-4">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border ${s[1]} text-sm font-bold mb-4"><i class="fa-solid ${s[2]} ${t.status === 'submitted' ? 'fa-beat-fade' : ''}"></i>${s[0]}</div>
+                    <p class="text-2xl font-orbitron font-black text-white">${Number(t.usdt).toFixed(2)} USDT</p>
+                    <p class="text-xs text-gray-400 mb-4">Recarga #${t.id} · ${fmt(t.pay_amount, t.currency)}</p>
+                    <p class="text-sm text-gray-300">${msg}</p>
+                </div>
+                <button onclick="window.kpayBack()" class="w-full border border-kiwi-border text-gray-200 rounded-xl py-3 text-sm mt-2">Ver mis recargas</button>`);
+            if (t.status === 'credited') {
+                localStorage.removeItem('kpay_active');
+                try { window.kiwiRpc('kiwi_me', { p_token: window.kiwiToken() }).then(me => {
+                    const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                    if (me && me.username) { users[me.username] = window.applyCloudUserToLocal(users[me.username] || {}, me); localStorage.setItem('kiwi_users', JSON.stringify(users)); if (typeof updateAuthUI === 'function') updateAuthUI(); if (window.updateBalanceDisplay) window.updateBalanceDisplay(); }
+                }).catch(() => {}); } catch (_) {}
+            }
+            if (['submitted', 'pending', 'review'].includes(t.status)) {
+                K.poll = setInterval(async () => {
+                    if (document.getElementById('kpay-modal').classList.contains('hidden')) return;
+                    try { const r = await api('check', { id: t.id }); if (r.topup && r.topup.status !== K.topup.status) { K.topup = r.topup; renderStatus(); } } catch (_) {}
+                }, 6000);
+            }
+        }
+        window.kpayRenderStatus = renderStatus; window.kpayRenderPay = renderPay;
+    })();
+    </script>
+
+    <!-- ===== v54: pestaña PAGOS del panel staff ===== -->
+    <script>
+    (function () {
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape' };
+        const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
+        const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
+        window.loadAdminPagos = async function () {
+            const box = document.getElementById('admin-pagos'); if (!box) return;
+            box.innerHTML = `
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <select id="kps-status" onchange="window.KPAY_STAFF.status=this.value;window.loadAdminPagos()" class="bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white">
+                        ${[['open', 'Abiertas (pendiente/verificando/revisión)'], ['review', 'En revisión'], ['submitted', 'Verificando'], ['pending', 'Esperando pago'], ['credited', 'Acreditadas'], ['rejected', 'Rechazadas'], ['expired', 'Vencidas'], ['', 'Todas']].map(([v, l]) => `<option value="${v}" ${P.status === v ? 'selected' : ''}>${l}</option>`).join('')}
+                    </select>
+                    <select id="kps-method" onchange="window.KPAY_STAFF.method=this.value;window.loadAdminPagos()" class="bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white">
+                        <option value="">Todos los métodos</option>${Object.entries(ML).map(([v, l]) => `<option value="${v}" ${P.method === v ? 'selected' : ''}>${l}</option>`).join('')}
+                    </select>
+                    <button onclick="window.loadAdminPagos()" class="bg-kiwi-dark border border-kiwi-border rounded-lg px-3 text-sm text-gray-200"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <div id="kps-counts" class="flex flex-wrap gap-2 mb-3 text-[11px]"></div>
+                <h4 class="font-orbitron text-xs text-kiwi-gold uppercase mb-2">Recargas</h4>
+                <div id="kps-topups" class="space-y-2 mb-5"><p class="text-gray-500 text-sm">Cargando…</p></div>
+                <h4 class="font-orbitron text-xs text-kiwi-gold uppercase mb-2">Notificaciones sin asignar</h4>
+                <div id="kps-notifs" class="space-y-2 mb-5"></div>
+                <h4 class="font-orbitron text-xs text-kiwi-gold uppercase mb-2">Registro de acreditaciones automáticas</h4>
+                <div id="kps-log" class="space-y-1 text-xs"></div>`;
+            try { P.data = await rpc('kiwi_pay_staff_list', { p_status: P.status || null, p_method: P.method || null, p_limit: 150 }); }
+            catch (e) { document.getElementById('kps-topups').innerHTML = '<p class="text-red-400 text-sm">' + esc(e.message) + ' (¿corriste kiwii-v54-pagos.sql?)</p>'; return; }
+            const ST = window.KPAY_STATUS || {};
+            const c = P.data.counts || {};
+            document.getElementById('kps-counts').innerHTML = Object.keys(ST).map(k => `<span class="px-2 py-1 rounded-full border ${ST[k][1]}">${ST[k][0]}: ${c[k] || 0}</span>`).join('');
+            const tops = P.data.topups || [];
+            document.getElementById('kps-topups').innerHTML = tops.length ? tops.map(t => {
+                const s = ST[t.status] || ['?', ''];
+                const open = !['credited', 'rejected'].includes(t.status);
+                return `<div class="bg-kiwi-dark border ${t.status === 'review' ? 'border-orange-500/60' : 'border-kiwi-border'} rounded-xl p-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="text-white font-bold text-sm">#${t.id} · ${esc(t.username)} <span class="text-gray-400 font-normal">· ${ML[t.method] || esc(t.method)}</span></p>
+                            <p class="text-kiwi-gold font-orbitron text-sm">${Number(t.usdt).toFixed(2)} USDT <span class="text-gray-300">← ${Number(t.pay_amount).toLocaleString('es-AR')} ${t.currency}</span>${t.received_amount != null ? ` <span class="text-xs ${Math.abs(t.received_amount - t.pay_amount) < 0.01 ? 'text-green-300' : 'text-orange-300'}">(llegó ${Number(t.received_amount)})</span>` : ''}</p>
+                            <p class="text-[11px] text-gray-400">Ref: <span class="text-gray-200 break-all">${esc(t.reference || '—')}</span>${t.payer_name ? ' · Nombre: <span class="text-gray-200">' + esc(t.payer_name) + '</span>' : ''}</p>
+                            <p class="text-[11px] text-gray-500">${new Date(t.created_at).toLocaleString('es-AR')} · tasa ${t.rate}${t.credited_by ? ' · por ' + esc(t.credited_by) : ''}${t.source ? ' (' + esc(t.source) + ')' : ''}</p>
+                            ${t.note ? `<p class="text-[11px] text-orange-300">${esc(t.note)}</p>` : ''}
+                        </div>
+                        <span class="shrink-0 px-2 py-1 rounded-full border text-[10px] ${s[1]}">${s[0]}</span>
+                    </div>
+                    ${t.proof ? `<a href="${t.proof}" target="_blank" class="inline-block mt-2"><img src="${t.proof}" class="h-24 rounded-lg border border-kiwi-border object-cover" alt="comprobante"></a><p class="text-[10px] text-gray-500">Comprobante del cliente: NO es prueba de pago, verificá en la cuenta.</p>` : ''}
+                    ${open ? `<div class="grid grid-cols-2 gap-2 mt-2">
+                        <button onclick="window.kpayStaffApprove(${t.id})" class="bg-green-500 text-black font-bold rounded-lg py-2 text-sm"><i class="fa-solid fa-check mr-1"></i>Aprobar</button>
+                        <button onclick="window.kpayStaffReject(${t.id})" class="bg-red-500/80 text-white font-bold rounded-lg py-2 text-sm"><i class="fa-solid fa-xmark mr-1"></i>Rechazar</button></div>` : ''}
+                </div>`; }).join('') : '<p class="text-gray-500 text-sm">No hay recargas con este filtro.</p>';
+            const nts = (P.data.notifs || []).filter(n => n.status !== 'matched' && n.status !== 'ignored');
+            const NS = { unmatched: 'Sin recarga', ambiguous: 'Varias posibles', unparsed: 'No se pudo leer', new: 'Nueva' };
+            document.getElementById('kps-notifs').innerHTML = nts.length ? nts.map(n => `
+                <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-xs">
+                    <div class="flex justify-between gap-2"><p class="text-white font-bold">${n.amount != null ? Number(n.amount).toLocaleString('es-AR') + ' ' + esc(n.currency || '') : '¿monto?'} <span class="text-gray-400 font-normal">· ${ML[n.method] || esc(n.app || '?')}</span></p>
+                    <span class="text-orange-300">${NS[n.status] || esc(n.status)}</span></div>
+                    <p class="text-gray-300 mt-1">${esc(n.title)} — ${esc(n.body)}</p>
+                    <p class="text-gray-500">${new Date(n.received_at).toLocaleString('es-AR')}${n.sender ? ' · de ' + esc(n.sender) : ''}${n.op ? ' · op ' + esc(n.op) : ''}</p>
+                    <div class="flex gap-2 mt-2"><input id="kps-link-${n.id}" type="number" placeholder="Nº de recarga" class="flex-1 bg-black/40 border border-kiwi-border rounded-lg p-2 text-white">
+                    <button onclick="window.kpayStaffLink(${n.id})" class="bg-kiwi-gold text-black font-bold rounded-lg px-3">Acreditar</button>
+                    <button onclick="window.kpayStaffIgnore(${n.id})" class="border border-kiwi-border text-gray-300 rounded-lg px-3">Ignorar</button></div>
+                </div>`).join('') : '<p class="text-gray-500 text-sm">Nada pendiente.</p>';
+            const autos = tops.filter(t => t.status === 'credited');
+            document.getElementById('kps-log').innerHTML = autos.length ? autos.map(t => `<p class="text-gray-300">✅ #${t.id} ${esc(t.username)} +${Number(t.credited_usdt || t.usdt).toFixed(2)} USDT · ${ML[t.method] || t.method} · ${esc(t.source || '')} · ${esc(t.credited_by || '')} · ${new Date(t.credited_at).toLocaleString('es-AR')}</p>`).join('') : '<p class="text-gray-500">Elegí el filtro "Acreditadas" o "Todas" para ver el registro.</p>';
+        };
+        window.kpayStaffApprove = async function (id) {
+            const t = (P.data.topups || []).find(x => x.id === id);
+            if (!confirm('¿Acreditar ' + Number(t.usdt).toFixed(2) + ' USDT a ' + t.username + '? Hacelo SOLO si viste el dinero en la cuenta.')) return;
+            try { await rpc('kiwi_pay_staff_approve', { p_id: id, p_notif_id: null, p_usdt: null }); window.loadAdminPagos(); } catch (e) { alert(e.message); }
+        };
+        window.kpayStaffReject = async function (id) {
+            const why = prompt('Motivo del rechazo (lo ve el cliente):', 'No encontramos el pago'); if (why === null) return;
+            try { await rpc('kiwi_pay_staff_reject', { p_id: id, p_reason: why }); window.loadAdminPagos(); } catch (e) { alert(e.message); }
+        };
+        window.kpayStaffLink = async function (nid) {
+            const id = Number(document.getElementById('kps-link-' + nid).value); if (!id) return alert('Escribí el número de recarga (#).');
+            if (!confirm('¿Acreditar la recarga #' + id + ' con esta notificación?')) return;
+            try { await rpc('kiwi_pay_staff_approve', { p_id: id, p_notif_id: nid, p_usdt: null }); window.loadAdminPagos(); } catch (e) { alert(e.message); }
+        };
+        window.kpayStaffIgnore = async function (nid) {
+            try { await rpc('kiwi_pay_staff_notif_ignore', { p_notif_id: nid }); window.loadAdminPagos(); } catch (e) { alert(e.message); }
+        };
+        const _prev = window.switchStaffTab;
+        window.switchStaffTab = function (tab) {
+            _prev(tab === 'pagos' ? 'cuentas' : tab);
+            const mng = window.canManageStaff();
+            document.querySelectorAll('#admin-page button').forEach(btn => { if (btn.textContent.trim().toLowerCase() === 'pagos') btn.classList.toggle('hidden', !mng); });
+            if (tab !== 'pagos') { const pg = document.getElementById('admin-pagos'); if (pg) pg.classList.add('hidden'); return; }
+            if (!mng) return;
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+            document.getElementById('admin-pagos').classList.remove('hidden');
+            document.querySelectorAll('#admin-page .border-b.mb-4 button').forEach(btn => {
+                const on = btn.textContent.trim().toLowerCase() === 'pagos';
+                btn.classList.toggle('text-kiwi-gold', on); btn.classList.toggle('border-b-2', on); btn.classList.toggle('border-kiwi-gold', on); btn.classList.toggle('text-gray-500', !on);
+            });
+            window.loadAdminPagos();
+        };
     })();
     </script>
 </body>
