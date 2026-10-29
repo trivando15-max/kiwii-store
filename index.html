@@ -3080,6 +3080,7 @@ window.balShowStaff = function (on) {
                                 <option value="receipt_review" ${p.status==='receipt_review'?'selected':''}>En revisión</option>
                             </select>
                             <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-2 py-1 rounded">Nota</button>
+                            ${(p.status === 'delivered' || p.status === 'accredited') ? `<button onclick="window.kiCopyReviewMsg(${p.id}, this)" class="text-xs bg-[#5865F2] text-white px-2 py-1 rounded" title="Copia un mensaje para pegarle al cliente por WhatsApp o Discord"><i class="fa-brands fa-discord"></i> Pedir reseña</button>` : ''}
                         </div>
                         <div class="flex justify-end items-center mt-1">${statusHtml}</div>
                     </div>
@@ -5855,6 +5856,7 @@ window.balShowStaff = function (on) {
                             </div>
                             <span class="text-[10px] font-bold uppercase ${color}">${statusText}</span>
                         </div>
+                        ${window.kiReviewBtn ? window.kiReviewBtn(p) : ''}
                     </div>
                 `;
             }).join('');
@@ -6139,6 +6141,7 @@ window.balShowStaff = function (on) {
                 ${keysInfo}
                 <div class="flex items-center gap-1 my-3">${timeline}</div>
                 <p><strong>Estado:</strong> ${window.getStatusLabel ? window.getStatusLabel(order.status) : order.status}</p>
+                ${window.kiReviewBtn ? window.kiReviewBtn(order) : ''}
             `;
             document.getElementById('order-detail-modal').classList.remove('hidden');
             window.currentOrderForSupport = order;
@@ -8433,5 +8436,68 @@ window.resetUser2FA = function(username) {
         };
     })();
     </script>
+
+<!-- ===== v58: RESEÑAS EN DISCORD (botón en pedidos, aviso al entrar, mensaje para staff) ===== -->
+<div id="ki-review-toast" class="hidden fixed bottom-4 left-3 right-3 sm:left-auto sm:right-4 sm:w-96 z-[140] rounded-2xl border-2 border-[#5865F2] bg-kiwi-card p-4 shadow-[0_0_30px_rgba(88,101,242,0.45)]">
+    <div class="flex items-start gap-3">
+        <span class="w-11 h-11 rounded-xl bg-[#5865F2] flex items-center justify-center text-white text-xl flex-shrink-0"><i class="fa-brands fa-discord"></i></span>
+        <div class="flex-1 min-w-0">
+            <p class="font-orbitron font-bold text-white text-sm">¡Tu pedido ya llegó! 🎉</p>
+            <p id="ki-review-toast-text" class="text-xs text-gray-300 mt-0.5">Contanos qué tal te fue dejando tu reseña en nuestro Discord. ¡Nos ayuda muchísimo!</p>
+        </div>
+        <button onclick="window.kiReviewDismiss()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="flex gap-2 mt-3">
+        <button onclick="window.kiReviewGo()" class="flex-1 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm py-2.5 rounded-xl"><i class="fa-brands fa-discord mr-1"></i>Dejar reseña</button>
+        <button onclick="window.kiReviewDismiss()" class="px-4 border border-kiwi-border text-gray-300 text-sm rounded-xl">Más tarde</button>
+    </div>
+</div>
+<script>
+(function () {
+    const LINK = 'https://discord.gg/BCKR9B8kkD';
+    const done = () => JSON.parse(localStorage.getItem('kiwi_review_done') || '{}');
+    const save = o => localStorage.setItem('kiwi_review_done', JSON.stringify(o));
+    const isDel = p => p && (p.status === 'delivered' || p.status === 'accredited' || p.status === 'entregado');
+    const mine = () => { try { if (typeof currentUser === 'undefined' || !currentUser) return []; return JSON.parse(localStorage.getItem('kiwi_purchases') || '[]').filter(p => window.sameUser(p.user, currentUser) && isDel(p)); } catch (e) { return []; } };
+    let current = null;
+    window.kiReviewBtn = function (p) {
+        if (!isDel(p)) return '';
+        const d = done()[p.id];
+        return d === 'ok'
+            ? '<p class="mt-3 text-xs text-green-400"><i class="fa-solid fa-circle-check mr-1"></i>¡Gracias por tu reseña!</p>'
+            : '<button onclick="event.stopPropagation(); window.kiReviewGo(' + p.id + ')" class="mt-3 w-full flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm py-2.5 rounded-xl"><i class="fa-brands fa-discord"></i> Dejar reseña en Discord</button>';
+    };
+    window.kiReviewGo = function (id) {
+        id = id || (current && current.id);
+        if (id) { const d = done(); d[id] = 'ok'; save(d); }
+        window.open(LINK, '_blank');
+        window.kiReviewDismiss(true);
+        if (typeof window.renderClientOrders === 'function') try { window.renderClientOrders(); } catch (e) {}
+    };
+    window.kiReviewDismiss = function (silent) {
+        const t = document.getElementById('ki-review-toast'); if (t) t.classList.add('hidden');
+        if (current && silent !== true) { const d = done(); if (!d[current.id]) d[current.id] = 'later'; save(d); }
+        current = null;
+    };
+    function check() {
+        const t = document.getElementById('ki-review-toast');
+        if (!t || !t.classList.contains('hidden')) return;
+        const d = done();
+        const p = mine().reverse().find(x => !d[x.id]);
+        if (!p) return;
+        current = p;
+        document.getElementById('ki-review-toast-text').textContent = '«' + String(p.title || 'Tu compra').slice(0, 50) + '» ya fue entregado. Contanos qué tal te fue dejando tu reseña en nuestro Discord.';
+        t.classList.remove('hidden');
+    }
+    window.kiCopyReviewMsg = function (id, btn) {
+        const p = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]').find(x => x.id == id); if (!p) return;
+        const msg = '¡Hola ' + (p.user || '') + '! 👋 Tu pedido de *' + p.title + '* ya fue entregado ✅\n\nSi todo salió bien, ¿nos ayudás dejando tu reseña en nuestro Discord? Nos sirve muchísimo 💚\n' + LINK + '\n\n¡Gracias por elegir Kiwii Store!';
+        const ok = () => { if (btn) { const o = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => btn.innerHTML = o, 1500); } };
+        try { navigator.clipboard.writeText(msg).then(ok, () => prompt('Copiá este mensaje:', msg)); } catch (e) { prompt('Copiá este mensaje:', msg); }
+    };
+    setTimeout(check, 6000);
+    setInterval(check, 60000);
+})();
+</script>
 </body>
 </html>
