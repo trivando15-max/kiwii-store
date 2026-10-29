@@ -245,8 +245,8 @@
         <div class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-kiwi-red/60 to-transparent"></div>
         <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 relative z-10">
             <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
-                <button id="staff-menu-btn" onclick="window.goToAdminPanel()" class="hidden relative text-kiwi-gold hover:text-yellow-400 text-xl transition mr-1">
-                    <i class="fa-solid fa-bars"></i>
+                <button id="staff-menu-btn" onclick="window.goToAdminPanel()" class="hidden relative h-10 px-3 rounded-xl border border-kiwi-gold/70 bg-kiwi-gold/15 text-kiwi-gold hover:bg-kiwi-gold/25 font-orbitron font-black text-[11px] sm:text-xs inline-flex items-center gap-2 transition mr-1">
+                    <i class="fa-solid fa-shield-halved text-base"></i><span class="hidden sm:inline">PANEL STAFF</span>
                     <span id="staff-notif-dot" class="hidden absolute -top-1 -right-1 flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
@@ -266,8 +266,8 @@
 <button id="register-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
                     <i class="fa-solid fa-user-plus"></i> <span id="auth-btn-text" class="hidden sm:inline">INGRESAR</span>
                 </button>
-<button onclick="window.toggleUserDrawer()" class="h-10 w-10 border border-white/10 bg-white/[0.03] rounded-xl hover:border-white/25 transition text-white flex items-center justify-center" title="Menú">
-                    <i class="fa-solid fa-bars"></i>
+<button onclick="window.toggleUserDrawer()" class="kiwi-menu-btn h-10 px-3 sm:px-4 rounded-xl font-orbitron font-black text-[11px] sm:text-xs tracking-wider text-white flex items-center gap-2 border border-red-400/70 bg-gradient-to-br from-kiwi-red to-red-800 shadow-[0_0_18px_rgba(225,29,42,0.55)] hover:brightness-110 active:scale-95 transition" title="Abrir menú: perfil, cargar saldo, ayuda y más">
+                    <i class="fa-solid fa-grip text-base"></i><span>MENÚ</span><i class="fa-solid fa-chevron-left text-[9px] opacity-80"></i>
                 </button>
             </div>
         </div>
@@ -534,46 +534,71 @@
     </div>
 
     <!-- DRAWER LATERAL USUARIO / COMUNIDAD -->
-    <div id="user-drawer" class="fixed inset-y-0 right-0 w-80 bg-kiwi-card border-l border-kiwi-border z-50 transform translate-x-full transition-transform duration-300 p-6 flex flex-col justify-between overflow-y-auto">
+    <style>
+        .kd-btn{background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border-color:rgba(255,255,255,.1);transition:transform .15s,border-color .2s,box-shadow .2s}
+        .kd-btn:hover{border-color:rgba(255,255,255,.35);box-shadow:0 0 18px rgba(255,255,255,.07)}
+        .kd-btn:active{transform:scale(.97)}
+        .kd-ico{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+        .kd-blue{background:linear-gradient(135deg,#38bdf8,#2563eb)} .kd-red{background:linear-gradient(135deg,#ff4d57,#be123c)}
+        .kd-green{background:linear-gradient(135deg,#4ade80,#16a34a)} .kd-gold{background:linear-gradient(135deg,#fbbf24,#d97706)}
+        .kd-violet{background:linear-gradient(135deg,#a78bfa,#6d28d9)} .kd-discord{background:linear-gradient(135deg,#7289ff,#4752c4)}
+        .kd-sec{font-family:Orbitron,sans-serif;font-size:11px;font-weight:800;letter-spacing:.14em;color:#9ca3af;display:flex;align-items:center;gap:8px;margin:0 0 10px}
+        .kd-sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.18),transparent)}
+    </style>
+    <div id="user-drawer" class="fixed inset-y-0 right-0 w-[88vw] max-w-sm bg-kiwi-card border-l border-kiwi-border z-50 transform translate-x-full transition-transform duration-300 p-5 flex flex-col justify-between overflow-y-auto">
         <div>
-            <div class="flex items-center justify-between pb-4 border-b border-kiwi-border mb-6">
-                <h3 class="font-orbitron font-bold text-lg text-white flex items-center gap-2">
-                    <i class="fa-solid fa-compass text-kiwi-red"></i> COMUNIDADES
+            <div class="flex items-center justify-between pb-4 border-b border-kiwi-border mb-5">
+                <h3 class="font-orbitron font-black text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-grip text-kiwi-red"></i> MENÚ
                 </h3>
-                <button onclick="window.toggleUserDrawer()" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="window.toggleUserDrawer()" class="h-9 w-9 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <h4 class="font-orbitron text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">CUENTA</h4>
-            <div class="space-y-3 mb-6">
-                <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
-                    <i class="fa-solid fa-user text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Mi Perfil</span>
+            <h4 class="kd-sec">MI CUENTA</h4>
+            <div class="space-y-2.5 mb-6">
+                <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border ">
+                    <span class="kd-ico kd-blue"><i class="fa-solid fa-user"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Mi perfil</span><span class="block text-[11px] text-gray-400">Tus datos y compras</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
-                <button onclick="window.toggleUserDrawer(); window.goToEvents();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-red/60 hover:border-kiwi-red transition text-gray-300 hover:text-white">
-                    <i class="fa-solid fa-gift text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Sorteos y Eventos</span>
-                    <span class="ml-auto text-[10px] font-orbitron font-bold bg-kiwi-red text-white px-2 py-0.5 rounded-full">NUEVO</span>
+                <button onclick="window.openBalanceFromMenu();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-green-400/60 shadow-[0_0_18px_rgba(34,197,94,0.25)]">
+                    <span class="kd-ico kd-green"><i class="fa-solid fa-wallet"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Cargar saldo</span><span class="block text-[11px] text-gray-400">Recargá tu saldo</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
-                <button onclick="window.openBalanceFromMenu();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
-                    <i class="fa-solid fa-wallet text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Cargar Saldo</span>
+                <button onclick="window.toggleUserDrawer(); window.goToEvents();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-red/60">
+                    <span class="kd-ico kd-red"><i class="fa-solid fa-gift"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Sorteos y eventos</span><span class="block text-[11px] text-gray-400">Participá y ganá</span></span><span class="text-[10px] font-orbitron font-bold bg-kiwi-red text-white px-2 py-0.5 rounded-full">NUEVO</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
-                <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
-                    <i class="fa-solid fa-coins text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Moneda de los precios</span>
-                    <span class="ml-auto flex items-center gap-1 text-xs font-rajdhani font-bold text-gray-400"><span id="currency-flag" class="text-base">🇦🇷</span><span id="currency-code">MONEDA</span></span>
+                <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border ">
+                    <span class="kd-ico kd-gold"><i class="fa-solid fa-coins"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Moneda de los precios</span><span class="block text-[11px] text-gray-400">Cambiá cómo ves los precios</span></span><span class="flex items-center gap-1 text-xs font-rajdhani font-bold text-gray-300"><span id="currency-flag" class="text-base">🇦🇷</span><span id="currency-code">MONEDA</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
-                <button id="staff-menu-btn" onclick="window.goToAdminPanel();" class="hidden w-full flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-gold transition text-gray-300 hover:text-white">
-                    <i class="fa-solid fa-shield-halved text-xl text-kiwi-gold"></i> <span class="font-rajdhani font-bold">Panel Staff</span>
+                <button id="staff-menu-btn" onclick="window.goToAdminPanel();" class="kd-btn hidden w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-gold/60">
+                    <span class="kd-ico kd-gold"><i class="fa-solid fa-shield-halved"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-kiwi-gold">Panel staff</span><span class="block text-[11px] text-gray-400">Solo para el equipo</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
             </div>
-            <h4 class="font-orbitron text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">CONTACTO</h4>
-            <div class="space-y-3 mb-6">
-                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="flex items-center gap-3 bg-green-600 hover:bg-green-700 p-4 rounded-xl border border-green-500 text-white transition">
-                    <i class="fa-brands fa-whatsapp text-2xl"></i> 
-                    <span class="font-rajdhani font-bold text-lg">WhatsApp</span>
+
+            <h4 class="kd-sec">AYUDA Y CONTACTO</h4>
+            <div class="space-y-2.5 mb-6">
+                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store,%20tengo%20una%20consulta" target="_blank" class="kd-btn flex items-center gap-3 rounded-2xl p-3 border !border-green-400/60 !bg-green-600/20">
+                    <span class="kd-ico kd-green"><i class="fa-brands fa-whatsapp text-2xl"></i></span>
+                    <span class="flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">WhatsApp</span><span class="block text-[11px] text-green-200/80">Escribinos, te respondemos</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
                 </a>
-                <a href="https://discord.gg/kiwiistore" target="_blank" class="flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
-                    <i class="fa-brands fa-discord text-xl text-[#5865F2]"></i> <span class="font-rajdhani font-bold">Servidor de Discord</span>
+                <a href="https://discord.gg/kiwiistore" target="_blank" class="kd-btn flex items-center gap-3 rounded-2xl p-3 border">
+                    <span class="kd-ico kd-discord"><i class="fa-brands fa-discord text-xl"></i></span>
+                    <span class="flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Servidor de Discord</span><span class="block text-[11px] text-gray-400">Comunidad y reseñas</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </a>
-                <a href="#faq" onclick="document.getElementById('user-drawer').classList.add('translate-x-full')" class="flex items-center gap-3 bg-kiwi-dark p-3 rounded-lg border border-kiwi-border hover:border-kiwi-red transition text-gray-300 hover:text-white">
-                    <i class="fa-solid fa-circle-question text-xl text-kiwi-red"></i> <span class="font-rajdhani font-bold">Preguntas Frecuentes</span>
+                <a href="#faq" onclick="document.getElementById('user-drawer').classList.add('translate-x-full')" class="kd-btn flex items-center gap-3 rounded-2xl p-3 border">
+                    <span class="kd-ico kd-violet"><i class="fa-solid fa-circle-question text-xl"></i></span>
+                    <span class="flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Preguntas frecuentes</span><span class="block text-[11px] text-gray-400">Resolvé tus dudas rápido</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </a>
             </div>
         </div>
@@ -1416,13 +1441,27 @@
             <div id="bal-staff" class="hidden">
             <button onclick="window.balShowStaff(false)" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Volver a elegir</button>
             <div class="rounded-xl border border-sky-400/60 bg-sky-500/10 text-sky-200 text-xs font-bold px-3 py-2 mb-3"><i class="fa-solid fa-headset mr-1"></i>Carga con staff (manual): te atiende una persona</div>
-            <select id="balance-currency" onchange="window.updateBalancePaymentInfo()" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-2 text-white text-sm mb-3">
-                <option value="ARS">Pesos Argentinos (ARS)</option>
-                <option value="MXN">Pesos Mexicanos (MXN)</option>
-                <option value="COP">Pesos Colombianos (COP)</option>
-                <option value="PEN">Soles Peruanos (PEN)</option>
-                <option value="USDT">USDT (Binance / Astropay)</option>
-            </select>
+            <p class="text-sm text-white font-bold mb-2">1. Elegí tu moneda</p>
+            <input type="hidden" id="balance-currency" value="">
+            <div id="bal-cur-grid" class="grid grid-cols-2 gap-2 mb-3">
+                    <button type="button" data-cur="ARS" onclick="window.balPickCurrency('ARS')" class="bal-cur flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 text-left transition active:scale-95 hover:border-kiwi-gold">
+                        <img src="https://flagcdn.com/w40/ar.png" srcset="https://flagcdn.com/w80/ar.png 2x" width="32" height="24" alt="ARS" class="rounded-sm shadow flex-shrink-0" style="width:32px;height:24px;object-fit:cover">
+                        <span class="leading-tight"><span class="block font-orbitron font-bold text-white text-sm">ARS</span><span class="block text-[11px] text-gray-400">Pesos argentinos</span></span></button>
+                    <button type="button" data-cur="MXN" onclick="window.balPickCurrency('MXN')" class="bal-cur flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 text-left transition active:scale-95 hover:border-kiwi-gold">
+                        <img src="https://flagcdn.com/w40/mx.png" srcset="https://flagcdn.com/w80/mx.png 2x" width="32" height="24" alt="MXN" class="rounded-sm shadow flex-shrink-0" style="width:32px;height:24px;object-fit:cover">
+                        <span class="leading-tight"><span class="block font-orbitron font-bold text-white text-sm">MXN</span><span class="block text-[11px] text-gray-400">Pesos mexicanos</span></span></button>
+                    <button type="button" data-cur="COP" onclick="window.balPickCurrency('COP')" class="bal-cur flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 text-left transition active:scale-95 hover:border-kiwi-gold">
+                        <img src="https://flagcdn.com/w40/co.png" srcset="https://flagcdn.com/w80/co.png 2x" width="32" height="24" alt="COP" class="rounded-sm shadow flex-shrink-0" style="width:32px;height:24px;object-fit:cover">
+                        <span class="leading-tight"><span class="block font-orbitron font-bold text-white text-sm">COP</span><span class="block text-[11px] text-gray-400">Pesos colombianos</span></span></button>
+                    <button type="button" data-cur="PEN" onclick="window.balPickCurrency('PEN')" class="bal-cur flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 text-left transition active:scale-95 hover:border-kiwi-gold">
+                        <img src="https://flagcdn.com/w40/pe.png" srcset="https://flagcdn.com/w80/pe.png 2x" width="32" height="24" alt="PEN" class="rounded-sm shadow flex-shrink-0" style="width:32px;height:24px;object-fit:cover">
+                        <span class="leading-tight"><span class="block font-orbitron font-bold text-white text-sm">PEN</span><span class="block text-[11px] text-gray-400">Soles peruanos</span></span></button>
+                    <button type="button" data-cur="USDT" onclick="window.balPickCurrency('USDT')" class="bal-cur col-span-2 flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 text-left transition active:scale-95 hover:border-kiwi-gold">
+                        <span class="w-8 h-6 rounded-sm bg-emerald-500 text-black font-black flex items-center justify-center text-sm flex-shrink-0">₮</span>
+                        <span class="leading-tight"><span class="block font-orbitron font-bold text-white text-sm">USDT</span><span class="block text-[11px] text-gray-400">Binance / Astropay</span></span></button>
+            </div>
+            <p id="bal-pick-hint" class="text-xs text-sky-300 bg-sky-500/10 border border-sky-400/30 rounded-lg px-3 py-2 mb-3"><i class="fa-solid fa-hand-pointer mr-1"></i>Tocá una moneda para continuar.</p>
+            <div id="bal-after" class="hidden">
             <div id="balance-payment-info" class="bg-kiwi-dark p-3 rounded-xl border border-kiwi-border mb-3 text-xs space-y-1">
                 <p class="text-kiwi-gold font-orbitron font-bold uppercase text-[11px]">Método de pago</p>
                 <p id="balance-payment-method" class="text-gray-300">Mercado Pago / Transferencia bancaria</p>
@@ -1435,7 +1474,7 @@
                     <li id="comm-MXN" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">MXN</span><span class="text-kiwi-gold font-bold">6% COMISIÓN EXTRA</span></li>
                     <li id="comm-COP" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">COP</span><span class="text-kiwi-gold font-bold">4% COMISIÓN EXTRA</span></li>
                     <li id="comm-PEN" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">PEN</span><span class="text-kiwi-gold font-bold">4% COMISIÓN EXTRA</span></li>
-                    <li id="comm-USDT" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">BINANCE / ASTROPAY</span><span class="text-kiwi-gold font-bold">1% COMISIÓN EXTRA</span></li>
+                    <li id="comm-USDT" class="comm-row flex justify-between items-center px-2 py-1 rounded-lg border border-transparent transition"><span class="text-gray-300 font-bold">BINANCE / ASTROPAY</span><span class="text-kiwi-gold font-bold">0% COMISIÓN EXTRA</span></li>
                 </ul>
             </div>
             <p class="text-xs text-gray-400 mb-3">Enviá el comprobante por WhatsApp o Discord. Una vez confirmado se acredita a tu saldo.</p>
@@ -1443,6 +1482,7 @@
             <p id="balance-total-preview" class="text-xs text-gray-300 mb-3 font-rajdhani text-[13px]"></p>
             <button onclick="window.requestBalanceLoad()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl"><i class="fa-brands fa-whatsapp mr-1"></i>Solicitar Carga</button>
             <a href="https://discord.gg/PS4AvPpKrh" target="_blank" rel="noopener noreferrer" class="mt-2 w-full flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3 rounded-xl transition"><i class="fa-brands fa-discord"></i>Solicitar saldo por Discord</a>
+            </div>
             </div>
         </div>
     </div>
@@ -5054,7 +5094,7 @@ window.balShowStaff = function (on) {
                 li.classList.toggle('border-transparent', !on);
             });
         };
-        window.BALANCE_COMMISSION = { ARS: 0, MXN: 6, COP: 4, PEN: 4, USDT: 1 };
+        window.BALANCE_COMMISSION = { ARS: 0, MXN: 6, COP: 4, PEN: 4, USDT: 0 };
         window.balanceCommissionCalc = function(amount, curr) {
             const pct = window.BALANCE_COMMISSION[curr] || 0;
             const a = Number(amount) || 0;
@@ -5084,13 +5124,30 @@ window.balShowStaff = function (on) {
 
         window.openBalanceModal = function() {
             if (!currentUser) return alert('Iniciá sesión primero');
-            const currSelect = document.getElementById('balance-currency');
-            if (currSelect && window.currentCurrency) currSelect.value = window.currentCurrency;
-            window.updateBalancePaymentInfo();
+            window.balResetCurrency();
             document.getElementById('balance-modal').classList.remove('hidden');
         };
 
+        window.balResetCurrency = function () {
+            const c = document.getElementById('balance-currency'); if (c) c.value = '';
+            document.querySelectorAll('#bal-cur-grid .bal-cur').forEach(b => { b.classList.remove('border-kiwi-gold', 'bg-kiwi-gold/10'); b.classList.add('border-kiwi-border'); });
+            const af = document.getElementById('bal-after'); if (af) af.classList.add('hidden');
+            const h = document.getElementById('bal-pick-hint'); if (h) h.classList.remove('hidden');
+            const am = document.getElementById('balance-amount'); if (am) am.value = '';
+        };
+        window.balPickCurrency = function (code) {
+            document.getElementById('balance-currency').value = code;
+            document.querySelectorAll('#bal-cur-grid .bal-cur').forEach(b => {
+                const on = b.dataset.cur === code;
+                b.classList.toggle('border-kiwi-gold', on); b.classList.toggle('bg-kiwi-gold/10', on); b.classList.toggle('border-kiwi-border', !on);
+            });
+            document.getElementById('bal-after').classList.remove('hidden');
+            document.getElementById('bal-pick-hint').classList.add('hidden');
+            window.updateBalancePaymentInfo();
+            const am = document.getElementById('balance-amount'); if (am) am.focus();
+        };
         window.requestBalanceLoad = function() {
+            if (!document.getElementById('balance-currency').value) return alert('Elegí primero tu moneda.');
             const amount = document.getElementById('balance-amount').value;
             const curr = document.getElementById('balance-currency')?.value || 'ARS';
             if (!amount || amount <= 0) return alert('Monto inválido');
@@ -8202,10 +8259,10 @@ window.resetUser2FA = function(username) {
             body(`
                 <button onclick="window.kpayResume()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Volver a los datos de pago</button>
                 <p class="text-sm text-gray-300 mb-3">Pagaste <b class="text-kiwi-gold">${fmt(t.pay_amount, t.currency)}</b>. Completá esto para encontrar tu pago más rápido:</p>
-                <label class="block text-xs text-gray-400 mb-1">${REF_LABEL[t.method]}${['usdt', 'binance_pay'].includes(t.method) ? ' *' : ''}</label>
+                <label class="block text-xs text-gray-400 mb-1">${REF_LABEL[t.method]}${['usdt', 'binance_pay'].includes(t.method) ? ' *' : ' (opcional)'}</label>
                 <input id="kpay-ref" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-3 text-white mb-3" placeholder="${t.method === 'usdt' ? 'Ej: 9f3c…a71b' : t.method === 'binance_pay' ? 'Ej: 462576928883449856' : 'Opcional pero ayuda'}">
-                ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre de quien pagó (opcional)</label>
-                <input id="kpay-name" class="w-full bg-kiwi-dark border-2 border-kiwi-border rounded-xl p-3 text-white mb-3" placeholder="Como figura en el banco">` : ''}
+                ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre completo de quien hizo la transferencia *</label>
+                <input id="kpay-name" class="w-full bg-kiwi-dark border-2 border-kiwi-border rounded-xl p-3 text-white mb-3" placeholder="Como figura en el comprobante">` : ''}
                 <label class="block text-xs text-gray-400 mb-1">Foto del comprobante (opcional)</label>
                 <input id="kpay-proof" type="file" accept="image/*" class="w-full text-xs text-gray-300 mb-1">
                 <p class="text-[11px] text-gray-500 mb-4">El comprobante solo ayuda al staff: el saldo se acredita cuando el pago aparece en la cuenta.</p>
@@ -8226,6 +8283,7 @@ window.resetUser2FA = function(username) {
             const ref = (document.getElementById('kpay-ref').value || '').trim();
             if (K.topup.method === 'usdt' && ref.length < 10) return say('Pegá el TxID / Hash de tu envío (lo ves en el detalle del retiro).');
             if (K.topup.method === 'binance_pay' && ref.replace(/\s/g, '').length < 8) return say('Pegá el ID de orden de Binance Pay: lo ves en el detalle del pago, en tu historial de Binance Pay.');
+            if (!['usdt', 'binance_pay'].includes(K.topup.method) && ((document.getElementById('kpay-name') || {}).value || '').trim().length < 3) return say('Escribí el nombre completo de quien hizo la transferencia, tal como figura en el comprobante.');
             const b = document.getElementById('kpay-send'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando…';
             try {
                 const proof = await shrink((document.getElementById('kpay-proof').files || [])[0]);
