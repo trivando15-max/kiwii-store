@@ -8,7 +8,12 @@
 // El saldo SOLO lo suma la base (kiwi_pay_credit). Este archivo nunca confía en la imagen del comprobante.
 const crypto = require('crypto');
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ykxyiamlvlppcyfzyvzr.supabase.co';
+const SUPABASE_URL = (function () {
+  let u = String(process.env.SUPABASE_URL || '').trim().replace(/^["']|["']$/g, '');
+  if (!u) return 'https://ykxyiamlvlppcyfzyvzr.supabase.co';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
+})();
 const env = (k, d) => { const v = process.env[k]; return v == null || String(v).trim() === '' ? (d === undefined ? '' : d) : String(v).trim(); };
 const USDT_TRC20_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 const BINANCE_BASE = 'https://api.binance.com';
@@ -24,7 +29,7 @@ const METHODS = {
   pe_yape:        { label: 'Yape (Perú)',           currency: 'PEN', step: 0.01, round: 0.1, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
-const DEFAULT_COMMISSION = { USDT: 1, ARS: 0, MXN: 6, COP: 4, PEN: 4 };
+const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4 };
 // Margen sobre P2P igual al de la web (KIWI_RATE_MARGIN)
 const RATE_MARGIN = { ARS: 1.00, MXN: 1.0143, COP: 1.0343, PEN: 1.009 };
 const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: ['BBVABank'], transAmount: 190 },
@@ -341,7 +346,8 @@ async function handler(req, res) {
     }
     return send(res, 400, { error: 'Acción desconocida' });
   } catch (e) {
-    return send(res, 400, { error: clean(e && e.message, 300) || 'Error' });
+    const cause = e && e.cause && (e.cause.code || e.cause.message) ? ' [' + clean(e.cause.code || e.cause.message, 80) + ']' : '';
+    return send(res, 400, { error: (clean(e && e.message, 300) || 'Error') + cause });
   }
 }
 
