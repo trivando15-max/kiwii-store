@@ -302,6 +302,11 @@ async function handler(req, res) {
     const action = String(q.action || body.action || (req.method === 'GET' ? 'config' : '')).toLowerCase();
 
     if (action === 'config') return send(res, 200, publicConfig());
+    // v61: país del visitante (header que agrega Vercel) para autoseleccionar la moneda del catálogo
+    if (action === 'geo') {
+      const c = String(req.headers['x-vercel-ip-country'] || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+      return send(res, 200, { ok: true, country: c || null });
+    }
 
     if (action === 'notif') {
       const secret = env('PAY_NOTIF_SECRET');
@@ -325,14 +330,21 @@ async function handler(req, res) {
       const method = String(body.method || '');
       const cfg = publicConfig();
       if (!cfg.methods.find(m => m.id === method)) return send(res, 400, { error: 'Método no disponible.' });
-      const usdt = Math.round(Number(body.usdt) * 100) / 100;
       const purpose = body.purpose === 'reseller' ? 'reseller' : 'normal';
       const minU = purpose === 'reseller' ? Math.max(RESELLER_MIN_USDT, cfg.min_usdt) : cfg.min_usdt;
-      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT.' });
       const cur = METHODS[method].currency;
-      const rate = await getRate(cur);
+      // v61: transferencia AR puede venir en pesos { ars }: el cliente paga eso y se acredita ars / tasa
+      const fiatIn = cur === 'ARS' && Number(body.ars) > 0 ? Math.round(Number(body.ars)) : null;
+      let usdt = fiatIn ? null : Math.round(Number(body.usdt) * 100) / 100;
+      const rate = (fiatIn || usdt >= minU) ? await getRate(cur) : null;
+      if (fiatIn && rate) {
+        const comm = Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0;
+        usdt = Math.floor(fiatIn / rate / (1 + comm / 100) * 100) / 100;
+      }
+      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT' + (fiatIn && rate ? ' (≈ $' + Math.ceil(minU * rate).toLocaleString('es-AR') + ' a $' + Math.floor(cfg.max_usdt * rate).toLocaleString('es-AR') + ' ARS).' : '.') });
       if (!rate) return send(res, 503, { error: 'No pudimos obtener la cotización. Probá en un minuto.' });
       const qv = quote(method, usdt, rate);
+      if (fiatIn) qv.base = round(fiatIn, METHODS[method].round);
       const r = await supaRpc('kiwi_pay_create', { p_token: token, p_method: method, p_usdt: usdt, p_currency: cur, p_base: qv.base,
         p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: cfg.minutes, p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2, p_purpose: purpose });
       return send(res, 200, { ok: true, topup: r.topup, account: cfg.methods.find(m => m.id === method).account });
