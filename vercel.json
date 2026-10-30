@@ -24,5 +24,7 @@
     { "source": "/pubgmobile", "destination": "/index.html" },
     { "source": "/BloodStrike", "destination": "/index.html" },
     { "source": "/bloodstrike", "destination": "/index.html" }
+    { "source": "/Panel-de-revendedores", "destination": "/index.html" }
+    { "source": "/panel-de-revendedores", "destination": "/index.html" }
   ]
 }
