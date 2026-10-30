@@ -4071,9 +4071,17 @@ window.balShowStaff = function (on) {
 
         // ===== v60: PRECIOS DE REDES SOCIALES (tabla editable) =====
         // costo: USD cada 1000 unidades (proveedor BulkMedya, id de servicio). margen: % según tamaño del paquete.
-        // Regla: precio = costo × cantidad/1000 × (1 + margen) → redondeo hacia arriba al centavo → mínimo 0,30 USDT.
+        // Regla (por línea de producto, paquete por paquete, de menor a mayor):
+        //   base   = costo × cantidad/1000 × (1 + margen × factor)  (redondeo hacia arriba al centavo)
+        //   precio = máx(base, escalera[cantidad] × piso, paquete anterior + 0,20)
+        //   seguidores: media ≥ baja + 0,20 · premium ≥ media + 0,30 (mismo paquete)
+        //   likes ≥ escalera + 0,10 · vistas = máx(base, escalera) → vistas siempre un poco más baratas que likes
+        //   público: factor 1, piso 1 · revendedor N1: factor 0,5, piso 0,9 · N2: factor 0,25, piso 0,8
         window.KIWI_SOCIAL_PRICING = {
-            minimo: 0.30,
+            escalera: { 100: 0.30, 500: 0.50, 1000: 0.80, 2000: 1.10, 5000: 1.50, 10000: 2.00, 20000: 2.60, 50000: 3.50, 100000: 5.00 },
+            pasoMinimo: 0.20,
+            difMedia: 0.20, difPremium: 0.30, difLikesVistas: 0.10,
+            pisoRevendedor: { 1: 1, 0.5: 0.9, 0.25: 0.8 },
             costos: {
                 'ig_seg_baja':    { servicio: 15234, usdPor1000: 0.17 },
                 'ig_seg_media':   { servicio: 15217, usdPor1000: 1.00 },
@@ -4096,6 +4104,13 @@ window.balShowStaff = function (on) {
             ks.forEach(k => { if (qty >= k) pick = k; });
             return M[pick];
         };
+        window.kiwiSocialLadder = function (qty) {
+            const E = window.KIWI_SOCIAL_PRICING.escalera;
+            const ks = Object.keys(E).map(Number).sort((a, b) => a - b);
+            let pick = ks[0];
+            ks.forEach(k => { if (qty >= k) pick = k; });
+            return E[pick];
+        };
         // clave de costo: 'ig_seg_baja' | 'ig_likes' | 'tt_vistas' ...
         window.kiwiSocialKey = function (prod, variant) {
             if (!prod) return null;
@@ -4106,14 +4121,46 @@ window.balShowStaff = function (on) {
             }
             return null;
         };
+        const kR = v => Math.round(v * 100) / 100;
+        const kCeil = v => Math.ceil(Math.round(v * 1e6) / 1e4) / 100;
+        window.kiwiSocialBase = function (key, qty, f) {
+            const c = window.KIWI_SOCIAL_PRICING.costos[key];
+            return kCeil(c.usdPor1000 * qty / 1000 * (1 + window.kiwiSocialMargin(qty) * f / 100));
+        };
+        // paquetes de cada línea (salen del catálogo)
+        window.kiwiSocialPacks = function (key) {
+            const isF = key.indexOf('ig_seg_') === 0, cat = key.indexOf('tt_') === 0 ? 'tiktok' : 'instagram';
+            return (window.products || []).filter(p => p.category === cat && p.sub === (isF ? 'seguidores' : 'likes'))
+                .map(window.kiwiSocialQty).filter(Boolean).sort((a, b) => a - b);
+        };
+        window._kiwiSocialCache = {};
+        // tabla completa {qty: precio} de una línea para un factor de margen
+        window.kiwiSocialTable = function (key, f) {
+            const C = window.KIWI_SOCIAL_PRICING, ck = key + '|' + f;
+            if (window._kiwiSocialCache[ck]) return window._kiwiSocialCache[ck];
+            const piso = C.pisoRevendedor[f] != null ? C.pisoRevendedor[f] : 1;
+            const dep = { ig_seg_media: ['ig_seg_baja', C.difMedia], ig_seg_premium: ['ig_seg_media', C.difPremium] }[key];
+            const depT = dep ? window.kiwiSocialTable(dep[0], f) : null;
+            const out = {}; let prev = 0;
+            window.kiwiSocialPacks(key).forEach(q => {
+                let p = window.kiwiSocialBase(key, q, f);
+                let lad = kR(window.kiwiSocialLadder(q) * piso);
+                if (/_likes$/.test(key)) lad = kR(lad + C.difLikesVistas);
+                p = Math.max(p, lad);
+                if (depT && depT[q] != null) p = Math.max(p, kR(depT[q] + dep[1]));
+                if (prev) p = Math.max(p, kR(prev + C.pasoMinimo));
+                out[q] = kR(p); prev = out[q];
+            });
+            return (window._kiwiSocialCache[ck] = out);
+        };
         // marginFactor: 1 = público, 0.5 = revendedor Nivel 1, 0.25 = Nivel 2
         window.kiwiSocialPriceRaw = function (key, qty, marginFactor) {
-            const C = window.KIWI_SOCIAL_PRICING, c = C.costos[key];
-            if (!c || !qty) return 0;
+            const C = window.KIWI_SOCIAL_PRICING;
+            if (!key || !C.costos[key] || !qty) return 0;
             const f = marginFactor == null ? 1 : marginFactor;
-            const raw = c.usdPor1000 * qty / 1000 * (1 + window.kiwiSocialMargin(qty) * f / 100);
-            const cents = Math.ceil(Math.round(raw * 1e6) / 1e4);
-            return Math.max(C.minimo, cents / 100);
+            const t = window.kiwiSocialTable(key, f);
+            if (t[qty] != null) return t[qty];
+            return Math.max(window.kiwiSocialBase(key, qty, f), kR(window.kiwiSocialLadder(qty) * (C.pisoRevendedor[f] || 1)));
         };
         window.kiwiSocialPrice = function (prod, variant, marginFactor) {
             if (marginFactor == null) marginFactor = window.kiwiReseller ? window.kiwiReseller.marginFactor('social') : 1;
@@ -7508,6 +7555,56 @@ window.resetUser2FA = function(username) {
             if (flagEl) flagEl.innerHTML = window.kiFlag(pref, 22);
         })();
 
+        // v61: moneda automática según país (solo si no hay preferencia guardada)
+        // Orden: /api/pay?action=geo (header x-vercel-ip-country) → api.country.is → zona horaria / idioma.
+        window.KIWI_GEO_CURRENCY = { AR: 'ARS', MX: 'MXN', PE: 'PEN', CO: 'COP' };
+        window.kiwiGeoTimeout = function (url, ms) {
+            const c = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const t = setTimeout(() => c && c.abort(), ms);
+            return fetch(url, c ? { signal: c.signal, cache: 'no-store' } : {}).then(r => r.ok ? r.json() : null).finally(() => clearTimeout(t));
+        };
+        window.kiwiGuessCountryLocal = function () {
+            try {
+                const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+                if (/^America\/(Argentina\/|Buenos_Aires|Cordoba|Mendoza|Catamarca|Jujuy)/.test(tz)) return 'AR';
+                if (/^America\/(Mexico_City|Cancun|Merida|Monterrey|Matamoros|Chihuahua|Ciudad_Juarez|Ojinaga|Mazatlan|Bahia_Banderas|Hermosillo|Tijuana)$/.test(tz)) return 'MX';
+                if (tz === 'America/Lima') return 'PE';
+                if (tz === 'America/Bogota') return 'CO';
+            } catch (_) {}
+            const langs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']);
+            for (const l of langs) { const m = /^[a-z]{2,3}-([A-Z]{2})$/i.exec(l || ''); if (m) return m[1].toUpperCase(); }
+            return null;
+        };
+        window.kiwiDetectCountry = async function () {
+            const ok = c => typeof c === 'string' && /^[A-Z]{2}$/i.test(c) ? c.toUpperCase() : null;
+            try { const j = await window.kiwiGeoTimeout('/api/pay?action=geo', 3000); const c = ok(j && j.country); if (c) return { country: c, via: 'vercel' }; } catch (_) {}
+            try { const j = await window.kiwiGeoTimeout('https://api.country.is/', 3000); const c = ok(j && j.country); if (c) return { country: c, via: 'country.is' }; } catch (_) {}
+            const c = window.kiwiGuessCountryLocal();
+            return { country: c, via: c ? 'local' : 'none' };
+        };
+        window.kiwiGeoToast = function (code) {
+            const d = document.createElement('div');
+            d.id = 'kiwi-geo-toast';
+            d.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;max-width:92vw;background:#111827;border:1px solid rgba(250,204,21,.55);color:#e5e7eb;font-size:12px;padding:9px 14px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.5);text-align:center;transition:opacity .4s';
+            d.textContent = 'Mostrando precios en ' + code + ' según tu país (podés cambiarlo en "Moneda de los precios")';
+            document.body.appendChild(d);
+            setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 500); }, 5500);
+        };
+        window.kiwiAutoCurrency = async function () {
+            try {
+                if (localStorage.getItem('kiwi_preferred_currency')) return null;   // nunca pisar una preferencia
+                const r = await window.kiwiDetectCountry();
+                if (localStorage.getItem('kiwi_preferred_currency')) return null;   // el usuario eligió mientras detectábamos
+                const code = window.KIWI_GEO_CURRENCY[r.country] || 'USDT';
+                localStorage.setItem('kiwi_currency_auto', JSON.stringify({ country: r.country, via: r.via, code, t: Date.now() }));
+                if (typeof window.selectCurrency === 'function') window.selectCurrency(code);
+                else { window.currentCurrency = code; localStorage.setItem('kiwi_preferred_currency', code); }
+                if (code !== 'USDT') window.kiwiGeoToast(code);
+                return code;
+            } catch (e) { return null; }
+        };
+        if (!window.KIWI_NO_GEO) setTimeout(() => window.kiwiAutoCurrency(), 600);
+
 
         // Session persistence check
         (function() {
@@ -8318,32 +8415,61 @@ window.resetUser2FA = function(username) {
                         <span class="px-2 py-1 rounded-full border text-[10px] ${s[1]}">${s[0]}</span></div>`; }).join('') : '<p class="text-gray-500">Todavía no hiciste recargas.</p>';
             } catch (e) { box.innerHTML = '<p class="text-gray-500">No se pudo cargar el historial.</p>'; }
         }
+        // v61: transferencia AR se carga en pesos (lo que el cliente transfiere); el resto en USDT
+        const kIsArs = () => K.method && K.method.currency === 'ARS';
+        const kRate = () => K.method.currency === 'USDT' ? 1 : Number((window.exchangeRates || {})[K.method.currency]) || 0;
+        const kArsMin = u => Math.ceil(u * kRate() * (1 + (K.method.commission_pct || 0) / 100) / 10) * 10;
+        const kNum = el => Number(String(el.value || '').replace(/\./g, '').replace(',', '.')) || 0;
+        window.kpaySetArs = function (u) { const el = document.getElementById('kpay-usdt'); el.value = kArsMin(u).toLocaleString('es-AR'); window.kpayEst(); };
+        window.kpayFmtArs = function (el) {
+            const d = String(el.value).replace(/\D/g, '').slice(0, 9);
+            el.value = d ? Number(d).toLocaleString('es-AR') : '';
+            window.kpayEst();
+        };
         window.kpayPick = function (id) {
             K.method = K.cfg.methods.find(m => m.id === id); steps(1);
-            const m = K.method, min = kMin(), res = K.purpose === 'reseller';
+            const m = K.method, min = kMin(), res = K.purpose === 'reseller', ars = kIsArs();
+            const arsMin = ars ? kArsMin(min) : 0;
+            const quick = res ? [50, 150].filter(v => v >= min) : [];
             body(`
                 <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
                 <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
-                <label class="block text-xs text-gray-400 mb-1 mt-3">¿Cuánto saldo querés cargar? (USDT)</label>
-                <input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">
-                <div class="grid ${res ? 'grid-cols-2' : 'grid-cols-4'} gap-2 mt-2">${(res ? [50, 150] : [1, 5, 10, 20]).filter(v => v >= min).map(v => `<button onclick="document.getElementById('kpay-usdt').value=${v};window.kpayEst()" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v}</button>`).join('')}</div>
+                <label class="block text-xs text-gray-400 mb-1 mt-3">${ars ? '¿Cuántos pesos (ARS) querés transferir?' : '¿Cuánto saldo querés cargar? (USDT)'}</label>
+                ${ars ? `<div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-orbitron text-gray-400">$</span>
+                <input id="kpay-usdt" type="text" inputmode="numeric" autocomplete="off" value="${(res ? arsMin : Math.max(arsMin, 10000)).toLocaleString('es-AR')}" oninput="window.kpayFmtArs(this)" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 pl-10 text-2xl font-orbitron text-white text-center"></div>`
+                : `<input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">`}
+                ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ $ ' + kArsMin(v).toLocaleString('es-AR') + '</span>' : ''}</button>`).join('')}</div>` : ''}
                 <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
-                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}Mínimo ${min} USDT. El monto exacto a pagar se fija en el siguiente paso.</p>
+                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ARS (≈ ' + min + ' USDT). ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
             window.kpayEst();
         };
         window.kpayBack = renderMethods;
         window.kpayEst = function () {
-            const m = K.method, v = Number(document.getElementById('kpay-usdt').value) || 0, el = document.getElementById('kpay-est');
-            const r = m.currency === 'USDT' ? 1 : Number((window.exchangeRates || {})[m.currency]) || 0;
+            const m = K.method, inp = document.getElementById('kpay-usdt'), el = document.getElementById('kpay-est'), r = kRate();
+            if (kIsArs()) {
+                const v = kNum(inp), u = r ? Math.floor(v / r / (1 + (m.commission_pct || 0) / 100) * 100) / 100 : 0;
+                el.innerHTML = v > 0 && r ? 'Se acreditarán aprox. <b class="text-kiwi-gold">' + u.toFixed(2) + ' USDT</b> en tu saldo' : '';
+                return;
+            }
+            const v = Number(inp.value) || 0;
             el.innerHTML = v > 0 && r ? 'Vas a pagar aprox. <b class="text-kiwi-gold">' + fmt(v * (1 + m.commission_pct / 100) * r, m.currency) + '</b>' : '';
         };
         window.kpayCreate = async function () {
-            const v = Number(document.getElementById('kpay-usdt').value);
-            if (!(v >= kMin())) return say('El mínimo es ' + kMin() + ' USDT');
+            const inp = document.getElementById('kpay-usdt'), ars = kIsArs();
+            let payload;
+            if (ars) {
+                const v = Math.round(kNum(inp)), mn = kRate() ? kArsMin(kMin()) : 0;
+                if (!(v > 0) || (mn && v < mn)) return say('El mínimo es $ ' + (mn || 0).toLocaleString('es-AR') + ' ARS (' + kMin() + ' USDT)');
+                payload = { method: K.method.id, ars: v, purpose: K.purpose || 'normal' };
+            } else {
+                const v = Number(inp.value);
+                if (!(v >= kMin())) return say('El mínimo es ' + kMin() + ' USDT');
+                payload = { method: K.method.id, usdt: v, purpose: K.purpose || 'normal' };
+            }
             const b = document.getElementById('kpay-go'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
-                const r = await api('create', { method: K.method.id, usdt: v, purpose: K.purpose || 'normal' });
+                const r = await api('create', payload);
                 K.topup = r.topup; K.account = r.account;
                 localStorage.setItem('kpay_active', JSON.stringify({ id: r.topup.id, t: Date.now(), account: r.account }));
                 renderPay();
@@ -8664,7 +8790,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             robux_grupo: { 1: 5, 2: 7 }, robux_gamepass: { 1: 5, 2: 7 }, robux_plus: { 1: 8, 2: 10 }
         },
         manual: { 1: 10, 2: 10 },          // productos de entrega manual (no Roblox, no redes)
-        level1Total: 50, level2Single: 150, cycleDays: 21, windowDays: 7
+        level1Total: 50, level2Single: 150, renewTotal: 50, cycleDays: 21
     };
     const C = window.KIWI_RESELLER_CFG;
     const LS = 'kiwi_reseller_on';
@@ -8830,7 +8956,8 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             ['fa-bolt', 'Recargas automáticas (Free Fire, PUBG, Blood Strike, MLBB)', 'Margen a la mitad · Nivel 2: a un cuarto'],
             ['fa-hand-holding-hand', 'Productos de entrega manual', '−10%'],
             ['fa-hashtag', 'Seguidores, likes y vistas', 'Margen a la mitad · Nivel 2: a un cuarto'],
-            ['fa-tv', 'Streaming e IA', 'Próximamente descuentos…']
+            ['fa-tv', 'Streaming e IA', 'Próximamente descuentos…'],
+            ['fa-rotate', 'Renovación automática', 'Cargá 50 USDT desde tu activación y seguís sin cortes']
         ];
         const statusHtml = !isLogged ? `
             <div class="rounded-2xl border border-white/10 bg-kiwi-card p-5 text-center">
@@ -8850,12 +8977,14 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
                     <div class="rounded-xl bg-black/40 border border-white/10 p-3"><p class="text-[10px] uppercase text-gray-400 font-bold">Vence</p><p class="text-white font-bold">${s && s.active ? fmtDate(s.cycle_end) : '—'}</p></div>
                     <div class="rounded-xl bg-black/40 border border-white/10 p-3"><p class="text-[10px] uppercase text-gray-400 font-bold">Tiempo restante</p><p id="rs-cd" class="text-white font-bold font-orbitron text-sm">${countdownText() || '—'}</p></div>
                 </div>
-                <p class="text-xs text-gray-400 mb-2">Cargado en este ciclo: <b class="text-white">${Number(s && s.loaded || 0).toFixed(2)} USDT</b>${s && s.max_single ? ` · mayor recarga: <b class="text-white">${Number(s.max_single).toFixed(2)}</b>` : ''}</p>
-                ${bar(s && s.loaded, C.level1Total, 'bg-gradient-to-r from-green-500 to-emerald-300', 'Nivel 1 · suma del ciclo')}
+                ${s && s.active ? `
+                ${bar(s.renewal_loaded, C.renewTotal, 'bg-gradient-to-r from-green-500 to-emerald-300', 'Para renovar')}
+                <p class="text-xs text-gray-300 -mt-1 mb-3">Para renovar: <b class="text-white">${Number(s.renewal_loaded || 0).toFixed(2)} / ${C.renewTotal} USDT</b> cargados desde tu activación, hasta <b class="text-white">${fmtDate(s.cycle_end)}</b>.
+                    ${Number(s.renewal_needed) > 0 ? `Te faltan <b class="text-white">${Number(s.renewal_needed).toFixed(2)} USDT</b>.` : `<b class="text-green-300">¡Listo! Tu plan se renueva solo${s.next_level ? ' con Nivel ' + s.next_level : ''} al vencer.</b>`}</p>
+                ${bar(s.max_single, C.level2Single, 'bg-gradient-to-r from-amber-500 to-yellow-300', 'Nivel 2 · una sola recarga')}` : `
+                ${bar(s && s.loaded, C.level1Total, 'bg-gradient-to-r from-green-500 to-emerald-300', 'Para activar · suma del ciclo')}
                 ${bar(s && s.max_single, C.level2Single, 'bg-gradient-to-r from-amber-500 to-yellow-300', 'Nivel 2 · una sola recarga')}
-                ${s && s.active ? `<div class="rounded-xl ${s.window_open ? 'border border-kiwi-gold/50 bg-kiwi-gold/10' : 'bg-black/30 border border-white/10'} p-3 text-xs text-gray-300">
-                    ${s.window_open ? `<b class="text-kiwi-gold">¡Ventana de renovación abierta!</b> Lo que cargues ahora suma para el próximo ciclo: <b class="text-white">${Number(s.next_cycle_loaded || 0).toFixed(2)} / 50 USDT</b>${s.next_level ? ' → renovás con Nivel ' + s.next_level : ''}.`
-                    : `La ventana de renovación se abre el <b class="text-white">${fmtDate(s.window_start)}</b> (últimos 7 días del ciclo).`}</div>` : ''}
+                ${s && s.cycle_start ? `<p class="text-xs text-gray-300 mb-1">Completá <b class="text-white">${(C.level1Total - Number(s.loaded || 0)).toFixed(2)} USDT</b> más antes del <b class="text-white">${fmtDate(s.cycle_end)}</b> para activar tu plan.</p>` : ''}`}
                 <button onclick="window.kiwiResellerTopup()" class="mt-4 w-full bg-gradient-to-r from-kiwi-gold to-amber-400 text-black font-orbitron font-black py-4 rounded-xl text-base shadow-[0_0_20px_rgba(255,183,3,0.35)]"><i class="fa-solid fa-bolt mr-1"></i> RECARGAR SALDO</button>
                 <p class="text-[11px] text-gray-500 text-center mt-2">Mínimo 50 USDT. Se acredita como saldo normal para comprar en la tienda.</p>
             </div>
@@ -8885,7 +9014,10 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
                     <li><b class="text-white">Nivel 1:</b> recargas desde este panel que sumen <b class="text-white">50 USDT o más</b> en el ciclo.</li>
                     <li><b class="text-white">Nivel 2:</b> <b class="text-white">una sola recarga</b> de 150 USDT o más.</li>
                     <li>Cada ciclo dura <b class="text-white">21 días</b> desde tu primera recarga del panel.</li>
-                    <li>Lo que cargues en los <b class="text-white">últimos 7 días</b> suma para el ciclo siguiente (podés juntar, por ejemplo 25 + 25). Si llegás a 50 USDT, el nuevo ciclo arranca solo al vencer; si no, el acceso se corta.</li>
+                    <li>Podés juntar varias recargas para llegar a 50 (por ejemplo 25 + 25). Tu plan se activa en el momento en que completás los 50.</li>
+                    <li><b class="text-white">Para renovar:</b> desde que se activa, todo lo que cargues hasta el día 21 (cualquier día) suma. Si llegás a <b class="text-white">50 USDT</b>, el ciclo siguiente arranca solo al vencer, sin cortes. Si no, el acceso vence y tu próxima recarga empieza un ciclo nuevo.</li>
+                    <li>Lo que cargaste para activar (incluido lo que sobre de esa recarga) no cuenta para renovar.</li>
+                    <li>Para el Nivel 2 del ciclo siguiente, la recarga de 150 USDT tiene que estar entre las de renovación.</li>
                     <li>Las recargas normales de saldo <b class="text-white">no cuentan</b> para el plan.</li>
                 </ul>
             </section>
