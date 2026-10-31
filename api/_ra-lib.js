@@ -80,20 +80,62 @@ async function loadLive(fetchImpl) {
       if (!p || isInactive(p) || !(c > 0 && c < 10000)) { inactive.push(id); costs[id] = FALLBACK[id]; continue; }
       costs[id] = Math.round(c * 1e4) / 1e4;
     }
-    return { at: Date.now(), costs, inactive, live: true };
+    return { at: Date.now(), costs, inactive, live: true, source: 'live' };
   } finally { clearTimeout(t); }
 }
 
-// Devuelve { costs:{id:costo}, inactive:[ids], live:boolean }. Nunca lanza error: si falla usa el último dato o el respaldo.
+// v66: memoria persistente (Supabase, opcional). Guarda el último costo real de RA y registra cada cambio.
+// Usa SUPABASE_SERVICE_ROLE_KEY (la misma de /api/pay). Si falta o falla, todo sigue andando sin memoria.
+const SB_URL = () => (process.env.SUPABASE_URL || 'https://ykxyiamlvlppcyfzyvzr.supabase.co').replace(/\/$/, '');
+async function sbRpc(fn, args, fetchImpl) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return null;
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const r = await (fetchImpl || fetch)(SB_URL() + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: ctrl.signal });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (_) { return null; } finally { clearTimeout(t); }
+}
+let lastSynced = null;
+async function persist(d, fetchImpl) {
+  const sig = JSON.stringify(d.costs);
+  if (sig === lastSynced) return;
+  const costs = {}; for (const id of IDS) if (!(d.inactive || []).includes(id)) costs[id] = d.costs[id];
+  const r = await sbRpc('kiwi_ra_costs_sync', { p_costs: costs }, fetchImpl);
+  if (r !== null) lastSynced = sig;
+}
+async function loadPersisted(fetchImpl) {
+  const r = await sbRpc('kiwi_ra_costs_get', {}, fetchImpl);
+  const rows = Array.isArray(r) ? r : [];
+  const costs = {}; let at = 0;
+  for (const row of rows) { const id = Number(row.ra_id), c = Number(row.cost); if (IDS.includes(id) && c > 0) { costs[id] = c; at = Math.max(at, Date.parse(row.updated_at) || 0); } }
+  return Object.keys(costs).length ? { costs, at } : null;
+}
+// Últimos cambios de costo registrados: [{ra_id, old_cost, new_cost, changed_at}]
+async function recentChanges(limit, fetchImpl) {
+  const r = await sbRpc('kiwi_ra_price_changes_recent', { p_limit: limit || 30 }, fetchImpl);
+  return Array.isArray(r) ? r : [];
+}
+
+// Devuelve { costs, inactive, live, source:'live'|'cache'|'db'|'fallback', stale }. Nunca lanza error.
+// v66: si RA no responde NUNCA se vende más barato sin avisar: se usa el último costo real conocido
+// (memoria de la instancia o Supabase) y, si no hay ninguno, source='fallback' (api/ra.js rechaza la compra).
 async function getCosts(opts) {
   opts = opts || {};
   if (!opts.force && cache && Date.now() - cache.at < CACHE_MS) return cache;
-  if (!inflight) inflight = loadLive(opts.fetch).then(d => (cache = d), () => null).finally(() => { inflight = null; });
+  if (!inflight) inflight = loadLive(opts.fetch).then(async d => { cache = d; try { await persist(d, opts.fetch); } catch (_) {} return d; }, () => null).finally(() => { inflight = null; });
   const d = await inflight;
   if (d) return d;
-  if (cache) return Object.assign({}, cache, { live: false, stale: true });
-  return { at: Date.now(), costs: Object.assign({}, FALLBACK), inactive: [], live: false };
+  if (cache) return Object.assign({}, cache, { live: false, stale: true, source: 'cache' });
+  const db = await loadPersisted(opts.fetch).catch(() => null);
+  if (db) {
+    // nunca por debajo del respaldo: si RA había bajado, cobramos un poco más mientras no responde (nunca menos)
+    const costs = {}; for (const id of IDS) costs[id] = Math.max(Number(db.costs[id]) || 0, FALLBACK[id]);
+    return { at: db.at || Date.now(), costs, inactive: [], live: false, stale: true, source: 'db' };
+  }
+  return { at: Date.now(), costs: Object.assign({}, FALLBACK), inactive: [], live: false, stale: true, source: 'fallback' };
 }
-function _resetCache() { cache = null; inflight = null; }
+function _resetCache() { cache = null; inflight = null; lastSynced = null; }
 
-module.exports = { RA_BASE, MARGIN, MARGINS, marginOf, TOLERANCE, FALLBACK, IDS, raKey, salePrice, resellerSalePrice, RESELLER_FACTOR, getCosts, _resetCache };
+module.exports = { RA_BASE, MARGIN, MARGINS, marginOf, TOLERANCE, FALLBACK, IDS, raKey, salePrice, resellerSalePrice, RESELLER_FACTOR, getCosts, recentChanges, _resetCache };
