@@ -27,7 +27,7 @@ const METHODS = {
   binance_pay:    { label: 'Binance Pay',          currency: 'USDT', step: 0.01, round: 0.01, kind: 'binance_pay' },
   ar_transfer:    { label: 'Transferencia Argentina (alias)', currency: 'ARS', step: 1, round: 10, kind: 'notif' },
   mx_nu:          { label: 'Nu México (SPEI)',      currency: 'MXN', step: 0.01, round: 0.1, kind: 'notif' },
-  co_bancolombia: { label: 'Bancolombia',           currency: 'COP', step: 1, round: 100, kind: 'notif' },
+  co_bancolombia: { label: 'Global66 (Colombia)',   currency: 'COP', step: 1, round: 100, kind: 'notif' },
   pe_yape:        { label: 'Yape (Perú)',           currency: 'PEN', step: 0.01, round: 0.1, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
@@ -56,7 +56,12 @@ function accountData(m) {
     case 'mx_nu':
       return env('PAY_MX_CLABE') ? [['CLABE', env('PAY_MX_CLABE')], ['Banco', 'Nu México']].concat(env('PAY_MX_TITULAR') ? [['Titular', env('PAY_MX_TITULAR')]] : []) : null;
     case 'co_bancolombia':
-      return env('PAY_CO_CUENTA') ? [['Cuenta Bancolombia', env('PAY_CO_CUENTA')], ['Tipo', env('PAY_CO_TIPO', 'Ahorros')]].concat(env('PAY_CO_TITULAR') ? [['Titular', env('PAY_CO_TITULAR')]] : [], env('PAY_CO_DOCUMENTO') ? [['Documento', env('PAY_CO_DOCUMENTO')]] : []) : null;
+      // v63: se recibe en Global66 (clave interna co_bancolombia se mantiene). Se muestran solo los datos cargados.
+      // v64: PAY_CO_LLAVE (llave Bre-B) alcanza sola para activar el método.
+      if (!env('PAY_CO_LLAVE') && !env('PAY_CO_CUENTA') && !env('PAY_CO_USUARIO') && !env('PAY_CO_EMAIL')) return null;
+      return [['Llave Bre-B', env('PAY_CO_LLAVE')], ['Cuenta Global66', env('PAY_CO_CUENTA')], ['Tipo de cuenta', env('PAY_CO_TIPO')], ['Banco', env('PAY_CO_BANCO')],
+        ['Usuario / celular Global66', env('PAY_CO_USUARIO')], ['Email Global66', env('PAY_CO_EMAIL')],
+        ['Titular', env('PAY_CO_TITULAR')], ['Documento', env('PAY_CO_DOCUMENTO')]].filter(x => x[1]);
     case 'pe_yape':
       return env('PAY_PE_YAPE_NUMERO') ? [['Celular Yape', env('PAY_PE_YAPE_NUMERO')]].concat(env('PAY_PE_TITULAR') ? [['Titular', env('PAY_PE_TITULAR')]] : []) : null;
   }
@@ -239,7 +244,7 @@ async function verifyTopup(topup) {
 const DEFAULT_APPS = {
   'com.mercadopago.wallet': 'ar_transfer', 'com.uala': 'ar_transfer', 'ar.com.brubank.wallet': 'ar_transfer',
   'com.nu.production': 'mx_nu', 'mx.com.nu': 'mx_nu',
-  'com.todo1.mobile': 'co_bancolombia', 'com.bancolombia.app': 'co_bancolombia',
+  'com.global66.cards': 'co_bancolombia', 'com.todo1.mobile': 'co_bancolombia', 'com.bancolombia.app': 'co_bancolombia',
   'com.bcp.innovacxion.yapeapp': 'pe_yape',
 };
 const CUR_OF = { ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN' };
@@ -272,11 +277,13 @@ function parseNotification(n, forcedMethod) {
   const out = { app, title, text, method, amount: null, currency: method ? CUR_OF[method] : null, sender: null, op: null, incoming: false };
   out.incoming = INCOMING.test(all) && !(OUTGOING.test(all) && !INCOMING.test(all.replace(OUTGOING, '')));
   if (!out.incoming) return out;
-  const am = all.match(/(?:S\/\.?|\$|COP|MXN|ARS|PEN|soles?)\s*([\d][\d.,]*)/i) || all.match(/([\d][\d.,]*)\s*(?:pesos|soles|COP|MXN|ARS|PEN)/i);
+  // v63: tomar el monto que aparece primero (prefijo "$"/"COP" o sufijo "COP"/"pesos"), no un saldo posterior
+  const amA = all.match(/(?:S\/\.?|\$|COP|MXN|ARS|PEN|soles?)\s*\$?\s*([\d][\d.,]*)/i), amB = all.match(/([\d][\d.,]*)\s*(?:pesos|soles|COP|MXN|ARS|PEN)\b/i);
+  const am = amA && amB ? (amA.index <= amB.index ? amA : amB) : (amA || amB);
   if (am) out.amount = parseAmountStr(am[1]);
   const snd = all.match(/([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})\s+te\s+(?:envi|transfiri|yape|pag)/)
-           || all.match(/(?:\bde|desde)\s+([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})/);
-  if (snd) out.sender = snd[1].trim();
+           || all.match(/(?:\bde|desde)\s+(?!(?:COP|USD|MXN|ARS|PEN|Global66|Bancolombia|Nequi|tu|su)\b)([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})/);
+  if (snd) out.sender = snd[1].replace(/([A-Za-zÁÉÍÓÚÑáéíóúñ]{2,})\.(?:\s.*)?$/, '$1').trim(); // v63: cortar en fin de oración
   const op = all.match(/(?:operaci[oó]n|n[uú]mero de operaci[oó]n|referencia|ref\.?|c[oó]digo|comprobante|folio|clave de rastreo)\s*(?:n[°º.o]*|#|:)?\s*([A-Za-z0-9-]{4,40})/i);
   if (op) out.op = op[1];
   return out;
@@ -333,15 +340,18 @@ async function handler(req, res) {
       const purpose = body.purpose === 'reseller' ? 'reseller' : 'normal';
       const minU = purpose === 'reseller' ? Math.max(RESELLER_MIN_USDT, cfg.min_usdt) : cfg.min_usdt;
       const cur = METHODS[method].currency;
-      // v61: transferencia AR puede venir en pesos { ars }: el cliente paga eso y se acredita ars / tasa
-      const fiatIn = cur === 'ARS' && Number(body.ars) > 0 ? Math.round(Number(body.ars)) : null;
+      // v61/v62: transferencia AR (ARS) y Bancolombia (COP) pueden venir en pesos { fiat } (o { ars }):
+      // el cliente paga eso (comisión incluida) y se acredita pesos / tasa / (1 + comisión), redondeado hacia abajo
+      const FIAT_IN = { ARS: 1, COP: 1 };
+      const fiatRaw = Number(body.fiat != null ? body.fiat : (cur === 'ARS' ? body.ars : null));
+      const fiatIn = FIAT_IN[cur] && fiatRaw > 0 ? Math.round(fiatRaw) : null;
       let usdt = fiatIn ? null : Math.round(Number(body.usdt) * 100) / 100;
       const rate = (fiatIn || usdt >= minU) ? await getRate(cur) : null;
       if (fiatIn && rate) {
         const comm = Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0;
         usdt = Math.floor(fiatIn / rate / (1 + comm / 100) * 100) / 100;
       }
-      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT' + (fiatIn && rate ? ' (≈ $' + Math.ceil(minU * rate).toLocaleString('es-AR') + ' a $' + Math.floor(cfg.max_usdt * rate).toLocaleString('es-AR') + ' ARS).' : '.') });
+      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT' + (fiatIn && rate ? (() => { const k = 1 + (Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0) / 100; return ' (≈ $' + Math.ceil(minU * rate * k).toLocaleString('es-AR') + ' a $' + Math.floor(cfg.max_usdt * rate * k).toLocaleString('es-AR') + ' ' + cur + ').'; })() : '.') });
       if (!rate) return send(res, 503, { error: 'No pudimos obtener la cotización. Probá en un minuto.' });
       const qv = quote(method, usdt, rate);
       if (fiatIn) qv.base = round(fiatIn, METHODS[method].round);
