@@ -26,7 +26,7 @@
         // true  = TODOS los productos de Recargas América (diamantes ilimitados, tarjetas/pases FF, Blood Strike, PUBG,
         //         Mobile Legends, etc.) muestran "Sin Stock" y no se pueden comprar (temporal: no se puede cargar saldo en RA).
         // false = todo vuelve a la normalidad. No toca productos manuales, Roblox, redes sociales, etc.
-        window.KIWI_RA_SIN_STOCK = true;
+        window.KIWI_RA_SIN_STOCK = false; // v66: Recargas América reactivado
         window.kiwiRaIsRaProd = p => !!(p && (p.raId || p.raLegacyId || p.autoDelivery || (window.KIWI_RA_ITEMS || []).some(it => it.id === p.id)));
         window.kiwiRaSinStock = p => !!window.KIWI_RA_SIN_STOCK && window.kiwiRaIsRaProd(p);
         window.kiwiRaOff = p => !!(p && (p.raUnavailable || window.kiwiRaSinStock(p)));
@@ -923,6 +923,7 @@
             </button>
         </div>
         <div class="bg-[#0f0e0a] border border-kiwi-gold rounded-2xl p-4">
+            <div id="kiwi-ra-cambios" class="hidden mb-4"></div>
             <div class="flex border-b border-kiwi-gold/30 mb-4">
                 <button onclick="window.switchStaffTab('cuentas')" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold">CUENTAS</button>
                 <button onclick="window.switchStaffTab('compras')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">COMPRAS</button>
@@ -8233,12 +8234,35 @@ window.resetUser2FA = function(username) {
                 if (!r.ok) return false;
                 const j = await r.json();
                 if (!j || !j.success) return false;
-                window.kiwiRaApplyPrices(j); return true;
+                window.kiwiRaApplyPrices(j); window.kiwiRaLastPrices = j; try { window.kiwiRaRenderCambios && window.kiwiRaRenderCambios(); } catch (_) {} return true;
             } catch (_) { return false; } finally { clearTimeout(t); }
         };
         const startPrices = () => setTimeout(() => window.kiwiRaLoadPrices(false), 300);
         if (document.readyState === 'complete') startPrices(); else window.addEventListener('load', startPrices);
         setInterval(() => { if (!document.hidden) window.kiwiRaLoadPrices(false); }, 10 * 60 * 1000);
+        // v66: aviso staff "Cambios de precio de Recargas América" (datos de /api/ra-prices: changes, low_margin, source)
+        window.kiwiRaRenderCambios = function () {
+            const box = document.getElementById('kiwi-ra-cambios'), j = window.kiwiRaLastPrices;
+            if (!box || !j) return;
+            const items = window.KIWI_RA_ITEMS || [];
+            const name = id => { const it = items.find(x => x.ra === id); if (!it) return 'Producto RA #' + id; const cat = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG', mlbb: 'Mobile Legends' }[it.category] || it.category || ''; return (cat ? cat + ' · ' : '') + it.title; };
+            const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            const usd = v => (Number(v) || 0).toFixed(4).replace(/0{1,2}$/, '');
+            const changes = Array.isArray(j.changes) ? j.changes.slice(0, 15) : [], low = Array.isArray(j.low_margin) ? j.low_margin : [];
+            const src = j.source || (j.live ? 'live' : 'fallback');
+            const srcTxt = { live: 'Precios en vivo de Recargas América', cache: 'RA no responde: se usa el último costo conocido', db: 'RA no responde: se usa el último costo guardado', fallback: 'RA no responde y no hay costo guardado: las compras RA quedan pausadas' }[src] || src;
+            let h = '<div class="rounded-xl border ' + (low.length || src === 'fallback' ? 'border-red-500 bg-red-500/10' : 'border-kiwi-gold/40 bg-black/30') + ' p-3 text-xs">'
+                + '<div class="flex items-center justify-between gap-2 mb-2"><b class="font-orbitron text-kiwi-gold">Cambios de precio de Recargas América</b>'
+                + '<span class="' + (src === 'live' ? 'text-green-400' : 'text-yellow-400') + '">' + esc(srcTxt) + '</span></div>';
+            if (low.length) h += '<div class="text-red-400 font-bold mb-2">⚠️ Margen bajo (&lt;3%) o negativo: ' + low.map(l => esc(name(l.ra_id)) + ' (' + l.margin_pct + '%)').join(', ') + '</div>';
+            if (!changes.length) h += '<div class="text-gray-400">Sin cambios de costo registrados' + (j.changes ? '' : ' (falta correr kiwii-v66-ra-cambios.sql)') + '.</div>';
+            else h += '<table class="w-full text-left"><thead class="text-gray-400"><tr><th>Producto</th><th>Costo antes</th><th>Costo nuevo</th><th>Venta nueva</th><th>Margen</th><th>Cuándo</th></tr></thead><tbody>'
+                + changes.map(c => { const bad = !(c.margin_pct >= 3); const up = c.new_cost > c.old_cost;
+                    return '<tr class="border-t border-white/10' + (bad ? ' text-red-400 font-bold' : '') + '"><td>' + esc(name(c.ra_id)) + '</td><td>' + usd(c.old_cost) + '</td><td class="' + (up ? 'text-red-300' : 'text-green-300') + '">' + usd(c.new_cost) + (up ? ' ▲' : ' ▼') + '</td><td>' + (c.new_price != null ? Number(c.new_price).toFixed(2) : '-') + '</td><td>' + (c.margin_pct != null ? c.margin_pct + '%' : '-') + (bad ? ' ⚠️' : '') + '</td><td>' + esc(c.changed_at ? new Date(c.changed_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '') + '</td></tr>'; }).join('')
+                + '</tbody></table>';
+            box.innerHTML = h + '</div>';
+            box.classList.remove('hidden');
+        };
     })();
     </script>
 
@@ -8493,7 +8517,15 @@ window.resetUser2FA = function(username) {
                 renderPay();
             } catch (e) { say(e.message); b.disabled = false; b.textContent = 'Continuar'; }
         };
-        function tip(id, acc) {
+        // v66: Colombia tiene dos modos (misma clave co_bancolombia, mismo monto, misma notificación)
+        const coModeOf = x => x[2] === 'breb' || x[2] === 'normal' ? x[2] : (x[0] === 'Llave Bre-B' ? 'breb' : 'normal');
+        const CO_TIP = {
+            breb: '⚡ <b>Pago inmediato con Bre-B.</b> Ojo: Bre-B solo funciona con algunos bancos/apps; si tu banco te da error, usá la <b>transferencia normal</b>. <b>Respetá los últimos pesos</b> del monto.',
+            normal: '🏦 En este método el pago se demora en reflejarse <b>aproximadamente un día</b>, pero es compatible con <b>todos los bancos de Colombia</b>. <b>Respetá los últimos pesos</b> del monto.'
+        };
+        window.kpayCoMode = function (mode) { K.coMode = mode; renderPay(); };
+        function tip(id, acc, mode) {
+            if (id === 'co_bancolombia' && mode && CO_TIP[mode]) return CO_TIP[mode];
             if (id === 'co_bancolombia' && (acc || []).some(([k]) => k === 'Llave Bre-B')) return 'Transferí a la llave Bre-B de arriba (desde tu banco o billetera). <b>Respetá los últimos pesos</b> del monto.';
             return {
                 usdt: 'Mandá <b>solo USDT</b> por la red indicada. Si tu exchange cobra comisión de retiro, sumala: tiene que <b>llegar</b> el monto exacto.',
@@ -8510,7 +8542,16 @@ window.resetUser2FA = function(username) {
             const accAll = (K.account || (m.account) || []);
             // v64: el titular se muestra como cartelito destacado (cualquier método que tenga línea 'Titular')
             const titular = (accAll.find(([k]) => k === 'Titular') || [])[1] || '';
-            const acc = accAll.filter(([k]) => k !== 'Titular');
+            let acc = accAll.filter(([k]) => k !== 'Titular'), coMode = '', coTabs = '';
+            if (m.id === 'co_bancolombia') {
+                const has = { breb: acc.some(x => coModeOf(x) === 'breb'), normal: acc.some(x => coModeOf(x) === 'normal') };
+                coMode = has[K.coMode] ? K.coMode : (has.breb ? 'breb' : 'normal'); // con los dos, Bre-B va preseleccionado
+                acc = acc.filter(x => coModeOf(x) === coMode);
+                if (has.breb && has.normal) {
+                    const tb = (id, ic, t1, t2) => `<button id="kpay-co-${id}" onclick="window.kpayCoMode('${id}')" class="flex-1 rounded-xl border-2 px-2 py-2 text-left ${coMode === id ? 'border-kiwi-gold bg-kiwi-gold/15' : 'border-kiwi-border bg-kiwi-dark'}"><p class="text-xs font-bold ${coMode === id ? 'text-kiwi-gold' : 'text-white'}">${ic} ${t1}</p><p class="text-[11px] text-gray-400">${t2}</p></button>`;
+                    coTabs = `<p class="text-xs text-gray-400 mb-1">Elegí cómo pagar:</p><div id="kpay-co-tabs" class="flex gap-2 mb-3">${tb('breb', '⚡', 'Llave Bre-B', '(inmediato)')}${tb('normal', '🏦', 'Transferencia a banco', '(normal · ~1 día)')}</div>`;
+                }
+            }
             body(`
                 <div class="bg-gradient-to-br from-kiwi-gold/20 to-transparent border-2 border-kiwi-gold rounded-2xl p-4 text-center mb-3">
                     <p class="text-xs text-gray-300 uppercase font-orbitron">Pagá exactamente</p>
@@ -8518,20 +8559,21 @@ window.resetUser2FA = function(username) {
                     <button onclick="window.kpayCopy('${plain(t.pay_amount, t.currency)}', this)" class="bg-kiwi-gold text-black font-bold rounded-lg px-4 py-2 text-sm"><i class="fa-regular fa-copy mr-1"></i>Copiar monto</button>
                     <p class="text-xs text-gray-300 mt-2">Recibís <b class="text-white">${Number(t.usdt).toFixed(2)} USDT</b> de saldo</p>
                 </div>
+                ${coTabs}
                 <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 mb-3 space-y-2">
-                    <p class="text-xs text-kiwi-gold font-orbitron uppercase">${FLAG[m.id] || ''} ${esc(m.label)}</p>
+                    <p class="text-xs text-kiwi-gold font-orbitron uppercase">${FLAG[m.id] || ''} ${esc(m.label)}${coMode ? (coMode === 'breb' ? ' · Llave Bre-B' : ' · Transferencia') : ''}</p>
                     ${titular ? `<div id="kpay-titular" class="flex items-center gap-2 bg-kiwi-gold/15 border border-kiwi-gold rounded-full px-3 py-1.5"><i class="fa-solid fa-user-check text-kiwi-gold"></i><p class="text-sm text-white min-w-0 truncate">Titular: <b>${esc(titular)}</b></p></div>` : ''}
                     ${acc.map(([k, v]) => `<div class="flex items-center justify-between gap-2"><div class="min-w-0"><p class="text-[11px] text-gray-500">${esc(k)}</p><p class="text-white font-bold text-sm break-all">${esc(v)}</p></div>
                         <button onclick="window.kpayCopy('${esc(v).replace(/'/g, '')}', this)" class="shrink-0 border border-kiwi-border rounded-lg px-3 py-2 text-xs text-gray-200"><i class="fa-regular fa-copy"></i></button></div>`).join('')}
                 </div>
-                <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id, accAll)}</p>
+                <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id, accAll, coMode)}</p>
                 <p class="text-center text-sm text-gray-300 mb-3">Tiempo para pagar: <b id="kpay-cd" class="text-white font-orbitron">--:--</b></p>
                 <button onclick="window.kpayPaid()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl text-base"><i class="fa-solid fa-check mr-1"></i>Ya pagué</button>
                 <button onclick="localStorage.removeItem('kpay_active'); window.kpayBack()" class="w-full text-xs text-gray-500 mt-3 py-2">Cancelar y elegir otro método</button>`);
             const tick = () => {
                 const s = Math.max(0, Math.floor((Date.parse(t.expires_at) - Date.now()) / 1000));
                 const el = document.getElementById('kpay-cd'); if (!el) return stopTimers();
-                el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+                el.textContent = s >= 3600 ? Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ' min' : String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
                 if (s <= 0) el.textContent = 'vencido';
             };
             tick(); K.timer = setInterval(tick, 1000);
