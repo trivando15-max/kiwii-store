@@ -58,21 +58,42 @@ function accountData(m) {
     case 'co_bancolombia':
       // v63: se recibe en Global66 (clave interna co_bancolombia se mantiene). Se muestran solo los datos cargados.
       // v64: PAY_CO_LLAVE (llave Bre-B) alcanza sola para activar el método.
+      // v66: DOS modos con la misma clave/monto/notificación. Cada línea lleva un 3er dato con el modo ('normal' | 'breb');
+      // clientes viejos leen solo [etiqueta, valor] y siguen andando. "Titular" va sin modo (vale para los dos).
       if (!env('PAY_CO_LLAVE') && !env('PAY_CO_CUENTA') && !env('PAY_CO_USUARIO') && !env('PAY_CO_EMAIL')) return null;
-      return [['Banco', env('PAY_CO_BANCO')], ['Número de cuenta', env('PAY_CO_CUENTA')], ['Tipo de cuenta', env('PAY_CO_TIPO')], ['Llave Bre-B', env('PAY_CO_LLAVE')],
-        ['Usuario / celular Global66', env('PAY_CO_USUARIO')], ['Email Global66', env('PAY_CO_EMAIL')],
-        ['Titular', env('PAY_CO_TITULAR')], ['Documento', env('PAY_CO_DOCUMENTO')]].filter(x => x[1]);
+      {
+        const out = [];
+        if (env('PAY_CO_LLAVE')) out.push(['Llave Bre-B', env('PAY_CO_LLAVE'), 'breb']);
+        if (env('PAY_CO_CUENTA') || env('PAY_CO_USUARIO') || env('PAY_CO_EMAIL')) {
+          const cta = env('PAY_CO_CUENTA');
+          out.push(['Banco', env('PAY_CO_BANCO') || 'Global66', 'normal']);
+          if (cta) {
+            out.push(['Número de cuenta', cta, 'normal']);
+            out.push(['Cédula de Ciudadanía', env('PAY_CO_DOCUMENTO') || cta, 'normal']);
+            out.push(['Tipo de cuenta', env('PAY_CO_TIPO') || 'Depósito Electrónico', 'normal']);
+          }
+          if (env('PAY_CO_USUARIO')) out.push(['Usuario / celular Global66', env('PAY_CO_USUARIO'), 'normal']);
+          if (env('PAY_CO_EMAIL')) out.push(['Email Global66', env('PAY_CO_EMAIL'), 'normal']);
+        } else if (env('PAY_CO_DOCUMENTO')) out.push(['Documento', env('PAY_CO_DOCUMENTO')]);
+        if (env('PAY_CO_TITULAR')) out.push(['Titular', env('PAY_CO_TITULAR')]);
+        return out;
+      }
     case 'pe_yape':
       return env('PAY_PE_YAPE_NUMERO') ? [['Celular Yape', env('PAY_PE_YAPE_NUMERO')]].concat(env('PAY_PE_TITULAR') ? [['Titular', env('PAY_PE_TITULAR')]] : []) : null;
   }
   return null;
+}
+// v66: Colombia (transferencia normal Global66) puede tardar ~1 día → la recarga queda abierta 24 h (PAY_CO_MINUTES, máx. 1500).
+function methodMinutes(method, def) {
+  if (method === 'co_bancolombia') { const m = Number(env('PAY_CO_MINUTES', '1440')); return m >= 10 ? Math.min(1500, m) : def; }
+  return def;
 }
 function publicConfig() {
   const comm = jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION);
   const methods = [];
   for (const [id, m] of Object.entries(METHODS)) {
     const acc = accountData(id);
-    if (acc) methods.push({ id, label: m.label, currency: m.currency, commission_pct: Number(comm[m.currency]) || 0, account: acc });
+    if (acc) methods.push({ id, label: m.label, currency: m.currency, commission_pct: Number(comm[m.currency]) || 0, account: acc, minutes: methodMinutes(id, Number(env('PAY_EXPIRY_MINUTES', '45')) || 45) });
   }
   return { ok: true, methods, min_usdt: Number(env('PAY_MIN_USDT', '1')) || 1, max_usdt: Number(env('PAY_MAX_USDT', '500')) || 500,
            minutes: Number(env('PAY_EXPIRY_MINUTES', '45')) || 45 };
@@ -356,7 +377,7 @@ async function handler(req, res) {
       const qv = quote(method, usdt, rate);
       if (fiatIn) qv.base = round(fiatIn, METHODS[method].round);
       const r = await supaRpc('kiwi_pay_create', { p_token: token, p_method: method, p_usdt: usdt, p_currency: cur, p_base: qv.base,
-        p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: cfg.minutes, p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2, p_purpose: purpose });
+        p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: methodMinutes(method, cfg.minutes), p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2, p_purpose: purpose });
       return send(res, 200, { ok: true, topup: r.topup, account: cfg.methods.find(m => m.id === method).account });
     }
     if (action === 'reseller') {
