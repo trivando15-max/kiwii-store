@@ -115,6 +115,8 @@ module.exports = async function handler(req, res) {
   if (!Number.isFinite(amount) || amount > 10000) return send(res, 400, { success: false, stage: 'checkout', error: 'Monto inválido.' });
   // v38: validar el precio contra el costo ACTUAL de Recargas América (+10%), con 3% de tolerancia
   const live = await lib.getCosts();
+  // v66: sin ningún costo real conocido (RA caído y sin memoria) no se vende: el respaldo fijo podría estar desactualizado.
+  if (live.source === 'fallback') return send(res, 503, { success: false, stage: 'checkout', code: 'PRICES_UNVERIFIED', error: 'No pudimos confirmar el precio con el proveedor. Probá en unos minutos. No se descontó saldo.' });
   if ((live.inactive || []).includes(pid)) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
   const cost = Number(live.costs[pid]) || ALLOWED[pid];
   const publicPrice = lib.salePrice(cost, pid); // v40: margen propio de cada producto
