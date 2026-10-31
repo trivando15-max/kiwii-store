@@ -18,6 +18,7 @@ const NEEDS_ZONE = new Set([249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 25
 const CATEGORY_OF = (pid) => pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : 'mlbb';
 
 const raKey = lib.raKey;
+const RA_SIN_STOCK = false; // v65: true = rechaza todas las compras RA aunque no exista RA_DISABLED
 function send(res, status, obj) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -98,6 +99,9 @@ module.exports = async function handler(req, res) {
   }
 
   if (action !== 'buy') return send(res, 400, { success: false, error: 'Acción inválida' });
+  // v65: "Sin stock" temporal de Recargas América. Activalo con RA_DISABLED=1 en Vercel (o poné RA_SIN_STOCK = true acá).
+  if (RA_SIN_STOCK || /^(1|true|si|sí)$/i.test(String(process.env.RA_DISABLED || '').trim()))
+    return send(res, 503, { success: false, stage: 'checkout', code: 'RA_DISABLED', error: 'Sin stock temporal. No se descontó saldo.' });
 
   // ---- 1) Cobro + pedido en Supabase (todo o nada, idempotente por request_id) ----
   const token = String(b.token || '');
