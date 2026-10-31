@@ -21,6 +21,17 @@
 
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ===== v65: INTERRUPTOR CENTRAL "SIN STOCK" DE RECARGAS AMÉRICA =====
+        // true  = TODOS los productos de Recargas América (diamantes ilimitados, tarjetas/pases FF, Blood Strike, PUBG,
+        //         Mobile Legends, etc.) muestran "Sin Stock" y no se pueden comprar (temporal: no se puede cargar saldo en RA).
+        // false = todo vuelve a la normalidad. No toca productos manuales, Roblox, redes sociales, etc.
+        window.KIWI_RA_SIN_STOCK = true;
+        window.kiwiRaIsRaProd = p => !!(p && (p.raId || p.raLegacyId || p.autoDelivery || (window.KIWI_RA_ITEMS || []).some(it => it.id === p.id)));
+        window.kiwiRaSinStock = p => !!window.KIWI_RA_SIN_STOCK && window.kiwiRaIsRaProd(p);
+        window.kiwiRaOff = p => !!(p && (p.raUnavailable || window.kiwiRaSinStock(p)));
+        window.kiwiRaOffLabel = p => window.kiwiRaSinStock(p) ? 'Sin Stock' : 'Agotado';
+    </script>
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -4786,8 +4797,8 @@ window.balShowStaff = function (on) {
                     <div class="aspect-[4/3] bg-gradient-to-b from-sky-500/10 to-transparent flex items-center justify-center p-2">${i < 6 ? `<img src="https://cdn-gop.garenanow.com/gop/app/0000/100/067/pricing_image_config/0000/000/00${(bm ? [100,310,520,1060,2180,5600].indexOf(bm[0]) : i) + 1}/logo.png" alt="${prod.title}" loading="lazy" class="w-full h-full object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.5)]">` : window.ffDiamondArt(i)}</div>
                     <div class="px-2 pb-3 pt-2 bg-[#20232b]">
                         <p class="font-bold text-white text-sm">${num.toLocaleString('es-AR')} <span class="text-[10px] font-normal text-gray-400">Diamantes</span></p>
-                        <p class="text-emerald-400 font-bold text-sm">${prod.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(prod)}</p>
-                        <p class="text-[11px] text-gray-500">≈ $${window.ffUsdOf(prod).toFixed(2)} USD</p>
+                        <p class="text-emerald-400 font-bold text-sm">${window.kiwiRaOff(prod) ? '<span class="text-red-400">' + window.kiwiRaOffLabel(prod) + '</span>' : window.getConvertedPrice(prod)}</p>
+                        <p class="text-[11px] text-gray-500">${window.kiwiRaSinStock(prod) ? '&nbsp;' : '≈ $' + window.ffUsdOf(prod).toFixed(2) + ' USD'}</p>
                     </div>
                 </button>`;
             }).join('');
@@ -6590,6 +6601,7 @@ window.balShowStaff = function (on) {
             document.getElementById('ff-confirm-modal').classList.add('hidden');
 
             // Diamantes ilimitados: API primero, saldo después
+            if (window.kiwiRaSinStock(prod)) return alert('Sin Stock: este producto no está disponible por el momento.\nNO se descontó saldo.');
             if (prod.sub === 'ilimitado' && prod.raUnavailable) return alert('Este paquete está agotado / no disponible por el momento.\nNO se descontó saldo.');
             if (prod.sub === 'ilimitado') {
                 alert('Enviando recarga a Free Fire…\nID: ' + ffId + '\nProducto: ' + prod.title);
@@ -8035,8 +8047,8 @@ window.resetUser2FA = function(username) {
                     <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-white/5 to-transparent p-2">${window.kiwiRaThumb(p, 'max-h-full max-w-full object-contain drop-shadow-lg')}</div>
                     <div class="px-2 pb-3 pt-2 bg-[#20232b]">
                         <p class="font-bold text-white text-xs sm:text-sm leading-tight min-h-[2.2em]">${esc(p.shortTitle || p.title)}</p>
-                        <p class="text-emerald-400 font-bold text-sm mt-1">${p.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(p)}</p>
-                        <p class="text-[11px] text-gray-500">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p>
+                        <p class="text-emerald-400 font-bold text-sm mt-1">${window.kiwiRaOff(p) ? '<span class="text-red-400">' + window.kiwiRaOffLabel(p) + '</span>' : window.getConvertedPrice(p)}</p>
+                        <p class="text-[11px] text-gray-500">${window.kiwiRaSinStock(p) ? '&nbsp;' : '≈ $' + Number(p.usdtPrice).toFixed(2) + ' USD'}</p>
                     </div>
                 </button>`).join('');
         };
@@ -8079,12 +8091,13 @@ window.resetUser2FA = function(username) {
             body.innerHTML = `
                 <div class="flex items-center gap-3"><div class="w-14 h-14 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 flex items-center justify-center text-3xl overflow-hidden">${window.kiwiRaThumb(p, 'w-full h-full object-contain p-1')}</div>
                 <div class="min-w-0"><p class="font-bold text-white text-sm leading-tight">${esc(p.title)}</p><p class="text-[11px] text-gray-500">ID: ${v.player ? esc(v.player) : '<span class="text-amber-400">sin ingresar</span>'}${g.zone ? ' · Zona: ' + (v.zone ? esc(v.zone) : '<span class="text-amber-400">sin ingresar</span>') : ''}</p></div></div>
-                <div class="flex items-end justify-between border-t border-white/5 mt-4 pt-3"><span class="text-xs text-gray-400 uppercase tracking-wider">Total</span><div class="text-right"><p class="text-emerald-400 font-bold text-lg leading-none">${window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500 mt-1">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p></div></div>
-                ${p.raUnavailable ? '<button disabled class="mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed">Agotado / No disponible</button>' : '<button onclick="window.raBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>'}`;
+                <div class="flex items-end justify-between border-t border-white/5 mt-4 pt-3"><span class="text-xs text-gray-400 uppercase tracking-wider">Total</span><div class="text-right"><p class="text-emerald-400 font-bold text-lg leading-none">${window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500 mt-1">${window.kiwiRaSinStock(p) ? '' : '≈ $' + Number(p.usdtPrice).toFixed(2) + ' USD'}</p></div></div>
+                ${window.kiwiRaOff(p) ? '<button disabled class="mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed">' + (window.kiwiRaSinStock(p) ? 'Sin Stock' : 'Agotado / No disponible') + '</button>' : '<button onclick="window.raBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>'}`;
         };
         window.raBuySelection = function () {
             const st = window.raState, g = window.KIWI_RA_GAMES[st.cat], v = readIds();
             const p = window.products.find(x => x.id === st.sel); if (!p) return;
+            if (window.kiwiRaSinStock(p)) return alert('Sin Stock: este producto no está disponible por el momento.');
             if (!/^\d{4,20}$/.test(v.player)) return window.kiwiWarn('Ingresá tu ID de ' + g.name + ' (solo números) antes de comprar.', () => document.getElementById('ra-player-id')?.focus());
             if (g.zone && !/^\d{1,8}$/.test(v.zone)) return window.kiwiWarn('Ingresá tu Zona / Servidor de Mobile Legends (el número entre paréntesis en tu perfil).', () => document.getElementById('ra-zone-id')?.focus());
             if (typeof currentUser === 'undefined' || !currentUser) { if (typeof window.openAuthModal === 'function') window.openAuthModal(); else alert('Iniciá sesión para comprar'); return; }
@@ -8115,6 +8128,7 @@ window.resetUser2FA = function(username) {
             if (!users[currentUser]) return alert('Sesión inválida. Volvé a iniciar sesión.');
             const price = Number(prod.usdtPrice) || 0;
             if (!price || !prod.raId) return alert('Producto no disponible.');
+            if (window.kiwiRaSinStock(prod)) return alert('Sin Stock: este producto no está disponible por el momento.');
             if (prod.raUnavailable) return alert('Este producto está agotado / no disponible por el momento.');
             const bal = Number(users[currentUser].balance || 0);
             if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
@@ -8166,7 +8180,7 @@ window.resetUser2FA = function(username) {
                 <button type="button" data-ff-id="${p.id}" onclick="window.ffSelectProduct(${p.id})" class="ff-card ff-ra-card relative text-center rounded-xl overflow-hidden border transition ${window.ffSelection && window.ffSelection.id === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
                     ${p.popular && p.tag ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/90 text-white">${esc(p.tag)}</span>` : ''}
                     <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-orange-500/10 to-transparent p-2">${window.kiwiRaThumb(p, 'max-h-full max-w-full object-contain drop-shadow-lg')}</div>
-                    <div class="px-2 pb-3 pt-2 bg-[#20232b]"><p class="font-bold text-white text-sm">${esc(p.shortTitle)}</p><p class="text-emerald-400 font-bold text-sm">${p.raUnavailable ? '<span class="text-red-400">Agotado</span>' : window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p></div>
+                    <div class="px-2 pb-3 pt-2 bg-[#20232b]"><p class="font-bold text-white text-sm">${esc(p.shortTitle)}</p><p class="text-emerald-400 font-bold text-sm">${window.kiwiRaOff(p) ? '<span class="text-red-400">' + window.kiwiRaOffLabel(p) + '</span>' : window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500">${window.kiwiRaSinStock(p) ? '&nbsp;' : '≈ $' + Number(p.usdtPrice).toFixed(2) + ' USD'}</p></div>
                 </button>`).join('');
             const panel = document.getElementById('ff-ra-panel'); if (panel) panel.classList.remove('hidden');
         };
@@ -8443,6 +8457,7 @@ window.resetUser2FA = function(username) {
                 : `<input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">`}
                 ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ $ ' + kArsMin(v).toLocaleString('es-AR') + '</span>' : ''}</button>`).join('')}</div>` : ''}
                 <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
+                <p id="kpay-min-note" class="text-xs text-center text-white bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-lg px-3 py-2 mb-2"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${res ? 'Monto mínimo para recargas de revendedor' : 'Monto mínimo para recargas automáticas'}: <b>${min} USDT</b>${ars && arsMin ? ' <span class="text-gray-300">(≈ $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ')</span>' : ''}</p>
                 <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ' (≈ ' + min + ' USDT). ' : '') + (m.commission_pct ? 'El monto que transferís ya incluye ' + m.commission_pct + '% de comisión. ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
             window.kpayEst();
@@ -9066,6 +9081,30 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         setInterval(() => { const t = window.kiwiToken ? window.kiwiToken() : ''; if (t !== lastTok) { lastTok = t; R.status = null; R.refresh(); } }, 4000);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+<script>
+// v65: "Sin Stock" de Recargas América (ver window.KIWI_RA_SIN_STOCK arriba). Envoltorios externos e idempotentes.
+(function () {
+    const MSG = 'Sin Stock: este producto no está disponible por el momento.';
+    const find = id => (window.products || []).find(p => p.id === Number(id) || p.id === id);
+    function install() {
+        if (!window.KIWI_RA_SIN_STOCK) return;
+        const gcp = window.getConvertedPrice;
+        if (typeof gcp === 'function' && !gcp._raSS) { const f = function (prod) { return window.kiwiRaSinStock(prod) ? 'Sin Stock' : gcp.apply(this, arguments); }; f._raSS = 1; window.getConvertedPrice = f; }
+        const oc = window.openCheckout;
+        if (typeof oc === 'function' && !oc._raSS) { const f = function (productId) { if (window.kiwiRaSinStock(find(productId))) return alert(MSG); return oc.apply(this, arguments); }; f._raSS = 1; window.openCheckout = f; }
+        ['buyBooyahPass'].forEach(n => { const o = window[n]; if (typeof o === 'function' && !o._raSS) { const f = function () { if (window.kiwiRaSinStock(find(221))) return alert(MSG); return o.apply(this, arguments); }; f._raSS = 1; window[n] = f; } });
+        const fb = window.ffBuySelection;
+        if (typeof fb === 'function' && !fb._raSS) { const f = function () { const s = window.ffSelection; if (s && s.id && window.kiwiRaSinStock(find(s.id))) return alert(MSG); return fb.apply(this, arguments); }; f._raSS = 1; window.ffBuySelection = f; }
+        const rs = window.renderFFSummary;
+        if (typeof rs === 'function' && !rs._raSS) { const f = function () { const r = rs.apply(this, arguments); try { const s = window.ffSelection, b = document.getElementById('ff-summary-body'); if (b && s && s.id && window.kiwiRaSinStock(find(s.id))) { b.querySelectorAll('button[onclick*="ffBuySelection"]').forEach(x => { x.disabled = true; x.className = 'mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed'; x.textContent = 'Sin Stock'; }); b.querySelectorAll('.text-emerald-400').forEach(x => { x.textContent = 'Sin Stock'; x.classList.replace('text-emerald-400', 'text-red-400'); }); } } catch (_) {} return r; }; f._raSS = 1; window.renderFFSummary = f; }
+        const ub = window.updateBooyahPrice;
+        if (typeof ub === 'function' && !ub._raSS) { const f = function () { const r = ub.apply(this, arguments); if (window.kiwiRaSinStock(find(221))) { const el = document.getElementById('booyah-price-display'); if (el) { el.textContent = 'Sin Stock'; el.classList.replace('text-emerald-400', 'text-red-400'); } const u = document.getElementById('booyah-usd-display'); if (u) u.textContent = ''; } return r; }; f._raSS = 1; window.updateBooyahPrice = f; try { f(); } catch (_) {} }
+    }
+    install();
+    document.addEventListener('DOMContentLoaded', install);
+    window.addEventListener('load', () => { install(); setTimeout(install, 3000); });
 })();
 </script>
 </body>
