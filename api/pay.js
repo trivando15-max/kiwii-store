@@ -59,7 +59,7 @@ function accountData(m) {
       // v63: se recibe en Global66 (clave interna co_bancolombia se mantiene). Se muestran solo los datos cargados.
       // v64: PAY_CO_LLAVE (llave Bre-B) alcanza sola para activar el método.
       if (!env('PAY_CO_LLAVE') && !env('PAY_CO_CUENTA') && !env('PAY_CO_USUARIO') && !env('PAY_CO_EMAIL')) return null;
-      return [['Llave Bre-B', env('PAY_CO_LLAVE')], ['Cuenta Global66', env('PAY_CO_CUENTA')], ['Tipo de cuenta', env('PAY_CO_TIPO')], ['Banco', env('PAY_CO_BANCO')],
+      return [['Banco', env('PAY_CO_BANCO')], ['Número de cuenta', env('PAY_CO_CUENTA')], ['Tipo de cuenta', env('PAY_CO_TIPO')], ['Llave Bre-B', env('PAY_CO_LLAVE')],
         ['Usuario / celular Global66', env('PAY_CO_USUARIO')], ['Email Global66', env('PAY_CO_EMAIL')],
         ['Titular', env('PAY_CO_TITULAR')], ['Documento', env('PAY_CO_DOCUMENTO')]].filter(x => x[1]);
     case 'pe_yape':
