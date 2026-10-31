@@ -1451,7 +1451,7 @@
                 <p class="text-sm text-gray-300 mb-4">Elegí cómo querés cargar tu saldo:</p>
                 <button onclick="document.getElementById('balance-modal').classList.add('hidden'); window.kpayOpen()" class="w-full text-left rounded-2xl p-4 mb-3 border-2 border-green-400 bg-gradient-to-br from-green-500/25 to-emerald-700/10 shadow-[0_0_24px_rgba(34,197,94,0.25)] active:scale-95 transition">
                     <div class="flex items-center justify-between mb-1"><span class="font-orbitron font-black text-green-300 text-base"><i class="fa-solid fa-bolt mr-2"></i>CARGA AUTOMÁTICA</span><span class="text-[10px] font-bold bg-green-400 text-black rounded-full px-2 py-1">SIN ESPERAR</span></div>
-                    <p class="text-sm text-white font-bold">Binance Pay, USDT, alias, Nu, Bancolombia y Yape</p>
+                    <p class="text-sm text-white font-bold">Binance Pay, USDT, alias, Nu, Global66 y Yape</p>
                     <p class="text-xs text-green-100/80 mt-1">Pagás y el saldo se acredita solo, sin hablar con nadie. Tocá para empezar <i class="fa-solid fa-arrow-right ml-1"></i></p>
                 </button>
                 <button onclick="window.balShowStaff(true)" class="w-full text-left rounded-2xl p-4 mb-2 border-2 border-sky-400 bg-gradient-to-br from-sky-500/20 to-indigo-700/10 active:scale-95 transition">
@@ -8416,9 +8416,12 @@ window.resetUser2FA = function(username) {
             } catch (e) { box.innerHTML = '<p class="text-gray-500">No se pudo cargar el historial.</p>'; }
         }
         // v61: transferencia AR se carga en pesos (lo que el cliente transfiere); el resto en USDT
-        const kIsArs = () => K.method && K.method.currency === 'ARS';
+        // v62: también Global66 Colombia (COP). Comisión incluida en lo que transfiere el cliente.
+        const FIAT_IN = { ARS: { label: '¿Cuántos pesos (ARS) querés transferir?', def: 10000, step: 10 }, COP: { label: '¿Cuántos pesos colombianos (COP) querés transferir?', def: 20000, step: 100 } };
+        const kIsArs = () => !!(K.method && FIAT_IN[K.method.currency]);
+        const kFI = () => FIAT_IN[K.method.currency];
         const kRate = () => K.method.currency === 'USDT' ? 1 : Number((window.exchangeRates || {})[K.method.currency]) || 0;
-        const kArsMin = u => Math.ceil(u * kRate() * (1 + (K.method.commission_pct || 0) / 100) / 10) * 10;
+        const kArsMin = u => { const st = kFI() ? kFI().step : 10; return Math.ceil(u * kRate() * (1 + (K.method.commission_pct || 0) / 100) / st) * st; };
         const kNum = el => Number(String(el.value || '').replace(/\./g, '').replace(',', '.')) || 0;
         window.kpaySetArs = function (u) { const el = document.getElementById('kpay-usdt'); el.value = kArsMin(u).toLocaleString('es-AR'); window.kpayEst(); };
         window.kpayFmtArs = function (el) {
@@ -8434,13 +8437,13 @@ window.resetUser2FA = function(username) {
             body(`
                 <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
                 <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
-                <label class="block text-xs text-gray-400 mb-1 mt-3">${ars ? '¿Cuántos pesos (ARS) querés transferir?' : '¿Cuánto saldo querés cargar? (USDT)'}</label>
+                <label class="block text-xs text-gray-400 mb-1 mt-3">${ars ? kFI().label : '¿Cuánto saldo querés cargar? (USDT)'}</label>
                 ${ars ? `<div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-orbitron text-gray-400">$</span>
-                <input id="kpay-usdt" type="text" inputmode="numeric" autocomplete="off" value="${(res ? arsMin : Math.max(arsMin, 10000)).toLocaleString('es-AR')}" oninput="window.kpayFmtArs(this)" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 pl-10 text-2xl font-orbitron text-white text-center"></div>`
+                <input id="kpay-usdt" type="text" inputmode="numeric" autocomplete="off" value="${(res ? arsMin : Math.max(arsMin, kFI().def)).toLocaleString('es-AR')}" oninput="window.kpayFmtArs(this)" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 pl-10 text-2xl font-orbitron text-white text-center"></div>`
                 : `<input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">`}
                 ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ $ ' + kArsMin(v).toLocaleString('es-AR') + '</span>' : ''}</button>`).join('')}</div>` : ''}
                 <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
-                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ARS (≈ ' + min + ' USDT). ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
+                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ' (≈ ' + min + ' USDT). ' : '') + (m.commission_pct ? 'El monto que transferís ya incluye ' + m.commission_pct + '% de comisión. ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
             window.kpayEst();
         };
@@ -8460,8 +8463,8 @@ window.resetUser2FA = function(username) {
             let payload;
             if (ars) {
                 const v = Math.round(kNum(inp)), mn = kRate() ? kArsMin(kMin()) : 0;
-                if (!(v > 0) || (mn && v < mn)) return say('El mínimo es $ ' + (mn || 0).toLocaleString('es-AR') + ' ARS (' + kMin() + ' USDT)');
-                payload = { method: K.method.id, ars: v, purpose: K.purpose || 'normal' };
+                if (!(v > 0) || (mn && v < mn)) return say('El mínimo es $ ' + (mn || 0).toLocaleString('es-AR') + ' ' + K.method.currency + ' (' + kMin() + ' USDT)');
+                payload = { method: K.method.id, fiat: v, purpose: K.purpose || 'normal' };
             } else {
                 const v = Number(inp.value);
                 if (!(v >= kMin())) return say('El mínimo es ' + kMin() + ' USDT');
@@ -8475,20 +8478,24 @@ window.resetUser2FA = function(username) {
                 renderPay();
             } catch (e) { say(e.message); b.disabled = false; b.textContent = 'Continuar'; }
         };
-        function tip(id) {
+        function tip(id, acc) {
+            if (id === 'co_bancolombia' && (acc || []).some(([k]) => k === 'Llave Bre-B')) return 'Transferí a la llave Bre-B de arriba (desde tu banco o billetera). <b>Respetá los últimos pesos</b> del monto.';
             return {
                 usdt: 'Mandá <b>solo USDT</b> por la red indicada. Si tu exchange cobra comisión de retiro, sumala: tiene que <b>llegar</b> el monto exacto.',
                 binance_pay: 'En Binance: <b>Pagar → Enviar → Pay ID</b>. Moneda <b>USDT</b> y el monto exacto.',
                 ar_transfer: 'Transferí desde tu banco o Mercado Pago al alias. <b>Respetá los últimos dígitos</b>: así reconocemos tu pago.',
                 mx_nu: 'Transferencia SPEI a la CLABE de Nu. Escribí el monto con los <b>centavos exactos</b>.',
-                co_bancolombia: 'Transferí desde Bancolombia o Nequi. <b>Respetá los últimos pesos</b> del monto.',
+                co_bancolombia: 'Transferí a la cuenta Global66 de arriba (desde Global66 o desde tu banco). <b>Respetá los últimos pesos</b> del monto.',
                 pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.'
             }[id] || '';
         }
         function renderPay() {
             stopTimers(); steps(2);
             const t = K.topup, m = K.method || { id: t.method, label: t.method };
-            const acc = (K.account || (m.account) || []);
+            const accAll = (K.account || (m.account) || []);
+            // v64: el titular se muestra como cartelito destacado (cualquier método que tenga línea 'Titular')
+            const titular = (accAll.find(([k]) => k === 'Titular') || [])[1] || '';
+            const acc = accAll.filter(([k]) => k !== 'Titular');
             body(`
                 <div class="bg-gradient-to-br from-kiwi-gold/20 to-transparent border-2 border-kiwi-gold rounded-2xl p-4 text-center mb-3">
                     <p class="text-xs text-gray-300 uppercase font-orbitron">Pagá exactamente</p>
@@ -8498,10 +8505,11 @@ window.resetUser2FA = function(username) {
                 </div>
                 <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 mb-3 space-y-2">
                     <p class="text-xs text-kiwi-gold font-orbitron uppercase">${FLAG[m.id] || ''} ${esc(m.label)}</p>
+                    ${titular ? `<div id="kpay-titular" class="flex items-center gap-2 bg-kiwi-gold/15 border border-kiwi-gold rounded-full px-3 py-1.5"><i class="fa-solid fa-user-check text-kiwi-gold"></i><p class="text-sm text-white min-w-0 truncate">Titular: <b>${esc(titular)}</b></p></div>` : ''}
                     ${acc.map(([k, v]) => `<div class="flex items-center justify-between gap-2"><div class="min-w-0"><p class="text-[11px] text-gray-500">${esc(k)}</p><p class="text-white font-bold text-sm break-all">${esc(v)}</p></div>
                         <button onclick="window.kpayCopy('${esc(v).replace(/'/g, '')}', this)" class="shrink-0 border border-kiwi-border rounded-lg px-3 py-2 text-xs text-gray-200"><i class="fa-regular fa-copy"></i></button></div>`).join('')}
                 </div>
-                <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id)}</p>
+                <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id, accAll)}</p>
                 <p class="text-center text-sm text-gray-300 mb-3">Tiempo para pagar: <b id="kpay-cd" class="text-white font-orbitron">--:--</b></p>
                 <button onclick="window.kpayPaid()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl text-base"><i class="fa-solid fa-check mr-1"></i>Ya pagué</button>
                 <button onclick="localStorage.removeItem('kpay_active'); window.kpayBack()" class="w-full text-xs text-gray-500 mt-3 py-2">Cancelar y elegir otro método</button>`);
@@ -8591,7 +8599,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Global66', pe_yape: '🇵🇪 Yape' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
