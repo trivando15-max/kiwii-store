@@ -27,10 +27,28 @@
         //         Mobile Legends, etc.) muestran "Sin Stock" y no se pueden comprar (temporal: no se puede cargar saldo en RA).
         // false = todo vuelve a la normalidad. No toca productos manuales, Roblox, redes sociales, etc.
         window.KIWI_RA_SIN_STOCK = false; // v66: Recargas América reactivado
+        window.KIWI_RA_CAMBIOS_VISIBLE = false; // v67: cartel staff "Cambios de precio de Recargas América" oculto para todos (true = mostrarlo; requiere RA_ADMIN_KEY)
         window.kiwiRaIsRaProd = p => !!(p && (p.raId || p.raLegacyId || p.autoDelivery || (window.KIWI_RA_ITEMS || []).some(it => it.id === p.id)));
-        window.kiwiRaSinStock = p => !!window.KIWI_RA_SIN_STOCK && window.kiwiRaIsRaProd(p);
+        // v68: "No Stock" desde el Panel Staff (pestaña STOCK, Owner/CEO). Se guarda en Supabase (kiwi_stock_flags).
+        window.KIWI_STOCK_OFF = (function () { try { return new Set(JSON.parse(localStorage.getItem('kiwi_stock_off') || '[]')); } catch (_) { return new Set(); } })();
+        window.KIWI_STOCK_FRAG_IDS = [222, 223, 224, 225, 226]; window.KIWI_STOCK_BOX_IDS = [227, 228, 229];
+        window.kiwiStockKey = function (p) {
+            if (!p) return null;
+            const cat = String(p.category || ''), sub = String(p.sub || '');
+            if (cat === 'roblox' && (sub === 'fruits' || sub === 'gamepasses')) return 'bloxfruits';
+            if (cat === 'roblox' && /^robux_/.test(sub)) return 'robux:' + sub + ((p.wholesale || /al por mayor/i.test(String(p.title || ''))) ? ':mayor' : '');
+            if (p.catalogId && p.variantName) return 'v:' + p.catalogId + '::' + p.variantName;
+            if (p.kind === 'frag' || window.KIWI_STOCK_FRAG_IDS.includes(Number(p.id))) return 'ff:frag';
+            if (p.kind === 'box' || window.KIWI_STOCK_BOX_IDS.includes(Number(p.id))) return 'ff:box';
+            if (p.raId) return 'ra:' + p.raId;
+            if (p.id !== undefined && p.id !== null && p.id !== '') return 'p:' + p.id;
+            return null;
+        };
+        window.kiwiStockOffKey = k => !!k && window.KIWI_STOCK_OFF.has(k);
+        window.kiwiStockOff = p => window.kiwiStockOffKey(window.kiwiStockKey(p));
+        window.kiwiRaSinStock = p => (!!window.KIWI_RA_SIN_STOCK && window.kiwiRaIsRaProd(p)) || window.kiwiStockOff(p);
         window.kiwiRaOff = p => !!(p && (p.raUnavailable || window.kiwiRaSinStock(p)));
-        window.kiwiRaOffLabel = p => window.kiwiRaSinStock(p) ? 'Sin Stock' : 'Agotado';
+        window.kiwiRaOffLabel = p => window.kiwiStockOff(p) ? 'No Stock' : (window.kiwiRaSinStock(p) ? 'Sin Stock' : 'Agotado');
     </script>
 
     <!-- FontAwesome Icons -->
@@ -916,30 +934,35 @@
         
     
     <div id="admin-page" class="hidden max-w-7xl mx-auto px-4 py-8">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="font-orbitron text-2xl font-black text-kiwi-gold">PANEL STAFF</h2>
+        <div class="flex items-center justify-between gap-3 mb-6">
+            <div class="min-w-0">
+                <h2 class="font-orbitron text-2xl font-black text-kiwi-gold">PANEL STAFF</h2>
+                <p class="text-xs text-gray-400 font-rajdhani">Elegí una sección. <span id="kadm-role" class="font-bold text-kiwi-gold/80"></span></p>
+            </div>
             <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('admin-page').classList.add('hidden'); document.getElementById('home-view').classList.remove('hidden');" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-gold text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> VOLVER
             </button>
         </div>
-        <div class="bg-[#0f0e0a] border border-kiwi-gold rounded-2xl p-4">
+        <div class="kadm-shell bg-[#0f0e0a] border border-kiwi-gold/70 rounded-2xl p-3 sm:p-5">
             <div id="kiwi-ra-cambios" class="hidden mb-4"></div>
-            <div class="flex border-b border-kiwi-gold/30 mb-4">
-                <button onclick="window.switchStaffTab('cuentas')" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold">CUENTAS</button>
-                <button onclick="window.switchStaffTab('compras')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">COMPRAS</button>
-                <button onclick="window.switchStaffTab('saldo')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">SALDO</button>
-                <button onclick="window.switchStaffTab('2fa')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">2FA</button>
-                <button onclick="window.switchStaffTab('pagos')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300">PAGOS</button>
+            <div class="kadm-tabs border-b border-kiwi-gold/30 mb-4">
+                <button onclick="window.switchStaffTab('cuentas')" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold"><i class="fa-solid fa-users"></i> CUENTAS</button>
+                <button onclick="window.switchStaffTab('compras')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-bag-shopping"></i> COMPRAS</button>
+                <button onclick="window.switchStaffTab('saldo')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-wallet"></i> SALDO</button>
+                <button onclick="window.switchStaffTab('2fa')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-key"></i> 2FA</button>
+                <button onclick="window.switchStaffTab('pagos')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-money-bill-transfer"></i> PAGOS</button>
+                <button onclick="window.switchStaffTab('stock')" id="kadm-tab-stock" class="hidden flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-boxes-stacked"></i> STOCK</button>
             </div>
             <div id="admin-content">
-                <div id="admin-cuentas" class="admin-tab">
+                <div id="admin-cuentas" class="admin-tab" data-title="Cuentas" data-sub="Usuarios registrados, rangos y baneos">
                     <input id="admin-search-users" oninput="window.filterAdminUsers(this.value)" placeholder="Buscar usuario o ID..." class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white mb-3">
                     <div id="admin-users-container"></div>
                 </div>
-                <div id="admin-compras" class="admin-tab hidden"></div>
-                <div id="admin-saldo" class="admin-tab hidden"></div>
-                <div id="admin-2fa" class="admin-tab hidden"></div>
-                <div id="admin-pagos" class="admin-tab hidden"></div>
+                <div id="admin-compras" class="admin-tab hidden" data-title="Compras" data-sub="Pedidos de clientes para atender"></div>
+                <div id="admin-saldo" class="admin-tab hidden" data-title="Saldo" data-sub="Acreditar o quitar saldo · Owner / CEO"></div>
+                <div id="admin-2fa" class="admin-tab hidden" data-title="2FA" data-sub="Resetear el código 2FA de un usuario · Owner / CEO"></div>
+                <div id="admin-pagos" class="admin-tab hidden" data-title="Pagos" data-sub="Recargas de saldo y notificaciones de pago · Owner / CEO"></div>
+                <div id="admin-stock" class="admin-tab hidden" data-title="Stock" data-sub="Marcá grupos y productos como «No Stock» · solo Owner / CEO"></div>
             </div>
         </div>
     </div>
@@ -8093,7 +8116,7 @@ window.resetUser2FA = function(username) {
                 <div class="flex items-center gap-3"><div class="w-14 h-14 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 flex items-center justify-center text-3xl overflow-hidden">${window.kiwiRaThumb(p, 'w-full h-full object-contain p-1')}</div>
                 <div class="min-w-0"><p class="font-bold text-white text-sm leading-tight">${esc(p.title)}</p><p class="text-[11px] text-gray-500">ID: ${v.player ? esc(v.player) : '<span class="text-amber-400">sin ingresar</span>'}${g.zone ? ' · Zona: ' + (v.zone ? esc(v.zone) : '<span class="text-amber-400">sin ingresar</span>') : ''}</p></div></div>
                 <div class="flex items-end justify-between border-t border-white/5 mt-4 pt-3"><span class="text-xs text-gray-400 uppercase tracking-wider">Total</span><div class="text-right"><p class="text-emerald-400 font-bold text-lg leading-none">${window.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500 mt-1">${window.kiwiRaSinStock(p) ? '' : '≈ $' + Number(p.usdtPrice).toFixed(2) + ' USD'}</p></div></div>
-                ${window.kiwiRaOff(p) ? '<button disabled class="mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed">' + (window.kiwiRaSinStock(p) ? 'Sin Stock' : 'Agotado / No disponible') + '</button>' : '<button onclick="window.raBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>'}`;
+                ${window.kiwiRaOff(p) ? '<button disabled class="mt-4 w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed">' + (window.kiwiRaSinStock(p) ? window.kiwiRaOffLabel(p) : 'Agotado / No disponible') + '</button>' : '<button onclick="window.raBuySelection()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar ahora</button>'}`;
         };
         window.raBuySelection = function () {
             const st = window.raState, g = window.KIWI_RA_GAMES[st.cat], v = readIds();
@@ -8234,16 +8257,21 @@ window.resetUser2FA = function(username) {
                 if (!r.ok) return false;
                 const j = await r.json();
                 if (!j || !j.success) return false;
-                window.kiwiRaApplyPrices(j); window.kiwiRaLastPrices = j; try { window.kiwiRaRenderCambios && window.kiwiRaRenderCambios(); } catch (_) {} return true;
+                window.kiwiRaApplyPrices(j); if (window.KIWI_RA_CAMBIOS_VISIBLE === true) { try { window.kiwiRaRenderCambios && window.kiwiRaRenderCambios(); } catch (_) {} } return true;
             } catch (_) { return false; } finally { clearTimeout(t); }
         };
         const startPrices = () => setTimeout(() => window.kiwiRaLoadPrices(false), 300);
         if (document.readyState === 'complete') startPrices(); else window.addEventListener('load', startPrices);
         setInterval(() => { if (!document.hidden) window.kiwiRaLoadPrices(false); }, 10 * 60 * 1000);
         // v66: aviso staff "Cambios de precio de Recargas América" (datos de /api/ra-prices: changes, low_margin, source)
-        window.kiwiRaRenderCambios = function () {
-            const box = document.getElementById('kiwi-ra-cambios'), j = window.kiwiRaLastPrices;
-            if (!box || !j) return;
+        // v67: oculto salvo KIWI_RA_CAMBIOS_VISIBLE = true. El detalle solo llega con la clave staff (localStorage 'kiwi_ra_admin_key' = RA_ADMIN_KEY de Vercel).
+        const kiwiRaQuitarCartel = () => { const b = document.getElementById('kiwi-ra-cambios'); if (b) b.remove(); };
+        if (window.KIWI_RA_CAMBIOS_VISIBLE !== true) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kiwiRaQuitarCartel); else kiwiRaQuitarCartel(); }
+        window.kiwiRaRenderCambios = async function () {
+            if (window.KIWI_RA_CAMBIOS_VISIBLE !== true) { kiwiRaQuitarCartel(); return; }
+            const box = document.getElementById('kiwi-ra-cambios'); if (!box) return;
+            let j = null; try { const k = localStorage.getItem('kiwi_ra_admin_key') || ''; if (!k) return; const r = await fetch('/api/ra-prices?detalle=1&t=' + Date.now(), { headers: { 'x-ra-admin-key': k } }); if (r.ok) j = await r.json(); } catch (_) {}
+            if (!j || !j.success || !Array.isArray(j.changes)) return;
             const items = window.KIWI_RA_ITEMS || [];
             const name = id => { const it = items.find(x => x.ra === id); if (!it) return 'Producto RA #' + id; const cat = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG', mlbb: 'Mobile Legends' }[it.category] || it.category || ''; return (cat ? cat + ' · ' : '') + it.title; };
             const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -9149,5 +9177,414 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     window.addEventListener('load', () => { install(); setTimeout(install, 3000); });
 })();
 </script>
+<style id="kiwi-v68-css">
+/* v68 · Panel staff ordenado + Stock */
+#admin-page .kadm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-bottom:10px}
+@media(min-width:640px){#admin-page .kadm-tabs{grid-template-columns:repeat(6,minmax(0,1fr))}}
+#admin-page .kadm-tabs>button{border-radius:12px;border:1px solid rgba(255,255,255,.08)!important;background:#15140f;padding:10px 6px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;letter-spacing:.04em}
+#admin-page .kadm-tabs>button.hidden{display:none}
+#admin-page .kadm-tabs>button.text-kiwi-gold{background:rgba(212,175,55,.14);border-color:rgba(212,175,55,.7)!important;color:#f5d76e}
+#admin-content>.admin-tab{background:#14130e;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px}
+@media(min-width:640px){#admin-content>.admin-tab{padding:20px}}
+#admin-content>.admin-tab::before{content:attr(data-title);display:block;font-family:Orbitron,sans-serif;font-weight:900;font-size:15px;color:#f5d76e;letter-spacing:.06em;text-transform:uppercase}
+#admin-content>.admin-tab::after{content:"";display:block;clear:both}
+#admin-content>.admin-tab[data-sub]>:first-child{margin-top:14px}
+#admin-content>.admin-tab[data-sub]::before{margin-bottom:2px}
+.kadm-sub{font-size:12px;color:#9ca3af;margin:0 0 14px;font-family:Rajdhani,sans-serif}
+#admin-users-container{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:900px){#admin-users-container{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#admin-users-container>*{margin:0!important}
+.kadm-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.kadm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kadm-card{background:#0d0c09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+.kadm-card h4{font-family:Orbitron,sans-serif;font-size:12px;color:#f5d76e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.kadm-in{width:100%;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;min-height:44px}
+/* Stock: tienda */
+.kst-btn-off{opacity:.6;cursor:not-allowed!important;filter:grayscale(.6);background:#2a2a2a!important;border-color:#3f3f46!important}
+.kst-card-off{position:relative;opacity:.6;filter:grayscale(.5)}
+.kst-badge{position:absolute;top:6px;right:6px;z-index:5;background:#dc2626;color:#fff;font:800 10px/1 Orbitron,sans-serif;padding:4px 7px;border-radius:999px;letter-spacing:.05em;pointer-events:none}
+.krx-gchip.is-nostock{opacity:.55;cursor:not-allowed;border-color:#7f1d1d!important;position:relative}
+.krx-gchip .kst-gbadge{margin-left:auto;background:#dc2626;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px;white-space:nowrap}
+/* Stock: panel */
+.kst-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.kst-tools input[type=search]{flex:1 1 220px}
+.kst-sec{border:1px solid rgba(255,255,255,.08);border-radius:14px;background:#0d0c09;margin-bottom:10px;overflow:hidden}
+.kst-sec>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:12px 14px;font-family:Orbitron,sans-serif;font-weight:800;font-size:12px;color:#f5d76e;text-transform:uppercase;letter-spacing:.05em}
+.kst-sec>summary::-webkit-details-marker{display:none}
+.kst-sec>summary::after{content:"\25BE";margin-left:6px;color:#9ca3af}
+.kst-sec[open]>summary::after{content:"\25B4"}
+.kst-cnt{margin-left:auto;font-family:Rajdhani,sans-serif;font-size:12px;color:#9ca3af;text-transform:none}
+.kst-cnt b{color:#f87171}
+.kst-rows{display:grid;grid-template-columns:1fr;gap:6px;padding:0 10px 12px}
+@media(min-width:760px){.kst-rows{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1180px){.kst-rows{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.kst-row{display:flex;align-items:center;gap:10px;background:#15140f;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px 10px;min-height:48px}
+.kst-row.is-off{border-color:rgba(220,38,38,.55);background:rgba(127,29,29,.18)}
+.kst-row .kst-lbl{flex:1;min-width:0;font-size:13px;color:#e5e7eb;line-height:1.2}
+.kst-row .kst-lbl small{display:block;color:#6b7280;font-size:10px;word-break:break-all}
+.kst-sw{flex:0 0 auto;width:50px;height:28px;border-radius:999px;background:#16a34a;position:relative;border:0;cursor:pointer;transition:background .15s}
+.kst-sw::after{content:"";position:absolute;top:3px;left:25px;width:22px;height:22px;border-radius:999px;background:#fff;transition:left .15s}
+.kst-sw.is-off{background:#dc2626}
+.kst-sw.is-off::after{left:3px}
+.kst-sw[disabled]{opacity:.5}
+.kst-pill{font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;background:#14532d;color:#86efac;white-space:nowrap}
+.kst-row.is-off .kst-pill{background:#7f1d1d;color:#fecaca}
+.kst-mini{font-size:11px;padding:6px 10px;border-radius:8px;border:1px solid #3f3f46;color:#d1d5db;background:#111}
+.kst-mini.red{border-color:#7f1d1d;color:#fca5a5}
+</style>
+<script id="kiwi-v68-stock">
+/* v68 · STOCK: flags "No Stock" por grupo/producto (Supabase kiwi_stock_flags) */
+(function () {
+    if (window.__kiwiV68) return; window.__kiwiV68 = true;
+    var W = window;
+    var MSG = 'No Stock: este producto no está disponible por ahora. Probá más tarde.';
+    function off(k) { return W.kiwiStockOffKey ? W.kiwiStockOffKey(k) : false; }
+    function groups() { try { return (typeof robloxGroups !== 'undefined' && robloxGroups) || W.robloxGroups || []; } catch (e) { return W.robloxGroups || []; } }
+    W.kiwiStockGroupKey = function (g) { return 'g:' + String(g && g.name || g || '').trim(); };
+    W.kiwiStockGroupOff = function (g) { return off(W.kiwiStockGroupKey(g)); };
+    W.kiwiStockRetailGroups = function () { return groups().slice(0, W.KRX_RETAIL_GROUPS || 14); };
+    W.kiwiStockGroupsAllOff = function () { var rg = W.kiwiStockRetailGroups(); return rg.length > 0 && rg.every(W.kiwiStockGroupOff); };
+    function toast(m) { try { if (W.showToast) return W.showToast(m, 'error'); } catch (e) {} alert(m); }
+    W.kiwiStockBlock = function (p) {
+        if (!p) return false;
+        if (W.kiwiStockOff && W.kiwiStockOff(p)) { toast(MSG); return true; }
+        if (p.category === 'roblox' && p.sub === 'robux_grupo' && !p.wholesale && W.kiwiStockGroupsAllOff()) { toast('No Stock: los grupos de Roblox no tienen stock ahora. Probá más tarde.'); return true; }
+        return false;
+    };
+    function prodById(id) { id = Number(id); return (W.products || []).find(function (x) { return Number(x.id) === id; }) || null; }
+    function variantProd(cid, idx) {
+        var it = (W.catalogVariant || []).find(function (x) { return String(x.id) === String(cid); });
+        if (!it || !it.variants) return null; var v = it.variants[Number(idx)]; if (!v) return null;
+        return { catalogId: it.id, variantName: v.name, sub: 'variant_item', category: it.category };
+    }
+    W.kiwiStockVariantProd = variantProd;
+
+    // ---- Carga de flags (todos pueden leer) ----
+    function sameSet(a, b) { if (a.size !== b.size) return false; var r = true; a.forEach(function (x) { if (!b.has(x)) r = false; }); return r; }
+    W.kiwiStockApply = function (list) {
+        if (!Array.isArray(list)) return false;
+        var n = new Set(list.map(String));
+        if (W.KIWI_STOCK_OFF && sameSet(n, W.KIWI_STOCK_OFF)) return false;
+        W.KIWI_STOCK_OFF = n;
+        try { localStorage.setItem('kiwi_stock_off', JSON.stringify(Array.from(n))); } catch (e) {}
+        W.kiwiStockRefreshUI();
+        return true;
+    };
+    W.kiwiStockLoad = async function () {
+        try {
+            var c = (typeof supabaseClient !== 'undefined' && supabaseClient) || W.supabaseClient;
+            if (!c || !c.rpc) return;
+            var r = await c.rpc('kiwi_stock_list');
+            if (r && !r.error) W.kiwiStockApply(r.data || []);
+        } catch (e) {}
+    };
+    W.kiwiStockRefreshUI = function () {
+        try { if (document.getElementById('inline-roblox-groups') && document.getElementById('inline-roblox-groups').innerHTML) W.renderInlineRobloxGroups(); } catch (e) {}
+        W.kiwiStockDomPass();
+        try { var st = document.getElementById('admin-stock'); if (st && !st.classList.contains('hidden')) W.renderStaffStock(); } catch (e) {}
+    };
+
+    // ---- Guards de compra (cliente) ----
+    function wrap(name, fn) {
+        var orig = W[name]; if (typeof orig !== 'function' || orig.__kst) return;
+        var w = function () { return fn.apply(this, [orig].concat([].slice.call(arguments))); };
+        w.__kst = true; W[name] = w;
+    }
+    function installGuards() {
+        wrap('openCheckout', function (o, id, isCustom) {
+            var p = isCustom ? W.currentActiveProduct : prodById(id);
+            if (W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('handlePurchaseSubmit', function (o, ev) {
+            if (W.kiwiStockBlock(W.currentActiveProduct)) { try { ev && ev.preventDefault && ev.preventDefault(); } catch (e) {} return false; }
+            return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('buyCustomRobuxBtn', function (o, m, type) {
+            var p = { category: 'roblox', sub: type, wholesale: !!document.getElementById('krx-mayor-box') };
+            if (W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('buyVariant', function (o, cid) {
+            var s = document.getElementById('select-' + cid);
+            if (s && W.kiwiStockBlock(variantProd(cid, s.value))) return; return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('buyFragments', function (o) { if (W.kiwiStockBlock({ id: 222 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyBoxes', function (o) { if (W.kiwiStockBlock({ id: 227 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyBooyahManual', function (o) { if (W.kiwiStockBlock(prodById(680) || { id: 680 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyBooyahPass', function (o) { if (W.kiwiStockBlock(prodById(221) || { id: 221 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('ffBuySelection', function (o) {
+            var s = W.ffSelection || {}; var p = s.kind === 'frag' ? { id: 222 } : s.kind === 'box' ? { id: 227 } : prodById(s.id);
+            if (W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('confirmFreeFirePurchase', function (o) { if (W.kiwiStockBlock(W.pendingFFProduct)) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyInstagramFollowers', function (o, id) { if (W.kiwiStockBlock(prodById(id))) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buySocialLikesViews', function (o, id) { if (W.kiwiStockBlock(prodById(id))) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('raBuySelection', function (o) {
+            var p = W.raState && W.raState.sel != null ? prodById(W.raState.sel) : null;
+            if (p && W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('kiwiRaPurchase', function (o, p) { if (p && typeof p === 'object' && W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyWithRecargas', function (o) { if (W.kiwiStockBlock(W.currentActiveProduct)) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('krxJoinGroup', function (o, i) {
+            var g = groups()[i]; if (g && W.kiwiStockGroupOff(g)) { toast('No Stock: este grupo no está disponible ahora.'); return; }
+            return o.apply(this, [].slice.call(arguments, 1));
+        });
+        wrap('krxPickGroup', function (o, i) {
+            var g = groups()[i]; if (g && W.kiwiStockGroupOff(g)) { toast('No Stock: este grupo no está disponible ahora.'); return; }
+            return o.apply(this, [].slice.call(arguments, 1));
+        });
+    }
+    W.kiwiStockInstallGuards = installGuards;
+
+    // ---- Grupos: chips con "No Stock" ----
+    W.renderInlineRobloxGroups = function () {
+        var container = document.getElementById('inline-roblox-groups'); if (!container) return;
+        var joined = {}; try { joined = JSON.parse(localStorage.getItem('kiwi_joined_groups')) || {}; } catch (e) {}
+        var all = groups(); var RG = W.kiwiStockRetailGroups();
+        var avail = RG.filter(function (g) { return !W.kiwiStockGroupOff(g); });
+        if (W.krxGroupSel != null && (!RG[W.krxGroupSel] || W.kiwiStockGroupOff(RG[W.krxGroupSel]))) W.krxGroupSel = null;
+        var sel = W.krxGroupSel != null && RG[W.krxGroupSel] ? W.krxGroupSel : null;
+        var done = avail.filter(function (g) { return joined[g.name]; }).length;
+        var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+        var chips = RG.map(function (g, idx) {
+            var o = W.kiwiStockGroupOff(g), j = !o && !!joined[g.name];
+            if (o) return '<button type="button" title="' + esc(g.name) + ' · No Stock" onclick="window.krxPickGroup(' + idx + ')" aria-disabled="true" class="krx-gchip is-nostock"><span class="krx-gnum">' + (idx + 1) + '</span><span class="truncate">' + esc(g.name) + '</span><span class="kst-gbadge">No Stock</span></button>';
+            return '<button type="button" title="' + esc(g.name) + '" onclick="window.krxPickGroup(' + idx + ')" class="krx-gchip ' + (j ? 'is-joined' : '') + ' ' + (sel === idx ? 'is-sel' : '') + '"><span class="krx-gnum">' + (j ? '✓' : idx + 1) + '</span><span class="truncate">' + esc(g.name) + '</span></button>';
+        }).join('');
+        var detail = '';
+        if (sel !== null) {
+            var g = all[sel], j = !!joined[g.name];
+            detail = '<div class="krx-gdetail"><p class="text-xs text-gray-400 font-rajdhani">Grupo ' + (sel + 1) + ' de ' + RG.length + '</p><p class="font-bold text-white text-base break-words">' + esc(g.name) + '</p><a href="' + esc(g.url) + '" target="_blank" rel="noopener" onclick="window.krxJoinGroup(' + sel + ')" class="krx-gjoin ' + (j ? 'is-joined' : '') + '">' + (j ? '<i class="fa-solid fa-check"></i> Ya te uniste · abrir de nuevo' : '<i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir grupo y unirme') + '</a></div>';
+        }
+        var nOff = RG.length - avail.length, head;
+        if (!avail.length) head = '<p class="text-sm font-bold mb-2 text-red-400"><i class="fa-solid fa-ban"></i> Grupos sin stock por ahora. No se pueden comprar Robux por grupo en este momento.</p>';
+        else head = '<p class="text-sm font-bold mb-2 ' + (done === avail.length ? 'text-green-400' : 'text-yellow-300') + '">Unido a ' + done + ' de ' + avail.length + ' grupos' + (nOff ? ' disponibles' : '') + '</p>' + (nOff ? '<p class="text-xs text-red-300 mb-2 font-rajdhani">' + nOff + ' grupo' + (nOff > 1 ? 's' : '') + ' sin stock: no hace falta unirte a ' + (nOff > 1 ? 'esos' : 'ese') + '.</p>' : '');
+        container.innerHTML = head + '<div class="krx-ggrid">' + chips + '</div>' + detail;
+    };
+
+    // ---- Precio visible ----
+    var _gcp = W.getConvertedPrice;
+    if (typeof _gcp === 'function' && !_gcp.__kst) {
+        W.getConvertedPrice = function (p) { if (p && W.kiwiStockOff && W.kiwiStockOff(p)) return 'No Stock'; return _gcp.apply(this, arguments); };
+        W.getConvertedPrice.__kst = true;
+    }
+
+    // ---- Pasada DOM: botones / tarjetas ----
+    var SEL = '[onclick*="openCheckout("],[onclick*="buyInstagramFollowers("],[onclick*="buySocialLikesViews("],[onclick*="ffSelectProduct("],[onclick*="raSelect("],[onclick*="buyCustomRobuxBtn("],[onclick*="buyVariant("],[onclick*="buyFragments("],[onclick*="buyBoxes("],[onclick*="buyBooyahManual("],[onclick*="buyBooyahPass("]';
+    function setBtn(el, isOff) {
+        if (isOff) {
+            if (el.dataset.kstOrig == null) { el.dataset.kstOrig = el.innerHTML; el.innerHTML = '<i class="fa-solid fa-ban"></i> No Stock'; }
+            if (!el.disabled && el.tagName === 'BUTTON') el.disabled = true;
+            if (!el.classList.contains('kst-btn-off')) el.classList.add('kst-btn-off');
+        } else if (el.dataset.kstOrig != null) {
+            el.innerHTML = el.dataset.kstOrig; delete el.dataset.kstOrig; el.disabled = false; el.classList.remove('kst-btn-off');
+        }
+    }
+    function setCard(el, isOff) {
+        var b = el.querySelector(':scope > .kst-badge');
+        if (isOff) {
+            if (!el.classList.contains('kst-card-off')) el.classList.add('kst-card-off');
+            if (!b) { b = document.createElement('span'); b.className = 'kst-badge'; b.textContent = 'No Stock'; el.appendChild(b); }
+        } else { if (el.classList.contains('kst-card-off')) el.classList.remove('kst-card-off'); if (b) b.remove(); }
+    }
+    W.kiwiStockDomPass = function () {
+        if (!W.kiwiStockOff) return;
+        var mayor = !!document.getElementById('krx-mayor-box');
+        document.querySelectorAll(SEL).forEach(function (el) {
+            if (el.closest('#admin-page')) return;
+            var oc = el.getAttribute('onclick') || '', m, p = null, card = false;
+            if ((m = oc.match(/(openCheckout|buyInstagramFollowers|buySocialLikesViews)\((\d+)/))) p = prodById(m[2]);
+            else if ((m = oc.match(/(ffSelectProduct|raSelect)\((\d+)/))) { p = prodById(m[2]); card = true; }
+            else if ((m = oc.match(/buyCustomRobuxBtn\([^,]*,\s*'([a-z_]+)'/))) p = { category: 'roblox', sub: m[1], wholesale: mayor };
+            else if ((m = oc.match(/buyVariant\('([^']+)'/))) { var s = document.getElementById('select-' + m[1]); p = s ? variantProd(m[1], s.value) : null; }
+            else if (/buyFragments\(/.test(oc)) p = { id: 222 };
+            else if (/buyBoxes\(/.test(oc)) p = { id: 227 };
+            else if (/buyBooyahManual\(/.test(oc)) p = { id: 680 };
+            else if (/buyBooyahPass\(/.test(oc)) p = prodById(221) || { id: 221 };
+            if (!p) return;
+            var isOff = !!W.kiwiStockOff(p);
+            if (!isOff && p.category === 'roblox' && p.sub === 'robux_grupo' && !p.wholesale) isOff = W.kiwiStockGroupsAllOff();
+            card ? setCard(el, isOff) : setBtn(el, isOff);
+        });
+        try {
+            var tw = document.createTreeWalker(document.body, 4, null), tn, fix = [];
+            while ((tn = tw.nextNode())) if (tn.nodeValue.indexOf('No Stock') > 0 && /(desde|Desde|from)\s+No Stock/.test(tn.nodeValue)) fix.push(tn);
+            fix.forEach(function (n) { n.nodeValue = n.nodeValue.replace(/(desde|Desde|from)\s+No Stock/g, 'No Stock'); });
+        } catch (e) {}
+        document.querySelectorAll('select[id^="select-"]').forEach(function (s) {
+            var cid = s.id.slice(7);
+            [].forEach.call(s.options, function (op) {
+                var vp = variantProd(cid, op.value); if (!vp) return;
+                var o = W.kiwiStockOff(vp);
+                if (o && !op.dataset.kstOff) { op.dataset.kstOff = '1'; op.dataset.kstTxt = op.textContent; op.textContent = op.textContent + ' — No Stock'; op.disabled = true; }
+                else if (!o && op.dataset.kstOff) { op.textContent = op.dataset.kstTxt || op.textContent; delete op.dataset.kstOff; op.disabled = false; }
+            });
+        });
+    };
+    var pend = 0;
+    function schedule() { if (pend) return; pend = setTimeout(function () { pend = 0; try { W.kiwiStockDomPass(); } catch (e) {} }, 150); }
+    document.addEventListener('change', function (e) { if (e.target && e.target.id && e.target.id.indexOf('select-') === 0) schedule(); }, true);
+
+    // ---- Panel STOCK (solo CEO / OWNER) ----
+    var UI = W.KIWI_STOCK_UI = W.KIWI_STOCK_UI || { q: '', onlyOff: false, open: {}, busy: {} };
+    function catName(c) { return ({ freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG Mobile', mlbb: 'Mobile Legends', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', roblox: 'Roblox', streaming: 'Streaming', ia: 'Inteligencia Artificial', ai: 'Inteligencia Artificial', gift: 'Gift Cards', giftcards: 'Gift Cards' })[c] || (c ? c.charAt(0).toUpperCase() + c.slice(1) : 'Otros'); }
+    function pLabel(p) {
+        var n = p.name || p.title || ('Producto ' + p.id);
+        if (p.sub && /seguidores|likes|views|vistas/.test(p.sub)) n = catName(p.category) + ' · ' + n;
+        return n;
+    }
+    W.kiwiStockCatalog = function () {
+        var secs = [], idx = {}, seen = {};
+        function add(sec, key, label, note) {
+            if (seen[key]) return; seen[key] = 1;
+            if (!idx[sec]) { idx[sec] = { name: sec, rows: [] }; secs.push(idx[sec]); }
+            idx[sec].rows.push({ key: key, label: label, note: note || '' });
+        }
+        var RG = W.KRX_RETAIL_GROUPS || 14;
+        groups().forEach(function (g, i) { add('Grupos de Roblox', W.kiwiStockGroupKey(g), (i + 1) + '. ' + g.name, i >= RG ? 'No se muestra en la tienda (fuera de los ' + RG + ')' : ''); });
+        var bf = (W.products || []).filter(function (p) { return W.kiwiStockKey(p) === 'bloxfruits'; }).length;
+        add('Roblox', 'bloxfruits', 'Blox Fruits products', bf + ' productos (frutas + gamepasses) en un solo botón');
+        add('Roblox', 'robux:robux_grupo', 'Robux por Grupo (minorista)');
+        add('Roblox', 'robux:robux_grupo:mayor', 'Robux por Grupo (mayorista)');
+        add('Roblox', 'robux:robux_gamepass', 'Robux por Gamepass');
+        add('Roblox', 'robux:robux_plus', 'Roblox Premium / Plus');
+        (W.products || []).forEach(function (p) {
+            var k = W.kiwiStockKey(p); if (k === 'bloxfruits') return;
+            if (k === 'ff:frag') return add('Free Fire', k, 'Fragmentos Universales', 'todas las cantidades');
+            if (k === 'ff:box') return add('Free Fire', k, 'Caja de Fragmentos', 'todas las cantidades');
+            var sec = catName(p.category || (p.raGame || ''));
+            if (p.raId != null) sec = catName(p.category) + (p.autoDelivery ? ' · automático' : '');
+            add(sec, k, pLabel(p));
+        });
+        (W.catalogVariant || []).forEach(function (it) {
+            (it.variants || []).forEach(function (v, i) { add(catName(it.category), W.kiwiStockKey(variantProd(it.id, i)), (it.title || it.name || it.id) + ' · ' + v.name); });
+        });
+        return secs;
+    };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    W.renderStaffStock = function () {
+        var box = document.getElementById('admin-stock'); if (!box) return;
+        if (!(W.canManageStaff && W.canManageStaff())) { box.innerHTML = '<p class="kadm-sub" style="margin-top:14px">Solo Owner / CEO.</p>'; return; }
+        var q = (UI.q || '').toLowerCase().trim(), secs = W.kiwiStockCatalog(), total = 0, totOff = 0;
+        var html = secs.map(function (s, si) {
+            var rows = s.rows.filter(function (r) {
+                if (UI.onlyOff && !off(r.key)) return false;
+                return !q || (r.label + ' ' + r.key + ' ' + s.name).toLowerCase().indexOf(q) >= 0;
+            });
+            var nOff = s.rows.filter(function (r) { return off(r.key); }).length; total += s.rows.length; totOff += nOff;
+            if (!rows.length) return '';
+            var isOpen = q || UI.onlyOff || UI.open[s.name] || (UI.open[s.name] == null && si === 0);
+            return '<details class="kst-sec" data-sec="' + esc(s.name) + '" ' + (isOpen ? 'open' : '') + ' ontoggle="window.KIWI_STOCK_UI.open[this.dataset.sec]=this.open">' +
+                '<summary>' + esc(s.name) + '<span class="kst-cnt">' + s.rows.length + ' · <b>' + nOff + ' sin stock</b></span></summary>' +
+                '<div class="flex flex-wrap gap-2 px-3 pb-2"><button type="button" class="kst-mini red" onclick="window.kiwiStockSetSection(' + si + ',true)">Deshabilitar todos</button><button type="button" class="kst-mini" onclick="window.kiwiStockSetSection(' + si + ',false)">Habilitar todos</button></div>' +
+                '<div class="kst-rows">' + rows.map(function (r) {
+                    var o = off(r.key), b = UI.busy[r.key];
+                    return '<div class="kst-row ' + (o ? 'is-off' : '') + '"><div class="kst-lbl">' + esc(r.label) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</div><span class="kst-pill">' + (o ? 'No Stock' : 'En stock') + '</span>' +
+                        '<button type="button" class="kst-sw ' + (o ? 'is-off' : '') + '" ' + (b ? 'disabled' : '') + ' title="' + (o ? 'Habilitar' : 'Deshabilitar') + '" aria-pressed="' + (o ? 'true' : 'false') + '" data-key="' + esc(r.key) + '" data-label="' + esc(r.label) + '" onclick="window.kiwiStockToggle(this.dataset.key,this.dataset.label)"></button></div>';
+                }).join('') + '</div></details>';
+        }).join('');
+        box.innerHTML = '<p class="kadm-sub">Apagá un grupo o producto y en la tienda aparece <b class="text-red-400">No Stock</b> y no se puede comprar. Los cambios se ven en la tienda en 2–3 minutos.</p>' +
+            '<div class="kst-tools"><input type="search" id="kst-q" class="kadm-in" placeholder="Buscar producto, grupo o categoría..." value="' + esc(UI.q) + '" oninput="window.KIWI_STOCK_UI.q=this.value;window.kiwiStockRerenderKeepFocus()">' +
+            '<label class="flex items-center gap-2 text-sm text-gray-300 kst-mini" style="min-height:44px"><input type="checkbox" ' + (UI.onlyOff ? 'checked' : '') + ' onchange="window.KIWI_STOCK_UI.onlyOff=this.checked;window.renderStaffStock()"> Ver solo deshabilitados</label>' +
+            '<button type="button" class="kst-mini" style="min-height:44px" onclick="window.kiwiStockLoad().then(window.renderStaffStock)"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>' +
+            '<p class="text-xs text-gray-400 mb-3">' + total + ' interruptores · <span class="text-red-400 font-bold">' + totOff + ' sin stock</span></p>' +
+            (html || '<p class="text-sm text-gray-400">Nada para mostrar.</p>');
+    };
+    W.kiwiStockRerenderKeepFocus = function () {
+        var el = document.getElementById('kst-q'), pos = el ? el.selectionStart : 0;
+        W.renderStaffStock(); var n = document.getElementById('kst-q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
+    };
+    async function setKeys(keys, disabled, label) {
+        if (!(W.canManageStaff && W.canManageStaff())) { toast('Solo Owner / CEO.'); return; }
+        var before = new Set(W.KIWI_STOCK_OFF);
+        keys.forEach(function (k) { UI.busy[k] = 1; disabled ? W.KIWI_STOCK_OFF.add(k) : W.KIWI_STOCK_OFF.delete(k); });
+        W.renderStaffStock();
+        try {
+            var r = await W.kiwiStaffRpc('kiwi_staff_stock_set', { p_keys: keys, p_disabled: !!disabled, p_label: label || null });
+            var d = r && r.data !== undefined ? r.data : r;
+            if (r && r.error) throw r.error;
+            keys.forEach(function (k) { delete UI.busy[k]; });
+            if (d && Array.isArray(d.disabled)) { W.KIWI_STOCK_OFF = new Set(); W.kiwiStockApply(d.disabled); }
+            try { localStorage.setItem('kiwi_stock_off', JSON.stringify(Array.from(W.KIWI_STOCK_OFF))); } catch (e) {}
+            W.kiwiStockDomPass();
+        } catch (e) {
+            keys.forEach(function (k) { delete UI.busy[k]; });
+            W.KIWI_STOCK_OFF = before;
+            toast('No se pudo guardar el stock: ' + ((e && e.message) || e));
+        }
+        W.renderStaffStock();
+    }
+    W.kiwiStockToggle = function (key, label) { return setKeys([key], !off(key), label); };
+    W.kiwiStockSetSection = function (si, disabled) {
+        var s = W.kiwiStockCatalog()[si]; if (!s) return;
+        if (!confirm((disabled ? 'Deshabilitar' : 'Habilitar') + ' los ' + s.rows.length + ' de "' + s.name + '"?')) return;
+        return setKeys(s.rows.map(function (r) { return r.key; }), disabled, s.name);
+    };
+
+    // ---- Saldo / 2FA en tarjetas (mismos ids y funciones) ----
+    var CUR = ['USDT', 'ARS', 'MXN', 'COP', 'PEN'];
+    var _saldo = W.loadAdminSaldo;
+    W.loadAdminSaldo = function () {
+        var box = document.getElementById('admin-saldo'); if (!box) return _saldo && _saldo.apply(this, arguments);
+        if (!(W.canManageStaff && W.canManageStaff())) return _saldo && _saldo.apply(this, arguments);
+        var v = function (id) { return "document.getElementById('" + id + "').value"; };
+        var args = [v('admin-credit-user'), v('admin-credit-amount'), v('admin-credit-id'), v('admin-credit-currency')].join(', ');
+        box.innerHTML = '<p class="kadm-sub">Acreditá o quitá saldo a un cliente. Queda registrado con tu usuario.</p><div class="kadm-grid">' +
+            '<div class="kadm-card"><h4><i class="fa-solid fa-user"></i> Cliente</h4><div class="space-y-3"><input id="admin-credit-user" placeholder="Usuario" class="kadm-in"><input id="admin-credit-id" placeholder="ID de cuenta (KWS-...)" class="kadm-in"></div></div>' +
+            '<div class="kadm-card"><h4><i class="fa-solid fa-coins"></i> Monto</h4><div class="grid grid-cols-3 gap-2"><input id="admin-credit-amount" type="number" placeholder="Monto" class="kadm-in col-span-2"><select id="admin-credit-currency" class="kadm-in">' + CUR.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') + '</select></div>' +
+            '<div class="grid grid-cols-2 gap-2 mt-3"><button onclick="window.creditUserBalance(' + args + ')" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-lg text-sm">Acreditar</button><button onclick="window.debitUserBalance(' + args + ')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm">Quitar saldo</button></div></div>' +
+            '</div>';
+    };
+    function decorate() {
+        document.querySelectorAll('#admin-content > .admin-tab[data-sub]').forEach(function (t) {
+            var f = t.firstElementChild;
+            if (t.id === 'admin-stock' || t.id === 'admin-saldo') return;
+            if (!f || !f.classList.contains('kadm-sub')) { var p = document.createElement('p'); p.className = 'kadm-sub'; p.textContent = t.dataset.sub; t.insertBefore(p, t.firstChild); }
+        });
+        var r = document.getElementById('kadm-role');
+        if (r) { var role = (W.getMyStaffRole && W.getMyStaffRole()) || ''; var t2 = role ? 'Rango: ' + String(role).toUpperCase() : ''; if (r.textContent !== t2) r.textContent = t2; }
+        var b = document.getElementById('kadm-tab-stock');
+        if (b) b.classList.toggle('hidden', !(W.canManageStaff && W.canManageStaff()));
+    }
+    W.kiwiAdminDecorate = decorate;
+
+    var _sw = W.switchStaffTab;
+    if (typeof _sw === 'function' && !_sw.__kst) {
+        W.switchStaffTab = function (tab) {
+            var isStock = tab === 'stock';
+            var r = _sw.call(this, isStock ? 'cuentas' : tab);
+            if (isStock && W.canManageStaff && W.canManageStaff()) {
+                document.querySelectorAll('#admin-content > .admin-tab').forEach(function (t) { t.classList.add('hidden'); });
+                document.getElementById('admin-stock').classList.remove('hidden');
+                document.querySelectorAll('#admin-page .kadm-tabs > button').forEach(function (bt) {
+                    var on = bt.id === 'kadm-tab-stock';
+                    bt.classList.toggle('text-kiwi-gold', on); bt.classList.toggle('border-b-2', on); bt.classList.toggle('border-kiwi-gold', on); bt.classList.toggle('text-gray-500', !on);
+                });
+                W.renderStaffStock(); W.kiwiStockLoad().then(function () { W.renderStaffStock(); });
+            }
+            setTimeout(decorate, 0);
+            return r;
+        };
+        W.switchStaffTab.__kst = true;
+    }
+
+    function boot() {
+        installGuards(); decorate(); W.kiwiStockDomPass();
+        try {
+            var mo = new MutationObserver(function (ms) {
+                for (var i = 0; i < ms.length; i++) { var t = ms[i].target; if (t && t.closest && t.closest('#admin-page')) continue; schedule(); return; }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+            var ap = document.getElementById('admin-page');
+            if (ap) new MutationObserver(function () { decorate(); }).observe(ap, { attributes: true, attributeFilter: ['class'] });
+        } catch (e) {}
+        W.kiwiStockLoad();
+        setInterval(function () { if (!document.hidden) W.kiwiStockLoad(); }, 150000);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) W.kiwiStockLoad(); });
+        setTimeout(installGuards, 1500); setTimeout(W.kiwiStockLoad, 3000);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+
 </body>
 </html>
