@@ -103,6 +103,13 @@ module.exports = async function handler(req, res) {
   if (RA_SIN_STOCK || /^(1|true|si|sí)$/i.test(String(process.env.RA_DISABLED || '').trim()))
     return send(res, 503, { success: false, stage: 'checkout', code: 'RA_DISABLED', error: 'Sin stock temporal. No se descontó saldo.' });
 
+  // v68: "No Stock" del Panel Staff (pestaña STOCK). Clave 'ra:<id>'. Si la consulta falla (p. ej. SQL v68 sin ejecutar), no bloquea.
+  try {
+    const sf = await supaRpc('kiwi_stock_list', {});
+    if (sf.ok && Array.isArray(sf.json) && sf.json.includes('ra:' + pid))
+      return send(res, 409, { success: false, stage: 'checkout', code: 'NO_STOCK', error: 'No Stock: este producto no está disponible por el momento. No se descontó saldo.' });
+  } catch (_) {}
+
   // ---- 1) Cobro + pedido en Supabase (todo o nada, idempotente por request_id) ----
   const token = String(b.token || '');
   const requestId = String(b.request_id || '');
