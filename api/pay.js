@@ -27,7 +27,7 @@ const METHODS = {
   binance_pay:    { label: 'Binance Pay',          currency: 'USDT', step: 0.01, round: 0.01, kind: 'binance_pay' },
   ar_transfer:    { label: 'Transferencia Argentina (alias)', currency: 'ARS', step: 1, round: 10, kind: 'notif' },
   mx_nu:          { label: 'Nu México (SPEI)',      currency: 'MXN', step: 0.01, round: 0.1, kind: 'notif' },
-  co_bancolombia: { label: 'Global66 (Colombia)',   currency: 'COP', step: 1, round: 100, kind: 'notif' },
+  co_bancolombia: { label: 'Bancolombia (Colombia)',   currency: 'COP', step: 1, round: 100, kind: 'notif' },
   pe_yape:        { label: 'Yape (Perú)',           currency: 'PEN', step: 0.01, round: 0.1, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
@@ -56,7 +56,7 @@ function accountData(m) {
     case 'mx_nu':
       return env('PAY_MX_CLABE') ? [['CLABE', env('PAY_MX_CLABE')], ['Banco', 'Nu México']].concat(env('PAY_MX_TITULAR') ? [['Titular', env('PAY_MX_TITULAR')]] : []) : null;
     case 'co_bancolombia':
-      // v63: se recibe en Global66 (clave interna co_bancolombia se mantiene). Se muestran solo los datos cargados.
+      // v69: se recibe en Bancolombia (antes Global66) (clave interna co_bancolombia se mantiene). Se muestran solo los datos cargados.
       // v64: PAY_CO_LLAVE (llave Bre-B) alcanza sola para activar el método.
       // v66: DOS modos con la misma clave/monto/notificación. Cada línea lleva un 3er dato con el modo ('normal' | 'breb');
       // clientes viejos leen solo [etiqueta, valor] y siguen andando. "Titular" va sin modo (vale para los dos).
@@ -66,14 +66,14 @@ function accountData(m) {
         if (env('PAY_CO_LLAVE')) out.push(['Llave Bre-B', env('PAY_CO_LLAVE'), 'breb']);
         if (env('PAY_CO_CUENTA') || env('PAY_CO_USUARIO') || env('PAY_CO_EMAIL')) {
           const cta = env('PAY_CO_CUENTA');
-          out.push(['Banco', env('PAY_CO_BANCO') || 'Global66', 'normal']);
+          out.push(['Banco', env('PAY_CO_BANCO') || 'Bancolombia', 'normal']);
           if (cta) {
             out.push(['Número de cuenta', cta, 'normal']);
-            out.push(['Cédula de Ciudadanía', env('PAY_CO_DOCUMENTO') || cta, 'normal']);
-            out.push(['Tipo de cuenta', env('PAY_CO_TIPO') || 'Depósito Electrónico', 'normal']);
+            if (env('PAY_CO_DOCUMENTO')) out.push(['Cédula de Ciudadanía', env('PAY_CO_DOCUMENTO'), 'normal']); // v69: cédula ≠ cuenta
+            out.push(['Tipo de cuenta', env('PAY_CO_TIPO') || 'Ahorros', 'normal']);
           }
-          if (env('PAY_CO_USUARIO')) out.push(['Usuario / celular Global66', env('PAY_CO_USUARIO'), 'normal']);
-          if (env('PAY_CO_EMAIL')) out.push(['Email Global66', env('PAY_CO_EMAIL'), 'normal']);
+          if (env('PAY_CO_USUARIO')) out.push(['Usuario / celular', env('PAY_CO_USUARIO'), 'normal']);
+          if (env('PAY_CO_EMAIL')) out.push(['Email', env('PAY_CO_EMAIL'), 'normal']);
         } else if (env('PAY_CO_DOCUMENTO')) out.push(['Documento', env('PAY_CO_DOCUMENTO')]);
         if (env('PAY_CO_TITULAR')) out.push(['Titular', env('PAY_CO_TITULAR')]);
         return out;
@@ -83,7 +83,7 @@ function accountData(m) {
   }
   return null;
 }
-// v66: Colombia (transferencia normal Global66) puede tardar ~1 día → la recarga queda abierta 24 h (PAY_CO_MINUTES, máx. 1500).
+// v66: Colombia (transferencia normal Bancolombia/otros bancos) puede tardar ~1 día → la recarga queda abierta 24 h (PAY_CO_MINUTES, máx. 1500).
 function methodMinutes(method, def) {
   if (method === 'co_bancolombia') { const m = Number(env('PAY_CO_MINUTES', '1440')); return m >= 10 ? Math.min(1500, m) : def; }
   return def;
