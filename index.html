@@ -1486,7 +1486,7 @@
                 <p class="text-sm text-gray-300 mb-4">Elegí cómo querés cargar tu saldo:</p>
                 <button onclick="document.getElementById('balance-modal').classList.add('hidden'); window.kpayOpen()" class="w-full text-left rounded-2xl p-4 mb-3 border-2 border-green-400 bg-gradient-to-br from-green-500/25 to-emerald-700/10 shadow-[0_0_24px_rgba(34,197,94,0.25)] active:scale-95 transition">
                     <div class="flex items-center justify-between mb-1"><span class="font-orbitron font-black text-green-300 text-base"><i class="fa-solid fa-bolt mr-2"></i>CARGA AUTOMÁTICA</span><span class="text-[10px] font-bold bg-green-400 text-black rounded-full px-2 py-1">SIN ESPERAR</span></div>
-                    <p class="text-sm text-white font-bold">Binance Pay, USDT, alias, Nu, Global66 y Yape</p>
+                    <p class="text-sm text-white font-bold">Binance Pay, USDT, alias, Nu, Bancolombia y Yape</p>
                     <p class="text-xs text-green-100/80 mt-1">Pagás y el saldo se acredita solo, sin hablar con nadie. Tocá para empezar <i class="fa-solid fa-arrow-right ml-1"></i></p>
                 </button>
                 <button onclick="window.balShowStaff(true)" class="w-full text-left rounded-2xl p-4 mb-2 border-2 border-sky-400 bg-gradient-to-br from-sky-500/20 to-indigo-700/10 active:scale-95 transition">
@@ -8482,7 +8482,7 @@ window.resetUser2FA = function(username) {
             } catch (e) { box.innerHTML = '<p class="text-gray-500">No se pudo cargar el historial.</p>'; }
         }
         // v61: transferencia AR se carga en pesos (lo que el cliente transfiere); el resto en USDT
-        // v62: también Global66 Colombia (COP). Comisión incluida en lo que transfiere el cliente.
+        // v62: también Bancolombia Colombia (COP). Comisión incluida en lo que transfiere el cliente.
         const FIAT_IN = { ARS: { label: '¿Cuántos pesos (ARS) querés transferir?', def: 10000, step: 10 }, COP: { label: '¿Cuántos pesos colombianos (COP) querés transferir?', def: 20000, step: 100 } };
         const kIsArs = () => !!(K.method && FIAT_IN[K.method.currency]);
         const kFI = () => FIAT_IN[K.method.currency];
@@ -8549,7 +8549,7 @@ window.resetUser2FA = function(username) {
         const coModeOf = x => x[2] === 'breb' || x[2] === 'normal' ? x[2] : (x[0] === 'Llave Bre-B' ? 'breb' : 'normal');
         const CO_TIP = {
             breb: '⚡ <b>Pago inmediato con Bre-B.</b> Ojo: Bre-B solo funciona con algunos bancos/apps; si tu banco te da error, usá la <b>transferencia normal</b>. <b>Respetá los últimos pesos</b> del monto.',
-            normal: '🏦 En este método el pago se demora en reflejarse <b>aproximadamente un día</b>, pero es compatible con <b>todos los bancos de Colombia</b>. <b>Respetá los últimos pesos</b> del monto.'
+            normal: '🏦 Desde Bancolombia (o Nequi/Bre-B si aplica) llega <b>al instante</b>; desde otros bancos se demora <b>aproximadamente un día</b>. <b>Respetá los últimos pesos</b> del monto.'
         };
         window.kpayCoMode = function (mode) { K.coMode = mode; renderPay(); };
         function tip(id, acc, mode) {
@@ -8560,7 +8560,7 @@ window.resetUser2FA = function(username) {
                 binance_pay: 'En Binance: <b>Pagar → Enviar → Pay ID</b>. Moneda <b>USDT</b> y el monto exacto.',
                 ar_transfer: 'Transferí desde tu banco o Mercado Pago al alias. <b>Respetá los últimos dígitos</b>: así reconocemos tu pago.',
                 mx_nu: 'Transferencia SPEI a la CLABE de Nu. Escribí el monto con los <b>centavos exactos</b>.',
-                co_bancolombia: 'Transferí a la cuenta Global66 de arriba (desde Global66 o desde tu banco). <b>Respetá los últimos pesos</b> del monto.',
+                co_bancolombia: 'Transferí a la cuenta Bancolombia de arriba (desde Bancolombia o desde cualquier otro banco). <b>Respetá los últimos pesos</b> del monto.',
                 pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.'
             }[id] || '';
         }
@@ -8684,7 +8684,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Global66', pe_yape: '🇵🇪 Yape' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
