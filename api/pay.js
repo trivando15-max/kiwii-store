@@ -7,6 +7,8 @@
 //   POST confirm { token, id, reference, payer_name?, proof? } -> "Ya pagué" (+ verificación automática USDT/Binance Pay)
 //   POST check   { token, id }                   -> vuelve a verificar / devuelve el estado
 //   POST notif   (header x-pay-secret)           -> notificación reenviada por el celular (transferencias)
+//   POST notify  { token, ids[], src? }          -> v72: aviso por Telegram al dueño (pedido verificado en la base, uno por pedido)
+//   GET  tgchat  (header x-pay-secret)           -> v72: devuelve el chat id de los últimos mensajes al bot (para TG_CHAT_ID)
 // El saldo SOLO lo suma la base (kiwi_pay_credit). Este archivo nunca confía en la imagen del comprobante.
 const crypto = require('crypto');
 
@@ -157,6 +159,63 @@ async function supaRpc(fn, args) {
 const clean = (s, n) => String(s == null ? '' : s).replace(/[<>]/g, '').trim().slice(0, n);
 const round = (x, step) => Math.round(Math.round(x / step) * step * 100) / 100;
 
+// ---------- v72: avisos por Telegram al dueño (TG_BOT_TOKEN + TG_CHAT_ID; si faltan no hace nada) ----------
+const TG_TZ = 'America/Argentina/Buenos_Aires';
+const tgOn = () => !!(env('TG_BOT_TOKEN') && env('TG_CHAT_ID'));
+const tgEsc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const _tgHits = [];                       // límite extra por instancia: máx. 25 mensajes por minuto
+function tgTime(d) {
+  try { return new Date(d || Date.now()).toLocaleString('es-AR', { timeZone: TG_TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) + ' (hora Buenos Aires)'; }
+  catch (_) { return new Date().toISOString(); }
+}
+async function tgSend(text) {
+  if (!tgOn()) return { ok: false, skipped: true };
+  const now = Date.now();
+  while (_tgHits.length && now - _tgHits[0] > 60000) _tgHits.shift();
+  if (_tgHits.length >= 25) return { ok: false, limited: true };
+  _tgHits.push(now);
+  try {
+    const r = await fetchJson('https://api.telegram.org/bot' + env('TG_BOT_TOKEN') + '/sendMessage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: env('TG_CHAT_ID'), text: String(text).slice(0, 3900), parse_mode: 'HTML', disable_web_page_preview: true })
+    }, 8000);
+    return { ok: !!r.ok };
+  } catch (_) { return { ok: false }; }
+}
+function orderUsdt(o) {
+  const ex = o && o.extra && typeof o.extra === 'object' ? o.extra : {};
+  const n = Number(ex.usdtPrice != null ? ex.usdtPrice : o.usdtPrice);
+  if (n > 0) return Math.round(n * 100) / 100 + ' USDT';
+  const m = String((o && o.price) || '').match(/([\d.,]+)\s*USDT/i);
+  return m ? m[1] + ' USDT' : (clean(o && o.price, 60) || '—');
+}
+function orderTgText(o, src) {
+  const direct = src === 'direct' && o.topup_id;
+  return '🛒 <b>Nueva compra completada</b>\n'
+    + '📦 Producto: <b>' + tgEsc(clean(o.title, 200)) + '</b>\n'
+    + '💵 Monto: <b>' + tgEsc(orderUsdt(o)) + '</b>\n'
+    + '👤 Comprador: <b>' + tgEsc(clean(o.user_name || o.username || o.user, 60)) + '</b>'
+    + (o.target_user ? '\n🎯 Para: ' + tgEsc(clean(o.target_user, 80)) : '') + '\n'
+    + '🧾 Pedido: <code>' + tgEsc(clean(o.id, 64)) + '</code>\n'
+    + '🕒 ' + tgEsc(tgTime(o.created_at)) + '\n'
+    + '💳 Origen: ' + (direct ? 'Compra directa (recarga #' + tgEsc(o.topup_id) + ' acreditada)' : 'Saldo');
+}
+// El servidor reclama en la base (service role) SOLO pedidos reales y recientes del dueño del token; cada pedido se avisa una vez.
+async function notifyOrders(token, ids, src) {
+  if (!tgOn() || !token) return { ok: true, sent: 0, skipped: !tgOn() };
+  const list = (Array.isArray(ids) ? ids : [ids]).map(x => clean(x, 64)).filter(Boolean).slice(0, 10);
+  if (!list.length) return { ok: true, sent: 0 };
+  const rows = await supaRpc('kiwi_order_notify_claim', { p_token: token, p_ids: list });
+  let sent = 0;
+  for (const o of (Array.isArray(rows) ? rows : [])) { if ((await tgSend(orderTgText(o, src === 'direct' ? 'direct' : 'saldo'))).ok) sent++; }
+  return { ok: true, sent };
+}
+async function notifyTopup(t) {
+  if (!tgOn() || !/^(1|true|si|sí|yes)$/i.test(env('TG_NOTIFY_TOPUPS')) || !t || t.status !== 'credited') return;
+  await tgSend('💰 <b>Recarga acreditada</b>\n👤 ' + tgEsc(clean(t.username, 60)) + '\n💵 ' + tgEsc(Number(t.credited_usdt || t.usdt) || 0) + ' USDT\n'
+    + '🏦 ' + tgEsc((METHODS[t.method] && METHODS[t.method].label) || t.method) + '\n🧾 Recarga #' + tgEsc(t.id) + '\n🕒 ' + tgEsc(tgTime(t.credited_at)));
+}
+
 // ---------- Cotización (misma fuente que /api/binance-p2p) ----------
 async function p2pRate(fiat) {
   const cfg = P2P[fiat];
@@ -301,6 +360,7 @@ async function verifyTopup(topup) {
     const key = topup.method + ':' + normTx(res.ref || ref).replace(/[^a-z0-9]/g, '');
     const out = await supaRpc('kiwi_pay_credit', { p_id: topup.id, p_source: res.source, p_ref_key: key, p_notif_id: null,
       p_usdt: null, p_by: 'auto', p_received: res.amount });
+    if (out && out.already === false) { try { await notifyTopup(out.topup); } catch (_) {} }
     return out.topup || out;
   }
   return supaRpc('kiwi_pay_mark', { p_id: topup.id, p_status: 'review',
@@ -403,7 +463,26 @@ async function handler(req, res) {
         p_hash: notifHash(body, p), p_method: p.incoming ? p.method : null, p_app: p.app, p_title: p.title, p_body: p.text,
         p_amount: p.incoming ? p.amount : null, p_currency: p.currency, p_sender: p.sender, p_op: p.op,
         p_posted: posted ? new Date(posted).toISOString() : null });
+      if (r && r.status === 'matched' && r.already !== true && r.topup) { try { await notifyTopup(r.topup); } catch (_) {} }
       return send(res, 200, { ok: true, status: r.status || (r.duplicate ? 'duplicate' : 'ok'), id: r.id || null });
+    }
+
+    // v72: ayuda para encontrar TG_CHAT_ID (solo con el secreto de admin; nunca devuelve el token del bot)
+    if (action === 'tgchat') {
+      const secret = env('PAY_NOTIF_SECRET');
+      const given = req.headers['x-pay-secret'] || req.headers['x-admin-secret'] || '';
+      if (!secret || secret.length < 16 || !safeEq(given, secret)) return send(res, 401, { error: 'no autorizado' });
+      if (!env('TG_BOT_TOKEN')) return send(res, 400, { error: 'Falta TG_BOT_TOKEN en Vercel.' });
+      const r = await fetchJson('https://api.telegram.org/bot' + env('TG_BOT_TOKEN') + '/getUpdates?limit=50', { method: 'GET' }, 8000);
+      const ups = (r.json && Array.isArray(r.json.result)) ? r.json.result : [];
+      const chats = [];
+      for (const u of ups.slice().reverse()) {
+        const m = u.message || u.channel_post || u.my_chat_member || u.edited_message;
+        const c = m && m.chat; if (!c || chats.find(x => x.id === c.id)) continue;
+        chats.push({ id: c.id, type: c.type, name: clean(c.title || [c.first_name, c.last_name].filter(Boolean).join(' ') || c.username, 80) });
+      }
+      return send(res, 200, { ok: !!r.ok, latest_chat_id: chats[0] ? chats[0].id : null, chats,
+        hint: chats.length ? 'Copiá latest_chat_id en TG_CHAT_ID (Vercel) y redeploy.' : 'Mandale cualquier mensaje a tu bot en Telegram y volvé a abrir esto.' });
     }
 
     if (req.method !== 'POST') return send(res, 405, { error: 'Usá POST' });
@@ -480,6 +559,10 @@ async function handler(req, res) {
       }
       return send(res, 200, { ok: true, results, diag });
     }
+    if (action === 'notify') {
+      const r = await notifyOrders(token, body.ids, String(body.src || ''));
+      return send(res, 200, { ok: true, sent: r.sent || 0 });
+    }
     if (action === 'check') {
       let t = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
       const last = t.last_check_at ? Date.parse(t.last_check_at) : 0;
@@ -494,5 +577,6 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
+module.exports.notifyOrders = notifyOrders;
 module.exports._t = { parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
-  checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
+  checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, notifyOrders, notifyTopup, orderTgText, tgTime, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
