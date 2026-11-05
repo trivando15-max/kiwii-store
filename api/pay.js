@@ -29,11 +29,14 @@ const METHODS = {
   mx_nu:          { label: 'Nu México (SPEI)',      currency: 'MXN', step: 0.01, round: 0.1, kind: 'notif' },
   co_bancolombia: { label: 'Bancolombia (Colombia)',   currency: 'COP', step: 1, round: 100, kind: 'notif' },
   pe_yape:        { label: 'Yape (Perú)',           currency: 'PEN', step: 0.01, round: 0.1, kind: 'notif' },
+  // v70: USD (ACH, Takenos) y EUR (SEPA, Wise). El cliente escribe el monto en su moneda; centavo único igual que el resto.
+  us_takenos:     { label: 'Dólares (USD) · Takenos', currency: 'USD', step: 0.01, round: 0.01, kind: 'notif' },
+  eu_wise:        { label: 'Euros (EUR) · Wise',      currency: 'EUR', step: 0.01, round: 0.01, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
-const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4 };
+const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4, USD: 0, EUR: 0 };
 // Margen sobre P2P igual al de la web (KIWI_RATE_MARGIN)
-const RATE_MARGIN = { ARS: 1.00, MXN: 1.0143, COP: 1.0343, PEN: 1.009 };
+const RATE_MARGIN = { ARS: 1.00, MXN: 1.0143, COP: 1.0343, PEN: 1.009, USD: 1.00, EUR: 1.01 };
 const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: ['BBVABank'], transAmount: 190 },
   COP: { payTypes: ['BancolombiaSA'], transAmount: 32000 }, PEN: { payTypes: ['Yape'], transAmount: 35 } };
 
@@ -78,6 +81,18 @@ function accountData(m) {
         if (env('PAY_CO_TITULAR')) out.push(['Titular', env('PAY_CO_TITULAR')]);
         return out;
       }
+    case 'us_takenos':
+      // v70: cuenta USD (ACH) de Takenos. Hacen falta cuenta + ruta; el resto se muestra si está cargado.
+      if (!env('PAY_US_CUENTA') || !env('PAY_US_RUTA')) return null;
+      return [['Número de cuenta', env('PAY_US_CUENTA')], ['Routing number (ACH)', env('PAY_US_RUTA')]]
+        .concat(env('PAY_US_TIPO') ? [['Tipo de cuenta', env('PAY_US_TIPO')]] : [], env('PAY_US_BANCO') ? [['Banco y dirección', env('PAY_US_BANCO')]] : [],
+                env('PAY_US_TITULAR') ? [['Titular', env('PAY_US_TITULAR')]] : []);
+    case 'eu_wise':
+      // v70: cuenta EUR (SEPA) de Wise. Hace falta el IBAN.
+      if (!env('PAY_EU_IBAN')) return null;
+      return [['IBAN', env('PAY_EU_IBAN')]]
+        .concat(env('PAY_EU_BIC') ? [['Swift / BIC', env('PAY_EU_BIC')]] : [], env('PAY_EU_BANCO') ? [['Banco y dirección', env('PAY_EU_BANCO')]] : [],
+                env('PAY_EU_TITULAR') ? [['Titular', env('PAY_EU_TITULAR')]] : []);
     case 'pe_yape':
       return env('PAY_PE_YAPE_NUMERO') ? [['Celular Yape', env('PAY_PE_YAPE_NUMERO')]].concat(env('PAY_PE_TITULAR') ? [['Titular', env('PAY_PE_TITULAR')]] : []) : null;
   }
@@ -86,6 +101,9 @@ function accountData(m) {
 // v66: Colombia (transferencia normal Bancolombia/otros bancos) puede tardar ~1 día → la recarga queda abierta 24 h (PAY_CO_MINUTES, máx. 1500).
 function methodMinutes(method, def) {
   if (method === 'co_bancolombia') { const m = Number(env('PAY_CO_MINUTES', '1440')); return m >= 10 ? Math.min(1500, m) : def; }
+  // v70: ACH puede tardar hasta 48 h hábiles → 2 días por defecto (máx. 4320 = 3 días, mismo tope que kiwi_pay_create v70)
+  if (method === 'us_takenos') { const m = Number(env('PAY_US_MINUTES', '2880')); return m >= 10 ? Math.min(4320, m) : def; }
+  if (method === 'eu_wise') { const m = Number(env('PAY_EU_MINUTES', '1440')); return m >= 10 ? Math.min(4320, m) : def; }
   return def;
 }
 function publicConfig() {
@@ -155,10 +173,38 @@ async function p2pRate(fiat) {
   }
   return null;
 }
+// v70: EUR en vivo desde Binance spot EURUSDT (USDT por 1 EUR). Respaldo: api.binance.vision y luego un endpoint FX libre.
+// Caché corta (25 s) para no pegarle a Binance en cada pedido. Devuelve EUR por 1 USDT (sin margen).
+const FX_TTL_MS = 25000;
+const _fx = {};
+async function eurPerUsdt() {
+  const c = _fx.EUR;
+  if (c && Date.now() - c.at < FX_TTL_MS) return c.v;
+  const srcs = [
+    ['https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT', j => Number(j && j.price)],
+    ['https://api.binance.vision/api/v3/ticker/price?symbol=EURUSDT', j => Number(j && j.price)],
+    ['https://open.er-api.com/v6/latest/EUR', j => Number(j && j.rates && j.rates.USD)],   // USD por 1 EUR (≈ USDT)
+  ];
+  for (const [url, pick] of srcs) {
+    try {
+      const r = await fetchJson(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, 5000);
+      const usdtPerEur = r.ok ? pick(r.json) : 0;
+      if (usdtPerEur > 0.5 && usdtPerEur < 3) { const v = 1 / usdtPerEur; _fx.EUR = { v, at: Date.now(), src: url }; return v; }
+    } catch (_) {}
+  }
+  return c ? c.v : null;   // si todo falla, último valor conocido
+}
 async function getRate(currency) {
   if (currency === 'USDT') return 1;
   const fixed = jsonEnv('PAY_FIXED_RATES_JSON', {});        // opcional: tasa manual { "ARS": 1650 }
   if (Number(fixed[currency]) > 0) return Number(fixed[currency]);
+  if (currency === 'USD' || currency === 'EUR') {
+    // USD: 1 USD ≈ 1 USDT (Takenos acredita dólares); EUR: Binance en vivo. Margen en PAY_RATE_MARGIN_JSON.
+    const b = currency === 'USD' ? 1 : await eurPerUsdt();
+    if (!b) return null;
+    const mm = Number(jsonEnv('PAY_RATE_MARGIN_JSON', RATE_MARGIN)[currency]) || 1;
+    return Math.round(b * mm * 1e6) / 1e6;
+  }
   const base = await p2pRate(currency);
   if (!base) return null;
   const m = Number(jsonEnv('PAY_RATE_MARGIN_JSON', RATE_MARGIN)[currency]) || 1;
@@ -267,10 +313,12 @@ const DEFAULT_APPS = {
   'com.nu.production': 'mx_nu', 'mx.com.nu': 'mx_nu',
   'com.global66.cards': 'co_bancolombia', 'com.todo1.mobile': 'co_bancolombia', 'com.bancolombia.app': 'co_bancolombia',
   'com.bcp.innovacxion.yapeapp': 'pe_yape',
+  'com.takenos': 'us_takenos',               // v70: Takenos (Google Play id=com.takenos, verificado en su centro de ayuda)
+  'com.transferwise.android': 'eu_wise',     // v70: Wise
 };
-const CUR_OF = { ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN' };
-const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido)/i;
-const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr)/i;
+const CUR_OF = { ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR' };
+const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
+const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr|you sent|you paid|you spent|sent to|is on its way|withdraw|card payment|you converted|convertiste)/i;
 
 // "$ 16.501", "16.501,50", "$1,234.56", "S/ 35.5", "COP 32.001" -> número
 function parseAmountStr(s) {
@@ -299,11 +347,11 @@ function parseNotification(n, forcedMethod) {
   out.incoming = INCOMING.test(all) && !(OUTGOING.test(all) && !INCOMING.test(all.replace(OUTGOING, '')));
   if (!out.incoming) return out;
   // v63: tomar el monto que aparece primero (prefijo "$"/"COP" o sufijo "COP"/"pesos"), no un saldo posterior
-  const amA = all.match(/(?:S\/\.?|\$|COP|MXN|ARS|PEN|soles?)\s*\$?\s*([\d][\d.,]*)/i), amB = all.match(/([\d][\d.,]*)\s*(?:pesos|soles|COP|MXN|ARS|PEN)\b/i);
+  const amA = all.match(/(?:S\/\.?|\$|€|COP|MXN|ARS|PEN|USD|EUR|soles?)\s*\$?\s*([\d][\d.,]*)/i), amB = all.match(/([\d][\d.,]*)\s*(?:pesos|soles|d[oó]lares|euros?|COP|MXN|ARS|PEN|USD|EUR|€)(?![A-Za-z])/i);
   const am = amA && amB ? (amA.index <= amB.index ? amA : amB) : (amA || amB);
   if (am) out.amount = parseAmountStr(am[1]);
   const snd = all.match(/([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})\s+te\s+(?:envi|transfiri|yape|pag)/)
-           || all.match(/(?:\bde|desde)\s+(?!(?:COP|USD|MXN|ARS|PEN|Global66|Bancolombia|Nequi|tu|su)\b)([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})/);
+           || all.match(/(?:\bde|desde|\bfrom)\s+(?!(?:COP|USD|EUR|MXN|ARS|PEN|Global66|Bancolombia|Nequi|Wise|Takenos|tu|su|your)\b)([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})/);
   if (snd) out.sender = snd[1].replace(/([A-Za-zÁÉÍÓÚÑáéíóúñ]{2,})\.(?:\s.*)?$/, '$1').trim(); // v63: cortar en fin de oración
   const op = all.match(/(?:operaci[oó]n|n[uú]mero de operaci[oó]n|referencia|ref\.?|c[oó]digo|comprobante|folio|clave de rastreo)\s*(?:n[°º.o]*|#|:)?\s*([A-Za-z0-9-]{4,40})/i);
   if (op) out.op = op[1];
@@ -330,6 +378,14 @@ async function handler(req, res) {
     const action = String(q.action || body.action || (req.method === 'GET' ? 'config' : '')).toLowerCase();
 
     if (action === 'config') return send(res, 200, publicConfig());
+    // v70: cotización en vivo para USD/EUR (el cliente la refresca cada ~30 s en el paso Monto). La que vale es la de "create".
+    if (action === 'rate') {
+      const c = String(q.c || body.c || '').toUpperCase();
+      if (c !== 'USD' && c !== 'EUR') return send(res, 400, { error: 'Moneda no soportada' });
+      const r = await getRate(c);
+      if (!r) return send(res, 503, { error: 'Sin cotización' });
+      return send(res, 200, { ok: true, currency: c, rate: r, usdt_per_unit: Math.round(1e6 / r) / 1e6, at: new Date().toISOString(), ttl_s: FX_TTL_MS / 1000 });
+    }
     // v61: país del visitante (header que agrega Vercel) para autoseleccionar la moneda del catálogo
     if (action === 'geo') {
       const c = String(req.headers['x-vercel-ip-country'] || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
@@ -363,22 +419,23 @@ async function handler(req, res) {
       const cur = METHODS[method].currency;
       // v61/v62: transferencia AR (ARS) y Bancolombia (COP) pueden venir en pesos { fiat } (o { ars }):
       // el cliente paga eso (comisión incluida) y se acredita pesos / tasa / (1 + comisión), redondeado hacia abajo
-      const FIAT_IN = { ARS: 1, COP: 1 };
+      // v70: USD/EUR también en su moneda, con centavos
+      const FIAT_IN = { ARS: 1, COP: 1, USD: 0.01, EUR: 0.01 };
       const fiatRaw = Number(body.fiat != null ? body.fiat : (cur === 'ARS' ? body.ars : null));
-      const fiatIn = FIAT_IN[cur] && fiatRaw > 0 ? Math.round(fiatRaw) : null;
+      const fiatIn = FIAT_IN[cur] && fiatRaw > 0 ? (FIAT_IN[cur] < 1 ? Math.floor(fiatRaw * 100 + 1e-6) / 100 : Math.round(fiatRaw)) : null;
       let usdt = fiatIn ? null : Math.round(Number(body.usdt) * 100) / 100;
       const rate = (fiatIn || usdt >= minU) ? await getRate(cur) : null;
       if (fiatIn && rate) {
         const comm = Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0;
-        usdt = Math.floor(fiatIn / rate / (1 + comm / 100) * 100) / 100;
+        usdt = Math.floor(fiatIn / rate / (1 + comm / 100) * 100 + 1e-6) / 100;
       }
-      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT' + (fiatIn && rate ? (() => { const k = 1 + (Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0) / 100; return ' (≈ $' + Math.ceil(minU * rate * k).toLocaleString('es-AR') + ' a $' + Math.floor(cfg.max_usdt * rate * k).toLocaleString('es-AR') + ' ' + cur + ').'; })() : '.') });
+      if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT' + (fiatIn && rate ? (() => { const k = 1 + (Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0) / 100; const dec = FIAT_IN[cur] < 1 ? 100 : 1, f = x => x.toLocaleString('es-AR', dec > 1 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : {}); return ' (≈ ' + (cur === 'EUR' ? '€' : '$') + f(Math.ceil(minU * rate * k * dec - 1e-6) / dec) + ' a ' + (cur === 'EUR' ? '€' : '$') + f(Math.floor(cfg.max_usdt * rate * k * dec) / dec) + ' ' + cur + ').'; })() : '.') });
       if (!rate) return send(res, 503, { error: 'No pudimos obtener la cotización. Probá en un minuto.' });
       const qv = quote(method, usdt, rate);
       if (fiatIn) qv.base = round(fiatIn, METHODS[method].round);
       const r = await supaRpc('kiwi_pay_create', { p_token: token, p_method: method, p_usdt: usdt, p_currency: cur, p_base: qv.base,
         p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: methodMinutes(method, cfg.minutes), p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2, p_purpose: purpose });
-      return send(res, 200, { ok: true, topup: r.topup, account: cfg.methods.find(m => m.id === method).account });
+      return send(res, 200, { ok: true, topup: r.topup, account: cfg.methods.find(m => m.id === method).account, rate });
     }
     if (action === 'reseller') {
       const r = await supaRpc('kiwi_reseller_status', { p_token: token });
@@ -438,4 +495,4 @@ async function handler(req, res) {
 
 module.exports = handler;
 module.exports._t = { parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
-  checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, setFetch: f => { _fetch = f; } };
+  checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
