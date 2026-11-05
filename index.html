@@ -323,6 +323,7 @@
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
 
                 <span id="header-balance" class="hidden md:inline text-kiwi-gold font-orbitron font-bold text-sm px-1">$0</span>
+<button id="kped-bell" onclick="window.kpedOpen()" class="hidden relative h-10 w-10 rounded-xl border border-kiwi-border bg-kiwi-dark text-kiwi-gold hover:border-kiwi-gold transition" title="Mis pedidos"><i class="fa-solid fa-box-open"></i><span class="kped-badge hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-kiwi-red text-white text-[10px] font-bold leading-[18px] text-center">0</span></button>
 <button id="register-main-btn" onclick="if(currentUser){window.goToProfile()}else{window.openAuthModal('login')}" class="h-10 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-3 sm:px-4 rounded-xl transition text-sm flex items-center gap-1.5" title="Registrarse">
                     <i class="fa-solid fa-user-plus"></i> <span id="auth-btn-text" class="hidden sm:inline">INGRESAR</span>
                 </button>
@@ -455,7 +456,7 @@
                     </button>
                 </div>
             </div>
-            <h3 class="font-orbitron text-sm font-bold text-white mb-3">MIS PEDIDOS</h3>
+            <div class="flex items-center justify-between mb-3"><h3 class="font-orbitron text-sm font-bold text-white">MIS PEDIDOS</h3><button onclick="window.kpedOpen()" class="relative text-xs font-bold bg-kiwi-gold text-black px-3 py-1.5 rounded-lg"><i class="fa-solid fa-box-open"></i> Ver estado y notas<span class="kped-badge hidden absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-kiwi-red text-white text-[10px] leading-[18px] text-center">0</span></button></div>
             <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
                 <div class="flex items-center justify-between">
                     <div>
@@ -623,6 +624,12 @@
                 <button onclick="window.goToProfile(); window.toggleUserDrawer();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border ">
                     <span class="kd-ico kd-blue"><i class="fa-solid fa-user"></i></span>
                     <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Mi perfil</span><span class="block text-[11px] text-gray-400">Tus datos y compras</span></span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
+                </button>
+                <button onclick="window.toggleUserDrawer(); window.kpedOpen();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-gold/60">
+                    <span class="kd-ico kd-gold"><i class="fa-solid fa-box-open"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Mis pedidos</span><span class="block text-[11px] text-gray-400">Estado y notas del staff</span></span>
+                    <span class="kped-badge hidden min-w-[20px] h-5 px-1.5 rounded-full bg-kiwi-red text-white text-[11px] font-bold leading-5 text-center">0</span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
                 <button onclick="window.openBalanceFromMenu();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-green-400/60 shadow-[0_0_18px_rgba(34,197,94,0.25)]">
@@ -3164,8 +3171,13 @@ window.balShowStaff = function (on) {
                                 <option value="delivered" ${p.status==='delivered'?'selected':''}>Entregado</option>
                                 ${(myRole === 'owner' || myRole === 'ceo') ? `<option value="cancelled" ${p.status==='cancelled'?'selected':''}>Cancelado</option>` : (p.status==='cancelled' ? '<option value="cancelled" selected disabled>Cancelado</option>' : '')}
                                 <option value="receipt_review" ${p.status==='receipt_review'?'selected':''}>En revisión</option>
+                                <option value="problem" ${p.status==='problem'?'selected':''}>Con problema</option>
                             </select>
-                            <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-2 py-1 rounded">Nota</button>
+                            <button onclick="window.addOrderNote(${p.id})" class="text-xs bg-kiwi-gold text-black px-2 py-1 rounded" title="El cliente la ve en Mis pedidos y recibe un aviso">Nota para el cliente</button>
+                        </div>
+                        <div class="flex gap-2 items-center mb-2">
+                            ${(p.status !== 'delivered' && p.status !== 'accredited' && p.status !== 'cancelled') ? `<button onclick="window.kpedStaffSet(${p.id}, 'delivered')" class="text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded"><i class="fa-solid fa-check"></i> Completar</button>` : ''}
+                            ${((myRole === 'owner' || myRole === 'ceo') && p.status !== 'cancelled') ? `<button onclick="window.kpedStaffSet(${p.id}, 'cancelled')" class="text-xs bg-red-700 hover:bg-red-600 text-white px-2 py-1 rounded"><i class="fa-solid fa-ban"></i> Cancelar${p.usdtPrice ? ' y devolver ' + Number(p.usdtPrice).toFixed(2) + ' USDT' : ''}</button>` : ''}
                             ${(p.status === 'delivered' || p.status === 'accredited') ? `<button onclick="window.kiCopyReviewMsg(${p.id}, this)" class="text-xs bg-[#5865F2] text-white px-2 py-1 rounded" title="Copia un mensaje para pegarle al cliente por WhatsApp o Discord"><i class="fa-brands fa-discord"></i> Pedir reseña</button>` : ''}
                         </div>
                         <div class="flex justify-end items-center mt-1">${statusHtml}</div>
@@ -5413,7 +5425,8 @@ window.balShowStaff = function (on) {
                 'claimed': 'Comprobante confirmado, en proceso de entregar el producto',
                 'delivered': 'Producto Entregado',
                 'accredited': 'Producto Entregado',
-                'cancelled': 'Producto Cancelado'
+                'cancelled': 'Producto Cancelado',
+                'problem': 'Pedido con problema (revisá la nota del staff)'
             };
             return map[status] || status;
         };
@@ -6531,6 +6544,7 @@ window.balShowStaff = function (on) {
                     window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(all)); window._purchaseSyncMuted = false;
                 }
                 q.failed = null; q.tries = 0; localStorage.removeItem('kiwi_pending_checkout');
+                if (rows.length && typeof window.kiwiNotifyOrders === 'function') window.kiwiNotifyOrders(list.map(pp => pp.id)); // v72: aviso Telegram al dueño
                 const cloudBal = Number(r.balance);
                 window._syncedBal[username] = cloudBal;
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
@@ -7353,6 +7367,13 @@ window.balShowStaff = function (on) {
             if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             alert('Estado actualizado a: ' + status);
+        };
+        // v72: botones rápidos (mismo RPC con rango validado en la base; cancelar devuelve el saldo pagado)
+        window.kpedStaffSet = function (id, status) {
+            const p = (window.readPurchases ? window.readPurchases() : []).find(x => String(x.id) === String(id));
+            const msg = status === 'cancelled' ? '¿Cancelar este pedido?' + (p && p.usdtPrice ? '\nSe le devuelven ' + Number(p.usdtPrice).toFixed(2) + ' USDT de saldo al cliente.' : '') + '\nEl cliente lo verá en Mis pedidos.' : '¿Marcar como COMPLETADO? El cliente recibe el aviso en Mis pedidos.';
+            if (!confirm(msg)) return;
+            return window.setOrderStatus(id, status);
         };
         window.addOrderNote = async function(id) {
             const note = prompt('Nota para el cliente:');
@@ -8192,6 +8213,7 @@ window.resetUser2FA = function(username) {
             if (Number.isFinite(nb)) { window._syncedBal[user] = nb; const us = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); if (us[user]) { us[user].balance = nb; localStorage.setItem('kiwi_users', JSON.stringify(us)); } }
             if (j.success && j.delivered !== false) { order.status = 'delivered'; order.notes = 'Entregado automáticamente'; }
             order._synced = true;
+            if (typeof window.kiwiNotifyOrders === 'function') window.kiwiNotifyOrders([order.id], 'saldo'); // v72: aviso Telegram al dueño
             const list = window.readPurchases(); list.push(order);
             window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(list)); window._purchaseSyncMuted = false;
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
@@ -8536,6 +8558,30 @@ window.resetUser2FA = function(username) {
             el.value = d ? Number(d).toLocaleString('es-AR') : '';
             window.kpayEst();
         };
+        // v73: nombre del titular de la cuenta desde la que paga el cliente (se compara con la notificación del banco)
+        const kIsPerson = id => !['usdt', 'binance_pay'].includes(id);
+        const kNameOk = v => String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').split(' ').filter(w => w.length >= 2 && !['de', 'del', 'la', 'las', 'los', 'y'].includes(w)).length >= 2;
+        const kPayerSaved = () => { try { return localStorage.getItem('kiwi_payer_name') || ''; } catch (_) { return ''; } };
+        function payerBox(val, idSuffix) {
+            return `<div id="kpay-payer-box${idSuffix || ''}" class="bg-sky-500/10 border-2 border-sky-400/70 rounded-xl p-3 my-3">
+                <label for="kpay-payer${idSuffix || ''}" class="block text-sm text-white font-bold mb-1"><i class="fa-solid fa-id-card text-sky-300 mr-1"></i>Nombre completo del titular de la cuenta desde la que vas a pagar *</label>
+                <input id="kpay-payer${idSuffix || ''}" autocomplete="name" value="${esc(val || '')}" placeholder="Ej: Juan Carlos Pérez Gómez" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-sky-300 rounded-xl p-3 text-white">
+                <p class="text-[11px] text-sky-100 mt-1">Se usa para <b>verificar el pago automáticamente</b>; tiene que coincidir con el nombre de quien transfiere. Si pagás desde la cuenta de otra persona (un familiar, un amigo), escribí <b>el nombre de esa persona</b>; si no coincide, el pago lo revisa el staff a mano y puede demorar.</p>
+            </div>`;
+        }
+        function readPayer(idSuffix) {
+            const v = ((document.getElementById('kpay-payer' + (idSuffix || '')) || {}).value || '').replace(/\s+/g, ' ').trim();
+            if (!kNameOk(v)) { say('Escribí el nombre completo (nombre y apellido) del titular de la cuenta desde la que vas a pagar. Se usa para verificar el pago automáticamente.'); return null; }
+            try { localStorage.setItem('kiwi_payer_name', v); } catch (_) {}
+            return v;
+        }
+        window.kpaySavePayer = async function (btn) {
+            const v = readPayer('-pay'); if (!v) return;
+            btn.disabled = true; const old = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try { const r = await api('payer', { id: K.topup.id, payer_name: v }); K.topup = r.topup || K.topup; btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado'; if (K.topup.status === 'credited') { renderStatus(); return; } }
+            catch (e) { say(e.message); btn.innerHTML = old; }
+            btn.disabled = false;
+        };
         window.kpayPick = function (id) {
             K.method = K.cfg.methods.find(m => m.id === id); steps(1); stopRate();
             if (K.purpose === 'direct') return directPick();
@@ -8555,6 +8601,7 @@ window.resetUser2FA = function(username) {
                 ${kDec() ? '<p id="kpay-rate" class="text-[11px] text-gray-400 text-center mb-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Cargando cotización…</p>' : ''}
                 <p id="kpay-min-note" class="text-xs text-center text-white bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-lg px-3 py-2 mb-2"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${res ? 'Monto mínimo para recargas de revendedor' : 'Monto mínimo para recargas automáticas'}: <b>${min} USDT</b>${kDec() ? '<span id="kpay-min-eq" class="text-gray-300">' + (arsMin ? ' (≈ ' + kSym() + ' ' + kShow(arsMin) + ' ' + m.currency + ')' : '') + '</span>' : ars && arsMin ? ' <span class="text-gray-300">(≈ $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ')</span>' : ''}</p>
                 <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (kDec() ? '' : arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ' (≈ ' + min + ' USDT). ' : '') + (m.commission_pct ? 'El monto que transferís ya incluye ' + m.commission_pct + '% de comisión. ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
+                ${kIsPerson(m.id) ? payerBox(kPayerSaved()) : ''}
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
             window.kpayEst();
             if (kDec()) { const cur = m.currency; kpayRate(cur); K.rateT = setInterval(() => kpayRate(cur), 30000); }
@@ -8573,6 +8620,7 @@ window.resetUser2FA = function(username) {
                     <p id="kdir-est" class="text-2xl font-orbitron font-black text-kiwi-gold">${est || '<i class="fa-solid fa-spinner fa-spin"></i>'}</p>
                     <p class="text-[11px] text-gray-400 mt-1">El monto <b>exacto</b> (con centavos) se fija en el siguiente paso${m.commission_pct ? ' · incluye ' + m.commission_pct + '% de comisión' : ''}.</p>
                 </div>
+                ${kIsPerson(m.id) ? payerBox(kPayerSaved()) : ''}
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-2 text-base">Continuar al pago</button>`);
             if (kDec() && !kRate()) kpayRate(cur).then(() => { if (K.purpose === 'direct' && document.getElementById('kdir-est')) directPick(); });
         }
@@ -8603,6 +8651,7 @@ window.resetUser2FA = function(username) {
                 if (!(v >= kMin())) return say('El mínimo es ' + kMin() + ' USDT');
                 payload = { method: K.method.id, usdt: v, purpose: K.purpose || 'normal' };
             }
+            if (kIsPerson(K.method.id)) { const pn = readPayer(); if (!pn) return; payload.payer_name = pn; }
             const b = document.getElementById('kpay-go'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
                 const r = await api('create', payload);
@@ -8674,6 +8723,12 @@ window.resetUser2FA = function(username) {
                 </div>
                 <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id, accAll, coMode)}</p>
                 <p class="text-center text-sm text-gray-300 mb-3">Tiempo para pagar: <b id="kpay-cd" class="text-white font-orbitron">--:--</b></p>
+                ${kIsPerson(m.id) ? `<div id="kpay-payer-pay-box" class="bg-sky-500/10 border-2 border-sky-400/70 rounded-xl p-3 mb-3">
+                    <label for="kpay-payer-pay" class="block text-xs text-white font-bold mb-1"><i class="fa-solid fa-id-card text-sky-300 mr-1"></i>Nombre completo del titular de la cuenta desde la que vas a pagar *</label>
+                    <div class="flex gap-2"><input id="kpay-payer-pay" autocomplete="name" value="${esc(t.payer_name || kPayerSaved())}" class="flex-1 min-w-0 bg-kiwi-dark border-2 border-kiwi-border focus:border-sky-300 rounded-xl p-2 text-white text-sm">
+                    <button onclick="window.kpaySavePayer(this)" class="shrink-0 border border-sky-300 text-sky-200 rounded-lg px-3 text-xs font-bold">Guardar</button></div>
+                    <p class="text-[11px] text-sky-100 mt-1">Se usa para verificar el pago automáticamente; tiene que coincidir con el nombre de quien transfiere. Si no coincide, el staff lo revisa a mano.</p>
+                </div>` : ''}
                 <button onclick="window.kpayPaid()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl text-base"><i class="fa-solid fa-check mr-1"></i>Ya pagué</button>
                 <button onclick="localStorage.removeItem('kpay_active'); window.kpayBack()" class="w-full text-xs text-gray-500 mt-3 py-2">Cancelar y elegir otro método</button>`);
             const tick = () => {
@@ -8686,14 +8741,16 @@ window.resetUser2FA = function(username) {
         }
         window.kpayPaid = function () {
             const t = K.topup, isT = !['usdt', 'binance_pay'].includes(t.method);
+            if (isT) { const pv = ((document.getElementById('kpay-payer-pay') || {}).value || '').replace(/\s+/g, ' ').trim(); if (pv) K.payerDraft = pv; }
             body(`
                 <button onclick="window.kpayResume()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Volver a los datos de pago</button>
                 <p class="text-sm text-gray-300 mb-3">Pagaste <b class="text-kiwi-gold">${fmt(t.pay_amount, t.currency)}</b>. Completá esto para encontrar tu pago más rápido:</p>
                 <p class="text-xs text-red-200 bg-red-600/15 border border-red-500/60 rounded-lg p-2 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Recordá: tenía que ser el monto <b>EXACTO</b> (${fmt(t.pay_amount, t.currency)}). Si mandaste otro monto, el staff lo revisa a mano (puede demorar).</p>
                 <label class="block text-xs text-gray-400 mb-1">${REF_LABEL[t.method]}${['usdt', 'binance_pay'].includes(t.method) ? ' *' : ' (opcional)'}</label>
                 <input id="kpay-ref" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-3 text-white mb-3" placeholder="${t.method === 'usdt' ? 'Ej: 9f3c…a71b' : t.method === 'binance_pay' ? 'Ej: 462576928883449856' : 'Opcional pero ayuda'}">
-                ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre completo de quien hizo la transferencia *</label>
-                <input id="kpay-name" class="w-full bg-kiwi-dark border-2 border-kiwi-border rounded-xl p-3 text-white mb-3" placeholder="Como figura en el comprobante">` : ''}
+                ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre completo del titular de la cuenta desde la que pagaste *</label>
+                <input id="kpay-name" value="${esc(K.payerDraft || t.payer_name || kPayerSaved())}" class="w-full bg-kiwi-dark border-2 border-kiwi-border rounded-xl p-3 text-white mb-1" placeholder="Como figura en el comprobante">
+                <p class="text-[11px] text-sky-200 mb-3">Tiene que coincidir con el nombre de quien transfirió: así se verifica el pago automáticamente.</p>` : ''}
                 <label class="block text-xs text-gray-400 mb-1">Foto del comprobante (opcional)</label>
                 <input id="kpay-proof" type="file" accept="image/*" class="w-full text-xs text-gray-300 mb-1">
                 <p class="text-[11px] text-gray-500 mb-4">El comprobante solo ayuda al staff: el saldo se acredita cuando el pago aparece en la cuenta.</p>
@@ -8714,7 +8771,7 @@ window.resetUser2FA = function(username) {
             const ref = (document.getElementById('kpay-ref').value || '').trim();
             if (K.topup.method === 'usdt' && ref.length < 10) return say('Pegá el TxID / Hash de tu envío (lo ves en el detalle del retiro).');
             if (K.topup.method === 'binance_pay' && ref.replace(/\s/g, '').length < 8) return say('Pegá el ID de orden de Binance Pay: lo ves en el detalle del pago, en tu historial de Binance Pay.');
-            if (!['usdt', 'binance_pay'].includes(K.topup.method) && ((document.getElementById('kpay-name') || {}).value || '').trim().length < 3) return say('Escribí el nombre completo de quien hizo la transferencia, tal como figura en el comprobante.');
+            if (!['usdt', 'binance_pay'].includes(K.topup.method) && !kNameOk((document.getElementById('kpay-name') || {}).value)) return say('Escribí el nombre completo (nombre y apellido) del titular de la cuenta desde la que pagaste: tiene que coincidir con el nombre de quien transfirió.');
             const b = document.getElementById('kpay-send'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando…';
             try {
                 const proof = await shrink((document.getElementById('kpay-proof').files || [])[0]);
@@ -8726,7 +8783,7 @@ window.resetUser2FA = function(username) {
             stopTimers(); steps(3);
             const t = K.topup, s = ST[t.status] || ST.pending;
             const msg = {
-                submitted: 'Estamos buscando tu pago. Suele tardar <b>1 a 5 minutos</b>. Podés cerrar esta ventana: el saldo aparece solo.',
+                submitted: /nombre/i.test(t.note || '') ? 'Recibimos un pago con tu monto, pero <b>el nombre de quien transfirió no coincide</b> (o no figura) con el que escribiste. El staff lo revisa a mano y te acredita apenas lo confirme.' : 'Estamos buscando tu pago. Suele tardar <b>1 a 5 minutos</b>. Podés cerrar esta ventana: el saldo aparece solo.',
                 pending: 'Todavía no marcaste el pago.',
                 review: 'Tu pago necesita una revisión del staff (por ejemplo, el monto no coincidió). Te acreditamos apenas lo confirmemos.',
                 credited: 'Se sumaron <b class="text-green-300">' + Number(t.credited_usdt || t.usdt).toFixed(2) + ' USDT</b> a tu saldo.',
@@ -8779,6 +8836,8 @@ window.resetUser2FA = function(username) {
         //     awaiting → buying → done | credited (saldo acreditado pero la compra no se pudo completar sola: queda el saldo).
         //     Así nunca se compra dos veces y, si se cierra la pestaña, al volver se ofrece completar la compra.
         const KEY = 'kiwi_direct_pending', MAXAGE = 30 * 3600e3;
+        // v72: ¿la compra que se está guardando es una compra directa (recarga recién acreditada)? Solo etiqueta el aviso de Telegram.
+        window.kiwiDirectBuying = function () { try { const p = JSON.parse(localStorage.getItem(KEY) || 'null'); return !!(p && p.state === 'buying' && Date.now() - (p.buyAt || 0) < 120000); } catch (_) { return false; } };
         const W = window, mem = {}; // replays en memoria (funciones) por id de pedido directo
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const say = m => (W.showKiwiAlert ? W.showKiwiAlert(m) : alert(m));
@@ -9003,7 +9062,7 @@ window.resetUser2FA = function(username) {
                         <div class="min-w-0">
                             <p class="text-white font-bold text-sm">#${t.id} · ${esc(t.username)} <span class="text-gray-400 font-normal">· ${ML[t.method] || esc(t.method)}</span></p>
                             <p class="text-kiwi-gold font-orbitron text-sm">${Number(t.usdt).toFixed(2)} USDT <span class="text-gray-300">← ${Number(t.pay_amount).toLocaleString('es-AR')} ${t.currency}</span>${t.received_amount != null ? ` <span class="text-xs ${Math.abs(t.received_amount - t.pay_amount) < 0.01 ? 'text-green-300' : 'text-orange-300'}">(llegó ${Number(t.received_amount)})</span>` : ''}</p>
-                            <p class="text-[11px] text-gray-400">Ref: <span class="text-gray-200 break-all">${esc(t.reference || '—')}</span>${t.payer_name ? ' · Nombre: <span class="text-gray-200">' + esc(t.payer_name) + '</span>' : ''}</p>
+                            <p class="text-[11px] text-gray-400">Ref: <span class="text-gray-200 break-all">${esc(t.reference || '—')}</span>${t.payer_name ? ' · Titular declarado: <span class="text-gray-200">' + esc(t.payer_name) + '</span>' : ''}</p>
                             <p class="text-[11px] text-gray-500">${new Date(t.created_at).toLocaleString('es-AR')} · tasa ${t.rate}${t.credited_by ? ' · por ' + esc(t.credited_by) : ''}${t.source ? ' (' + esc(t.source) + ')' : ''}</p>
                             ${t.status === 'submitted' ? '<p class="text-[11px] text-sky-300">🔎 Verificando solo: se consulta a Binance/banco cada 30 s y si el monto coincide se acredita automáticamente. Aprobar a mano solo si ya viste el dinero.</p>' : ''}${t.note ? `<p class="text-[11px] text-orange-300">${esc(t.note)}</p>` : ''}
                         </div>
@@ -9015,14 +9074,19 @@ window.resetUser2FA = function(username) {
                         <button onclick="window.kpayStaffReject(${t.id})" class="bg-red-500/80 text-white font-bold rounded-lg py-2 text-sm"><i class="fa-solid fa-xmark mr-1"></i>Rechazar</button></div>` : ''}
                 </div>`; }).join('') : '<p class="text-gray-500 text-sm">No hay recargas con este filtro.</p>';
             const nts = (P.data.notifs || []).filter(n => n.status !== 'matched' && n.status !== 'ignored');
-            const NS = { unmatched: 'Sin recarga', ambiguous: 'Varias posibles', unparsed: 'No se pudo leer', new: 'Nueva' };
+            const NS = { unmatched: 'Sin recarga', ambiguous: 'Varias posibles', unparsed: 'No se pudo leer', new: 'Nueva', name_mismatch: '⚠️ Nombre no coincide', name_missing: '⚠️ Falta el nombre' };
             document.getElementById('kps-notifs').innerHTML = nts.length ? nts.map(n => `
                 <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-xs">
                     <div class="flex justify-between gap-2"><p class="text-white font-bold">${n.amount != null ? Number(n.amount).toLocaleString('es-AR') + ' ' + esc(n.currency || '') : '¿monto?'} <span class="text-gray-400 font-normal">· ${ML[n.method] || esc(n.app || '?')}</span></p>
                     <span class="text-orange-300">${NS[n.status] || esc(n.status)}</span></div>
                     <p class="text-gray-300 mt-1">${esc(n.title)} — ${esc(n.body)}</p>
-                    <p class="text-gray-500">${new Date(n.received_at).toLocaleString('es-AR')}${n.sender ? ' · de ' + esc(n.sender) : ''}${n.op ? ' · op ' + esc(n.op) : ''}</p>
-                    <div class="flex gap-2 mt-2"><input id="kps-link-${n.id}" type="number" placeholder="Nº de recarga" class="flex-1 bg-black/40 border border-kiwi-border rounded-lg p-2 text-white">
+                    <p class="text-gray-500">${new Date(n.received_at).toLocaleString('es-AR')}${n.op ? ' · op ' + esc(n.op) : ''}</p>
+                    <div class="kps-names grid grid-cols-2 gap-2 mt-2">
+                        <div class="rounded-lg border ${n.name_ok === false ? 'border-red-500/70 bg-red-500/10' : n.name_ok ? 'border-green-500/60 bg-green-500/10' : 'border-kiwi-border bg-black/30'} p-2"><p class="text-[10px] text-gray-400 uppercase">Nombre en la notificación</p><p class="text-white font-bold break-words">${esc(n.sender || '— (no trae)')}</p></div>
+                        <div class="rounded-lg border ${n.name_ok === false ? 'border-red-500/70 bg-red-500/10' : n.name_ok ? 'border-green-500/60 bg-green-500/10' : 'border-kiwi-border bg-black/30'} p-2"><p class="text-[10px] text-gray-400 uppercase">Declarado por el cliente${n.topup_id ? ' · #' + n.topup_id + (n.topup_user ? ' ' + esc(n.topup_user) : '') : ''}</p><p class="text-white font-bold break-words">${esc(n.declared_name || '—')}</p></div>
+                    </div>
+                    ${n.note ? `<p class="text-[11px] text-orange-300 mt-1">${esc(n.note)}</p>` : ''}
+                    <div class="flex gap-2 mt-2"><input id="kps-link-${n.id}" type="number" placeholder="Nº de recarga" value="${n.topup_id && /^name_/.test(n.status) ? n.topup_id : ''}" class="flex-1 bg-black/40 border border-kiwi-border rounded-lg p-2 text-white">
                     <button onclick="window.kpayStaffLink(${n.id})" class="bg-kiwi-gold text-black font-bold rounded-lg px-3">Acreditar</button>
                     <button onclick="window.kpayStaffIgnore(${n.id})" class="border border-kiwi-border text-gray-300 rounded-lg px-3">Ignorar</button></div>
                 </div>`).join('') : '<p class="text-gray-500 text-sm">Nada pendiente.</p>';
@@ -9857,5 +9921,152 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 })();
 </script>
 
+<!-- v72: MIS PEDIDOS (estado + notas del staff + avisos) -->
+<div id="kped-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)window.kpedClose()">
+    <div class="bg-kiwi-card border border-kiwi-border w-full sm:max-w-lg max-h-[92vh] rounded-t-2xl sm:rounded-2xl flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-kiwi-border">
+            <h3 class="font-orbitron font-bold text-white text-base"><i class="fa-solid fa-box-open text-kiwi-gold mr-2"></i>MIS PEDIDOS</h3>
+            <button onclick="window.kpedClose()" class="h-9 w-9 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="kped-filters" class="flex flex-wrap gap-2 px-4 pt-3"></div>
+        <div id="kped-list" class="overflow-y-auto p-4 space-y-3"></div>
+        <p class="text-[11px] text-gray-500 px-4 pb-4">Se actualiza solo cada minuto. Te avisamos acá cuando un pedido se completa, se cancela o el staff te deja una nota.</p>
+    </div>
+</div>
+<div id="kped-toasts" class="fixed top-20 right-3 left-3 sm:left-auto sm:w-96 z-[150] space-y-2 pointer-events-none"></div>
+<script>
+(function () {
+    const W = window;
+    const S = { events: [], last: 0, seen: 0, unread: 0, filter: 'all', toasted: {}, started: false };
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const me = () => { try { return typeof currentUser !== 'undefined' ? currentUser : null; } catch (_) { return null; } };
+    const tok = () => { try { return W.kiwiToken && W.kiwiToken(); } catch (_) { return null; } };
+    // 5 estados que ve el comprador
+    const BUCKET = { pending: 'pendiente', receipt_review: 'pendiente', confirmed: 'proceso', claimed: 'proceso',
+                     delivered: 'completado', accredited: 'completado', cancelled: 'cancelado', problem: 'problema' };
+    const PILL = {
+        pendiente:  ['Pendiente',    'bg-yellow-500/15 text-yellow-300 border-yellow-500/40', 'fa-hourglass-half'],
+        proceso:    ['En proceso',   'bg-blue-500/15 text-blue-300 border-blue-500/40', 'fa-gears'],
+        completado: ['Completado',   'bg-green-500/15 text-green-300 border-green-500/40', 'fa-circle-check'],
+        cancelado:  ['Cancelado',    'bg-red-500/15 text-red-300 border-red-500/40', 'fa-ban'],
+        problema:   ['Con problema', 'bg-orange-500/15 text-orange-300 border-orange-500/40', 'fa-triangle-exclamation']
+    };
+    W.kpedBucket = s => BUCKET[s] || 'pendiente';
+    const pill = b => { const p = PILL[b] || PILL.pendiente; return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase ${p[1]}"><i class="fa-solid ${p[2]}"></i>${p[0]}</span>`; };
+    const fmt = d => { try { return new Date(d).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } };
+    const mine = () => { const u = me(); if (!u) return []; try { return (W.readPurchases ? W.readPurchases() : JSON.parse(localStorage.getItem('kiwi_purchases') || '[]')).filter(p => W.sameUser ? W.sameUser(p.user, u) : p.user === u); } catch (_) { return []; } };
+
+    W.kpedToast = function (title, text, kind, onclick) {
+        const box = document.getElementById('kped-toasts'); if (!box) return;
+        const b = PILL[kind] || PILL.proceso;
+        const d = document.createElement('div');
+        d.className = 'pointer-events-auto cursor-pointer rounded-2xl border bg-kiwi-card/95 p-3 shadow-[0_0_24px_rgba(0,0,0,0.6)] flex gap-3 items-start ' + b[1];
+        d.innerHTML = `<i class="fa-solid ${b[2]} text-lg mt-0.5"></i><div class="min-w-0 flex-1"><p class="font-rajdhani font-bold text-white text-sm leading-tight">${esc(title)}</p><p class="text-xs text-gray-300 mt-0.5 break-words">${esc(text)}</p></div><button class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>`;
+        d.onclick = e => { d.remove(); if (!e.target.closest('button') && onclick) onclick(); };
+        box.appendChild(d);
+        setTimeout(() => d.remove(), 9000);
+    };
+    function eventMsg(e, title) {
+        if (e.kind === 'note') return ['Nota del staff · ' + title, e.body || '', 'proceso'];
+        const b = W.kpedBucket(e.status);
+        if (b === 'completado') return ['¡Pedido completado!', title, 'completado'];
+        if (b === 'cancelado') return ['Pedido cancelado', title + ' · si pagaste con saldo, se te devolvió', 'cancelado'];
+        if (b === 'problema') return ['Tu pedido tiene un problema', title + ' · revisá la nota del staff', 'problema'];
+        return null;
+    }
+    function applyEvents(list, toast) {
+        const byId = {}; mine().forEach(p => { byId[String(p.id)] = p; });
+        let changed = false; const all = W.readPurchases ? W.readPurchases() : null;
+        for (const e of list) {
+            if (S.events.some(x => x.id === e.id)) continue;
+            S.events.push(e); S.last = Math.max(S.last, Number(e.id) || 0);
+            const p = byId[String(e.order_id)];
+            if (all) { const q = all.find(x => String(x.id) === String(e.order_id)); if (q) { if (e.kind === 'status' && e.status) q.status = e.status; if (e.kind === 'note') q.notes = e.body; changed = true; } }
+            if (toast && e.id > S.seen && !S.toasted[e.id]) {
+                const m = eventMsg(e, (p && p.title) || ('Pedido ' + e.order_id));
+                if (m) { S.toasted[e.id] = 1; W.kpedToast(m[0], m[1], m[2], () => W.kpedOpen(e.order_id)); }
+            }
+        }
+        if (changed && all) { W._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(all)); W._purchaseSyncMuted = false; }
+        S.unread = S.events.filter(e => e.id > S.seen && (e.kind === 'note' || ['completado', 'cancelado', 'problema', 'proceso'].includes(W.kpedBucket(e.status)))).length;
+    }
+    W.kpedPoll = async function (first) {
+        if (!me() || !tok() || !W.kiwiRpc) return;
+        try {
+            const r = await W.kiwiRpc('kiwi_my_order_events', { p_token: tok(), p_after: S.last });
+            if (!r) return;
+            S.seen = Math.max(S.seen, Number(r.last_seen) || 0);
+            const ev = Array.isArray(r.events) ? r.events : [];
+            // al cargar: solo avisar lo no leído de las últimas 48 h (máx. 3 avisos)
+            if (first) { const fresh = ev.filter(e => e.id > S.seen && Date.now() - Date.parse(e.created_at) < 48 * 3600e3).slice(-3); applyEvents(ev.filter(e => !fresh.includes(e)), false); applyEvents(fresh, true); }
+            else applyEvents(ev, true);
+            renderBadge();
+            if (!document.getElementById('kped-modal').classList.contains('hidden')) W.kpedRender();
+            if (ev.length && typeof W.renderClientOrders === 'function') W.renderClientOrders();
+        } catch (e) { /* SQL v72 sin aplicar o sin conexión: se ve igual con los datos locales */ }
+    };
+    function renderBadge() {
+        const n = S.unread, bell = document.getElementById('kped-bell');
+        if (bell) bell.classList.toggle('hidden', !me());
+        document.querySelectorAll('.kped-badge').forEach(b => { b.textContent = n > 9 ? '9+' : String(n); b.classList.toggle('hidden', !n); });
+    }
+    W.kpedFilter = f => { S.filter = f; W.kpedRender(); };
+    W.kpedRender = function () {
+        const list = document.getElementById('kped-list'), fl = document.getElementById('kped-filters');
+        if (!list) return;
+        const orders = mine().slice().reverse();
+        const cnt = { all: orders.length }; orders.forEach(p => { const b = W.kpedBucket(p.status); cnt[b] = (cnt[b] || 0) + 1; });
+        fl.innerHTML = [['all', 'Todos']].concat(Object.keys(PILL).map(k => [k, PILL[k][0]])).filter(x => x[0] === 'all' || cnt[x[0]])
+            .map(x => `<button onclick="window.kpedFilter('${x[0]}')" class="px-3 py-1 rounded-full text-[11px] font-bold border ${S.filter === x[0] ? 'bg-kiwi-gold text-black border-kiwi-gold' : 'bg-kiwi-dark text-gray-300 border-kiwi-border'}">${x[1]} (${cnt[x[0]] || 0})</button>`).join('');
+        const shown = S.filter === 'all' ? orders : orders.filter(p => W.kpedBucket(p.status) === S.filter);
+        if (!shown.length) { list.innerHTML = '<p class="text-gray-500 text-sm text-center py-10">' + (orders.length ? 'No hay pedidos con este estado.' : 'Todavía no tenés pedidos.') + '</p>'; return; }
+        list.innerHTML = shown.map(p => {
+            const evs = S.events.filter(e => String(e.order_id) === String(p.id));
+            const notes = evs.filter(e => e.kind === 'note');
+            const thread = notes.length ? notes : (p.notes ? [{ body: p.notes, created_at: null, legacy: 1 }] : []);
+            const isNew = evs.some(e => e.id > S.seen);
+            return `<div id="kped-o-${esc(p.id)}" class="rounded-xl border ${isNew ? 'border-kiwi-gold/70' : 'border-kiwi-border'} bg-kiwi-dark p-3">
+                <div class="flex justify-between gap-2 items-start">
+                    <div class="min-w-0"><p class="font-rajdhani font-bold text-white text-base leading-tight">${esc(p.title)}</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">${esc(p.date || '')} · <span class="text-kiwi-gold">${esc(p.usdtPrice ? Number(p.usdtPrice).toFixed(2) + ' USDT' : p.price)}</span></p>
+                    <p class="text-[11px] text-gray-500">Pedido #${esc(p.id)}${p.targetUser ? ' · ' + esc(p.targetUser) : ''}</p></div>
+                    <div class="shrink-0 text-right">${pill(W.kpedBucket(p.status))}${isNew ? '<p class="text-[10px] text-kiwi-gold font-bold mt-1">NUEVO</p>' : ''}</div>
+                </div>
+                ${thread.length ? `<div class="mt-2 space-y-1.5 border-t border-kiwi-border/60 pt-2">${thread.map(n => `<div class="rounded-lg bg-kiwi-card border border-yellow-500/20 px-2.5 py-1.5"><p class="text-[10px] text-yellow-400 font-bold"><i class="fa-solid fa-headset"></i> Staff${n.created_at ? ' · ' + esc(fmt(n.created_at)) : ''}</p><p class="text-xs text-gray-200 whitespace-pre-wrap break-words">${esc(n.body)}</p></div>`).join('')}</div>` : ''}
+            </div>`;
+        }).join('');
+    };
+    W.kpedOpen = function (orderId) {
+        if (!me()) { if (W.openAuthModal) W.openAuthModal('login'); return; }
+        const m = document.getElementById('kped-modal'); m.classList.remove('hidden');
+        if (orderId) S.filter = 'all';
+        W.kpedRender();
+        if (orderId) { const el = document.getElementById('kped-o-' + orderId); if (el) el.scrollIntoView({ block: 'center' }); }
+        if (S.last > S.seen && W.kiwiRpc && tok()) { const upto = S.last; W.kiwiRpc('kiwi_my_order_seen', { p_token: tok(), p_upto: upto }).then(() => { S.seen = Math.max(S.seen, upto); S.unread = 0; renderBadge(); }).catch(() => {}); }
+        if (typeof W.kiwiFetchOrders === 'function') { try { Promise.resolve(W.kiwiFetchOrders()).then(() => W.kpedRender()).catch(() => {}); } catch (_) {} }
+    };
+    W.kpedClose = () => { document.getElementById('kped-modal').classList.add('hidden'); W.kpedRender(); };
+
+    // Aviso al dueño por Telegram (el servidor verifica el pedido; uno por pedido). Nunca bloquea la compra.
+    W.kiwiNotifyOrders = function (ids, src) {
+        try {
+            const t = tok(); const list = (ids || []).map(String).filter(Boolean);
+            if (!t || !list.length) return;
+            fetch('/api/pay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+                body: JSON.stringify({ action: 'notify', token: t, ids: list.slice(0, 10), src: src || (W.kiwiDirectBuying && W.kiwiDirectBuying() ? 'direct' : 'saldo') }) }).catch(() => {});
+        } catch (_) {}
+    };
+
+    function start() {
+        renderBadge();
+        if (S.started || !me()) return;
+        S.started = true;
+        W.kpedPoll(true);
+        setInterval(() => { if (document.visibilityState !== 'hidden') W.kpedPoll(false); }, 60000);
+    }
+    setInterval(start, 3000); setTimeout(start, 800);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.started) W.kpedPoll(false); });
+})();
+</script>
 </body>
 </html>
