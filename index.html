@@ -962,7 +962,7 @@
                 <div id="admin-saldo" class="admin-tab hidden" data-title="Saldo" data-sub="Acreditar o quitar saldo · Owner / CEO"></div>
                 <div id="admin-2fa" class="admin-tab hidden" data-title="2FA" data-sub="Resetear el código 2FA de un usuario · Owner / CEO"></div>
                 <div id="admin-pagos" class="admin-tab hidden" data-title="Pagos" data-sub="Recargas de saldo y notificaciones de pago · Owner / CEO"></div>
-                <div id="admin-stock" class="admin-tab hidden" data-title="Stock" data-sub="Marcá grupos y productos como «No Stock» · solo Owner / CEO"></div>
+                <div id="admin-stock" class="admin-tab hidden" data-title="Stock" data-sub="Productos «No Stock» (bloquea) · grupos: solo etiqueta, no bloquea la compra · solo Owner / CEO"></div>
             </div>
         </div>
     </div>
@@ -1615,6 +1615,11 @@ window.balShowStaff = function (on) {
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]">
                     <i class="fa-solid fa-wallet text-lg"></i> COMPRAR CON SALDO
                 </button>
+                <!-- v71: Compra directa (paga el producto con la recarga automática y se compra solo al acreditarse) -->
+                <button type="button" id="kdir-btn" onclick="window.kiwiDirectCheckout(this)" class="w-full bg-kiwi-gold hover:brightness-110 text-black font-orbitron font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt text-lg"></i> COMPRA DIRECTA <span class="font-rajdhani text-xs font-bold">(pagar ahora por transferencia / Binance)</span>
+                </button>
+                <p class="text-[11px] text-gray-400 text-center font-rajdhani -mt-2">Compra directa: pagás el producto con tu método favorito y, cuando se verifica el pago, la compra se hace sola.</p>
             </form>
         </div>
     </div>
@@ -5614,7 +5619,7 @@ window.balShowStaff = function (on) {
                 if (!users[currentUser]) return alert('Sesión inválida');
                 const usdtPrice = Number(prod.usdtPrice) || 0;
                 const bal = Number(users[currentUser].balance || 0);
-                if (bal < usdtPrice) return alert('Saldo insuficiente');
+                if (bal < usdtPrice) return window.kiwiLowBal(bal, usdtPrice, 'checkout', prod.title);
                 users[currentUser].balance = bal - usdtPrice;
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
@@ -5637,7 +5642,7 @@ window.balShowStaff = function (on) {
                 if (!users[currentUser]) return alert('Sesión inválida');
                 const usdtPrice = Number(prod.usdtPrice) || 0;
                 const bal = Number(users[currentUser].balance || 0);
-                if (bal < usdtPrice) return alert('Saldo insuficiente');
+                if (bal < usdtPrice) return window.kiwiLowBal(bal, usdtPrice, 'checkout', prod.title);
                 users[currentUser].balance = bal - usdtPrice;
                 localStorage.setItem('kiwi_users', JSON.stringify(users));
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
@@ -5684,7 +5689,7 @@ window.balShowStaff = function (on) {
                 const bal = Number(users[currentUser].balance || 0);
                 const priceNumGP = Number(window.currentActiveProduct.usdtPrice) || 0; // v38: USDT (antes comparaba el texto en pesos)
                 if (!priceNumGP) return alert('No se pudo leer el precio del producto.');
-                if (bal < priceNumGP) return alert('Saldo insuficiente');
+                if (bal < priceNumGP) return window.kiwiLowBal(bal, priceNumGP, 'checkout', window.currentActiveProduct.title);
                 const robloxUser = (document.getElementById('user-account-input')?.value || '').trim();
                 const gamepassLink = (document.getElementById('extra-input')?.value || '').trim();
                 if (!robloxUser) return alert('Ingresá tu usuario de Roblox');
@@ -5717,8 +5722,7 @@ window.balShowStaff = function (on) {
                 return;
             }
             if (balance < priceNum) {
-                alert('Saldo insuficiente.\nTu saldo: ' + balance.toFixed(2) + ' USDT\nPrecio: ' + priceNum.toFixed(2) + ' USDT');
-                return;
+                return window.kiwiLowBal(balance, priceNum, 'checkout', prod.title);
             }
 
             const bulkServiceId = window.resolveBulkMedyaServiceId(prod);
@@ -6588,7 +6592,7 @@ window.balShowStaff = function (on) {
             if (!priceNum) return alert('No se pudo leer el precio del producto.');
             if (bal < priceNum) {
                 document.getElementById('ff-confirm-modal').classList.add('hidden');
-                return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + priceNum.toFixed(2) + ' USDT');
+                return window.kiwiLowBal(bal, priceNum, () => window.confirmFreeFirePurchase(), prod && (prod.title || prod.name));
             }
 
             // v32: diamantes LIMITADOS. Antes de cobrar: sin duplicados y oferta revalidada en el momento
@@ -6733,7 +6737,7 @@ window.balShowStaff = function (on) {
             const bal = users[currentUser]?.balance || 0;
             const priceArs = qty * FRAG_PRICE_PER_UNIT;
             const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
-            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + Number(bal).toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
+            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyFragments(), qty + ' Fragmentos');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
 
@@ -6796,7 +6800,7 @@ window.balShowStaff = function (on) {
             if (!users[currentUser]) return alert('Sesión inválida');
             const bal = Number(users[currentUser].balance || 0);
             const price = Number(prod.usdtPrice) || 2;
-            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
+            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyBooyahManual(), 'Pase Booyah');
             const ffId = users[currentUser].ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
             const priceStr = window.getConvertedPrice(prod);
@@ -6827,7 +6831,7 @@ window.balShowStaff = function (on) {
             const bal = users[currentUser]?.balance || 0;
             const priceArs = qty * BOX_PRICE_PER_UNIT;
             const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
-            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + Number(bal).toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
+            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyBoxes(), 'Caja de Fragmentos');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
 
@@ -6859,7 +6863,7 @@ window.balShowStaff = function (on) {
             const bal = users[currentUser]?.balance || 0;
             const priceArs = window.kiwiBooyahArs();
             const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
-            if (bal < price) return alert('Saldo insuficiente');
+            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyBooyahPass(), 'Pase Booyah');
             const ffId = users[currentUser]?.ff_id;
             if (!ffId) return alert('Verificá tu ID de Free Fire primero');
 
@@ -7394,7 +7398,7 @@ window.balShowStaff = function (on) {
             const pmin = methodText === window.KRX_MAYOR_LABEL ? window.KRX_MAYOR_MIN : (window.ROBUX_MIN || 100);
             if (!(amount >= pmin)) return alert('El monto mínimo es de ' + pmin.toLocaleString('es-AR') + ' Robux');
             if (subType === 'robux_grupo' && methodText !== window.KRX_MAYOR_LABEL && amount > window.ROBUX_MAX_MENOR) return alert('El monto máximo es de ' + window.ROBUX_MAX_MENOR.toLocaleString('es-AR') + ' Robux');
-            if (bal < priceNum) return alert('Saldo insuficiente');
+            if (bal < priceNum) return window.kiwiLowBal(bal, priceNum, 'checkout', amount + ' Robux (' + methodText + ')');
             users[currentUser].balance = bal - priceNum;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
@@ -8155,7 +8159,7 @@ window.resetUser2FA = function(username) {
             if (window.kiwiRaSinStock(prod)) return alert('Sin Stock: este producto no está disponible por el momento.');
             if (prod.raUnavailable) return alert('Este producto está agotado / no disponible por el momento.');
             const bal = Number(users[currentUser].balance || 0);
-            if (bal < price) return alert('Saldo insuficiente.\nTu saldo: ' + bal.toFixed(2) + ' USDT\nPrecio: ' + price.toFixed(2) + ' USDT');
+            if (bal < price) return window.kiwiLowBal(bal, price, () => window.kiwiRaPurchase(prod, data), prod.title || prod.name);
             if (typeof window.spendPending === 'function' && window.spendPending()) { if (window.flushSpend) window.flushSpend(); return alert('Estamos guardando una compra anterior. Probá de nuevo en unos segundos.'); }
             if (!window.kiwiToken()) return alert('Tu sesión venció. Volvé a iniciar sesión.');
             window._raBusy = true;
@@ -8384,7 +8388,7 @@ window.resetUser2FA = function(username) {
     <div id="kpay-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[120] hidden flex items-center justify-center p-3">
         <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-5 relative max-h-[94vh] overflow-y-auto">
             <button onclick="window.kpayClose()" class="absolute top-3 right-3 w-10 h-10 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-orbitron text-lg font-bold text-kiwi-gold mb-1"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</h3>
+            <h3 id="kpay-title" class="font-orbitron text-lg font-bold text-kiwi-gold mb-1"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</h3>
             <div id="kpay-steps" class="flex gap-1 mb-4"></div>
             <div id="kpay-body"></div>
         </div>
@@ -8394,12 +8398,17 @@ window.resetUser2FA = function(username) {
         const API = '/api/pay';
         const K = window.KPAY = { cfg: null, method: null, topup: null, timer: null, poll: null };
         const ICON = { usdt: 'fa-solid fa-coins', binance_pay: 'fa-solid fa-wallet', ar_transfer: 'fa-solid fa-building-columns',
-                       mx_nu: 'fa-solid fa-credit-card', co_bancolombia: 'fa-solid fa-landmark', pe_yape: 'fa-solid fa-mobile-screen' };
-        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN' };
-        const FLAG = new Proxy({}, { get: (_, id) => window.kiFlag(FLAGC[id] || 'XX', 22) });
+                       mx_nu: 'fa-solid fa-credit-card', co_bancolombia: 'fa-solid fa-landmark', pe_yape: 'fa-solid fa-mobile-screen',
+                       us_takenos: 'fa-solid fa-dollar-sign', eu_wise: 'fa-solid fa-euro-sign' };
+        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR' };
+        // v70: banderas USD/EUR solo dentro de Recargar (no toca window.kiFlag ni el selector de moneda)
+        const kFlag = (c, w) => { const iso = { USD: 'us', EUR: 'eu' }[c]; if (!iso) return window.kiFlag(c, w); const h = Math.round(w * 0.75);
+            return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + c + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle">'; };
+        const FLAG = new Proxy({}, { get: (_, id) => kFlag(FLAGC[id] || 'XX', 22) });
         const REF_LABEL = { usdt: 'TxID / Hash de la transacción', binance_pay: 'ID de orden de Binance Pay',
                             ar_transfer: 'Número de operación / comprobante', mx_nu: 'Clave de rastreo / folio',
-                            co_bancolombia: 'Número de comprobante', pe_yape: 'Número de operación' };
+                            co_bancolombia: 'Número de comprobante', pe_yape: 'Número de operación',
+                            us_takenos: 'Referencia / ID de la transferencia', eu_wise: 'Referencia / ID de la transferencia' };
         const ST = { pending: ['Esperando tu pago', 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', 'fa-hourglass-half'],
                      submitted: ['Verificando…', 'bg-blue-500/20 text-blue-300 border-blue-500/40', 'fa-magnifying-glass'],
                      review: ['En revisión del staff', 'bg-orange-500/20 text-orange-300 border-orange-500/40', 'fa-user-shield'],
@@ -8410,7 +8419,7 @@ window.resetUser2FA = function(username) {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const fmt = (n, cur) => {
             const d = cur === 'ARS' || cur === 'COP' ? 0 : 2;
-            return (cur === 'PEN' ? 'S/ ' : cur === 'USDT' ? '' : '$ ') + Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ' + cur;
+            return (cur === 'PEN' ? 'S/ ' : cur === 'EUR' ? '€ ' : cur === 'USDT' ? '' : '$ ') + Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ' + cur;
         };
         const plain = (n, cur) => cur === 'ARS' || cur === 'COP' ? String(Math.round(n)) : Number(n).toFixed(2);
         async function api(action, data) {
@@ -8438,13 +8447,17 @@ window.resetUser2FA = function(username) {
         const kMin = () => K.purpose === 'reseller' ? Math.max(RES_MIN, K.cfg.min_usdt || 1) : (K.cfg.min_usdt || 1);
         window.kpayOpen = async function (opts) {
             if (typeof currentUser !== 'undefined' && !currentUser) return say('Iniciá sesión primero');
-            K.purpose = (opts && opts.purpose === 'reseller') ? 'reseller' : 'normal';
+            K.purpose = (opts && (opts.purpose === 'reseller' || opts.purpose === 'direct')) ? opts.purpose : 'normal';
+            // v71: Compra directa → recarga normal por el total exacto del producto (K.directUsdt)
+            K.directUsdt = K.purpose === 'direct' ? Number(opts.usdt) || 0 : 0; K.directTitle = K.purpose === 'direct' ? String(opts.title || '') : '';
+            document.getElementById('kpay-title').innerHTML = K.purpose === 'direct' ? '<i class="fa-solid fa-bolt mr-1"></i>Compra directa' : '<i class="fa-solid fa-bolt mr-1"></i>Recargar saldo';
             document.getElementById('kpay-modal').classList.remove('hidden');
-            const act = JSON.parse(localStorage.getItem('kpay_active') || 'null');
+            if (opts && opts.resumeId) { try { const r = await api('check', { id: opts.resumeId }); K.cfg = K.cfg || await api('config'); K.topup = r.topup; K.method = (K.cfg.methods || []).find(m => m.id === r.topup.method); return r.topup.status === 'pending' ? renderPay() : renderStatus(); } catch (_) {} }
+            const act = K.purpose === 'direct' ? null : JSON.parse(localStorage.getItem('kpay_active') || 'null');
             steps(0); body('<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando…</p>');
             try { K.cfg = await api('config'); } catch (e) { K.cfg = { methods: [], min_usdt: 1 }; }
             if (act && act.id && Date.now() - act.t < 3 * 3600e3) {
-                try { const r = await api('check', { id: act.id }); if (r.topup && !['credited', 'rejected'].includes(r.topup.status)) { K.topup = r.topup; K.account = act.account; K.method = K.cfg.methods.find(m => m.id === r.topup.method); return r.topup.status === 'pending' ? renderPay() : renderStatus(); } } catch (_) {}
+                try { const r = await api('check', { id: act.id }); const dp = window.kiwiDirectPending && window.kiwiDirectPending(); if (dp && dp.topupId === act.id) { K.purpose = 'direct'; K.directUsdt = dp.usdt; K.directTitle = dp.title; document.getElementById('kpay-title').innerHTML = '<i class="fa-solid fa-bolt mr-1"></i>Compra directa'; } if (r.topup && !['credited', 'rejected'].includes(r.topup.status)) { K.topup = r.topup; K.account = act.account; K.method = K.cfg.methods.find(m => m.id === r.topup.method); return r.topup.status === 'pending' ? renderPay() : renderStatus(); } } catch (_) {}
                 localStorage.removeItem('kpay_active');
             }
             renderMethods();
@@ -8453,13 +8466,14 @@ window.resetUser2FA = function(username) {
             stopTimers(); steps(0);
             const ms = (K.cfg && K.cfg.methods) || [];
             body(`
+                ${K.purpose === 'direct' ? window.kiwiDirectBanner(K.directTitle, K.directUsdt) : ''}
                 ${K.purpose === 'reseller' ? '<div class="mb-3 rounded-xl border border-kiwi-gold/60 bg-kiwi-gold/10 p-3 text-xs text-kiwi-gold font-bold"><i class="fa-solid fa-crown mr-1"></i>Recarga de revendedor: mínimo 50 USDT. Suma a tu plan y se acredita como saldo normal.</div>' : ''}
                 <p class="text-sm text-white font-bold mb-1">1. Elegí cómo querés pagar</p>
                 <p class="text-xs text-gray-300 mb-3">El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago.</p>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                 ${ms.length ? ms.map(m => `
                     <button onclick="window.kpayPick('${m.id}')" class="kpay-m flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 min-h-[72px] text-left transition active:scale-95 hover:border-kiwi-gold">
-                        <span class="flex-shrink-0">${window.kiFlag(FLAGC[m.id] || 'XX', 32)}</span>
+                        <span class="flex-shrink-0">${kFlag(FLAGC[m.id] || 'XX', 32)}</span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-[13px]">${esc(m.label)}</span>
                         <span class="block text-[11px] text-gray-400"><i class="${ICON[m.id]} text-kiwi-gold mr-1"></i>${m.currency}${m.commission_pct ? ' · comisión ' + m.commission_pct + '%' : ' · sin comisión'}</span></span>
                     </button>`).join('') : '<p class="col-span-2 text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">Las recargas automáticas todavía no están activas. Podés cargar por WhatsApp.</p>'}
@@ -8483,20 +8497,48 @@ window.resetUser2FA = function(username) {
         }
         // v61: transferencia AR se carga en pesos (lo que el cliente transfiere); el resto en USDT
         // v62: también Bancolombia Colombia (COP). Comisión incluida en lo que transfiere el cliente.
-        const FIAT_IN = { ARS: { label: '¿Cuántos pesos (ARS) querés transferir?', def: 10000, step: 10 }, COP: { label: '¿Cuántos pesos colombianos (COP) querés transferir?', def: 20000, step: 100 } };
+        const FIAT_IN = { ARS: { label: '¿Cuántos pesos (ARS) querés transferir?', def: 10000, step: 10 }, COP: { label: '¿Cuántos pesos colombianos (COP) querés transferir?', def: 20000, step: 100 },
+                          // v70: USD (Takenos) y EUR (Wise): con centavos; tasa en vivo desde /api/pay?action=rate
+                          USD: { label: '¿Cuántos dólares (USD) querés transferir?', def: 10, step: 0.01, dec: 2, sym: '$' },
+                          EUR: { label: '¿Cuántos euros (EUR) querés transferir?', def: 10, step: 0.01, dec: 2, sym: '€' } };
         const kIsArs = () => !!(K.method && FIAT_IN[K.method.currency]);
         const kFI = () => FIAT_IN[K.method.currency];
-        const kRate = () => K.method.currency === 'USDT' ? 1 : Number((window.exchangeRates || {})[K.method.currency]) || 0;
-        const kArsMin = u => { const st = kFI() ? kFI().step : 10; return Math.ceil(u * kRate() * (1 + (K.method.commission_pct || 0) / 100) / st) * st; };
-        const kNum = el => Number(String(el.value || '').replace(/\./g, '').replace(',', '.')) || 0;
-        window.kpaySetArs = function (u) { const el = document.getElementById('kpay-usdt'); el.value = kArsMin(u).toLocaleString('es-AR'); window.kpayEst(); };
+        const kDec = () => !!(kFI() && kFI().dec);
+        const kRate = () => K.method.currency === 'USDT' ? 1 : Number((K.liveRate || {})[K.method.currency]) || Number((window.exchangeRates || {})[K.method.currency]) || 0;
+        const kArsMin = u => { const st = kFI() ? kFI().step : 10, x = u * kRate() * (1 + (K.method.commission_pct || 0) / 100);
+            return kDec() ? Math.ceil(x * 100 - 1e-6) / 100 : Math.ceil(x / st) * st; };
+        const kNum = el => kDec() ? (Number(String(el.value || '').replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0)
+                                  : (Number(String(el.value || '').replace(/\./g, '').replace(',', '.')) || 0);
+        const kShow = v => kDec() ? Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Number(v).toLocaleString('es-AR');
+        const kSym = () => (kFI() && kFI().sym) || '$';
+        // v70: cotización en vivo (cada 30 s mientras estás en el paso Monto). Al crear, el servidor vuelve a cotizar y fija la tasa.
+        function stopRate() { clearInterval(K.rateT); K.rateT = null; }
+        async function kpayRate(cur) {
+            try {
+                const r = await fetch(API + '?action=rate&c=' + cur); const j = await r.json();
+                if (j && j.rate > 0) { K.liveRate = Object.assign({}, K.liveRate, { [cur]: j.rate }); K.rateAt = Date.now(); }
+            } catch (_) {}
+            if (!K.method || K.method.currency !== cur || !document.getElementById('kpay-usdt')) return stopRate();
+            const el = document.getElementById('kpay-rate'), r = kRate();
+            if (el && r) el.innerHTML = '<i class="fa-solid fa-arrows-rotate mr-1"></i>Cotización en vivo: <b class="text-white">1 USDT = ' + kSym() + ' ' + r.toLocaleString('es-AR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' ' + cur + '</b> · se actualiza cada 30 s';
+            window.kpayMinNote && window.kpayMinNote();
+            window.kpayEst();
+        }
+        window.kpayMinNote = function () {
+            if (!kDec()) return; const el = document.getElementById('kpay-min-eq'); const mn = kRate() ? kArsMin(kMin()) : 0;
+            if (el) el.innerHTML = mn ? ' (≈ ' + kSym() + ' ' + kShow(mn) + ' ' + K.method.currency + ')' : '';
+            document.querySelectorAll('[data-kq]').forEach(b => { const v = Number(b.dataset.kq); b.querySelector('span').textContent = '≈ ' + kSym() + ' ' + kShow(kArsMin(v)); });
+        };
+        window.kpaySetArs = function (u) { const el = document.getElementById('kpay-usdt'); el.value = kShow(kArsMin(u)); window.kpayEst(); };
         window.kpayFmtArs = function (el) {
+            if (kDec()) { el.value = String(el.value).replace(/[^\d.,]/g, '').slice(0, 10); return window.kpayEst(); }
             const d = String(el.value).replace(/\D/g, '').slice(0, 9);
             el.value = d ? Number(d).toLocaleString('es-AR') : '';
             window.kpayEst();
         };
         window.kpayPick = function (id) {
-            K.method = K.cfg.methods.find(m => m.id === id); steps(1);
+            K.method = K.cfg.methods.find(m => m.id === id); steps(1); stopRate();
+            if (K.purpose === 'direct') return directPick();
             const m = K.method, min = kMin(), res = K.purpose === 'reseller', ars = kIsArs();
             const arsMin = ars ? kArsMin(min) : 0;
             const quick = res ? [50, 150].filter(v => v >= min) : [];
@@ -8504,17 +8546,36 @@ window.resetUser2FA = function(username) {
                 <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
                 <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
                 <label class="block text-xs text-gray-400 mb-1 mt-3">${ars ? kFI().label : '¿Cuánto saldo querés cargar? (USDT)'}</label>
-                ${ars ? `<div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-orbitron text-gray-400">$</span>
-                <input id="kpay-usdt" type="text" inputmode="numeric" autocomplete="off" value="${(res ? arsMin : Math.max(arsMin, kFI().def)).toLocaleString('es-AR')}" oninput="window.kpayFmtArs(this)" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 pl-10 text-2xl font-orbitron text-white text-center"></div>`
+                ${ars ? `<div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-orbitron text-gray-400">${kSym()}</span>
+                <input id="kpay-usdt" type="text" inputmode="${kDec() ? 'decimal' : 'numeric'}" autocomplete="off" value="${kShow(res ? arsMin : Math.max(arsMin, kFI().def))}" oninput="window.kpayFmtArs(this)" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 pl-10 text-2xl font-orbitron text-white text-center"></div>`
                 : `<input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">`}
-                ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ $ ' + kArsMin(v).toLocaleString('es-AR') + '</span>' : ''}</button>`).join('')}</div>` : ''}
+                ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button ${ars ? `data-kq="${v}" ` : ''}onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ ' + kSym() + ' ' + kShow(kArsMin(v)) + '</span>' : ''}</button>`).join('')}</div>` : ''}
                 <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
-                <p id="kpay-min-note" class="text-xs text-center text-white bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-lg px-3 py-2 mb-2"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${res ? 'Monto mínimo para recargas de revendedor' : 'Monto mínimo para recargas automáticas'}: <b>${min} USDT</b>${ars && arsMin ? ' <span class="text-gray-300">(≈ $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ')</span>' : ''}</p>
-                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ' (≈ ' + min + ' USDT). ' : '') + (m.commission_pct ? 'El monto que transferís ya incluye ' + m.commission_pct + '% de comisión. ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
+                <p class="text-xs text-red-200 bg-red-600/15 border border-red-500/60 rounded-lg px-3 py-2 my-2 text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i>En el siguiente paso te mostramos el monto <b>EXACTO</b> (con centavos) a transferir. Mandá <b>ese</b> monto exacto para que se acredite solo.</p>
+                ${kDec() ? '<p id="kpay-rate" class="text-[11px] text-gray-400 text-center mb-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Cargando cotización…</p>' : ''}
+                <p id="kpay-min-note" class="text-xs text-center text-white bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-lg px-3 py-2 mb-2"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${res ? 'Monto mínimo para recargas de revendedor' : 'Monto mínimo para recargas automáticas'}: <b>${min} USDT</b>${kDec() ? '<span id="kpay-min-eq" class="text-gray-300">' + (arsMin ? ' (≈ ' + kSym() + ' ' + kShow(arsMin) + ' ' + m.currency + ')' : '') + '</span>' : ars && arsMin ? ' <span class="text-gray-300">(≈ $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ')</span>' : ''}</p>
+                <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (kDec() ? '' : arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ' (≈ ' + min + ' USDT). ' : '') + (m.commission_pct ? 'El monto que transferís ya incluye ' + m.commission_pct + '% de comisión. ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
                 <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
             window.kpayEst();
+            if (kDec()) { const cur = m.currency; kpayRate(cur); K.rateT = setInterval(() => kpayRate(cur), 30000); }
         };
-        window.kpayBack = renderMethods;
+        window.kpayBack = function () { stopRate(); renderMethods(); };
+        // v71: paso "Monto" de la Compra directa: el monto es fijo (total del producto, mínimo 1 USDT)
+        function directPick() {
+            const m = K.method, u = K.directUsdt, ars = kIsArs();
+            const cur = m.currency, est = cur === 'USDT' ? fmt(u * (1 + (m.commission_pct || 0) / 100), 'USDT') : (kRate() ? (ars ? kSym() + ' ' + kShow(kArsMin(u)) + ' ' + cur : fmt(u * (1 + (m.commission_pct || 0) / 100) * kRate(), cur)) : '');
+            body(`
+                <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
+                ${window.kiwiDirectBanner(K.directTitle, u)}
+                <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
+                <div class="bg-kiwi-dark border-2 border-kiwi-gold/60 rounded-xl p-4 text-center my-3">
+                    <p class="text-xs text-gray-400 uppercase font-orbitron">Vas a pagar aprox.</p>
+                    <p id="kdir-est" class="text-2xl font-orbitron font-black text-kiwi-gold">${est || '<i class="fa-solid fa-spinner fa-spin"></i>'}</p>
+                    <p class="text-[11px] text-gray-400 mt-1">El monto <b>exacto</b> (con centavos) se fija en el siguiente paso${m.commission_pct ? ' · incluye ' + m.commission_pct + '% de comisión' : ''}.</p>
+                </div>
+                <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-2 text-base">Continuar al pago</button>`);
+            if (kDec() && !kRate()) kpayRate(cur).then(() => { if (K.purpose === 'direct' && document.getElementById('kdir-est')) directPick(); });
+        }
         window.kpayEst = function () {
             const m = K.method, inp = document.getElementById('kpay-usdt'), el = document.getElementById('kpay-est'), r = kRate();
             if (kIsArs()) {
@@ -8528,9 +8589,14 @@ window.resetUser2FA = function(username) {
         window.kpayCreate = async function () {
             const inp = document.getElementById('kpay-usdt'), ars = kIsArs();
             let payload;
-            if (ars) {
-                const v = Math.round(kNum(inp)), mn = kRate() ? kArsMin(kMin()) : 0;
-                if (!(v > 0) || (mn && v < mn)) return say('El mínimo es $ ' + (mn || 0).toLocaleString('es-AR') + ' ' + K.method.currency + ' (' + kMin() + ' USDT)');
+            if (K.purpose === 'direct') {
+                // v71: monto en USDT = total del producto (el servidor calcula el monto exacto a transferir en la moneda del método)
+                if (!(K.directUsdt > 0)) return say('Monto inválido.');
+                if (K.directUsdt < kMin()) { K.directUsdt = kMin(); try { const dp = JSON.parse(localStorage.getItem('kiwi_direct_pending') || 'null'); if (dp && !dp.topupId) { dp.usdt = K.directUsdt; localStorage.setItem('kiwi_direct_pending', JSON.stringify(dp)); } } catch (_) {} }
+                payload = { method: K.method.id, usdt: K.directUsdt, purpose: 'normal' };
+            } else if (ars) {
+                const v = kDec() ? Math.floor(kNum(inp) * 100 + 1e-6) / 100 : Math.round(kNum(inp)), mn = kRate() ? kArsMin(kMin()) : 0;
+                if (!(v > 0) || (mn && v < mn)) return say('El mínimo es ' + kSym() + ' ' + kShow(mn || 0) + ' ' + K.method.currency + ' (' + kMin() + ' USDT)');
                 payload = { method: K.method.id, fiat: v, purpose: K.purpose || 'normal' };
             } else {
                 const v = Number(inp.value);
@@ -8540,8 +8606,10 @@ window.resetUser2FA = function(username) {
             const b = document.getElementById('kpay-go'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
                 const r = await api('create', payload);
+                stopRate(); if (r.rate > 0 && kDec()) K.liveRate = Object.assign({}, K.liveRate, { [K.method.currency]: r.rate });
                 K.topup = r.topup; K.account = r.account;
                 localStorage.setItem('kpay_active', JSON.stringify({ id: r.topup.id, t: Date.now(), account: r.account }));
+                if (K.purpose === 'direct' && window.kiwiDirectAttach) window.kiwiDirectAttach(r.topup);
                 renderPay();
             } catch (e) { say(e.message); b.disabled = false; b.textContent = 'Continuar'; }
         };
@@ -8561,9 +8629,18 @@ window.resetUser2FA = function(username) {
                 ar_transfer: 'Transferí desde tu banco o Mercado Pago al alias. <b>Respetá los últimos dígitos</b>: así reconocemos tu pago.',
                 mx_nu: 'Transferencia SPEI a la CLABE de Nu. Escribí el monto con los <b>centavos exactos</b>.',
                 co_bancolombia: 'Transferí a la cuenta Bancolombia de arriba (desde Bancolombia o desde cualquier otro banco). <b>Respetá los últimos pesos</b> del monto.',
-                pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.'
+                pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.',
+                us_takenos: '🇺🇸 Transferencia <b>ACH</b> en dólares a la cuenta de arriba. Mandá el <b>monto exacto con los centavos</b>: así reconocemos tu pago. ACH puede tardar <b>hasta 48 h hábiles</b> en llegar. El nombre y la dirección del banco se muestran tal como los da la cuenta.',
+                eu_wise: '🇪🇺 Transferencia <b>SEPA</b> en euros al IBAN de arriba: llega en minutos y hasta 1 día hábil. Mandá el <b>monto exacto con los céntimos</b>. El Swift/BIC es solo para transferencias internacionales (fuera de SEPA).'
             }[id] || '';
         }
+        // v71: aviso GRANDE de monto exacto en todas las pantallas de pago
+        function exactWarn(t) {
+            return `<div id="kpay-exact" class="rounded-2xl border-2 border-red-500 bg-red-600/20 p-4 mb-3 shadow-[0_0_20px_rgba(239,68,68,.35)]">
+                <p class="font-orbitron font-black text-red-300 text-base mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>¡MONTO EXACTO!</p>
+                <p class="text-[15px] text-white font-rajdhani leading-snug">Es necesario e <b>IMPORTANTE</b> que transfieras el monto <b>EXACTO</b> que figura en la página${t ? ' (<b class="text-kiwi-gold">' + fmt(t.pay_amount, t.currency) + '</b>)' : ''}, <b>con todos los centavos/decimales</b>, para que el pago se verifique automáticamente. Si enviás otro monto, el pago <b>no se acreditará solo</b> y deberá revisarse manualmente (puede demorar).</p></div>`;
+        }
+        window.kpayExactWarn = exactWarn;
         function renderPay() {
             stopTimers(); steps(2);
             const t = K.topup, m = K.method || { id: t.method, label: t.method };
@@ -8583,10 +8660,11 @@ window.resetUser2FA = function(username) {
             body(`
                 <div class="bg-gradient-to-br from-kiwi-gold/20 to-transparent border-2 border-kiwi-gold rounded-2xl p-4 text-center mb-3">
                     <p class="text-xs text-gray-300 uppercase font-orbitron">Pagá exactamente</p>
-                    <p class="text-3xl font-orbitron font-black text-kiwi-gold my-1" id="kpay-amt">${fmt(t.pay_amount, t.currency)}</p>
-                    <button onclick="window.kpayCopy('${plain(t.pay_amount, t.currency)}', this)" class="bg-kiwi-gold text-black font-bold rounded-lg px-4 py-2 text-sm"><i class="fa-regular fa-copy mr-1"></i>Copiar monto</button>
-                    <p class="text-xs text-gray-300 mt-2">Recibís <b class="text-white">${Number(t.usdt).toFixed(2)} USDT</b> de saldo</p>
+                    <p class="text-4xl font-orbitron font-black text-kiwi-gold my-1 break-all" id="kpay-amt" style="text-shadow:0 0 18px rgba(245,215,110,.45)">${fmt(t.pay_amount, t.currency)}</p>
+                    <button onclick="window.kpayCopy('${plain(t.pay_amount, t.currency)}', this)" class="bg-kiwi-gold text-black font-bold rounded-lg px-5 py-3 text-base"><i class="fa-regular fa-copy mr-1"></i>Copiar monto exacto</button>
+                    <p class="text-xs text-gray-300 mt-2">Recibís <b class="text-white">${Number(t.usdt).toFixed(2)} USDT</b> de saldo${K.purpose === 'direct' ? ' y la compra se hace sola' : ''}</p>
                 </div>
+                ${exactWarn(t)}
                 ${coTabs}
                 <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 mb-3 space-y-2">
                     <p class="text-xs text-kiwi-gold font-orbitron uppercase">${FLAG[m.id] || ''} ${esc(m.label)}${coMode ? (coMode === 'breb' ? ' · Llave Bre-B' : ' · Transferencia') : ''}</p>
@@ -8611,6 +8689,7 @@ window.resetUser2FA = function(username) {
             body(`
                 <button onclick="window.kpayResume()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Volver a los datos de pago</button>
                 <p class="text-sm text-gray-300 mb-3">Pagaste <b class="text-kiwi-gold">${fmt(t.pay_amount, t.currency)}</b>. Completá esto para encontrar tu pago más rápido:</p>
+                <p class="text-xs text-red-200 bg-red-600/15 border border-red-500/60 rounded-lg p-2 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Recordá: tenía que ser el monto <b>EXACTO</b> (${fmt(t.pay_amount, t.currency)}). Si mandaste otro monto, el staff lo revisa a mano (puede demorar).</p>
                 <label class="block text-xs text-gray-400 mb-1">${REF_LABEL[t.method]}${['usdt', 'binance_pay'].includes(t.method) ? ' *' : ' (opcional)'}</label>
                 <input id="kpay-ref" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-3 text-white mb-3" placeholder="${t.method === 'usdt' ? 'Ej: 9f3c…a71b' : t.method === 'binance_pay' ? 'Ej: 462576928883449856' : 'Opcional pero ayuda'}">
                 ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre completo de quien hizo la transferencia *</label>
@@ -8655,6 +8734,7 @@ window.resetUser2FA = function(username) {
                 rejected: 'El staff rechazó esta recarga. ' + esc(t.note || '')
             }[t.status] || '';
             body(`
+                ${K.purpose === 'direct' && window.kiwiDirectProgress ? window.kiwiDirectProgress(t.status === 'credited' ? 1 : 0) : ''}
                 <div class="text-center py-4">
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border ${s[1]} text-sm font-bold mb-4"><i class="fa-solid ${s[2]} ${t.status === 'submitted' ? 'fa-beat-fade' : ''}"></i>${s[0]}</div>
                     <p class="text-2xl font-orbitron font-black text-white">${Number(t.usdt).toFixed(2)} USDT</p>
@@ -8662,7 +8742,8 @@ window.resetUser2FA = function(username) {
                     <p class="text-sm text-gray-300">${msg}</p>
                 </div>
                 <button onclick="window.kpayBack()" class="w-full border border-kiwi-border text-gray-200 rounded-xl py-3 text-sm mt-2">Ver mis recargas</button>`);
-            if (t.status === 'credited') {
+            if (t.status === 'credited' && K.purpose === 'direct' && window.kiwiDirectOnCredited) { localStorage.removeItem('kpay_active'); window.kiwiDirectOnCredited(t); }
+            else if (t.status === 'credited') {
                 localStorage.removeItem('kpay_active');
                 try { window.kiwiRpc('kiwi_me', { p_token: window.kiwiToken() }).then(me => {
                     const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
@@ -8676,7 +8757,206 @@ window.resetUser2FA = function(username) {
                 }, 6000);
             }
         }
-        window.kpayRenderStatus = renderStatus; window.kpayRenderPay = renderPay;
+        window.kpayRenderStatus = renderStatus; window.kpayRenderPay = renderPay; window.kpayApi = api;
+    })();
+    </script>
+    <!-- ===== v71: COMPRA DIRECTA (pagar el producto con la recarga automática) ===== -->
+    <div id="kdir-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[125] hidden flex items-center justify-center p-3">
+        <div class="bg-kiwi-card border-2 border-kiwi-gold w-full max-w-md rounded-2xl p-5 relative max-h-[94vh] overflow-y-auto">
+            <button onclick="window.kiwiDirectHide()" class="absolute top-3 right-3 w-10 h-10 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div id="kdir-body"></div>
+        </div>
+    </div>
+    <script>
+    (function () {
+        // Diseño (v71):
+        //  1) "Compra directa" crea una recarga NORMAL (kiwi_pay_create) por el total del producto en USDT
+        //     (redondeado hacia arriba al centavo; si es menor al mínimo de recargas, se paga el mínimo y la diferencia queda como saldo).
+        //  2) El saldo lo acredita SOLO el camino de siempre (notificación / verificación, atómico e idempotente en Supabase).
+        //  3) Recién cuando la recarga está 'credited' y el saldo real (kiwi_me) alcanza, se repite la MISMA compra con saldo
+        //     (mismo código, mismos precios de revendedor). El cobro del saldo lo valida kiwi_checkout en el servidor.
+        //  4) El pedido pendiente se guarda en localStorage ('kiwi_direct_pending') con un estado:
+        //     awaiting → buying → done | credited (saldo acreditado pero la compra no se pudo completar sola: queda el saldo).
+        //     Así nunca se compra dos veces y, si se cierra la pestaña, al volver se ofrece completar la compra.
+        const KEY = 'kiwi_direct_pending', MAXAGE = 30 * 3600e3;
+        const W = window, mem = {}; // replays en memoria (funciones) por id de pedido directo
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const say = m => (W.showKiwiAlert ? W.showKiwiAlert(m) : alert(m));
+        const read = () => { try { const p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && Date.now() - p.t > MAXAGE) { localStorage.removeItem(KEY); return null; } return p; } catch (_) { return null; } };
+        const save = p => { p ? localStorage.setItem(KEY, JSON.stringify(p)) : localStorage.removeItem(KEY); };
+        const curUser = () => { try { return typeof currentUser !== 'undefined' ? currentUser : null; } catch (_) { return null; } };
+        const balNow = () => { try { const u = JSON.parse(localStorage.getItem('kiwi_users') || '{}')[curUser()]; return Number(u && u.balance) || 0; } catch (_) { return 0; } };
+        W.kiwiDirectPending = read;
+        W.kiwiDirectMin = () => Number((W.KPAY && W.KPAY.cfg && W.KPAY.cfg.min_usdt) || 1) || 1;
+        // Monto de la recarga: total exacto del producto (redondeado hacia arriba al centavo), mínimo 1 USDT
+        W.kiwiDirectAmount = function (price, min) { const p = Math.ceil(Number(price) * 100 - 1e-6) / 100; return Math.max(Number(min) || 1, p); };
+        W.kiwiDirectHide = () => document.getElementById('kdir-modal').classList.add('hidden');
+        function show(h) { document.getElementById('kdir-body').innerHTML = h; document.getElementById('kdir-modal').classList.remove('hidden'); }
+
+        W.kiwiDirectBanner = function (title, usdt) {
+            const p = read(), price = p ? p.price : usdt, extra = Math.round((usdt - price) * 100) / 100;
+            return '<div id="kdir-banner" class="mb-3 rounded-xl border-2 border-kiwi-gold bg-kiwi-gold/10 p-3 text-sm text-white">' +
+                '<p class="font-orbitron font-bold text-kiwi-gold text-xs uppercase mb-1"><i class="fa-solid fa-bolt mr-1"></i>Compra directa</p>' +
+                '<p class="font-bold break-words">' + esc(title) + '</p>' +
+                '<p class="text-gray-200">Total: <b class="text-kiwi-gold">' + Number(usdt).toFixed(2) + ' USDT</b></p>' +
+                (extra > 0.004 ? '<p class="text-[12px] text-yellow-200 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>El producto cuesta ' + Number(price).toFixed(2) + ' USDT, pero el pago automático mínimo es de ' + Number(usdt).toFixed(2) + ' USDT: los <b>' + extra.toFixed(2) + ' USDT</b> que sobran quedan como saldo en tu cuenta.</p>' : '') +
+                '<p class="text-[12px] text-gray-300 mt-1">Cuando se verifica tu pago, se acredita el saldo y la compra se hace <b>sola</b>. Si cerrás la página, al volver te la completamos (el saldo nunca se pierde).</p></div>';
+        };
+        W.kiwiDirectProgress = function (stage) { // 0 esperando pago · 1 pago detectado · 2 compra completada
+            const st = [['fa-hourglass-half', 'Esperando tu pago'], ['fa-circle-check', 'Pago detectado'], ['fa-bag-shopping', 'Compra completada']];
+            return '<div id="kdir-prog" class="flex items-start gap-1 mb-3">' + st.map((x, i) => {
+                const on = i <= stage, cur = i === stage;
+                return '<div class="flex-1 text-center"><div class="mx-auto w-9 h-9 rounded-full flex items-center justify-center border-2 ' + (on ? 'border-green-400 bg-green-500/20 text-green-300' : 'border-kiwi-border text-gray-500') + '"><i class="fa-solid ' + x[0] + (cur && stage < 2 ? ' fa-beat-fade' : '') + '"></i></div><p class="text-[10px] mt-1 font-orbitron ' + (on ? 'text-green-300' : 'text-gray-500') + '">' + x[1] + '</p></div>';
+            }).join('') + '</div>';
+        };
+
+        // ---- Snapshot del checkout (modal "PAGO Y CONFIRMACIÓN") para repetirlo tal cual ----
+        const val = id => { const e = document.getElementById(id); return e ? e.value : null; };
+        function snapCheckout() {
+            return { prod: W.currentActiveProduct ? JSON.parse(JSON.stringify(W.currentActiveProduct)) : null, robux: W.pendingRobux ? Object.assign({}, W.pendingRobux) : null,
+                     user: val('user-account-input'), extra: val('extra-account-input'), extra2: val('extra-input'), method: val('payment-method-select'),
+                     title: (document.getElementById('modal-product-title') || {}).textContent || '', price: (document.getElementById('modal-product-price') || {}).textContent || '' };
+        }
+        function checkoutPrice() {
+            if (W.pendingRobux) return Number(W.pendingRobux.priceNum) || 0;
+            const p = W.currentActiveProduct; if (!p) return 0;
+            if (Number(p.usdtPrice) > 0) return Number(p.usdtPrice);
+            const R = (W.exchangeRates && W.exchangeRates.ARS) || 1600;
+            if (Number(p.purchasePriceARS) > 0) return Number(p.purchasePriceARS) / R;
+            const m = String(p.price || '').match(/([\d.]+)/); return m ? (parseFloat(m[1].replace(/\./g, '')) || 0) / R : 0;
+        }
+        function replayCheckout(sn) {
+            const modal = document.getElementById('checkout-modal'); if (!modal) return false;
+            W.currentActiveProduct = sn.prod; W.pendingRobux = sn.robux;
+            const set = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.value = v; };
+            set('user-account-input', sn.user); set('extra-account-input', sn.extra); set('extra-input', sn.extra2); set('payment-method-select', sn.method);
+            const t = document.getElementById('modal-product-title'); if (t && sn.title) t.textContent = sn.title;
+            const pr = document.getElementById('modal-product-price'); if (pr && sn.price) pr.textContent = sn.price;
+            modal.classList.remove('hidden');
+            const btn = modal.querySelector('form button[type="submit"]'); if (!btn) return false;
+            btn.click(); // mismo camino que "COMPRAR CON SALDO" (incluye el interceptor de Robux por grupo)
+            return true;
+        }
+        function validateCheckout() {
+            const form = document.querySelector('#checkout-modal form');
+            if (form && form.reportValidity && !form.reportValidity()) return false;
+            const prod = W.currentActiveProduct, pr = W.pendingRobux;
+            if (W.kiwiStockBlock && W.kiwiStockBlock(prod)) return false;
+            if (pr) {
+                const pmin = pr.methodText === W.KRX_MAYOR_LABEL ? W.KRX_MAYOR_MIN : (W.ROBUX_MIN || 100);
+                if (!(pr.amount >= pmin)) { say('El monto mínimo es de ' + pmin.toLocaleString('es-AR') + ' Robux'); return false; }
+                if (pr.subType === 'robux_grupo' && pr.methodText !== W.KRX_MAYOR_LABEL && pr.amount > W.ROBUX_MAX_MENOR) { say('El monto máximo es de ' + W.ROBUX_MAX_MENOR.toLocaleString('es-AR') + ' Robux'); return false; }
+            } else if (prod && prod.category === 'roblox' && String(prod.sub || '').startsWith('robux_')) {
+                const rbx = parseInt(String(prod.title || '').match(/^(\d+)\s*Robux/i)?.[1] || '0', 10);
+                const wmin = (prod.wholesale || /al por mayor/i.test(String(prod.title || ''))) ? W.KRX_MAYOR_MIN : (W.ROBUX_MIN || 100);
+                if (!(rbx >= wmin)) { say('El monto mínimo es de ' + wmin.toLocaleString('es-AR') + ' Robux'); return false; }
+            }
+            return true;
+        }
+
+        // ---- Inicio ----
+        W.kiwiDirectStart = function (price, title, replay) {
+            if (!curUser()) return say('Iniciá sesión primero');
+            price = Math.round(Number(price) * 1e6) / 1e6;
+            if (!(price > 0)) return say('No se pudo leer el precio del producto.');
+            const old = read();
+            if (old && old.user === curUser() && ['awaiting', 'buying'].includes(old.state) && old.topupId) {
+                return show('<p class="font-orbitron font-bold text-kiwi-gold mb-2"><i class="fa-solid fa-bolt mr-1"></i>Ya tenés una Compra directa en curso</p><p class="text-sm text-gray-200 mb-4">' + esc(old.title) + ' · ' + Number(old.usdt).toFixed(2) + ' USDT. Terminala o cancelala antes de empezar otra.</p>' +
+                    '<button onclick="window.kiwiDirectHide();window.kiwiDirectResume()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl mb-2">Ver la compra en curso</button>' +
+                    '<button onclick="window.kiwiDirectCancel()" class="w-full border border-kiwi-border text-gray-300 rounded-xl py-3 text-sm">Cancelar la anterior</button>');
+            }
+            const id = 'kd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            const usdt = W.kiwiDirectAmount(price, W.kiwiDirectMin());
+            const p = { id, user: curUser(), price, usdt, title: String(title || 'Producto'), t: Date.now(), state: 'awaiting', topupId: null,
+                        kind: replay === 'checkout' ? 'checkout' : 'fn', snap: replay === 'checkout' ? snapCheckout() : null };
+            if (typeof replay === 'function') mem[id] = replay;
+            save(p);
+            W.kiwiDirectHide();
+            W.kpayOpen({ purpose: 'direct', usdt, title: p.title });
+        };
+        W.kiwiDirectAttach = function (topup) { const p = read(); if (p && p.state === 'awaiting' && !p.topupId) { p.topupId = topup.id; save(p); } };
+        W.kiwiDirectCancel = function () { save(null); W.kiwiDirectHide(); try { localStorage.removeItem('kpay_active'); } catch (_) {} say('Compra directa cancelada. Si ya habías pagado, el saldo se acredita igual en tu cuenta.'); };
+        W.kiwiDirectResume = function () { const p = read(); if (p && p.topupId) W.kpayOpen({ purpose: 'direct', usdt: p.usdt, title: p.title, resumeId: p.topupId }); };
+        W.kiwiDirectCheckout = function () {
+            if (!curUser()) return say('Iniciá sesión primero');
+            if (!validateCheckout()) return;
+            const prod = W.currentActiveProduct || {};
+            const title = W.pendingRobux ? (W.pendingRobux.amount + ' Robux (' + W.pendingRobux.methodText + ')') : (prod.title || prod.name);
+            W.kiwiDirectStart(checkoutPrice(), title, 'checkout');
+        };
+        // Saldo insuficiente → elegir: Compra directa / Cargar saldo
+        W.kiwiLowBal = function (bal, price, retry, title) {
+            const u = W.kiwiDirectAmount(price, W.kiwiDirectMin());
+            W._kdirRetry = { price, retry, title };
+            show('<p class="font-orbitron font-bold text-red-300 mb-1"><i class="fa-solid fa-wallet mr-1"></i>Saldo insuficiente</p>' +
+                '<p class="text-sm text-gray-300 mb-3">Tu saldo: <b class="text-white">' + Number(bal).toFixed(2) + ' USDT</b> · Precio: <b class="text-white">' + Number(price).toFixed(2) + ' USDT</b></p>' +
+                '<button id="kdir-go" onclick="window.kiwiDirectFromLowBal()" class="w-full bg-kiwi-gold text-black font-orbitron font-bold py-4 rounded-xl mb-2"><i class="fa-solid fa-bolt mr-1"></i>COMPRA DIRECTA · pagar ' + u.toFixed(2) + ' USDT</button>' +
+                '<p class="text-[11px] text-gray-400 mb-3 text-center">Pagás este producto por transferencia / Binance y, cuando se verifica el pago, la compra se hace sola.</p>' +
+                '<button onclick="window.kiwiDirectHide(); window.kpayOpen()" class="w-full border border-kiwi-gold text-kiwi-gold rounded-xl py-3 text-sm mb-2">Cargar saldo</button>' +
+                '<button onclick="window.kiwiDirectHide()" class="w-full text-xs text-gray-500 py-2">Cancelar</button>');
+        };
+        W.kiwiDirectFromLowBal = function () { const r = W._kdirRetry; if (!r) return; W._kdirRetry = null; W.kiwiDirectStart(r.price, r.title, r.retry); };
+
+        // ---- Pago acreditado → completar la compra (una sola vez) ----
+        async function refreshBalance() {
+            try {
+                const me = await W.kiwiRpc('kiwi_me', { p_token: W.kiwiToken() });
+                const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                if (me && me.username) { users[me.username] = W.applyCloudUserToLocal(users[me.username] || {}, me); localStorage.setItem('kiwi_users', JSON.stringify(users)); if (typeof updateAuthUI === 'function') updateAuthUI(); if (W.updateBalanceDisplay) W.updateBalanceDisplay(); }
+                return true;
+            } catch (_) { return false; }
+        }
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        function finalView(ok, p, msg) {
+            const html = W.kiwiDirectProgress(ok ? 2 : 1) + '<div class="text-center py-3">' +
+                (ok ? '<p class="text-2xl font-orbitron font-black text-green-300 mb-1"><i class="fa-solid fa-circle-check"></i> ¡Compra completada!</p><p class="text-sm text-gray-200">' + esc(p.title) + '</p><p class="text-xs text-gray-400 mt-2">Lo ves en <b>Mis pedidos</b>.' + (p.usdt - p.price > 0.004 ? ' Te quedaron ' + (p.usdt - p.price).toFixed(2) + ' USDT de saldo.' : '') + '</p>'
+                    : '<p class="text-lg font-orbitron font-bold text-yellow-300 mb-1"><i class="fa-solid fa-circle-info"></i> Pago acreditado</p><p class="text-sm text-gray-200">' + (msg || ('Se acreditaron ' + Number(p.usdt).toFixed(2) + ' USDT a tu saldo, pero la compra no se pudo completar sola. Tu saldo está a salvo: volvé al producto y tocá <b>Comprar con saldo</b>.')) + '</p>') +
+                '</div><button onclick="window.kpayClose(); window.kiwiDirectHide()" class="w-full bg-kiwi-gold text-black font-bold py-3 rounded-xl mt-2">Listo</button>';
+            const kb = document.getElementById('kpay-body'), km = document.getElementById('kpay-modal');
+            if (km && !km.classList.contains('hidden') && kb) kb.innerHTML = html; else show(html);
+        }
+        W.kiwiDirectOnCredited = async function (topup, fromResume) {
+            const p = read();
+            if (!p || p.state !== 'awaiting' || String(p.topupId) !== String(topup.id) || p.user !== curUser()) return;
+            const replay = p.kind === 'checkout' ? () => replayCheckout(p.snap) : mem[p.id];
+            if (!replay) { p.state = 'credited'; save(p); await refreshBalance(); return finalView(false, p, 'Se acreditaron <b>' + Number(p.usdt).toFixed(2) + ' USDT</b> a tu saldo. Como la página se recargó, volvé a <b>' + esc(p.title) + '</b> y tocá <b>Comprar con saldo</b>.'); }
+            p.state = 'buying'; p.buyAt = Date.now(); save(p); // desde acá nunca se vuelve a intentar sola: evita compras dobles
+            for (let i = 0; i < 8 && W.spendPending && W.spendPending(); i++) await sleep(700);
+            await refreshBalance();
+            const bal0 = balNow(), n0 = (JSON.parse(localStorage.getItem('kiwi_purchases') || '[]')).length;
+            if (bal0 + 1e-6 < p.price) { p.state = 'credited'; save(p); return finalView(false, p); }
+            try { W.kpayClose && W.kpayClose(); } catch (_) {}
+            try { await replay(); } catch (e) { console.warn('Compra directa: error al completar', e); }
+            await sleep(1200);
+            const n1 = (JSON.parse(localStorage.getItem('kiwi_purchases') || '[]')).length, bal1 = balNow();
+            const ok = n1 > n0 || bal1 < bal0 - p.price * 0.5;
+            p.state = ok ? 'done' : 'credited'; p.doneAt = Date.now(); save(ok ? null : p);
+            finalView(ok, p);
+        };
+        // ---- Recuperación: pestaña cerrada / modal cerrado ----
+        let busy = false;
+        W.kiwiDirectCheck = async function () {
+            const p = read(); if (busy || !p || !p.topupId || p.user !== curUser() || !W.kpayApi) return;
+            if (p.state === 'credited') return; // ya avisado: el saldo quedó en la cuenta
+            if (p.state === 'buying') { if (Date.now() - (p.buyAt || 0) > 90000) { p.state = 'credited'; save(p); } return; } // se cortó a mitad: no reintentar (podría duplicar)
+            const km = document.getElementById('kpay-modal'); if (km && !km.classList.contains('hidden')) return; // el modal ya hace el seguimiento
+            busy = true;
+            try {
+                const r = await W.kpayApi('check', { id: p.topupId }); const t = r && r.topup; if (!t) return;
+                if (['expired', 'rejected'].includes(t.status)) { save(null); return; }
+                if (t.status !== 'credited') return;
+                if (mem[p.id]) return W.kiwiDirectOnCredited(t); // misma pestaña: se completa sola
+                if (p.kind === 'checkout') {
+                    show(W.kiwiDirectProgress(1) + '<p class="font-orbitron font-bold text-green-300 mb-1"><i class="fa-solid fa-circle-check mr-1"></i>¡Llegó tu pago!</p><p class="text-sm text-gray-200 mb-4">Se acreditaron <b>' + Number(p.usdt).toFixed(2) + ' USDT</b>. ¿Completamos tu compra de <b>' + esc(p.title) + '</b> (' + Number(p.price).toFixed(2) + ' USDT)?</p>' +
+                        '<button id="kdir-finish" onclick="window.kiwiDirectFinish(' + "'" + String(t.id).replace(/\D/g, '') + "'" + ')" class="w-full bg-green-500 text-black font-orbitron font-bold py-4 rounded-xl mb-2"><i class="fa-solid fa-bag-shopping mr-1"></i>Completar compra</button>' +
+                        '<button onclick="window.kiwiDirectKeep()" class="w-full border border-kiwi-border text-gray-300 rounded-xl py-3 text-sm">Dejar el saldo en mi cuenta</button>');
+                } else W.kiwiDirectOnCredited(t);
+            } catch (_) {} finally { busy = false; }
+        };
+        W.kiwiDirectFinish = function (id) { const b = document.getElementById('kdir-finish'); if (b) b.disabled = true; W.kiwiDirectOnCredited({ id }); };
+        W.kiwiDirectKeep = function () { save(null); W.kiwiDirectHide(); say('Listo: el saldo quedó en tu cuenta. Podés comprar cuando quieras con "Comprar con saldo".'); };
+        setTimeout(() => W.kiwiDirectCheck(), 5000);
+        setInterval(() => { if (read()) W.kiwiDirectCheck(); }, 20000);
     })();
     </script>
 
@@ -8684,7 +8964,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_nu: '🇲🇽 Nu', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
@@ -9203,7 +9483,8 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 .kst-btn-off{opacity:.6;cursor:not-allowed!important;filter:grayscale(.6);background:#2a2a2a!important;border-color:#3f3f46!important}
 .kst-card-off{position:relative;opacity:.6;filter:grayscale(.5)}
 .kst-badge{position:absolute;top:6px;right:6px;z-index:5;background:#dc2626;color:#fff;font:800 10px/1 Orbitron,sans-serif;padding:4px 7px;border-radius:999px;letter-spacing:.05em;pointer-events:none}
-.krx-gchip.is-nostock{opacity:.55;cursor:not-allowed;border-color:#7f1d1d!important;position:relative}
+.krx-gchip.is-nostock{border-color:#7f1d1d!important;position:relative}
+.krx-allbox{background:linear-gradient(135deg,#7f1d1d,#450a0a);border:2px solid #f87171;border-radius:12px;padding:12px 14px;margin-bottom:10px;color:#fff;font-family:Rajdhani,sans-serif;font-size:16px;line-height:1.3}.krx-allbox i{color:#fde047}
 .krx-gchip .kst-gbadge{margin-left:auto;background:#dc2626;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px;white-space:nowrap}
 /* Stock: panel */
 .kst-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
@@ -9248,7 +9529,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     W.kiwiStockBlock = function (p) {
         if (!p) return false;
         if (W.kiwiStockOff && W.kiwiStockOff(p)) { toast(MSG); return true; }
-        if (p.category === 'roblox' && p.sub === 'robux_grupo' && !p.wholesale && W.kiwiStockGroupsAllOff()) { toast('No Stock: los grupos de Roblox no tienen stock ahora. Probá más tarde.'); return true; }
+        // v71: el "No Stock" de los grupos es solo una etiqueta: nunca bloquea la compra de Robux por grupo.
         return false;
     };
     function prodById(id) { id = Number(id); return (W.products || []).find(function (x) { return Number(x.id) === id; }) || null; }
@@ -9324,14 +9605,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         });
         wrap('kiwiRaPurchase', function (o, p) { if (p && typeof p === 'object' && W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1)); });
         wrap('buyWithRecargas', function (o) { if (W.kiwiStockBlock(W.currentActiveProduct)) return; return o.apply(this, [].slice.call(arguments, 1)); });
-        wrap('krxJoinGroup', function (o, i) {
-            var g = groups()[i]; if (g && W.kiwiStockGroupOff(g)) { toast('No Stock: este grupo no está disponible ahora.'); return; }
-            return o.apply(this, [].slice.call(arguments, 1));
-        });
-        wrap('krxPickGroup', function (o, i) {
-            var g = groups()[i]; if (g && W.kiwiStockGroupOff(g)) { toast('No Stock: este grupo no está disponible ahora.'); return; }
-            return o.apply(this, [].slice.call(arguments, 1));
-        });
+        // v71: los grupos con "No Stock" se pueden abrir, unirse y elegir igual (solo cambia la etiqueta).
     }
     W.kiwiStockInstallGuards = installGuards;
 
@@ -9340,24 +9614,22 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         var container = document.getElementById('inline-roblox-groups'); if (!container) return;
         var joined = {}; try { joined = JSON.parse(localStorage.getItem('kiwi_joined_groups')) || {}; } catch (e) {}
         var all = groups(); var RG = W.kiwiStockRetailGroups();
-        var avail = RG.filter(function (g) { return !W.kiwiStockGroupOff(g); });
-        if (W.krxGroupSel != null && (!RG[W.krxGroupSel] || W.kiwiStockGroupOff(RG[W.krxGroupSel]))) W.krxGroupSel = null;
         var sel = W.krxGroupSel != null && RG[W.krxGroupSel] ? W.krxGroupSel : null;
-        var done = avail.filter(function (g) { return joined[g.name]; }).length;
+        // v71: hay que estar en los 14 grupos (también los marcados No Stock). El contador cuenta todos.
+        var done = RG.filter(function (g) { return joined[g.name]; }).length;
         var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
         var chips = RG.map(function (g, idx) {
-            var o = W.kiwiStockGroupOff(g), j = !o && !!joined[g.name];
-            if (o) return '<button type="button" title="' + esc(g.name) + ' · No Stock" onclick="window.krxPickGroup(' + idx + ')" aria-disabled="true" class="krx-gchip is-nostock"><span class="krx-gnum">' + (idx + 1) + '</span><span class="truncate">' + esc(g.name) + '</span><span class="kst-gbadge">No Stock</span></button>';
-            return '<button type="button" title="' + esc(g.name) + '" onclick="window.krxPickGroup(' + idx + ')" class="krx-gchip ' + (j ? 'is-joined' : '') + ' ' + (sel === idx ? 'is-sel' : '') + '"><span class="krx-gnum">' + (j ? '✓' : idx + 1) + '</span><span class="truncate">' + esc(g.name) + '</span></button>';
+            var o = W.kiwiStockGroupOff(g), j = !!joined[g.name];
+            return '<button type="button" title="' + esc(g.name) + (o ? ' · No Stock' : '') + '" onclick="window.krxPickGroup(' + idx + ')" class="krx-gchip ' + (j ? 'is-joined' : '') + ' ' + (o ? 'is-nostock' : '') + ' ' + (sel === idx ? 'is-sel' : '') + '"><span class="krx-gnum">' + (j ? '✓' : idx + 1) + '</span><span class="truncate">' + esc(g.name) + '</span>' + (o ? '<span class="kst-gbadge">No Stock</span>' : '') + '</button>';
         }).join('');
         var detail = '';
         if (sel !== null) {
-            var g = all[sel], j = !!joined[g.name];
-            detail = '<div class="krx-gdetail"><p class="text-xs text-gray-400 font-rajdhani">Grupo ' + (sel + 1) + ' de ' + RG.length + '</p><p class="font-bold text-white text-base break-words">' + esc(g.name) + '</p><a href="' + esc(g.url) + '" target="_blank" rel="noopener" onclick="window.krxJoinGroup(' + sel + ')" class="krx-gjoin ' + (j ? 'is-joined' : '') + '">' + (j ? '<i class="fa-solid fa-check"></i> Ya te uniste · abrir de nuevo' : '<i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir grupo y unirme') + '</a></div>';
+            var g = all[sel], j = !!joined[g.name], go = W.kiwiStockGroupOff(g);
+            detail = '<div class="krx-gdetail"><p class="text-xs text-gray-400 font-rajdhani">Grupo ' + (sel + 1) + ' de ' + RG.length + (go ? ' · <span class="text-red-400 font-bold">No Stock</span>' : '') + '</p><p class="font-bold text-white text-base break-words">' + esc(g.name) + '</p><a href="' + esc(g.url) + '" target="_blank" rel="noopener" onclick="window.krxJoinGroup(' + sel + ')" class="krx-gjoin ' + (j ? 'is-joined' : '') + '">' + (j ? '<i class="fa-solid fa-check"></i> Ya te uniste · abrir de nuevo' : '<i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir grupo y unirme') + '</a></div>';
         }
-        var nOff = RG.length - avail.length, head;
-        if (!avail.length) head = '<p class="text-sm font-bold mb-2 text-red-400"><i class="fa-solid fa-ban"></i> Grupos sin stock por ahora. No se pueden comprar Robux por grupo en este momento.</p>';
-        else head = '<p class="text-sm font-bold mb-2 ' + (done === avail.length ? 'text-green-400' : 'text-yellow-300') + '">Unido a ' + done + ' de ' + avail.length + ' grupos' + (nOff ? ' disponibles' : '') + '</p>' + (nOff ? '<p class="text-xs text-red-300 mb-2 font-rajdhani">' + nOff + ' grupo' + (nOff > 1 ? 's' : '') + ' sin stock: no hace falta unirte a ' + (nOff > 1 ? 'esos' : 'ese') + '.</p>' : '');
+        var N = RG.length;
+        var head = '<div class="krx-allbox"><i class="fa-solid fa-triangle-exclamation"></i> <b>OBLIGATORIO: tenés que unirte a los ' + N + ' grupos</b>, también a los que dicen <b>No Stock</b>, para poder comprar Robux por CUALQUIERA de los ' + N + ' grupos. Si falta uno solo, no podemos enviarte los Robux.</div>' +
+            '<p class="text-sm font-bold mb-2 ' + (done === N ? 'text-green-400' : 'text-yellow-300') + '">Unido a ' + done + ' de ' + N + ' grupos</p>';
         container.innerHTML = head + '<div class="krx-ggrid">' + chips + '</div>' + detail;
     };
 
@@ -9402,7 +9674,6 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             else if (/buyBooyahPass\(/.test(oc)) p = prodById(221) || { id: 221 };
             if (!p) return;
             var isOff = !!W.kiwiStockOff(p);
-            if (!isOff && p.category === 'roblox' && p.sub === 'robux_grupo' && !p.wholesale) isOff = W.kiwiStockGroupsAllOff();
             card ? setCard(el, isOff) : setBtn(el, isOff);
         });
         try {
@@ -9440,7 +9711,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             idx[sec].rows.push({ key: key, label: label, note: note || '' });
         }
         var RG = W.KRX_RETAIL_GROUPS || 14;
-        groups().forEach(function (g, i) { add('Grupos de Roblox', W.kiwiStockGroupKey(g), (i + 1) + '. ' + g.name, i >= RG ? 'No se muestra en la tienda (fuera de los ' + RG + ')' : ''); });
+        groups().forEach(function (g, i) { add('Grupos de Roblox', W.kiwiStockGroupKey(g), (i + 1) + '. ' + g.name, i >= RG ? 'No se muestra en la tienda (fuera de los ' + RG + ')' : 'Solo muestra la etiqueta No Stock, no bloquea la compra'); });
         var bf = (W.products || []).filter(function (p) { return W.kiwiStockKey(p) === 'bloxfruits'; }).length;
         add('Roblox', 'bloxfruits', 'Blox Fruits products', bf + ' productos (frutas + gamepasses) en un solo botón');
         add('Roblox', 'robux:robux_grupo', 'Robux por Grupo (minorista)');
@@ -9482,7 +9753,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
                         '<button type="button" class="kst-sw ' + (o ? 'is-off' : '') + '" ' + (b ? 'disabled' : '') + ' title="' + (o ? 'Habilitar' : 'Deshabilitar') + '" aria-pressed="' + (o ? 'true' : 'false') + '" data-key="' + esc(r.key) + '" data-label="' + esc(r.label) + '" onclick="window.kiwiStockToggle(this.dataset.key,this.dataset.label)"></button></div>';
                 }).join('') + '</div></details>';
         }).join('');
-        box.innerHTML = '<p class="kadm-sub">Apagá un grupo o producto y en la tienda aparece <b class="text-red-400">No Stock</b> y no se puede comprar. Los cambios se ven en la tienda en 2–3 minutos.</p>' +
+        box.innerHTML = '<p class="kadm-sub">Apagá un producto y en la tienda aparece <b class="text-red-400">No Stock</b> y no se puede comprar. En los <b>grupos de Roblox</b> solo muestra la etiqueta No Stock, no bloquea la compra (hay que estar en los 14 igual). Los cambios se ven en la tienda en 2–3 minutos.</p>' +
             '<div class="kst-tools"><input type="search" id="kst-q" class="kadm-in" placeholder="Buscar producto, grupo o categoría..." value="' + esc(UI.q) + '" oninput="window.KIWI_STOCK_UI.q=this.value;window.kiwiStockRerenderKeepFocus()">' +
             '<label class="flex items-center gap-2 text-sm text-gray-300 kst-mini" style="min-height:44px"><input type="checkbox" ' + (UI.onlyOff ? 'checked' : '') + ' onchange="window.KIWI_STOCK_UI.onlyOff=this.checked;window.renderStaffStock()"> Ver solo deshabilitados</label>' +
             '<button type="button" class="kst-mini" style="min-height:44px" onclick="window.kiwiStockLoad().then(window.renderStaffStock)"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>' +
