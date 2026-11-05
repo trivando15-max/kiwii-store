@@ -210,10 +210,19 @@ async function notifyOrders(token, ids, src) {
   for (const o of (Array.isArray(rows) ? rows : [])) { if ((await tgSend(orderTgText(o, src === 'direct' ? 'direct' : 'saldo'))).ok) sent++; }
   return { ok: true, sent };
 }
-async function notifyTopup(t) {
+async function notifyTopup(t, sender) {
   if (!tgOn() || !/^(1|true|si|sí|yes)$/i.test(env('TG_NOTIFY_TOPUPS')) || !t || t.status !== 'credited') return;
   await tgSend('💰 <b>Recarga acreditada</b>\n👤 ' + tgEsc(clean(t.username, 60)) + '\n💵 ' + tgEsc(Number(t.credited_usdt || t.usdt) || 0) + ' USDT\n'
-    + '🏦 ' + tgEsc((METHODS[t.method] && METHODS[t.method].label) || t.method) + '\n🧾 Recarga #' + tgEsc(t.id) + '\n🕒 ' + tgEsc(tgTime(t.credited_at)));
+    + '🏦 ' + tgEsc((METHODS[t.method] && METHODS[t.method].label) || t.method) + '\n🧾 Recarga #' + tgEsc(t.id) + '\n🕒 ' + tgEsc(tgTime(t.credited_at))
+    + (sender || t.payer_name ? '\n🪪 Nombre en la notificación: ' + tgEsc(sender || '—') + '\n✍️ Nombre declarado: ' + tgEsc(t.payer_name || '—') : ''));
+}
+// v73: pago que llegó con el monto justo pero el nombre no coincide (o falta): avisa para revisar a mano en PAGOS
+async function notifyNameReview(r, p) {
+  if (!tgOn()) return;
+  await tgSend('⚠️ <b>Pago a revisar: ' + (r.status === 'name_mismatch' ? 'el nombre no coincide' : 'falta el nombre') + '</b>\n💵 ' + tgEsc(p.amount) + ' ' + tgEsc(p.currency || '')
+    + '\n🏦 ' + tgEsc((METHODS[p.method] && METHODS[p.method].label) || p.method) + '\n🧾 Recarga #' + tgEsc(r.topup_id)
+    + '\n🪪 Nombre en la notificación: ' + tgEsc(r.sender || '—') + '\n✍️ Nombre declarado: ' + tgEsc(r.declared || '—')
+    + '\nNo se acreditó: aprobala a mano en PAGOS si corresponde.');
 }
 
 // ---------- Cotización (misma fuente que /api/binance-p2p) ----------
@@ -396,6 +405,40 @@ function parseAmountStr(s) {
   const n = Number(intPart + (dec ? '.' + dec : ''));
   return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
 }
+// v73: nombre de quien transfiere. Ejemplos REALES: Global66 "Recibiste 17.401 COP de SIGGY ALEJANDRO." ·
+// Mercado Pago "De Lautaro Uriel Bajo desde su cuenta de Mercado Pago." · variantes: "JUAN PEREZ te envió", "John Smith sent you", "from John Smith".
+const NAME_RX = "([A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*(?:\\s+(?:(?:de|del|la|los|y)\\s+)?[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*){0,4})";
+const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero)\b/i;
+function extractSender(all) {
+  const tries = [
+    new RegExp(NAME_RX + '\\s+(?:te\\s+(?:envi|transfiri|yape|pag|mand|deposit)|(?:has\\s+)?sent\\s+you|paid\\s+you)'),
+    new RegExp('(?:^|[\\s·—:,(-])(?:[Dd]e|DE|[Dd]esde|DESDE|[Ff]rom|FROM|[Rr]emitente:?|[Ee]nviado por|[Ss]ent by)\\s+' + NAME_RX, 'g'),
+  ];
+  for (const rx of tries) {
+    const list = rx.global ? [...all.matchAll(rx)] : [all.match(rx)].filter(Boolean);
+    for (const m of list) {
+      let n = m[1].replace(/([A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,})\.(?:\s.*)?$/, '$1').replace(/\s+(?:de|del|la|los|y)$/i, '').trim(); // cortar en fin de oración
+      if (!n || NOT_NAME.test(n) || n.length < 2) continue;
+      return n.slice(0, 120);
+    }
+  }
+  return null;
+}
+// v73: misma regla que kiwi_pay_name_match (SQL): sin tildes/mayúsculas, por palabras, >= 2 en común (o todas si una tiene 1)
+const NAME_STOP = new Set(['de','del','la','las','los','le','y','e','da','das','do','dos','di','van','von','el','sr','sra','mr','mrs','ms']);
+function nameTokens(s) {
+  return [...new Set(String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').split(' ')
+    .filter(w => w.length >= 2 && !NAME_STOP.has(w)))];
+}
+function nameMatch(a, b) {
+  const ta = nameTokens(a), tb = nameTokens(b);
+  if (!ta.length || !tb.length) return null;
+  const c = ta.filter(x => tb.includes(x)).length;
+  return c >= Math.min(2, ta.length, tb.length);
+}
+const nameCheckOn = () => !/^(off|0|false|no)$/i.test(env('PAY_NAME_CHECK'));
+const NAME_ERR = 'Escribí el nombre completo (nombre y apellido) del titular de la cuenta desde la que vas a pagar: se usa para verificar el pago automáticamente y tiene que coincidir con el nombre de quien transfiere.';
+const cleanName = s => clean(s, 80).replace(/\s+/g, ' ').trim();
 function parseNotification(n, forcedMethod) {
   const app = clean(n.package || n.packageName || n.app_package || n.app || '', 120);
   const title = clean(n.title || '', 300);
@@ -410,9 +453,7 @@ function parseNotification(n, forcedMethod) {
   const amA = all.match(/(?:S\/\.?|\$|€|COP|MXN|ARS|PEN|USD|EUR|soles?)\s*\$?\s*([\d][\d.,]*)/i), amB = all.match(/([\d][\d.,]*)\s*(?:pesos|soles|d[oó]lares|euros?|COP|MXN|ARS|PEN|USD|EUR|€)(?![A-Za-z])/i);
   const am = amA && amB ? (amA.index <= amB.index ? amA : amB) : (amA || amB);
   if (am) out.amount = parseAmountStr(am[1]);
-  const snd = all.match(/([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})\s+te\s+(?:envi|transfiri|yape|pag)/)
-           || all.match(/(?:\bde|desde|\bfrom)\s+(?!(?:COP|USD|EUR|MXN|ARS|PEN|Global66|Bancolombia|Nequi|Wise|Takenos|tu|su|your)\b)([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]+(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ.]*){0,3})/);
-  if (snd) out.sender = snd[1].replace(/([A-Za-zÁÉÍÓÚÑáéíóúñ]{2,})\.(?:\s.*)?$/, '$1').trim(); // v63: cortar en fin de oración
+  out.sender = extractSender(all); // v73: nombre de quien envió (se compara con el declarado por el cliente)
   const op = all.match(/(?:operaci[oó]n|n[uú]mero de operaci[oó]n|referencia|ref\.?|c[oó]digo|comprobante|folio|clave de rastreo)\s*(?:n[°º.o]*|#|:)?\s*([A-Za-z0-9-]{4,40})/i);
   if (op) out.op = op[1];
   return out;
@@ -462,9 +503,10 @@ async function handler(req, res) {
       const r = await supaRpc('kiwi_pay_notif_ingest', {
         p_hash: notifHash(body, p), p_method: p.incoming ? p.method : null, p_app: p.app, p_title: p.title, p_body: p.text,
         p_amount: p.incoming ? p.amount : null, p_currency: p.currency, p_sender: p.sender, p_op: p.op,
-        p_posted: posted ? new Date(posted).toISOString() : null });
-      if (r && r.status === 'matched' && r.already !== true && r.topup) { try { await notifyTopup(r.topup); } catch (_) {} }
-      return send(res, 200, { ok: true, status: r.status || (r.duplicate ? 'duplicate' : 'ok'), id: r.id || null });
+        p_posted: posted ? new Date(posted).toISOString() : null, p_name_check: nameCheckOn() });
+      if (r && r.status === 'matched' && r.already !== true && r.topup) { try { await notifyTopup(r.topup, p.sender); } catch (_) {} }
+      if (r && (r.status === 'name_mismatch' || r.status === 'name_missing')) { try { await notifyNameReview(r, p); } catch (_) {} }
+      return send(res, 200, { ok: true, status: r.status || (r.duplicate ? 'duplicate' : 'ok'), id: r.id || null, sender: p.sender || null });
     }
 
     // v72: ayuda para encontrar TG_CHAT_ID (solo con el secreto de admin; nunca devuelve el token del bot)
@@ -510,11 +552,28 @@ async function handler(req, res) {
       }
       if (!(usdt >= minU) || usdt > cfg.max_usdt) return send(res, 400, { error: (purpose === 'reseller' ? 'Recarga de revendedor: ' : '') + 'el monto debe estar entre ' + minU + ' y ' + cfg.max_usdt + ' USDT' + (fiatIn && rate ? (() => { const k = 1 + (Number(jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION)[cur]) || 0) / 100; const dec = FIAT_IN[cur] < 1 ? 100 : 1, f = x => x.toLocaleString('es-AR', dec > 1 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : {}); return ' (≈ ' + (cur === 'EUR' ? '€' : '$') + f(Math.ceil(minU * rate * k * dec - 1e-6) / dec) + ' a ' + (cur === 'EUR' ? '€' : '$') + f(Math.floor(cfg.max_usdt * rate * k * dec) / dec) + ' ' + cur + ').'; })() : '.') });
       if (!rate) return send(res, 503, { error: 'No pudimos obtener la cotización. Probá en un minuto.' });
+      // v73: en transferencias el cliente declara el titular de la cuenta desde la que paga (se compara con la notificación)
+      const payerName = cleanName(body.payer_name);
+      if (METHODS[method].kind === 'notif' && nameTokens(payerName).length < 2) return send(res, 400, { error: NAME_ERR });
       const qv = quote(method, usdt, rate);
       if (fiatIn) qv.base = round(fiatIn, METHODS[method].round);
       const r = await supaRpc('kiwi_pay_create', { p_token: token, p_method: method, p_usdt: usdt, p_currency: cur, p_base: qv.base,
         p_rate: rate, p_commission: qv.commission, p_step: qv.step, p_minutes: methodMinutes(method, cfg.minutes), p_max_open: Number(env('PAY_MAX_OPEN', '2')) || 2, p_purpose: purpose });
-      return send(res, 200, { ok: true, topup: r.topup, account: cfg.methods.find(m => m.id === method).account, rate });
+      let topup = r.topup;
+      if (METHODS[method].kind === 'notif' && payerName && topup && topup.id) {
+        const sp = await supaRpc('kiwi_pay_set_payer', { p_token: token, p_id: Number(topup.id), p_name: payerName, p_name_check: nameCheckOn() });
+        if (sp && sp.topup) topup = sp.topup;
+      }
+      return send(res, 200, { ok: true, topup, account: cfg.methods.find(m => m.id === method).account, rate });
+    }
+    // v73: el cliente corrige el nombre del titular en el paso Pagar (si ya llegó la notificación, se reintenta el emparejamiento)
+    if (action === 'payer') {
+      const nm = cleanName(body.payer_name);
+      if (nameTokens(nm).length < 2) return send(res, 400, { error: NAME_ERR });
+      const cur = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
+      if (!cur || !METHODS[cur.method] || METHODS[cur.method].kind !== 'notif') return send(res, 400, { error: 'Recarga inválida.' });
+      const r = await supaRpc('kiwi_pay_set_payer', { p_token: token, p_id: Number(body.id), p_name: nm, p_name_check: nameCheckOn() });
+      return send(res, 200, { ok: true, topup: r.topup });
     }
     if (action === 'reseller') {
       const r = await supaRpc('kiwi_reseller_status', { p_token: token });
@@ -531,10 +590,10 @@ async function handler(req, res) {
         if (cur && cur.method === 'usdt' && refIn.length < 10) throw new Error('Pegá el TxID / Hash de tu envío.');
       }
       { const cur2 = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
-        if (cur2 && METHODS[cur2.method] && METHODS[cur2.method].kind === 'notif' && clean(body.payer_name, 80).length < 3)
-          throw new Error('Escribí el nombre completo de quien hizo la transferencia, tal como figura en el comprobante.'); }
+        if (cur2 && METHODS[cur2.method] && METHODS[cur2.method].kind === 'notif' && nameTokens(body.payer_name || cur2.payer_name).length < 2)
+          throw new Error(NAME_ERR); }
       const r = await supaRpc('kiwi_pay_submit', { p_token: token, p_id: Number(body.id), p_reference: refIn,
-        p_payer_name: clean(body.payer_name, 80), p_proof: proof });
+        p_payer_name: cleanName(body.payer_name), p_proof: proof, p_name_check: nameCheckOn() });
       let t = r.topup;
       if (t && METHODS[t.method] && METHODS[t.method].kind !== 'notif') t = await verifyTopup(t);
       return send(res, 200, { ok: true, topup: t });
@@ -578,5 +637,5 @@ async function handler(req, res) {
 
 module.exports = handler;
 module.exports.notifyOrders = notifyOrders;
-module.exports._t = { parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
+module.exports._t = { extractSender, nameMatch, nameTokens, nameCheckOn, notifyNameReview, parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
   checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, notifyOrders, notifyTopup, orderTgText, tgTime, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
