@@ -951,6 +951,12 @@
             </button>
         </div>
         <div class="kadm-shell bg-[#0f0e0a] border border-kiwi-gold/70 rounded-2xl p-3 sm:p-5">
+            <div id="kiwi-staff-refresh-bar" class="flex flex-wrap items-center gap-3 mb-4 p-3 rounded-xl border border-kiwi-gold/40 bg-black/30">
+                <button id="kiwi-staff-refresh" type="button" onclick="window.kiwiStaffRefresh()" class="bg-kiwi-gold text-black font-bold rounded-lg px-4 py-2 disabled:opacity-50"><i class="fa-solid fa-rotate mr-1"></i> Actualizar</button>
+                <span id="kiwi-staff-updated" role="status" aria-live="polite" class="text-xs text-gray-300">Sin actualizar</span>
+                <span id="kiwi-staff-new" class="hidden text-xs text-yellow-300" role="status">Hay cambios — tocá Actualizar</span>
+                <span class="text-[11px] text-gray-500">Actualización manual · solo esta pestaña</span>
+            </div>
             <div id="kiwi-ra-cambios" class="hidden mb-4"></div>
             <div class="kadm-tabs border-b border-kiwi-gold/30 mb-4">
                 <button onclick="window.switchStaffTab('cuentas')" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold"><i class="fa-solid fa-users"></i> CUENTAS</button>
@@ -2049,7 +2055,7 @@ window.balShowStaff = function (on) {
         window.fetchInitialData = async function() {
             if (!supabaseClient || !window.supabaseOnline) {
                 console.warn('Supabase no está disponible; se conserva la información local.');
-                return;
+                return false;
             }
             try {
                 // 1. Cargar Usuarios
@@ -2098,11 +2104,10 @@ window.balShowStaff = function (on) {
                 }
 
                 updateAuthUI();
-                if (document.getElementById('staff-drawer') && !document.getElementById('staff-drawer').classList.contains('-translate-x-full')) {
-                    if(typeof currentStaffTab !== 'undefined') window.switchStaffTab(currentStaffTab);
-                }
+                // v74: sincronizar datos nunca vuelve a dibujar el panel staff.
+                return !errU && !purchasesErr;
 
-            } catch (err) { console.error("Error sincronizando:", err); }
+            } catch (err) { console.error("Error sincronizando:", err); return false; }
         };
 
 
@@ -2126,9 +2131,7 @@ window.balShowStaff = function (on) {
                 return { error: e };
             }
         };
-        setInterval(function() { // sin acceso directo a la tabla ya no llega el realtime de compras: el staff refresca cada 30 s
-            try { if (!document.hidden && window.supabaseOnline && window.kiwiIsOrderStaff() && typeof window.fetchInitialData === 'function') window.fetchInitialData(); } catch (_) {}
-        }, 30000);
+        // v74: pedidos staff se consultan al entrar o al tocar Actualizar; sin polling.
 
         // ===== Sincronización de compras con Supabase (v15) =====
         window.sameUser = function(a, b) { return a != null && b != null && String(a).toLowerCase() === String(b).toLowerCase(); };
@@ -2214,10 +2217,15 @@ window.balShowStaff = function (on) {
 
         function initStaffRealtime() {
             if (!supabaseClient || !window.supabaseOnline) return;
+            const changed = () => {
+                if (window.kiwiIsOrderStaff()) {
+                    if (window.kiwiStaffMarkChanged) window.kiwiStaffMarkChanged();
+                } else window.fetchInitialData();
+            };
             supabaseClient.channel('live-db-changes')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => { window.fetchInitialData(); })
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'compras' }, () => { window.fetchInitialData(); })
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_staff' }, () => { window.fetchInitialData(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, changed)
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'compras' }, changed)
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_staff' }, changed)
               .subscribe();
         }
 
@@ -7013,7 +7021,7 @@ window.balShowStaff = function (on) {
             }
             if (path === '/panel-admin') {
                 setTimeout(() => {
-                    if (typeof window.toggleStaffDrawer === 'function') window.toggleStaffDrawer();
+                    if (typeof window.goToAdminPanel === 'function') window.goToAdminPanel();
                 }, 300);
             }
         };
@@ -7537,7 +7545,7 @@ window.resetUser2FA = function(username) {
             if (saldoTab) saldoTab.classList.toggle('hidden', !isOwnerOrCeo);
             if (tab2fa) tab2fa.classList.toggle('hidden', !isOwnerOrCeo);
         };
-        setInterval(window.applyRolePermissions, 2000);
+        // v74: permisos visuales al abrir la pestaña; autorización real sigue en el servidor.
         if (typeof window.switchStaffTab === 'function') window.switchStaffTab('cuentas');
 
 
@@ -7870,7 +7878,7 @@ window.resetUser2FA = function(username) {
     }
 
     const staffCall = async (fn, args, okMsg) => {
-        try { const r = await window.kiwiStaffRpc(fn, args); if (okMsg) alert(okMsg(r)); await loadEvents(); return r; }
+        try { const r = await window.kiwiStaffRpc(fn, args); if (okMsg) alert(okMsg(r)); await loadEvents(true); return r; }
         catch (e) { alert('Error: ' + (e.message || e)); }
     };
     window.staffEventSave = function () {
@@ -7907,7 +7915,7 @@ window.resetUser2FA = function(username) {
         try { meData = await window.kiwiStaffRpc('kiwi_my_points', {}); } catch (e) { meData = { error: e.message || 'error' }; }
     }
 
-    async function loadEvents() {
+    async function loadEvents(refreshStaff = false) {
         const tasks = [
             window.kiwiRpc('kiwi_event_public', { p_limit: 20 }).then(d => { evData = d; }).catch(e => { console.warn('eventos:', e); if (!evData) evData = { event: null }; }),
             window.kiwiRpc('kiwi_weekly_public', { p_limit: 3 }).then(d => { wkData = d; }).catch(e => { console.warn('semanales:', e); }),
@@ -7916,7 +7924,7 @@ window.resetUser2FA = function(username) {
         await Promise.all(tasks);
         renderEvent(); renderMe('ev-me'); renderWeekly();
         const staffEl = document.getElementById('ev-staff');
-        if (!staffEl || !staffEl.contains(document.activeElement)) renderStaff();
+        if (refreshStaff || (staffEl && !staffEl.dataset.loaded)) { renderStaff(); if (staffEl) staffEl.dataset.loaded = '1'; }
     }
     window.loadKiwiEvents = loadEvents;
 
@@ -7932,7 +7940,7 @@ window.resetUser2FA = function(username) {
         view.classList.remove('hidden');
         view.scrollTop = 0;
         renderMe('ev-me'); renderWeekly();
-        loadEvents();
+        loadEvents(true);
         window.stopEventsRefresh();
         refreshTimer = setInterval(() => { if (!document.hidden) loadEvents(); }, 30000);
         cdTimer = setInterval(renderCountdown, 1000);
@@ -8283,7 +8291,7 @@ window.resetUser2FA = function(username) {
                 if (!r.ok) return false;
                 const j = await r.json();
                 if (!j || !j.success) return false;
-                window.kiwiRaApplyPrices(j); if (window.KIWI_RA_CAMBIOS_VISIBLE === true) { try { window.kiwiRaRenderCambios && window.kiwiRaRenderCambios(); } catch (_) {} } return true;
+                window.kiwiRaApplyPrices(j); return true; // v74: el cartel staff solo se dibuja por acción explícita
             } catch (_) { return false; } finally { clearTimeout(t); }
         };
         const startPrices = () => setTimeout(() => window.kiwiRaLoadPrices(false), 300);
@@ -9028,6 +9036,7 @@ window.resetUser2FA = function(username) {
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
             const box = document.getElementById('admin-pagos'); if (!box) return;
+            const request = P.request = (P.request || 0) + 1;
             box.innerHTML = `
                 <div class="flex flex-wrap gap-2 mb-3">
                     <select id="kps-status" onchange="window.KPAY_STAFF.status=this.value;window.loadAdminPagos()" class="bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white">
@@ -9036,7 +9045,7 @@ window.resetUser2FA = function(username) {
                     <select id="kps-method" onchange="window.KPAY_STAFF.method=this.value;window.loadAdminPagos()" class="bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white">
                         <option value="">Todos los métodos</option>${Object.entries(ML).map(([v, l]) => `<option value="${v}" ${P.method === v ? 'selected' : ''}>${l}</option>`).join('')}
                     </select>
-                    <button onclick="window.loadAdminPagos()" class="bg-kiwi-dark border border-kiwi-border rounded-lg px-3 text-sm text-gray-200"><i class="fa-solid fa-rotate"></i></button>
+                    <button onclick="window.kiwiStaffRefresh()" class="bg-kiwi-dark border border-kiwi-border rounded-lg px-3 text-sm text-gray-200"><i class="fa-solid fa-rotate"></i> Actualizar</button>
                     <button id="kps-verify" onclick="window.kpayStaffVerifyNow(false)" class="bg-green-500 text-black font-bold rounded-lg px-3 py-2 text-sm"><i class="fa-solid fa-magnifying-glass-dollar mr-1"></i>Verificar ahora</button>
                     <button onclick="window.kpayStaffVerifyNow(true)" class="border border-sky-400 text-sky-300 rounded-lg px-3 py-2 text-sm"><i class="fa-brands fa-bitcoin mr-1"></i>Probar Binance</button>
                 </div>
@@ -9048,8 +9057,9 @@ window.resetUser2FA = function(username) {
                 <h4 class="font-orbitron text-xs text-kiwi-gold uppercase mb-2">Registro de acreditaciones automáticas</h4>
                 <div id="kps-log" class="space-y-1 text-xs"></div>`;
             if (!window.KPAY_MOCK_STAFF && !P.noVerify) { try { await window.kpayStaffVerify(false, true); } catch (_) {} }
-            try { P.data = await rpc('kiwi_pay_staff_list', { p_status: P.status || null, p_method: P.method || null, p_limit: 150 }); }
-            catch (e) { document.getElementById('kps-topups').innerHTML = '<p class="text-red-400 text-sm">' + esc(e.message) + ' (¿corriste kiwii-v54-pagos.sql?)</p>'; return; }
+            if (request !== P.request) return false;
+            try { const data = await rpc('kiwi_pay_staff_list', { p_status: P.status || null, p_method: P.method || null, p_limit: 150 }); if (request !== P.request) return false; P.data = data; }
+            catch (e) { if (request === P.request) document.getElementById('kps-topups').innerHTML = '<p class="text-red-400 text-sm">' + esc(e.message) + ' (¿corriste kiwii-v54-pagos.sql?)</p>'; return false; }
             const ST = window.KPAY_STATUS || {};
             const c = P.data.counts || {};
             document.getElementById('kps-counts').innerHTML = Object.keys(ST).map(k => `<span class="px-2 py-1 rounded-full border ${ST[k][1]}">${ST[k][0]}: ${c[k] || 0}</span>`).join('');
@@ -9092,6 +9102,7 @@ window.resetUser2FA = function(username) {
                 </div>`).join('') : '<p class="text-gray-500 text-sm">Nada pendiente.</p>';
             const autos = tops.filter(t => t.status === 'credited');
             document.getElementById('kps-log').innerHTML = autos.length ? autos.map(t => `<p class="text-gray-300">✅ #${t.id} ${esc(t.username)} +${Number(t.credited_usdt || t.usdt).toFixed(2)} USDT · ${ML[t.method] || t.method} · ${esc(t.source || '')} · ${esc(t.credited_by || '')} · ${new Date(t.credited_at).toLocaleString('es-AR')}</p>`).join('') : '<p class="text-gray-500">Elegí el filtro "Acreditadas" o "Todas" para ver el registro.</p>';
+            return true;
         };
         window.kpayStaffVerify = async function (diag, quiet) {
             const r = await fetch('/api/pay', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -9107,7 +9118,7 @@ window.resetUser2FA = function(username) {
             return j;
         };
         window.kpayStaffVerifyNow = async function (diag) { const b = document.getElementById('kps-verify'); if (b) b.disabled = true; try { await window.kpayStaffVerify(diag); } finally { window.loadAdminPagos(); } };
-        setInterval(function () { const b = document.getElementById('admin-pagos'); if (b && b.offsetParent && !window.KPAY_MOCK_STAFF) window.loadAdminPagos(); }, 30000);
+        // v74: PAGOS sin actualización periódica; usar Actualizar.
         window.kpayStaffApprove = async function (id) {
             const t = (P.data.topups || []).find(x => x.id === id);
             if (!confirm('¿Acreditar ' + Number(t.usdt).toFixed(2) + ' USDT a ' + t.username + '? Hacelo SOLO si viste el dinero en la cuenta.')) return;
@@ -9618,15 +9629,16 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     W.kiwiStockLoad = async function () {
         try {
             var c = (typeof supabaseClient !== 'undefined' && supabaseClient) || W.supabaseClient;
-            if (!c || !c.rpc) return;
+            if (!c || !c.rpc) return false;
             var r = await c.rpc('kiwi_stock_list');
-            if (r && !r.error) W.kiwiStockApply(r.data || []);
-        } catch (e) {}
+            if (r && !r.error) { W.kiwiStockApply(r.data || []); return true; }
+            return false;
+        } catch (e) { return false; }
     };
     W.kiwiStockRefreshUI = function () {
         try { if (document.getElementById('inline-roblox-groups') && document.getElementById('inline-roblox-groups').innerHTML) W.renderInlineRobloxGroups(); } catch (e) {}
         W.kiwiStockDomPass();
-        try { var st = document.getElementById('admin-stock'); if (st && !st.classList.contains('hidden')) W.renderStaffStock(); } catch (e) {}
+        // v74: los flags del escaparate siguen en vivo, pero nunca redibujan STOCK staff.
     };
 
     // ---- Guards de compra (cliente) ----
@@ -9820,7 +9832,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         box.innerHTML = '<p class="kadm-sub">Apagá un producto y en la tienda aparece <b class="text-red-400">No Stock</b> y no se puede comprar. En los <b>grupos de Roblox</b> solo muestra la etiqueta No Stock, no bloquea la compra (hay que estar en los 14 igual). Los cambios se ven en la tienda en 2–3 minutos.</p>' +
             '<div class="kst-tools"><input type="search" id="kst-q" class="kadm-in" placeholder="Buscar producto, grupo o categoría..." value="' + esc(UI.q) + '" oninput="window.KIWI_STOCK_UI.q=this.value;window.kiwiStockRerenderKeepFocus()">' +
             '<label class="flex items-center gap-2 text-sm text-gray-300 kst-mini" style="min-height:44px"><input type="checkbox" ' + (UI.onlyOff ? 'checked' : '') + ' onchange="window.KIWI_STOCK_UI.onlyOff=this.checked;window.renderStaffStock()"> Ver solo deshabilitados</label>' +
-            '<button type="button" class="kst-mini" style="min-height:44px" onclick="window.kiwiStockLoad().then(window.renderStaffStock)"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>' +
+            '<button type="button" class="kst-mini" style="min-height:44px" onclick="window.kiwiStaffRefresh()"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>' +
             '<p class="text-xs text-gray-400 mb-3">' + total + ' interruptores · <span class="text-red-400 font-bold">' + totOff + ' sin stock</span></p>' +
             (html || '<p class="text-sm text-gray-400">Nada para mostrar.</p>');
     };
@@ -10068,5 +10080,86 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.started) W.kpedPoll(false); });
 })();
 </script>
+
+<!-- v74: panel staff estable, carga explícita por pestaña (sin timers) -->
+<script id="kiwi-v74-staff-manual">
+(function (W) {
+    const tabs = ['cuentas', 'compras', 'saldo', '2fa', 'pagos', 'stock'];
+    const S = W.KIWI_STAFF_MANUAL = { tab: 'cuentas', seq: 0, busy: false, updated: {}, drafts: {}, changes: 0 };
+    const el = id => document.getElementById(id);
+    W.kiwiStaffMarkChanged = function () {
+        S.changes++;
+        const b = el('kiwi-staff-new');
+        if (b) { b.textContent = 'Hay cambios — tocá Actualizar'; b.classList.remove('hidden'); }
+    };
+    function status(error) {
+        const b = el('kiwi-staff-refresh'), label = el('kiwi-staff-updated');
+        if (b) { b.disabled = S.busy; b.setAttribute('aria-busy', String(S.busy)); b.innerHTML = S.busy ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Actualizando…' : '<i class="fa-solid fa-rotate mr-1"></i> Actualizar'; }
+        if (label) label.textContent = error ? 'No se pudo actualizar. Reintentá.' : S.busy ? 'Cargando datos…' : S.updated[S.tab] ? 'Actualizado ' + S.updated[S.tab] + ' (hora AR)' : 'Sin actualizar';
+    }
+    // Retener borradores al salir de una pestaña; nunca copiar contraseñas al almacenamiento.
+    function remember(tab) {
+        const box = el('admin-' + tab); if (!box) return;
+        S.drafts[tab] = Array.from(box.querySelectorAll('input, textarea, select, details')).filter(n => n.type !== 'password' && n.type !== 'file').map((n, i) => ({ id: n.id, i, value: n.value, checked: n.checked, open: n.open }));
+    }
+    function restore(tab) {
+        const box = el('admin-' + tab); if (!box) return;
+        const nodes = Array.from(box.querySelectorAll('input, textarea, select, details')).filter(n => n.type !== 'password' && n.type !== 'file');
+        (S.drafts[tab] || []).forEach(d => {
+            const n = d.id ? nodes.find(x => x.id === d.id) : nodes[d.i];
+            if (!n || n.tagName === 'SELECT' || n.type === 'checkbox' || n.type === 'radio') return; // filtros y flags se leen del estado vigente
+            if (n.tagName === 'DETAILS') n.open = d.open; else n.value = d.value;
+        });
+    }
+    async function load(tab, manual) {
+        if (!tabs.includes(tab)) tab = 'cuentas';
+        const role = W.getMyStaffRole();
+        if (!['owner', 'ceo', 'mod'].includes(role)) return;
+        if (['saldo', '2fa', 'pagos', 'stock'].includes(tab) && !W.canManageStaff()) tab = 'cuentas';
+        if (S.busy && S.tab === tab) return;
+        if (!manual) remember(S.tab);
+        S.tab = tab; currentStaffTab = tab;
+        const seq = ++S.seq, changes = S.changes;
+        S.busy = true; status();
+        document.querySelectorAll('#admin-content > .admin-tab').forEach(n => n.classList.toggle('hidden', n.id !== 'admin-' + tab));
+        document.querySelectorAll('#admin-page .kadm-tabs > button').forEach(n => {
+            const match = (n.getAttribute('onclick') || '').match(/switchStaffTab\('([^']+)'/);
+            const key = match && match[1], on = key === tab;
+            n.classList.toggle('hidden', ['saldo', '2fa', 'pagos', 'stock'].includes(key) && !W.canManageStaff());
+            ['text-kiwi-gold', 'border-b-2', 'border-kiwi-gold'].forEach(c => n.classList.toggle(c, on)); n.classList.toggle('text-gray-500', !on);
+        });
+        try {
+            let result;
+            if (tab === 'cuentas' || tab === 'compras') {
+                result = await W.fetchInitialData();
+                if (seq !== S.seq) return;
+                if (result === false) throw new Error('Sin conexión');
+                if (tab === 'cuentas') renderStaffCuentas(role); else renderStaffCompras(role);
+            } else if (tab === 'stock') {
+                result = await W.kiwiStockLoad();
+                if (seq !== S.seq) return;
+                if (result === false) throw new Error('Sin conexión');
+                W.renderStaffStock();
+            } else if (tab === 'pagos') result = await W.loadAdminPagos();
+            else if (tab === 'saldo') W.loadAdminSaldo();
+            else if (tab === '2fa') W.loadAdmin2FA();
+            if (seq !== S.seq) return;
+            if (result === false) throw new Error('No se pudo cargar');
+            if (!manual) restore(tab); else delete S.drafts[tab];
+            if (W.kiwiAdminDecorate) W.kiwiAdminDecorate();
+            if (W.KIWI_RA_CAMBIOS_VISIBLE === true && W.kiwiRaRenderCambios) await W.kiwiRaRenderCambios();
+            if (seq !== S.seq) return;
+            S.updated[tab] = new Date().toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false });
+            if (S.changes === changes && el('kiwi-staff-new')) el('kiwi-staff-new').classList.add('hidden');
+            S.busy = false; status();
+        } catch (e) {
+            if (seq === S.seq) { S.busy = false; status(true); }
+        }
+    }
+    W.switchStaffTab = tab => load(tab, false);
+    W.kiwiStaffRefresh = () => load(S.tab, true);
+})(window);
+</script>
+
 </body>
 </html>
