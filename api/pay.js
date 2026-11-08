@@ -28,6 +28,7 @@ const METHODS = {
   usdt:           { label: 'USDT (TRC20 / BEP20)', currency: 'USDT', step: 0.01, round: 0.01, kind: 'crypto' },
   binance_pay:    { label: 'Binance Pay',          currency: 'USDT', step: 0.01, round: 0.01, kind: 'binance_pay' },
   ar_transfer:    { label: 'Transferencia Argentina (alias)', currency: 'ARS', step: 1, round: 10, kind: 'notif' },
+  mx_hey:         { label: 'Hey Banco (SPEI)',      currency: 'MXN', step: 0.01, round: 0.1, kind: 'notif' },
   mx_nu:          { label: 'Nu México (SPEI)',      currency: 'MXN', step: 0.01, round: 0.1, kind: 'notif' },
   co_bancolombia: { label: 'Bancolombia (Colombia)',   currency: 'COP', step: 1, round: 100, kind: 'notif' },
   pe_yape:        { label: 'Yape (Perú)',           currency: 'PEN', step: 0.01, round: 0.1, kind: 'notif' },
@@ -58,8 +59,9 @@ function accountData(m) {
         ? [['Binance Pay ID', env('PAY_BINANCE_PAY_ID')]].concat(env('PAY_BINANCE_PAY_NAME') ? [['Nombre', env('PAY_BINANCE_PAY_NAME')]] : []) : null;
     case 'ar_transfer':
       return env('PAY_AR_ALIAS') ? [['Alias', env('PAY_AR_ALIAS')]].concat(env('PAY_AR_CVU') ? [['CVU/CBU', env('PAY_AR_CVU')]] : [], env('PAY_AR_TITULAR') ? [['Titular', env('PAY_AR_TITULAR')]] : [], env('PAY_AR_BANCO') ? [['Banco / billetera', env('PAY_AR_BANCO')]] : []) : null;
-    case 'mx_nu':
-      return env('PAY_MX_CLABE') ? [['CLABE', env('PAY_MX_CLABE')], ['Banco', 'Nu México']].concat(env('PAY_MX_TITULAR') ? [['Titular', env('PAY_MX_TITULAR')]] : []) : null;
+    case 'mx_nu': return null; // Retirado: solo se conservan filas históricas.
+    case 'mx_hey':
+      return env('PAY_MX_CLABE') ? [['CLABE', env('PAY_MX_CLABE')], ['Banco', env('PAY_MX_BANCO', 'Hey Banco')]].concat(env('PAY_MX_TITULAR') ? [['Titular', env('PAY_MX_TITULAR')]] : []) : null;
     case 'co_bancolombia':
       // v69: se recibe en Bancolombia (antes Global66) (clave interna co_bancolombia se mantiene). Se muestran solo los datos cargados.
       // v64: PAY_CO_LLAVE (llave Bre-B) alcanza sola para activar el método.
@@ -102,6 +104,7 @@ function accountData(m) {
 }
 // v66: Colombia (transferencia normal Bancolombia/otros bancos) puede tardar ~1 día → la recarga queda abierta 24 h (PAY_CO_MINUTES, máx. 1500).
 function methodMinutes(method, def) {
+  if (method === 'mx_hey') { const m = Number(env('PAY_MX_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }
   if (method === 'co_bancolombia') { const m = Number(env('PAY_CO_MINUTES', '1440')); return m >= 10 ? Math.min(1500, m) : def; }
   // v70: ACH puede tardar hasta 48 h hábiles → 2 días por defecto (máx. 4320 = 3 días, mismo tope que kiwi_pay_create v70)
   if (method === 'us_takenos') { const m = Number(env('PAY_US_MINUTES', '2880')); return m >= 10 ? Math.min(4320, m) : def; }
@@ -113,10 +116,10 @@ function publicConfig() {
   const methods = [];
   for (const [id, m] of Object.entries(METHODS)) {
     const acc = accountData(id);
-    if (acc) methods.push({ id, label: m.label, currency: m.currency, commission_pct: Number(comm[m.currency]) || 0, account: acc, minutes: methodMinutes(id, Number(env('PAY_EXPIRY_MINUTES', '45')) || 45) });
+    if (acc) methods.push({ id, label: m.label, currency: m.currency, commission_pct: Number(comm[m.currency]) || 0, account: acc, minutes: methodMinutes(id, Number(env('PAY_EXPIRY_MINUTES', '15')) || 15) });
   }
   return { ok: true, methods, min_usdt: Number(env('PAY_MIN_USDT', '1')) || 1, max_usdt: Number(env('PAY_MAX_USDT', '500')) || 500,
-           minutes: Number(env('PAY_EXPIRY_MINUTES', '45')) || 45 };
+           minutes: Number(env('PAY_EXPIRY_MINUTES', '15')) || 15 };
 }
 
 // ---------- HTTP helpers (mismo estilo que api/ra.js) ----------
@@ -379,13 +382,13 @@ async function verifyTopup(topup) {
 // ---------- Notificaciones de bancos (parsers tolerantes, configurables) ----------
 const DEFAULT_APPS = {
   'com.mercadopago.wallet': 'ar_transfer', 'com.uala': 'ar_transfer', 'ar.com.brubank.wallet': 'ar_transfer',
-  'com.nu.production': 'mx_nu', 'mx.com.nu': 'mx_nu',
+  'com.banregio.hey': 'mx_hey',
   'com.global66.cards': 'co_bancolombia', 'com.todo1.mobile': 'co_bancolombia', 'com.bancolombia.app': 'co_bancolombia',
   'com.bcp.innovacxion.yapeapp': 'pe_yape',
   'com.takenos': 'us_takenos',               // v70: Takenos (Google Play id=com.takenos, verificado en su centro de ayuda)
   'com.transferwise.android': 'eu_wise',     // v70: Wise
 };
-const CUR_OF = { ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR' };
+const CUR_OF = { mx_hey: 'MXN', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR' };
 const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
 const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr|you sent|you paid|you spent|sent to|is on its way|withdraw|card payment|you converted|convertiste)/i;
 
@@ -577,6 +580,12 @@ async function handler(req, res) {
     }
     if (action === 'reseller') {
       const r = await supaRpc('kiwi_reseller_status', { p_token: token });
+      return send(res, 200, r);
+    }
+    if (action === 'cancel') {
+      const id = Number(body.id);
+      if (!Number.isSafeInteger(id) || id <= 0) return send(res, 400, { error: 'Recarga inválida.' });
+      const r = await supaRpc('kiwi_pay_cancel', { p_token: token, p_id: id });
       return send(res, 200, r);
     }
     if (action === 'confirm') {
