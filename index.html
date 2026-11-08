@@ -1362,28 +1362,28 @@
                         <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/ar.png" srcset="https://flagcdn.com/w80/ar.png 2x" alt="ARS" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">ARS</span><span class="block text-[11px] text-gray-400">Peso argentino</span></span>
                     </span>
-                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 1.642 ARS</span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 1.686,56 ARS</span>
                 </button>
                 <button id="curr-card-MXN" onclick="window.selectCurrency('MXN', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
                     <span class="flex items-center gap-3">
                         <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/mx.png" srcset="https://flagcdn.com/w80/mx.png 2x" alt="MXN" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">MXN</span><span class="block text-[11px] text-gray-400">Peso mexicano</span></span>
                     </span>
-                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 18,87 MXN</span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 19,15 MXN</span>
                 </button>
                 <button id="curr-card-COP" onclick="window.selectCurrency('COP', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
                     <span class="flex items-center gap-3">
                         <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/co.png" srcset="https://flagcdn.com/w80/co.png 2x" alt="COP" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">COP</span><span class="block text-[11px] text-gray-400">Peso colombiano</span></span>
                     </span>
-                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3.259 COP</span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3.299,97 COP</span>
                 </button>
                 <button id="curr-card-PEN" onclick="window.selectCurrency('PEN', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
                     <span class="flex items-center gap-3">
                         <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/pe.png" srcset="https://flagcdn.com/w80/pe.png 2x" alt="PEN" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">PEN</span><span class="block text-[11px] text-gray-400">Sol peruano</span></span>
                     </span>
-                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3,45 PEN</span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3,57 PEN</span>
                 </button>
                 <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 col-span-2">
                     <span class="flex items-center gap-3">
@@ -1826,17 +1826,18 @@ window.balShowStaff = function (on) {
 
         // --- SISTEMA DE CONVERSION DE MONEDAS ---
         window.currentCurrency = 'USDT';
-        // Tasas de respaldo (si /api/binance-p2p no responde): precio de COMPRA "Al instante" en la app de Binance
+        // v75: tasas de respaldo YA con +1,6% (bases aproximadas ARS 1660, MXN 18.85, COP 3248, PEN 3.51).
+        // Si falla la API se conserva el último valor; loadBinanceRates solo aplica margen a una base nueva.
         window.exchangeRates = {
-            'ARS': 1642,
-            'MXN': 19.46,
-            'COP': 3306.6,
-            'PEN': 3.493,
+            'ARS': 1686.56,
+            'MXN': 19.152,
+            'COP': 3299.97,
+            'PEN': 3.566,
             'USDT': 1
         };
-        // Margen sobre el precio P2P de compra (top 5 anuncios, método de pago local, ~10 USDT) que trae /api/binance-p2p.
-        // Iguala lo que cobra la app de Binance en "Al instante". 1.03 = +3%. Editá estos valores si cambia la diferencia.
-        window.KIWI_RATE_MARGIN = { ARS: 1.00, MXN: 1.0143, COP: 1.0343, PEN: 1.009 };
+        // v75: como Hexz, mejor anuncio BUY sin filtro de banco (~10 USDT), pero con margen fijo de +1,6%.
+        // /api/binance-p2p devuelve la base cruda; se multiplica una sola vez.
+        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016 };
         window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
 
         window.getConvertedPrice = function(prod) {
