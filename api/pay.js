@@ -38,9 +38,9 @@ const METHODS = {
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
 const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4, USD: 0, EUR: 0 };
 // Margen sobre P2P igual al de la web (KIWI_RATE_MARGIN)
-const RATE_MARGIN = { ARS: 1.00, MXN: 1.0143, COP: 1.0343, PEN: 1.009, USD: 1.00, EUR: 1.01 };
-const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: ['BBVABank'], transAmount: 190 },
-  COP: { payTypes: ['BancolombiaSA'], transAmount: 32000 }, PEN: { payTypes: ['Yape'], transAmount: 35 } };
+const RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, USD: 1.00, EUR: 1.01 };
+const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: [], transAmount: 190 },
+  COP: { payTypes: [], transAmount: 32000 }, PEN: { payTypes: [], transAmount: 35 } };
 
 function jsonEnv(k, d) { try { const v = env(k); return v ? Object.assign({}, d, JSON.parse(v)) : d; } catch (_) { return d; } }
 function accountData(m) {
@@ -225,7 +225,7 @@ async function notifyNameReview(r, p) {
     + '\nNo se acreditó: aprobala a mano en PAGOS si corresponde.');
 }
 
-// ---------- Cotización (misma fuente que /api/binance-p2p) ----------
+// ---------- Cotización v75: mejor BUY sin filtro de banco (misma fuente que /api/binance-p2p) ----------
 async function p2pRate(fiat) {
   const cfg = P2P[fiat];
   const tries = [[cfg.payTypes, cfg.transAmount], [[], cfg.transAmount], [[], null]];
@@ -235,8 +235,8 @@ async function p2pRate(fiat) {
       if (transAmount) body.transAmount = transAmount;
       const r = await fetchJson('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search',
         { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify(body) }, 8000);
-      const prices = ((r.json && r.json.data) || []).map(a => Number(a.adv && a.adv.price)).filter(n => n > 0).sort((a, b) => a - b).slice(0, 5);
-      if (prices.length) return prices.reduce((s, p) => s + p, 0) / prices.length;
+      const prices = ((r.json && r.json.data) || []).map(a => Number(a.adv && a.adv.price)).filter(n => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+      if (prices.length) return prices[0];
     } catch (_) {}
   }
   return null;
