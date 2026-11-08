@@ -1,9 +1,7 @@
-// Vercel Serverless Function - Proxy for Volsever Free Fire API
-// Deploy this and set VOLSEVER_API_KEY in Vercel environment variables
 
-export default async function handler(req, res) {
-  // Allow CORS from any origin (or restrict to your domain)
-  res.setHeader('Access-Control-Allow-Origin', '*');
+module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -15,11 +13,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { action, id, region } = req.query;
+  const { action, id, region } = req.query || {};
   const apiKey = process.env.VOLSEVER_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured' });
+    return res.status(500).json({ error: 'Servicio temporalmente no disponible.' });
   }
 
   let url;
@@ -38,8 +36,10 @@ export default async function handler(req, res) {
       }
     });
     const data = await response.json();
-    return res.status(response.status).json(data);
+    if (!response.ok || data?.error) return res.status(502).json({status:false,error:'No pudimos verificar el jugador.',message:'Intentá nuevamente más tarde.'});
+    const d = data.data || {};
+    return res.status(200).json({status:!!data.status,data:{username:d.username,nickname:d.nickname,account_region:d.account_region,region:d.region,user_id:d.user_id,uid:d.uid,discount_items:Array.isArray(d.discount_items)?d.discount_items.map(x=>({diamonds:x.diamonds,is_discount:x.is_discount})):undefined},message:data.status?undefined:'No encontramos ese jugador.'});
   } catch (err) {
-    return res.status(500).json({ error: 'Proxy error', message: err.message });
+    return res.status(500).json({ status: false, error: 'No pudimos verificar el jugador.', message: 'Intentá nuevamente más tarde.' });
   }
 }

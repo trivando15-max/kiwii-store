@@ -1,35 +1,22 @@
-/**
- * Vercel Serverless Function — Proxy para Bulk Medya API
- *
- * Ruta: POST /api/bulkmedya
- *
- * Variables de entorno requeridas en Vercel:
- *   BULK_MEDYA_API_KEY = f07776f87a5974953972921dba729e92
- *
- * Body JSON esperado:
- *   { "action": "add", "service": 15217, "link": "https://instagram.com/...", "quantity": 1000 }
- *   { "action": "status", "order": 23501 }
- *   { "action": "balance" }
- *   { "action": "services" }
- */
 
-const BULK_API_URL = 'https://bulkmedya.org/api/v2';
+
+const SOCIAL_API_URL = 'https://bulkmedya.org/api/v2';
 
 function getApiKey() {
   const key = process.env.BULK_MEDYA_API_KEY;
   if (!key) {
-    throw new Error('Falta la variable de entorno BULK_MEDYA_API_KEY en Vercel');
+    throw new Error('Servicio temporalmente no disponible.');
   }
   return key;
 }
 
-async function callBulkMedya(params) {
+async function callDelivery(params) {
   const body = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) body.set(k, String(v));
   }
 
-  const res = await fetch(BULK_API_URL, {
+  const res = await fetch(SOCIAL_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -50,8 +37,8 @@ async function callBulkMedya(params) {
 }
 
 module.exports = async function handler(req, res) {
-  // CORS básico (misma origen en producción)
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -80,7 +67,6 @@ module.exports = async function handler(req, res) {
   try {
     const apiKey = getApiKey();
 
-    // --- ADD ORDER ---
     if (action === 'add') {
       const service = Number(payload.service);
       const link = String(payload.link || '').trim();
@@ -96,7 +82,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'quantity debe ser >= 1' });
       }
 
-      const { ok, data } = await callBulkMedya({
+      const { ok, data } = await callDelivery({
         key: apiKey,
         action: 'add',
         service,
@@ -114,53 +100,52 @@ module.exports = async function handler(req, res) {
 
       return res.status(ok ? 200 : 502).json({
         success: false,
-        error: data?.error || data?.message || data?.raw || 'Bulk Medya no devolvió order ID',
-        detail: data
+        error: 'No pudimos completar la entrega. Consultá a soporte.'
       });
     }
 
-    // --- ORDER STATUS ---
     if (action === 'status') {
       const order = payload.order;
       if (!order) {
         return res.status(400).json({ error: 'order es obligatorio' });
       }
 
-      const { data } = await callBulkMedya({
+      const { data } = await callDelivery({
         key: apiKey,
         action: 'status',
         order
       });
 
-      return res.status(200).json(data);
+      if (data?.error || data?.raw) return res.status(502).json({success:false,error:'Consulta temporalmente no disponible.'});
+      return res.status(200).json({status:data.status,remains:data.remains,start_count:data.start_count});
     }
 
-    // --- BALANCE ---
     if (action === 'balance') {
-      const { data } = await callBulkMedya({
+      const { data } = await callDelivery({
         key: apiKey,
         action: 'balance'
       });
-      return res.status(200).json(data);
+      if (data?.error || data?.raw) return res.status(502).json({success:false,error:'Consulta temporalmente no disponible.'});
+      return res.status(200).json({balance:data.balance,currency:data.currency});
     }
 
-    // --- SERVICES LIST ---
     if (action === 'services') {
-      const { data } = await callBulkMedya({
+      const { data } = await callDelivery({
         key: apiKey,
         action: 'services'
       });
-      return res.status(200).json(data);
+      if (!Array.isArray(data)) return res.status(502).json({success:false,error:'Catálogo temporalmente no disponible.'});
+      return res.status(200).json(data.map(s=>({service:s.service,type:s.type,rate:s.rate,min:s.min,max:s.max})));
     }
 
     return res.status(400).json({
       error: 'action inválida. Usá: add | status | balance | services'
     });
   } catch (err) {
-    console.error('[bulkmedya proxy]', err);
+
     return res.status(500).json({
       success: false,
-      error: err.message || 'Error interno del proxy'
+      error: 'Servicio temporalmente no disponible.'
     });
   }
 };

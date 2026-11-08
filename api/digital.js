@@ -1,22 +1,10 @@
-/**
- * Vercel Serverless — Proxy ResellMe API
- *
- * POST /api/resellme
- *
- * Env: RESELLME_API_KEY = sk_live_...
- *
- * Body:
- *   { "action": "order", "product_id": "...", "variant_id": "...", "quantity": 1 }
- *   { "action": "products" }
- *   { "action": "balance" }
- *   { "action": "order_status", "order_id": "ord_..." }
- */
+
 
 const BASE = 'https://resellme.xyz/api/reseller/v1';
 
 function getKey() {
   const key = process.env.RESELLME_API_KEY;
-  if (!key) throw new Error('Falta RESELLME_API_KEY en Vercel');
+  if (!key) throw new Error('Servicio temporalmente no disponible.');
   return key;
 }
 
@@ -37,11 +25,12 @@ async function api(path, options = {}) {
   } catch {
     data = { raw: text };
   }
-  return { ok: res.ok, status: res.status, data };
+  return { ok: res.ok && !data?.error && !data?.raw && data?.success !== false, status: res.status, data };
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -65,7 +54,6 @@ module.exports = async function handler(req, res) {
   const action = String(body.action || '').toLowerCase();
 
   try {
-    // --- ORDER (compra + entrega keys) ---
     if (action === 'order' || action === 'add') {
       const product_id = body.product_id || body.productId;
       const variant_id = body.variant_id || body.variantId || undefined;
@@ -87,22 +75,9 @@ module.exports = async function handler(req, res) {
       });
 
       if (!ok) {
-        const errMsg =
-          data?.error ||
-          data?.message ||
-          (status === 402
-            ? 'Saldo insuficiente en la cuenta del proveedor'
-            : status === 409
-              ? 'Sin stock disponible'
-              : 'HTTP ' + status);
-        return res.status(ok ? 200 : status === 402 || status === 409 ? 200 : 502).json({
-          success: false,
-          error: errMsg,
-          detail: data
-        });
+        return res.status(status === 402 || status === 409 ? 200 : 502).json({success:false, error:status === 409 ? 'Sin stock disponible.' : 'No pudimos completar la entrega. Consultá a soporte.'});
       }
 
-      // Extraer keys de la respuesta
       const keys = [];
       if (Array.isArray(data?.items)) {
         for (const it of data.items) {
@@ -118,31 +93,26 @@ module.exports = async function handler(req, res) {
         order_id: data.order_id || data.id || null,
         status: data.status || 'completed',
         keys,
-        total: data.total,
-        balance: data.balance,
-        raw: data
+
       });
     }
 
-    // --- PRODUCTS ---
     if (action === 'products') {
       const { ok, data } = await api('/products');
       if (!ok) {
-        return res.status(502).json({ success: false, error: data?.error || 'Error catálogo' });
+        return res.status(502).json({ success: false, error: 'Catálogo temporalmente no disponible.' });
       }
-      return res.status(200).json(data);
+      return res.status(200).json({success:true, currency:/^(EUR|USD|USDT)$/.test(data.currency) ? data.currency : 'EUR', products:(Array.isArray(data.products)?data.products:[]).map(p=>({id:p.id,price:p.price,stock:p.stock,variants:(Array.isArray(p.variants)?p.variants:[]).map(v=>({id:v.id,price:v.price,stock:v.stock}))}))});
     }
 
-    // --- BALANCE ---
     if (action === 'balance') {
       const { ok, data } = await api('/balance');
       if (!ok) {
-        return res.status(502).json({ success: false, error: data?.error || 'Error saldo' });
+        return res.status(502).json({ success: false, error: 'Consulta temporalmente no disponible.' });
       }
-      return res.status(200).json(data);
+      return res.status(200).json({balance:data.balance,currency:data.currency});
     }
 
-    // --- ORDER STATUS ---
     if (action === 'order_status' || action === 'status') {
       const orderId = body.order_id || body.orderId || body.order;
       if (!orderId) {
@@ -150,19 +120,19 @@ module.exports = async function handler(req, res) {
       }
       const { ok, data } = await api('/orders/' + encodeURIComponent(orderId));
       if (!ok) {
-        return res.status(502).json({ success: false, error: data?.error || 'Error consulta' });
+        return res.status(502).json({ success: false, error: 'Consulta temporalmente no disponible.' });
       }
-      return res.status(200).json(data);
+      return res.status(200).json({success:true,order_id:data.order_id || data.id || null,status:data.status});
     }
 
     return res.status(400).json({
       error: 'action inválida. Usá: order | products | balance | order_status'
     });
   } catch (err) {
-    console.error('[resellme proxy]', err);
+
     return res.status(500).json({
       success: false,
-      error: err.message || 'Error interno del proxy'
+      error: 'Servicio temporalmente no disponible.'
     });
   }
 };

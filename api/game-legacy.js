@@ -1,18 +1,16 @@
-// Vercel Serverless Function - Proxy for RecargasAmerica
-// Variables de entorno en Vercel: RECARGAS_API_KEY
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = process.env.RECARGAS_API_KEY;
+  res.setHeader('Cache-Control', 'no-store');
+  const apiKey = process.env.RECARGAS_API_KEY || process.env.RA_API_KEY || process.env.RECARGAS_AMERICA_API_KEY || process.env.RECARGAS_API_TOKEN;
+  const base = (process.env.INSTANT_API_BASE || process.env.RA_API_BASE || 'https://panel.recargasamerica.com/api/v1').replace(/\/+$/, '');
   if (!apiKey) {
-    return res.status(500).json({ success: false, error: 'API key not configured (RECARGAS_API_KEY)' });
+    return res.status(500).json({ success: false, error: 'Servicio temporalmente no disponible.' });
   }
 
-  // Body puede venir como objeto o string según el runtime
   let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch (_) { body = {}; }
@@ -43,9 +41,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // Payload compatible con RecargasAmerica:
-  // - producto / product_id como ENTERO
-  // - player_id (no solo "destination")
   const upstreamBody = {
     product_id: productId,
     producto: productId,
@@ -56,7 +51,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const response = await fetch('https://panel.recargasamerica.com/api/v1/buy/catalog', {
+    const response = await fetch(base + '/buy/catalog', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -74,23 +69,15 @@ export default async function handler(req, res) {
       data = { raw: text };
     }
 
-    // Normalizar respuesta para el frontend
     if (response.ok && (data.success === true || data.status === true || data.status === 'OK' || data.ok === true)) {
-      return res.status(200).json({ success: true, ...data });
+      return res.status(200).json({ success: true });
     }
 
-    return res.status(response.status).json({
-      success: false,
-      error: data.error || data.message || data.msg || ('HTTP ' + response.status),
-      code: data.code || undefined,
-      errors: data.errors || undefined,
-      upstream: data
-    });
+    return res.status(response.ok ? 200 : 502).json({ success: false, error: 'No pudimos completar la entrega. Consultá a soporte con tu número de pedido.' });
   } catch (err) {
     return res.status(500).json({
       success: false,
-      error: 'Proxy error',
-      message: err.message
+      error: 'No pudimos confirmar la entrega. Consultá a soporte antes de reintentar.'
     });
   }
 }

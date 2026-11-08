@@ -1,28 +1,17 @@
-// KIWII STORE v40 - Utilidades compartidas de Recargas América (no es una ruta: Vercel ignora archivos que empiezan con "_")
-const RA_BASE = 'https://panel.recargasamerica.com/api/v1';
+const RA_BASE = (process.env.INSTANT_API_BASE || process.env.RA_API_BASE || 'https://panel.recargasamerica.com/api/v1').replace(/\/+$/, '');
 const MARGIN = 1.10;      // margen por defecto (10%) solo si un producto no está en MARGINS
-// v40: GANANCIA (%) POR PRODUCTO (id de Recargas América → %). ESTA ES LA TABLA QUE MANDA (el servidor valida con ella).
-// Escalera por grupo: el pack más chico 20%, baja parejo hasta 10% en el más grande. Copia de respaldo: KIWI_RA_MARGINS en index.html.
 const MARGINS = {
-  // Free Fire · Diamantes ilimitados (110 → 6.160)
   5: 20, 6: 18, 7: 16, 8: 14, 9: 12, 10: 10,
-  // Free Fire · Tarjetas y Pase (por costo: Semanal Básica, Semanal, Booyah, Mensual)
   1: 20, 2: 16.5, 4: 13.5, 3: 10,
-  // Blood Strike · Gold (100 → 5.000)
   23: 20, 25: 18, 26: 16, 27: 14, 28: 12, 29: 10,
-  // Blood Strike · Pases (Lucky Chest, Level Up, Elite, Premium)
   30: 20, 31: 16.5, 32: 13.5, 33: 10,
-  // PUBG Mobile · UC (60 → 8.100)
   34: 20, 35: 18, 36: 16, 37: 14, 38: 12, 39: 10,
-  // Mobile Legends Global · diamantes + Pase Semanal + Twilight, ordenados por costo
   249: 20, 250: 19, 251: 18, 252: 16.5, 253: 15.5, 254: 14.5, 255: 13.5, 256: 12, 257: 11, 258: 10,
-  // Mobile Legends US · diamantes + pases, ordenados por costo
   259: 20, 260: 19, 261: 18, 262: 17.5, 263: 16.5, 264: 15.5, 265: 14.5, 266: 13.5, 267: 12.5, 268: 12, 269: 11, 270: 10
 };
 const TOLERANCE = 0.03;   // 3% de margen de diferencia entre el precio que vio el cliente y el actual
 const CACHE_MS = 5 * 60 * 1000;
 
-// Costos de respaldo (USD) por si Recargas América no responde. Solo estos productos se pueden vender (sin PINES).
 const FALLBACK = {
   5: 0.6494, 6: 1.9463, 7: 3.2918, 8: 6.1152, 9: 12.1364, 10: 30.8870, // Free Fire diamantes ilimitados (v39)
   1: 0.3535, 2: 1.5150, 3: 7.0700, 4: 2.1210,
@@ -40,9 +29,7 @@ function raKey() {
   return process.env.RA_API_KEY || process.env.RECARGAS_API_KEY || process.env.RECARGAS_AMERICA_API_KEY || process.env.RECARGAS_API_TOKEN || '';
 }
 const marginOf = (id) => { const p = Number(MARGINS[id]); return p >= 0 && p <= 200 ? 1 + p / 100 : MARGIN; };
-// precio de venta = costo × (1 + margen del producto), hacia arriba al centavo. Sin id usa el 10% por defecto.
 const salePrice = (cost, id) => Math.ceil(Math.round(cost * (id != null ? marginOf(id) : MARGIN) * 1e6) / 1e4 - 1e-9) / 100;
-// v60: precio de revendedor → se achica solo el margen (factor 0.5 = Nivel 1, 0.25 = Nivel 2). Nunca por debajo del costo.
 const RESELLER_FACTOR = { 1: 0.5, 2: 0.25 };
 const resellerSalePrice = (cost, id, level) => {
   const f = RESELLER_FACTOR[level];
@@ -84,8 +71,6 @@ async function loadLive(fetchImpl) {
   } finally { clearTimeout(t); }
 }
 
-// v66: memoria persistente (Supabase, opcional). Guarda el último costo real de RA y registra cada cambio.
-// Usa SUPABASE_SERVICE_ROLE_KEY (la misma de /api/pay). Si falta o falla, todo sigue andando sin memoria.
 const SB_URL = () => (process.env.SUPABASE_URL || 'https://ykxyiamlvlppcyfzyvzr.supabase.co').replace(/\/$/, '');
 async function sbRpc(fn, args, fetchImpl) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -112,15 +97,11 @@ async function loadPersisted(fetchImpl) {
   for (const row of rows) { const id = Number(row.ra_id), c = Number(row.cost); if (IDS.includes(id) && c > 0) { costs[id] = c; at = Math.max(at, Date.parse(row.updated_at) || 0); } }
   return Object.keys(costs).length ? { costs, at } : null;
 }
-// Últimos cambios de costo registrados: [{ra_id, old_cost, new_cost, changed_at}]
 async function recentChanges(limit, fetchImpl) {
   const r = await sbRpc('kiwi_ra_price_changes_recent', { p_limit: limit || 30 }, fetchImpl);
   return Array.isArray(r) ? r : [];
 }
 
-// Devuelve { costs, inactive, live, source:'live'|'cache'|'db'|'fallback', stale }. Nunca lanza error.
-// v66: si RA no responde NUNCA se vende más barato sin avisar: se usa el último costo real conocido
-// (memoria de la instancia o Supabase) y, si no hay ninguno, source='fallback' (api/ra.js rechaza la compra).
 async function getCosts(opts) {
   opts = opts || {};
   if (!opts.force && cache && Date.now() - cache.at < CACHE_MS) return cache;
@@ -130,7 +111,6 @@ async function getCosts(opts) {
   if (cache) return Object.assign({}, cache, { live: false, stale: true, source: 'cache' });
   const db = await loadPersisted(opts.fetch).catch(() => null);
   if (db) {
-    // nunca por debajo del respaldo: si RA había bajado, cobramos un poco más mientras no responde (nunca menos)
     const costs = {}; for (const id of IDS) costs[id] = Math.max(Number(db.costs[id]) || 0, FALLBACK[id]);
     return { at: db.at || Date.now(), costs, inactive: [], live: false, stale: true, source: 'db' };
   }

@@ -1,0 +1,7 @@
+# Private handoff/build artifacts are not part of the public website.
+tests/
+capturas/
+*.md
+*.sql
+*.zip
+node_modules/
