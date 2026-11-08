@@ -1,15 +1,15 @@
 // /api/binance-p2p?fiat=COP  →  { fiat, rate, prices, payTypes, transAmount, source }
 // Precio de COMPRA de USDT en Binance P2P (lo que paga un cliente que compra USDT),
-// filtrado por el método de pago más usado en cada país y por un monto chico (~10 USDT),
-// promediando los 5 mejores anuncios. El margen extra ("Al instante") se aplica en el HTML (KIWI_RATE_MARGIN).
+// v75: mejor anuncio BUY (menor precio), sin filtro de banco/método de pago,
+// para un monto chico (~10 USDT), con respaldo sin monto si no hay anuncios.
+// Devuelve la tasa base sin margen; el +1,6% se aplica en HTML (KIWI_RATE_MARGIN) y pay.js (RATE_MARGIN).
 
 const CONFIG = {
-  ARS: { payTypes: [],                transAmount: 16500 },
-  MXN: { payTypes: ['BBVABank'],      transAmount: 190 },
-  COP: { payTypes: ['BancolombiaSA'], transAmount: 32000 },
-  PEN: { payTypes: ['Yape'],          transAmount: 35 },
+  ARS: { payTypes: [], transAmount: 16500 },
+  MXN: { payTypes: [], transAmount: 190 },
+  COP: { payTypes: [], transAmount: 32000 },
+  PEN: { payTypes: [], transAmount: 35 },
 };
-const TOP_N = 5;
 const URL = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
 
 async function search(fiat, payTypes, transAmount) {
@@ -32,7 +32,7 @@ async function handler(req, res) {
   const fiat = String((req.query && req.query.fiat) || 'ARS').toUpperCase();
   const cfg = CONFIG[fiat];
   if (!cfg) return res.status(400).json({ error: 'fiat no soportado' });
-  // Intentos: método de pago + monto → solo monto → sin filtros
+  // Intentos compatibles: configuración sin banco + monto → solo monto → sin filtros
   const attempts = [
     [cfg.payTypes, cfg.transAmount, 'payType+amount'],
     [[], cfg.transAmount, 'amount'],
@@ -40,10 +40,9 @@ async function handler(req, res) {
   ];
   for (const [pt, amt, source] of attempts) {
     try {
-      const prices = (await search(fiat, pt, amt)).sort((a, b) => a - b).slice(0, TOP_N);
+      const prices = (await search(fiat, pt, amt)).sort((a, b) => a - b);
       if (prices.length) {
-        const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
-        const rate = Math.round(avg * 1000) / 1000;
+        const rate = prices[0];
         res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
         return res.status(200).json({ fiat, rate, prices, payTypes: pt, transAmount: amt, source });
       }
