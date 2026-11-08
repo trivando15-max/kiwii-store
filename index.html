@@ -22,12 +22,10 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ===== v65: INTERRUPTOR CENTRAL "SIN STOCK" DE RECARGAS AMÉRICA =====
-        // true  = TODOS los productos de Recargas América (diamantes ilimitados, tarjetas/pases FF, Blood Strike, PUBG,
-        //         Mobile Legends, etc.) muestran "Sin Stock" y no se pueden comprar (temporal: no se puede cargar saldo en RA).
+        // ===== v65: INTERRUPTOR CENTRAL "SIN STOCK" DE ENTREGA AUTOMÁTICA =====
+        // true  = TODOS los productos de entrega automática (diamantes ilimitados, tarjetas/pases FF, Blood Strike, PUBG,
         // false = todo vuelve a la normalidad. No toca productos manuales, Roblox, redes sociales, etc.
-        window.KIWI_RA_SIN_STOCK = false; // v66: Recargas América reactivado
-        window.KIWI_RA_CAMBIOS_VISIBLE = false; // v67: cartel staff "Cambios de precio de Recargas América" oculto para todos (true = mostrarlo; requiere RA_ADMIN_KEY)
+        window.KIWI_RA_SIN_STOCK = false; // v66: entrega automática reactivado
         window.kiwiRaIsRaProd = p => !!(p && (p.raId || p.raLegacyId || p.autoDelivery || (window.KIWI_RA_ITEMS || []).some(it => it.id === p.id)));
         // v68: "No Stock" desde el Panel Staff (pestaña STOCK, Owner/CEO). Se guarda en Supabase (kiwi_stock_flags).
         window.KIWI_STOCK_OFF = (function () { try { return new Set(JSON.parse(localStorage.getItem('kiwi_stock_off') || '[]')); } catch (_) { return new Set(); } })();
@@ -957,7 +955,7 @@
                 <span id="kiwi-staff-new" class="hidden text-xs text-yellow-300" role="status">Hay cambios — tocá Actualizar</span>
                 <span class="text-[11px] text-gray-500">Actualización manual · solo esta pestaña</span>
             </div>
-            <div id="kiwi-ra-cambios" class="hidden mb-4"></div>
+
             <div class="kadm-tabs border-b border-kiwi-gold/30 mb-4">
                 <button onclick="window.switchStaffTab('cuentas')" class="flex-1 py-3 text-xs font-orbitron font-bold text-kiwi-gold border-b-2 border-kiwi-gold"><i class="fa-solid fa-users"></i> CUENTAS</button>
                 <button onclick="window.switchStaffTab('compras')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-bag-shopping"></i> COMPRAS</button>
@@ -1155,7 +1153,7 @@
                             <div id="ff-ra-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
                         </section>
 
-                        <!-- PASE BOOYAH (v52: instantáneo por Recargas América + opción con carga manual) -->
+                        
                         <section id="ff-booyah-card" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Pase Booyah</h3>
                             <p class="text-xs text-gray-400 mb-4">Elegí cómo querés recibirlo.</p>
@@ -1742,8 +1740,6 @@
                 panel.style.display = '';
             }
             // Also close balance modal if it was open on top
-            const bal = document.getElementById('balance-modal');
-            if (bal) bal.classList.add('hidden');
         };
 
         // --- SISTEMA DE CONVERSION DE MONEDAS ---
@@ -2281,7 +2277,7 @@
                    if(activeSubBtn) activeSubBtn.click();
                 } else if(activeCategoryTitle.includes('STREAMING')) {
                    window.renderVariantCatalog();
-                   if (typeof window.refreshResellmeStockUI === 'function') window.refreshResellmeStockUI(false);
+                   if (typeof window.refreshDigitalStockUI === 'function') window.refreshDigitalStockUI(false);
                 }
             }
         };
@@ -3275,122 +3271,96 @@
             { id: 424, category: 'tiktok', sub: 'likes', title: '100.000 Likes/Vistas', price: '30 USDT - $48.000 ARS', emoji: '👑', popular: true, tag: 'Mega VIP', usdtPrice: 30, purchasePriceARS: 48000 }
         ];
 
-        // ===== v37: PRODUCTOS DE RECARGAS AMÉRICA (entrega automática) =====
-        // v38: precio de venta = costo de Recargas América x 1,10 (10% de ganancia), redondeado hacia arriba al centavo.
-        // Los costos se actualizan solos desde /api/ra-prices al abrir la página (si falla, se usan los costos de abajo).
-        // v39: false = los diamantes ilimitados se entregan por /api/recargas como siempre. true = pasan por /api/ra (cobro en el servidor + validación de precio).
+        // ===== v37: PRODUCTOS DE ENTREGA AUTOMÁTICA (entrega automática) =====
+        // v38: precio de venta = costo de entrega automática x 1,10 (10% de ganancia), redondeado hacia arriba al centavo.
+        // v39: false = los diamantes ilimitados se entregan por /api/game-legacy como siempre. true = pasan por /api/game (cobro en el servidor + validación de precio).
         window.KIWI_FF_ILIMITADO_VIA_RA = false;
-        // v40: ganancia % por producto (id Recargas América → %). Respaldo: la tabla que manda está en api/_ra-lib.js (MARGINS) y llega por /api/ra-prices.
-        window.KIWI_RA_MARGINS = {
-          // Free Fire · Diamantes ilimitados (110 → 6.160)
-          5: 20, 6: 18, 7: 16, 8: 14, 9: 12, 10: 10,
-          // Free Fire · Tarjetas y Pase (por costo: Semanal Básica, Semanal, Booyah, Mensual)
-          1: 20, 2: 16.5, 4: 13.5, 3: 10,
-          // Blood Strike · Gold (100 → 5.000)
-          23: 20, 25: 18, 26: 16, 27: 14, 28: 12, 29: 10,
-          // Blood Strike · Pases (Lucky Chest, Level Up, Elite, Premium)
-          30: 20, 31: 16.5, 32: 13.5, 33: 10,
-          // PUBG Mobile · UC (60 → 8.100)
-          34: 20, 35: 18, 36: 16, 37: 14, 38: 12, 39: 10,
-          // Mobile Legends Global · diamantes + Pase Semanal + Twilight, ordenados por costo
-          249: 20, 250: 19, 251: 18, 252: 16.5, 253: 15.5, 254: 14.5, 255: 13.5, 256: 12, 257: 11, 258: 10,
-          // Mobile Legends US · diamantes + pases, ordenados por costo
-          259: 20, 260: 19, 261: 18, 262: 17.5, 263: 16.5, 264: 15.5, 265: 14.5, 266: 13.5, 267: 12.5, 268: 12, 269: 11, 270: 10
-        };
-        window.KIWI_RA_MARGIN = 1.10; // 1.10 = +10%. Si lo cambiás, cambiá también MARGIN en api/_ra-lib.js
         window.KIWI_RA_ITEMS = [
-            // id tienda, id RA, categoría, sub, título, costo RA (USD), extras
-            // FREE FIRE · DIAMANTES ILIMITADOS (v39: precio = costo RA x 1,10; la entrega sigue por /api/recargas como antes)
-            { id: 200, ra: 5, category: 'freefire', sub: 'ilimitado', title: '110 Diamantes', cost: 0.6494, legacy: true },
-            { id: 201, ra: 6, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', cost: 1.9463, legacy: true },
-            { id: 202, ra: 7, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', cost: 3.2918, legacy: true },
-            { id: 203, ra: 8, category: 'freefire', sub: 'ilimitado', title: '1.166 Diamantes', cost: 6.1152, legacy: true },
-            { id: 204, ra: 9, category: 'freefire', sub: 'ilimitado', title: '2.398 Diamantes', cost: 12.1364, legacy: true },
-            { id: 205, ra: 10, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', cost: 30.8870, legacy: true },
+            { id: 200, ra: 5, category: 'freefire', sub: 'ilimitado', title: '110 Diamantes', salePrices: [0.78, 0.72, 0.69], legacy: true },
+            { id: 201, ra: 6, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', salePrices: [2.3, 2.13, 2.04], legacy: true },
+            { id: 202, ra: 7, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', salePrices: [3.82, 3.56, 3.43], legacy: true },
+            { id: 203, ra: 8, category: 'freefire', sub: 'ilimitado', title: '1.166 Diamantes', salePrices: [6.98, 6.55, 6.33], legacy: true },
+            { id: 204, ra: 9, category: 'freefire', sub: 'ilimitado', title: '2.398 Diamantes', salePrices: [13.6, 12.87, 12.51], legacy: true },
+            { id: 205, ra: 10, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', salePrices: [33.98, 32.44, 31.66], legacy: true },
             // FREE FIRE (tarjetas y pase)
-            { id: 230, ra: 1, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal Básica', cost: 0.3535, emoji: '🎟️' },
-            { id: 231, ra: 2, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal', cost: 1.5150, emoji: '🎟️' },
-            { id: 232, ra: 3, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Mensual', cost: 7.0700, emoji: '🎫', tag: 'Más Elegido', popular: true },
-            { id: 221, ra: 4, category: 'freefire', sub: 'especiales', title: 'Pase Booyah Premium', cost: 2.1210, keep: true },
+            { id: 230, ra: 1, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal Básica', salePrices: [0.43, 0.39, 0.38], emoji: '🎟️' },
+            { id: 231, ra: 2, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal', salePrices: [1.77, 1.64, 1.58], emoji: '🎟️' },
+            { id: 232, ra: 3, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Mensual', salePrices: [7.78, 7.43, 7.25], emoji: '🎫', tag: 'Más Elegido', popular: true },
+            { id: 221, ra: 4, category: 'freefire', sub: 'especiales', title: 'Pase Booyah Premium', salePrices: [2.41, 2.27, 2.2], keep: true },
             // BLOOD STRIKE
-            { id: 600, ra: 23, category: 'bloodstrike', sub: 'gold', title: '100 + 5 Gold', cost: 0.7172, emoji: '🪙' },
-            { id: 601, ra: 25, category: 'bloodstrike', sub: 'gold', title: '300 + 20 Gold', cost: 2.1515, emoji: '🪙' },
-            { id: 602, ra: 26, category: 'bloodstrike', sub: 'gold', title: '500 + 40 Gold', cost: 3.5859, emoji: '🪙' },
-            { id: 603, ra: 27, category: 'bloodstrike', sub: 'gold', title: '1.000 + 100 Gold', cost: 7.1693, emoji: '💰', tag: 'Más Elegido', popular: true },
-            { id: 604, ra: 28, category: 'bloodstrike', sub: 'gold', title: '2.000 + 260 Gold', cost: 14.3385, emoji: '💰' },
-            { id: 605, ra: 29, category: 'bloodstrike', sub: 'gold', title: '5.000 + 800 Gold', cost: 35.8488, emoji: '💰', tag: 'Mejor Oferta', popular: true },
-            { id: 606, ra: 30, category: 'bloodstrike', sub: 'pases', title: 'Ultra Skin Lucky Chest', cost: 0.4293, emoji: '🎁' },
-            { id: 607, ra: 31, category: 'bloodstrike', sub: 'pases', title: 'Level Up Pass', cost: 1.6875, emoji: '🎖️' },
-            { id: 608, ra: 32, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Elite', cost: 3.3898, emoji: '🎖️' },
-            { id: 609, ra: 33, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Premium', cost: 7.4249, emoji: '🏆', tag: 'Premium', popular: true },
+            { id: 600, ra: 23, category: 'bloodstrike', sub: 'gold', title: '100 + 5 Gold', salePrices: [0.87, 0.79, 0.76], emoji: '🪙' },
+            { id: 601, ra: 25, category: 'bloodstrike', sub: 'gold', title: '300 + 20 Gold', salePrices: [2.54, 2.35, 2.25], emoji: '🪙' },
+            { id: 602, ra: 26, category: 'bloodstrike', sub: 'gold', title: '500 + 40 Gold', salePrices: [4.16, 3.88, 3.73], emoji: '🪙' },
+            { id: 603, ra: 27, category: 'bloodstrike', sub: 'gold', title: '1.000 + 100 Gold', salePrices: [8.18, 7.68, 7.43], emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 604, ra: 28, category: 'bloodstrike', sub: 'gold', title: '2.000 + 260 Gold', salePrices: [16.06, 15.2, 14.77], emoji: '💰' },
+            { id: 605, ra: 29, category: 'bloodstrike', sub: 'gold', title: '5.000 + 800 Gold', salePrices: [39.44, 37.65, 36.75], emoji: '💰', tag: 'Mejor Oferta', popular: true },
+            { id: 606, ra: 30, category: 'bloodstrike', sub: 'pases', title: 'Ultra Skin Lucky Chest', salePrices: [0.52, 0.48, 0.46], emoji: '🎁' },
+            { id: 607, ra: 31, category: 'bloodstrike', sub: 'pases', title: 'Level Up Pass', salePrices: [1.97, 1.83, 1.76], emoji: '🎖️' },
+            { id: 608, ra: 32, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Elite', salePrices: [3.85, 3.62, 3.51], emoji: '🎖️' },
+            { id: 609, ra: 33, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Premium', salePrices: [8.17, 7.8, 7.62], emoji: '🏆', tag: 'Premium', popular: true },
             // PUBG MOBILE
-            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC (57 + 3)', cost: 0.8959, emoji: '🪙' },
-            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC (300 + 25)', cost: 4.5090, emoji: '🪙' },
-            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC (600 + 60)', cost: 9.0304, emoji: '💰', tag: 'Más Elegido', popular: true },
-            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC (1.500 + 300)', cost: 22.5873, emoji: '💰' },
-            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC (3.000 + 850)', cost: 45.1820, emoji: '💰' },
-            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC (6.000 + 2.100)', cost: 90.3764, emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC (57 + 3)', salePrices: [1.08, 0.99, 0.95], emoji: '🪙' },
+            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC (300 + 25)', salePrices: [5.33, 4.92, 4.72], emoji: '🪙' },
+            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC (600 + 60)', salePrices: [10.48, 9.76, 9.4], emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC (1.500 + 300)', salePrices: [25.75, 24.17, 23.38], emoji: '💰' },
+            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC (3.000 + 850)', salePrices: [50.61, 47.9, 46.54], emoji: '💰' },
+            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC (6.000 + 2.100)', salePrices: [99.42, 94.9, 92.64], emoji: '👑', tag: 'Mejor Oferta', popular: true },
             // MOBILE LEGENDS (global)
-            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes (78 + 8)', cost: 1.1539, emoji: '💎' },
-            { id: 641, ra: 250, category: 'mlbb', sub: 'global', title: 'Pase Semanal de Diamantes', cost: 1.4592, emoji: '🎟️', tag: 'Popular', popular: true },
-            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes (156 + 16)', cost: 2.3103, emoji: '💎' },
-            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes (234 + 23)', cost: 3.4494, emoji: '💎' },
-            { id: 644, ra: 253, category: 'mlbb', sub: 'global', title: 'Twilight Pass', cost: 7.6209, emoji: '🌙' },
-            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes (625 + 81)', cost: 9.2364, emoji: '💎', tag: 'Más Elegido', popular: true },
-            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes (1.860 + 335)', cost: 27.7117, emoji: '💎' },
-            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes (3.099 + 589)', cost: 46.1870, emoji: '💎' },
-            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes (4.649 + 883)', cost: 69.2830, emoji: '💎' },
-            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes (7.740 + 1.548)', cost: 115.4725, emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes (78 + 8)', salePrices: [1.39, 1.27, 1.22], emoji: '💎' },
+            { id: 641, ra: 250, category: 'mlbb', sub: 'global', title: 'Pase Semanal de Diamantes', salePrices: [1.74, 1.6, 1.53], emoji: '🎟️', tag: 'Popular', popular: true },
+            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes (156 + 16)', salePrices: [2.73, 2.52, 2.42], emoji: '💎' },
+            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes (234 + 23)', salePrices: [4.02, 3.74, 3.6], emoji: '💎' },
+            { id: 644, ra: 253, category: 'mlbb', sub: 'global', title: 'Twilight Pass', salePrices: [8.81, 8.22, 7.92], emoji: '🌙' },
+            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes (625 + 81)', salePrices: [10.58, 9.91, 9.58], emoji: '💎', tag: 'Más Elegido', popular: true },
+            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes (1.860 + 335)', salePrices: [31.46, 29.59, 28.65], emoji: '💎' },
+            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes (3.099 + 589)', salePrices: [51.73, 48.96, 47.58], emoji: '💎' },
+            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes (4.649 + 883)', salePrices: [76.91, 73.1, 71.19], emoji: '💎' },
+            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes (7.740 + 1.548)', salePrices: [127.02, 121.25, 118.36], emoji: '👑', tag: 'Mejor Oferta', popular: true },
             // MOBILE LEGENDS (cuentas región US)
-            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes (51 + 5) · US', cost: 0.8586, emoji: '💎' },
-            { id: 661, ra: 260, category: 'mlbb', sub: 'us', title: '112 Diamantes (102 + 10) · US', cost: 1.7173, emoji: '💎' },
-            { id: 662, ra: 261, category: 'mlbb', sub: 'us', title: 'Pase Semanal de Diamantes · US', cost: 1.7173, emoji: '🎟️' },
-            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes (253 + 25) · US', cost: 4.2931, emoji: '💎' },
-            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes (505 + 66) · US', cost: 8.5862, emoji: '💎' },
-            { id: 665, ra: 264, category: 'mlbb', sub: 'us', title: 'Twilight Pass · US', cost: 8.5862, emoji: '🌙' },
-            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes (1.010 + 182) · US', cost: 17.1700, emoji: '💎' },
-            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes (1.515 + 273) · US', cost: 25.7562, emoji: '💎' },
-            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes (2.525 + 480) · US', cost: 42.9262, emoji: '💎' },
-            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes (3.030 + 576) · US', cost: 51.5100, emoji: '💎' },
-            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes (4.008 + 802) · US', cost: 68.6800, emoji: '💎' },
-            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes (5.010 + 1.002) · US', cost: 85.8500, emoji: '👑' }
+            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes (51 + 5) · US', salePrices: [1.04, 0.95, 0.91], emoji: '💎' },
+            { id: 661, ra: 260, category: 'mlbb', sub: 'us', title: '112 Diamantes (102 + 10) · US', salePrices: [2.05, 1.89, 1.8], emoji: '💎' },
+            { id: 662, ra: 261, category: 'mlbb', sub: 'us', title: 'Pase Semanal de Diamantes · US', salePrices: [2.03, 1.88, 1.8], emoji: '🎟️' },
+            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes (253 + 25) · US', salePrices: [5.05, 4.67, 4.49], emoji: '💎' },
+            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes (505 + 66) · US', salePrices: [10.01, 9.3, 8.95], emoji: '💎' },
+            { id: 665, ra: 264, category: 'mlbb', sub: 'us', title: 'Twilight Pass · US', salePrices: [9.92, 9.26, 8.92], emoji: '🌙' },
+            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes (1.010 + 182) · US', salePrices: [19.66, 18.42, 17.8], emoji: '💎' },
+            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes (1.515 + 273) · US', salePrices: [29.24, 27.5, 26.63], emoji: '💎' },
+            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes (2.525 + 480) · US', salePrices: [48.3, 45.61, 44.27], emoji: '💎' },
+            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes (3.030 + 576) · US', salePrices: [57.7, 54.61, 53.06], emoji: '💎' },
+            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes (4.008 + 802) · US', salePrices: [76.24, 72.46, 70.57], emoji: '💎' },
+            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes (5.010 + 1.002) · US', salePrices: [94.44, 90.15, 88], emoji: '👑' }
         ];
         window.kiwiRaSalePrice = function(it) {
-            const cost = Number(it.cost) || 0;
-            if (it.precio) return Math.max(Number(it.precio), Math.ceil(cost * 100) / 100);
-            const pm = Number((window.KIWI_RA_MARGINS || {})[it.ra]);
-            let m = (pm >= 0 && pm <= 200) ? 1 + pm / 100 : (Number(window.KIWI_RA_MARGIN) || 1.10);
-            // v60: revendedor → margen ×0,5 (Nivel 1) o ×0,25 (Nivel 2)
             const rf = window.kiwiReseller ? window.kiwiReseller.marginFactor('ra') : 1;
-            if (rf < 1) m = 1 + (m - 1) * rf;
-            return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100; // hacia arriba al centavo
+            const tier = rf <= 0.25 ? 2 : rf <= 0.5 ? 1 : 0;
+            return Number((it.salePrices || [])[tier]) || Number((it.salePrices || [])[0]) || 0;
         };
-        // v41: imagen de cada producto (id Recargas América → archivo en /images, .webp). Si falta, se muestra el emoji.
+        // v41: imagen de cada producto (id entrega automática → archivo en /images, .webp). Si falta, se muestra el emoji.
         window.KIWI_RA_IMG = { 1: 'ff-tarjeta-semanal-basica', 2: 'ff-tarjeta-semanal-v3', 3: 'ff-tarjeta-mensual-v3', 34: 'pubg-uc-1', 35: 'pubg-uc-2', 36: 'pubg-uc-3', 37: 'pubg-uc-4', 38: 'pubg-uc-5', 39: 'pubg-uc-6', 23: 'bs-gold-1', 25: 'bs-gold-2', 26: 'bs-gold-3', 27: 'bs-gold-4', 28: 'bs-gold-5', 29: 'bs-gold-6', 30: 'bs-pass-luckychest', 31: 'bs-pass-levelup', 32: 'bs-pass-elite', 33: 'bs-pass-premium', 249: 'mlbb-d1', 250: 'mlbb-weekly-pass', 251: 'mlbb-d1', 252: 'mlbb-d2', 253: 'mlbb-twilight-pass', 254: 'mlbb-d5', 255: 'mlbb-d5', 256: 'mlbb-d6', 257: 'mlbb-d7', 258: 'mlbb-d7', 259: 'mlbb-d1', 260: 'mlbb-d1', 261: 'mlbb-weekly-pass', 262: 'mlbb-d2', 263: 'mlbb-d5', 264: 'mlbb-twilight-pass', 265: 'mlbb-d5', 266: 'mlbb-d6', 267: 'mlbb-d6', 268: 'mlbb-d7', 269: 'mlbb-d7', 270: 'mlbb-d7' };
         window.kiwiRaImg = function (p) { const n = p && (window.KIWI_RA_IMG || {})[p.raId]; return n ? '/images/' + n + '.webp' : ''; };
         window.kiwiRaThumb = function (p, cls) { const u = window.kiwiRaImg(p); return u ? `<img src="${u}" alt="" loading="lazy" class="${cls}" onerror="this.replaceWith(document.createTextNode('${p.emoji || ''}'))">` : (p.emoji || ''); };
-        window.KIWI_RA_MAP = {}; // id del catálogo → id de Recargas América
+        window.KIWI_RA_MAP = {}; // id del catálogo → id de entrega automática
         (function () {
             const GAME = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG Mobile', mlbb: 'Mobile Legends' };
             window.KIWI_RA_ITEMS.forEach(it => {
                 const usdt = window.kiwiRaSalePrice(it);
                 const ars = '$' + Math.round(usdt * 1600).toLocaleString('es-AR') + ' ARS';
                 const existing = window.products.find(p => p.id === it.id);
-                if (it.legacy) { // Diamantes ilimitados: solo cambia el precio; la compra sigue por el flujo de siempre (/api/recargas)
+                if (it.legacy) { // Diamantes ilimitados: solo cambia el precio; la compra sigue por el flujo de siempre (/api/game-legacy)
                     if (window.KIWI_FF_ILIMITADO_VIA_RA) window.KIWI_RA_MAP[it.id] = it.ra;
-                    if (existing) Object.assign(existing, { usdtPrice: usdt, price: ars, raCost: it.cost, raLegacyId: it.ra });
+                    if (existing) Object.assign(existing, { usdtPrice: usdt, price: ars, raLegacyId: it.ra });
                     return;
                 }
                 window.KIWI_RA_MAP[it.id] = it.ra;
                 if (existing) { // Pase Booyah: mismo producto, ahora con entrega automática
-                    Object.assign(existing, { title: it.title, usdtPrice: usdt, price: ars, raId: it.ra, raCost: it.cost, autoDelivery: true });
+                    Object.assign(existing, { title: it.title, usdtPrice: usdt, price: ars, raId: it.ra, autoDelivery: true });
                     return;
                 }
                 window.products.push({
                     id: it.id, category: it.category, sub: it.sub,
                     title: (it.category === 'freefire' ? 'Free Fire · ' : GAME[it.category] + ' · ') + it.title,
                     shortTitle: it.title, price: ars, usdtPrice: usdt, emoji: it.emoji || '💎',
-                    tag: it.tag, popular: !!it.popular, raId: it.ra, raCost: it.cost, autoDelivery: true
+                    tag: it.tag, popular: !!it.popular, raId: it.ra, autoDelivery: true
                 });
             });
         })();
@@ -3482,8 +3452,8 @@
                 let variantsOptions = `<option value="" disabled selected>Selecciona una variante...</option>`;
                 item.variants.forEach((v, i) => {
                     let displayPrice = window.getConvertedVariantPrice(v.price) + window.x2Label(v);
-                    const stock = (typeof window.getResellmeStock === 'function')
-                        ? window.getResellmeStock(item.id, v.name)
+                    const stock = (typeof window.getDigitalStock === 'function')
+                        ? window.getDigitalStock(item.id, v.name)
                         : null;
                     let stockLabel = '';
                     if (stock === null || stock === undefined) stockLabel = '';
@@ -3570,8 +3540,8 @@
             listEl.innerHTML = variant.includes.map(inc => `<li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-500 mt-1 text-[10px]"></i> <span>${inc}</span></li>`).join('');
             infoDiv.classList.remove('hidden');
 
-            const stock = (typeof window.getResellmeStock === 'function')
-                ? window.getResellmeStock(item.id, variant.name)
+            const stock = (typeof window.getDigitalStock === 'function')
+                ? window.getDigitalStock(item.id, variant.name)
                 : null;
             if (stockLine) {
                 if (stock === null || stock === undefined) {
@@ -3609,8 +3579,8 @@
             if (variantIndex === "") return;
             const variant = item.variants[variantIndex];
 
-            const stock = (typeof window.getResellmeStock === 'function')
-                ? window.getResellmeStock(item.id, variant.name)
+            const stock = (typeof window.getDigitalStock === 'function')
+                ? window.getDigitalStock(item.id, variant.name)
                 : null;
             if (stock !== null && stock !== undefined && stock !== Infinity && stock <= 0) {
                 return alert('Esta variante no tiene stock disponible en este momento.');
@@ -3634,14 +3604,13 @@
                 variantName: variant.name,
                 purchasePriceARS,
                 usdtPrice,
-                isResellme: true
+                isDigital: true
             };
             window.openCheckout(null, true);
         }
 
-        // === RESELLME (Streaming / IA / Tools — vía proxy /api/resellme) ===
-        // Clave SOLO en Vercel: RESELLME_API_KEY
-        window.RESELLME_MAP = {
+        // === DIGITAL (Streaming / IA / Tools — vía proxy /api/digital) ===
+        window.DIGITAL_MAP = {
             // key = catalogId + '::' + variantName (exacto como en el select)
             'netflix::España Lifetime': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs0000je2uoh1a9uqus' },
             'netflix::España No Ads': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs9000le2uoi3r875v9' },
@@ -3680,30 +3649,30 @@
             'duolingo::Super GiftLink 12 months': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'var_sduo12m_on_duolingo_0001' }
         };
 
-        // v22: regla x2 según NUESTRO COSTO en ResellMe (precio proveedor, moneda que reporta la API: EUR)
+        // v22: regla x2 según NUESTRO COSTO en Digital (precio servicio, moneda que reporta la API: EUR)
         //  costo < 0.75        → se piden 2 cuentas, precio de venta igual
         //  0.75 <= costo < 1   → se piden 2 cuentas, precio de venta 2.5 USDT
         //  costo >= 1          → 1 cuenta, precio igual
-        window.resellmeCostByVariantId = {}; // variant_id|product_id → costo proveedor
-        window.resellmeCostCurrency = 'EUR';
+        window.digitalCostByVariantId = {}; // variant_id|product_id → costo servicio
+        window.digitalCostCurrency = 'EUR';
         window.X2_PRICE_USDT = 2.5;
-        window.getResellmeCost = function(catalogId, variantName) {
-            const map = window.RESELLME_MAP[(catalogId || '') + '::' + (variantName || '')];
+        window.getDigitalCost = function(catalogId, variantName) {
+            const map = window.DIGITAL_MAP[(catalogId || '') + '::' + (variantName || '')];
             if (!map) return null;
             const key = map.variant_id || map.product_id;
-            const c = window.resellmeCostByVariantId[key];
+            const c = window.digitalCostByVariantId[key];
             return (typeof c === 'number' && isFinite(c)) ? c : null;
         };
-        // Excluidos de la regla x2 (cantidad 1, precio original). Clave: 'catalogId::variante' o variant_id de ResellMe.
+        // Excluidos de la regla x2 (cantidad 1, precio original). Clave: 'catalogId::variante' o variant_id de Digital.
         window.X2_EXCLUDED = ['chatgpt::1 día'];
         window.isX2Excluded = function(catalogId, variantName) {
             const key = (catalogId || '') + '::' + (variantName || '');
-            const map = window.RESELLME_MAP[key];
+            const map = window.DIGITAL_MAP[key];
             return window.X2_EXCLUDED.includes(key) || !!(map && (window.X2_EXCLUDED.includes(map.variant_id) || window.X2_EXCLUDED.includes(map.product_id)));
         };
-        window.resellmeTier = function(catalogId, variantName) {
-            if (window.isX2Excluded(catalogId, variantName)) return { cost: window.getResellmeCost(catalogId, variantName), qty: 1, tier: 0, priceUsdt: null };
-            const cost = window.getResellmeCost(catalogId, variantName);
+        window.digitalTier = function(catalogId, variantName) {
+            if (window.isX2Excluded(catalogId, variantName)) return { cost: window.getDigitalCost(catalogId, variantName), qty: 1, tier: 0, priceUsdt: null };
+            const cost = window.getDigitalCost(catalogId, variantName);
             if (cost === null || cost <= 0) return { cost, qty: 1, tier: 0, priceUsdt: null };
             if (cost < 0.75) return { cost, qty: 2, tier: 1, priceUsdt: null };
             if (cost < 1) return { cost, qty: 2, tier: 2, priceUsdt: window.X2_PRICE_USDT };
@@ -3714,11 +3683,11 @@
             return '$' + ars.toLocaleString('es-AR') + ' ARS / ' + usdt + ' USDT';
         };
         /** Aplica x2 y precio 2.5 USDT a las variantes según el costo cacheado */
-        window.applyResellmeCostTiers = function() {
+        window.applyDigitalCostTiers = function() {
             (window.catalogVariant || []).forEach(item => {
                 (item.variants || []).forEach(v => {
                     if (v.basePrice === undefined) v.basePrice = v.price;
-                    const t = window.resellmeTier(item.id, v.name);
+                    const t = window.digitalTier(item.id, v.name);
                     v.x2 = t.qty === 2;
                     v.price = t.priceUsdt ? window.formatVariantPriceString(t.priceUsdt) : v.basePrice;
                 });
@@ -3726,44 +3695,44 @@
         };
         window.x2Label = function(v) { return (v && v.x2) ? ' · x2 cuentas' : ''; };
 
-        window.resolveResellmeIds = function(prod) {
+        window.resolveDigitalIds = function(prod) {
             if (!prod) return null;
-            if (prod.resellmeProductId) {
-                return { product_id: prod.resellmeProductId, variant_id: prod.resellmeVariantId || null };
+            if (prod.digitalProductId) {
+                return { product_id: prod.digitalProductId, variant_id: prod.digitalVariantId || null };
             }
             const key = (prod.catalogId || '') + '::' + (prod.variantName || '');
-            return window.RESELLME_MAP[key] || null;
+            return window.DIGITAL_MAP[key] || null;
         };
 
-        // Stock en vivo desde ResellMe (vía proxy). Cache en memoria.
-        window.resellmeStockByVariantId = {}; // variant_id → number | Infinity
-        window.resellmeStockLoadedAt = 0;
+        // Stock en vivo desde Digital (vía proxy). Cache en memoria.
+        window.digitalStockByVariantId = {}; // variant_id → number | Infinity
+        window.digitalStockLoadedAt = 0;
 
-        window.getResellmeStock = function(catalogId, variantName) {
-            const map = window.RESELLME_MAP[(catalogId || '') + '::' + (variantName || '')];
+        window.getDigitalStock = function(catalogId, variantName) {
+            const map = window.DIGITAL_MAP[(catalogId || '') + '::' + (variantName || '')];
             if (!map) return null;
             const key = map.variant_id || map.product_id;
-            if (!(key in window.resellmeStockByVariantId)) return null;
-            return window.resellmeStockByVariantId[key];
+            if (!(key in window.digitalStockByVariantId)) return null;
+            return window.digitalStockByVariantId[key];
         };
 
-        window.fetchResellmeStock = async function(force) {
+        window.fetchDigitalStock = async function(force) {
             const now = Date.now();
-            if (!force && window.resellmeStockLoadedAt && (now - window.resellmeStockLoadedAt) < 60000) {
-                return window.resellmeStockByVariantId;
+            if (!force && window.digitalStockLoadedAt && (now - window.digitalStockLoadedAt) < 60000) {
+                return window.digitalStockByVariantId;
             }
             try {
-                const res = await fetch('/api/resellme', {
+                const res = await fetch('/api/digital', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                     body: JSON.stringify({ action: 'products' })
                 });
                 const data = await res.json().catch(() => null);
-                if (!data || !Array.isArray(data.products)) return window.resellmeStockByVariantId;
+                if (!data || !Array.isArray(data.products)) return window.digitalStockByVariantId;
 
                 const cache = {};
                 const costs = {};
-                if (data.currency) window.resellmeCostCurrency = data.currency;
+                if (data.currency) window.digitalCostCurrency = data.currency;
                 for (const p of data.products) {
                     if (typeof p.price === 'number') costs[p.id] = p.price;
                     for (const v of (p.variants || [])) if (typeof v.price === 'number') costs[v.id] = v.price;
@@ -3779,19 +3748,19 @@
                         }
                     }
                 }
-                window.resellmeStockByVariantId = cache;
-                window.resellmeCostByVariantId = costs;
-                window.applyResellmeCostTiers();
-                window.resellmeStockLoadedAt = now;
+                window.digitalStockByVariantId = cache;
+                window.digitalCostByVariantId = costs;
+                window.applyDigitalCostTiers();
+                window.digitalStockLoadedAt = now;
                 return cache;
             } catch (e) {
-                console.warn('No se pudo cargar stock ResellMe:', e);
-                return window.resellmeStockByVariantId;
+                console.warn('No se pudo cargar stock Digital:', e);
+                return window.digitalStockByVariantId;
             }
         };
 
         /** Actualiza selects visibles con el stock cacheado */
-        window.applyResellmeStockToUI = function() {
+        window.applyDigitalStockToUI = function() {
             if (!window.catalogVariant) return;
             window.catalogVariant.forEach(item => {
                 const select = document.getElementById('select-' + item.id);
@@ -3801,7 +3770,7 @@
                 let html = `<option value="" disabled selected>Selecciona una variante...</option>`;
                 item.variants.forEach((v, i) => {
                     const displayPrice = window.getConvertedVariantPrice(v.price) + window.x2Label(v);
-                    const stock = window.getResellmeStock(item.id, v.name);
+                    const stock = window.getDigitalStock(item.id, v.name);
                     let stockLabel = '';
                     if (stock === null || stock === undefined) stockLabel = '';
                     else if (stock === Infinity || stock === -1) stockLabel = ' · Stock: ∞';
@@ -3818,12 +3787,12 @@
             });
         };
 
-        window.refreshResellmeStockUI = async function(force) {
-            await window.fetchResellmeStock(!!force);
-            window.applyResellmeStockToUI();
+        window.refreshDigitalStockUI = async function(force) {
+            await window.fetchDigitalStock(!!force);
+            window.applyDigitalStockToUI();
         };
 
-        window.sendResellmeOrder = async function(productId, variantId, quantity) {
+        window.sendDigitalOrder = async function(productId, variantId, quantity) {
             try {
                 const body = {
                     action: 'order',
@@ -3831,7 +3800,7 @@
                     quantity: Number(quantity) || 1
                 };
                 if (variantId) body.variant_id = variantId;
-                const res = await fetch('/api/resellme', {
+                const res = await fetch('/api/digital', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                     body: JSON.stringify(body)
@@ -3843,21 +3812,19 @@
                         orderId: json.order_id,
                         keys: Array.isArray(json.keys) ? json.keys : [],
                         status: json.status,
-                        raw: json
                     };
                 }
                 return {
                     success: false,
-                    error: json.error || json.message || ('HTTP ' + res.status),
-                    raw: json
+                    error: 'No pudimos completar la entrega. Intentá de nuevo o consultá a soporte.',
                 };
             } catch (e) {
                 return { success: false, error: e.message || String(e) };
             }
         };
 
-        // === BULK MEDYA (vía proxy /api/bulkmedya — la API Key NO va en el frontend) ===
-        window.BULK_MEDYA = {
+        // === REDES (vía proxy /api/social — la API Key NO va en el frontend) ===
+        window.SOCIAL_DELIVERY = {
             // Solo Service IDs públicos (no secretos)
             services: {
                 ig_followers_baja: 15234,
@@ -3870,10 +3837,10 @@
             }
         };
 
-        /** Envía pedido a Bulk Medya a través del proxy de Vercel */
-        window.sendBulkMedyaOrder = async function(serviceId, link, quantity) {
+        /** Envía pedido a redes a través del proxy de Vercel */
+        window.sendSocialOrder = async function(serviceId, link, quantity) {
             try {
-                const res = await fetch('/api/bulkmedya', {
+                const res = await fetch('/api/social', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({
@@ -3888,19 +3855,19 @@
                 try { json = JSON.parse(text); } catch (_) { json = { raw: text }; }
 
                 if (json && (json.order || json.success === true)) {
-                    return { success: true, orderId: json.order || json.orderId, raw: json };
+                    return { success: true, orderId: json.order || json.orderId };
                 }
-                const errMsg = (json && (json.error || json.message)) || text || ('HTTP ' + res.status);
-                return { success: false, error: errMsg, raw: json };
+                const errMsg = 'No pudimos completar la entrega. Intentá de nuevo o consultá a soporte.';
+                return { success: false, error: errMsg };
             } catch (e) {
                 return { success: false, error: e.message || String(e) };
             }
         };
 
-        /** Consulta estado de un pedido en el proveedor (vía proxy) */
-        window.getBulkMedyaStatus = async function(orderId) {
+        /** Consulta estado de un pedido en el servicio (vía proxy) */
+        window.getSocialStatus = async function(orderId) {
             try {
-                const res = await fetch('/api/bulkmedya', {
+                const res = await fetch('/api/social', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ action: 'status', order: orderId })
@@ -3912,9 +3879,9 @@
         };
 
         /**
-         * Sincroniza estados de pedidos con el proveedor.
-         * Si el proveedor marca Completed → status local = delivered.
-         * No muestra el nombre del proveedor al cliente.
+         * Sincroniza estados de pedidos con el servicio.
+         * Si el servicio marca Completed → status local = delivered.
+         * No muestra el nombre del servicio al cliente.
          */
         window.syncBulkOrderStatuses = async function() {
             let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -3929,7 +3896,7 @@
             let updated = 0;
             for (const order of pending) {
                 try {
-                    const data = await window.getBulkMedyaStatus(order.bulkOrderId);
+                    const data = await window.getSocialStatus(order.bulkOrderId);
                     if (!data || data.error) continue;
 
                     // Respuesta típica SMM: { status: "Completed" | "In progress" | "Pending" | "Partial" | "Canceled", remains: "0", ... }
@@ -3947,7 +3914,7 @@
 
                     if (newStatus && order.status !== newStatus) {
                         order.status = newStatus;
-                        order.providerStatus = remoteStatus;
+                        order.deliveryStatus = remoteStatus;
                         order.lastStatusCheck = new Date().toISOString();
                         updated++;
 
@@ -3958,7 +3925,7 @@
                             }
                         } catch (_) {}
                     } else if (remoteStatus) {
-                        order.providerStatus = remoteStatus;
+                        order.deliveryStatus = remoteStatus;
                         order.lastStatusCheck = new Date().toISOString();
                     }
                 } catch (e) {
@@ -3992,25 +3959,25 @@
             return parseInt(m[1].replace(/\./g, ''), 10) || 0;
         };
 
-        window.resolveBulkMedyaServiceId = function(prod) {
+        window.resolveSocialServiceId = function(prod) {
             if (!prod) return null;
             if (prod.category === 'instagram' && prod.sub === 'seguidores' && prod.igQuality) {
                 const map = {
-                    baja: window.BULK_MEDYA.services.ig_followers_baja,
-                    media: window.BULK_MEDYA.services.ig_followers_media,
-                    premium: window.BULK_MEDYA.services.ig_followers_premium
+                    baja: window.SOCIAL_DELIVERY.services.ig_followers_baja,
+                    media: window.SOCIAL_DELIVERY.services.ig_followers_media,
+                    premium: window.SOCIAL_DELIVERY.services.ig_followers_premium
                 };
                 return map[prod.igQuality] || null;
             }
             if (prod.category === 'instagram' && prod.sub === 'likes') {
                 const type = (prod.socialLikeType || '').toLowerCase();
-                if (type.includes('vista')) return window.BULK_MEDYA.services.ig_views;
-                return window.BULK_MEDYA.services.ig_likes;
+                if (type.includes('vista')) return window.SOCIAL_DELIVERY.services.ig_views;
+                return window.SOCIAL_DELIVERY.services.ig_likes;
             }
             if (prod.category === 'tiktok' && prod.sub === 'likes') {
                 const type = (prod.socialLikeType || '').toLowerCase();
-                if (type.includes('vista')) return window.BULK_MEDYA.services.tt_views;
-                return window.BULK_MEDYA.services.tt_likes;
+                if (type.includes('vista')) return window.SOCIAL_DELIVERY.services.tt_views;
+                return window.SOCIAL_DELIVERY.services.tt_likes;
             }
             return null;
         };
@@ -4053,7 +4020,7 @@
         };
 
         // ===== v60: PRECIOS DE REDES SOCIALES (tabla editable) =====
-        // costo: USD cada 1000 unidades (proveedor BulkMedya, id de servicio). margen: % según tamaño del paquete.
+        // costo: USD cada 1000 unidades (servicio Social, id de servicio). margen: % según tamaño del paquete.
         // Regla (por línea de producto, paquete por paquete, de menor a mayor):
         //   base   = costo × cantidad/1000 × (1 + margen × factor)  (redondeo hacia arriba al centavo)
         //   precio = máx(base, escalera[cantidad] × piso, paquete anterior + 0,20)
@@ -4403,7 +4370,7 @@
         // v49: tipo de entrega (fuente única)
         window.KIWI_DELIVERY = {
             manualCategories: ['roblox'],
-            // v52: el Pase Booyah de Recargas América (id 221) es instantáneo; el manual es el id 680. Diamantes Limitados = manual.
+            // v52: el Pase Booyah de entrega automática (id 221) es instantáneo; el manual es el id 680. Diamantes Limitados = manual.
             manualRegex: /fragmento|caja de fragmento|cajas? de evolutiv|evolutiv|carga manual|\blimitad[oa]s?\b/i,
             manualIds: [210, 211, 212, 213, 214, 215, 222, 223, 224, 225, 226, 227, 228, 229, 680]
         };
@@ -4970,14 +4937,14 @@
                 if (grid) { grid.classList.add('hidden'); grid.innerHTML = ''; }
                 document.getElementById('streaming-category-wrapper').classList.remove('hidden');
                 window.renderVariantCatalog();
-                // Stock en vivo desde ResellMe
-                if (typeof window.refreshResellmeStockUI === 'function') {
-                    window.refreshResellmeStockUI(false);
+                // Stock en vivo desde Digital
+                if (typeof window.refreshDigitalStockUI === 'function') {
+                    window.refreshDigitalStockUI(false);
                 }
-                if (!window._resellmeStockInterval) {
-                    window._resellmeStockInterval = setInterval(() => {
-                        if (typeof window.refreshResellmeStockUI === 'function') {
-                            window.refreshResellmeStockUI(true);
+                if (!window._digitalStockInterval) {
+                    window._digitalStockInterval = setInterval(() => {
+                        if (typeof window.refreshDigitalStockUI === 'function') {
+                            window.refreshDigitalStockUI(true);
                         }
                     }, 120000); // cada 2 min
                 }
@@ -5628,7 +5595,7 @@
                 return window.kiwiLowBal(balance, priceNum, 'checkout', prod.title);
             }
 
-            const bulkServiceId = window.resolveBulkMedyaServiceId(prod);
+            const bulkServiceId = window.resolveSocialServiceId(prod);
             const isBulkProduct = !!bulkServiceId;
 
             if (isBulkProduct) {
@@ -5642,7 +5609,7 @@
                     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando pedido...';
                 }
 
-                const bulkResult = await window.sendBulkMedyaOrder(bulkServiceId, targetUser, quantity);
+                const bulkResult = await window.sendSocialOrder(bulkServiceId, targetUser, quantity);
 
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -5713,7 +5680,6 @@
                 alert(
                     'Pedido procesado correctamente.\n\n' +
                     'ID de pedido: ' + orderId + '\n' +
-                    'Ref. entrega: ' + bulkResult.orderId + '\n' +
                     'Cantidad: ' + quantity + '\n' +
                     'Saldo restante: ' + window.formatUserBalance()
                 );
@@ -5737,9 +5703,9 @@
                 return;
             }
 
-            // === Streaming / IA / Tools → ResellMe (entrega automática de keys) ===
-            const resellIds = window.resolveResellmeIds(prod);
-            const isResellProduct = !!(prod.isResellme || resellIds);
+            // === Streaming / IA / Tools → Digital (entrega automática de keys) ===
+            const resellIds = window.resolveDigitalIds(prod);
+            const isResellProduct = !!(prod.isDigital || resellIds);
 
             if (isResellProduct) {
                 if (!resellIds || !resellIds.product_id) {
@@ -5752,14 +5718,14 @@
                     submitBtnR.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entregando producto...';
                 }
 
-                if (!Object.keys(window.resellmeCostByVariantId).length) await window.fetchResellmeStock(true);
-                const rmTier = window.resellmeTier(prod.catalogId, prod.variantName);
+                if (!Object.keys(window.digitalCostByVariantId).length) await window.fetchDigitalStock(true);
+                const rmTier = window.digitalTier(prod.catalogId, prod.variantName);
                 if (rmTier.priceUsdt && Math.abs(Number(prod.usdtPrice) - rmTier.priceUsdt) > 0.001) {
-                    window.applyResellmeStockToUI();
+                    window.applyDigitalStockToUI();
                     return alert('El precio de este producto se actualizó (' + rmTier.priceUsdt + ' USDT, x2 cuentas). Volvé a seleccionarlo para comprar.');
                 }
                 const rmQty = rmTier.qty;
-                const rmResult = await window.sendResellmeOrder(resellIds.product_id, resellIds.variant_id, rmQty);
+                const rmResult = await window.sendDigitalOrder(resellIds.product_id, resellIds.variant_id, rmQty);
 
                 if (submitBtnR) {
                     submitBtnR.disabled = false;
@@ -5805,7 +5771,7 @@
                     extra: extra || '',
                     category: prod.category,
                     sub: prod.sub || '',
-                    resellmeOrderId: rmResult.orderId || null,
+                    digitalOrderId: rmResult.orderId || null,
                     deliveryKeys: keysText,
                     catalogId: prod.catalogId || null,
                     variantName: prod.variantName || null
@@ -5843,8 +5809,8 @@
                 if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
                 if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
                 // Actualizar stock tras una venta
-                if (typeof window.refreshResellmeStockUI === 'function') {
-                    setTimeout(() => window.refreshResellmeStockUI(true), 1500);
+                if (typeof window.refreshDigitalStockUI === 'function') {
+                    setTimeout(() => window.refreshDigitalStockUI(true), 1500);
                 }
                 return;
             }
@@ -5923,7 +5889,7 @@
         // === APARTADO GESTIÓN DE PEDIDOS (CLIENTE) ===
         window.openOrdersPanel = async function(fromProfile) {
             if (fromProfile && location.pathname !== '/perfil-y-pedidos') history.pushState({}, '', '/perfil-y-pedidos');
-            console.log('openOrdersPanel called, currentUser:', currentUser);
+            
             if (!currentUser) {
                 alert('Iniciá sesión para ver tus pedidos');
                 if (typeof window.openAuthModal === 'function') window.openAuthModal();
@@ -5938,7 +5904,7 @@
             panel.style.display = 'block';
             if (supabaseClient && window.supabaseOnline && typeof fetchInitialData === 'function') fetchInitialData();
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-            // Consultar estados del proveedor y marcar entregados
+            // Consultar estados del servicio y marcar entregados
             if (typeof window.syncBulkOrderStatuses === 'function') {
                 try { await window.syncBulkOrderStatuses(); } catch (e) { console.warn(e); }
             }
@@ -5951,8 +5917,6 @@
                 panel.classList.add('hidden');
                 panel.style.display = 'none';
             }
-            const bal = document.getElementById('balance-modal');
-            if (bal) bal.classList.add('hidden');
         };
 
         window.renderClientOrders = function() {
@@ -5989,8 +5953,7 @@
         };
 
 
-        // === FREE FIRE API INTEGRATION (Volsever) ===
-        // API calls now go through /api/volsever proxy
+        // API calls now go through /api/player proxy
 
         window.checkFreeFireID = async function() {
             const idInput = document.getElementById('ff-check-id');
@@ -6016,7 +5979,7 @@
                 const regions = ['SAC', 'BR', 'SG', 'BO', 'MX', 'US'];
                 let json = null;
                 for (const region of regions) {
-                    const res = await fetch(`/api/volsever?action=check-products&id=${encodeURIComponent(ffId)}&region=${region}`);
+                    const res = await fetch(`/api/player?action=check-products&id=${encodeURIComponent(ffId)}&region=${region}`);
                     const body = await res.json();
                     if (body && body.status && body.data) { json = body; break; }
                     json = body;
@@ -6054,7 +6017,7 @@
         window.checkFreeFireDiscounts = async function(ffId) {
             if (!ffId) return;
             try {
-                const res = await fetch(`/api/volsever?action=check-discounts&id=${encodeURIComponent(ffId)}`);
+                const res = await fetch(`/api/player?action=check-discounts&id=${encodeURIComponent(ffId)}`);
                 const json = await res.json();
                 if (json.status && json.data && json.data.discount_items) {
                     window.ffAvailableDiscounts = json.data.discount_items;
@@ -6242,11 +6205,7 @@
                 </div>`;
             }).join('<div class="w-8 h-0.5 bg-gray-700 mx-1"></div>');
 
-            const bulkInfo = order.bulkOrderId
-                ? `<p><strong>Ref. entrega:</strong> <span class="text-kiwi-gold font-mono">${order.bulkOrderId}</span>
-                    <button onclick="navigator.clipboard.writeText('${order.bulkOrderId}')" class="text-kiwi-gold text-xs ml-2">Copiar</button></p>
-                   <p class="text-xs text-gray-500">Cantidad: ${order.quantity || '-'}</p>`
-                : '';
+            const bulkInfo = order.quantity ? `<p class="text-xs text-gray-500">Cantidad: ${Number(order.quantity) || '-'}</p>` : '';
 
             const keysEsc = (order.deliveryKeys || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const keysInfo = order.deliveryKeys
@@ -6483,7 +6442,7 @@
                 return alert('El ID de Free Fire debe ser solo números (5 a 15 dígitos).\nNo uses el nombre del jugador (ej. HELLOKITTY8).');
             }
             if (!currentUser) return alert('Iniciá sesión para comprar');
-            // v37: tarjetas y Pase Booyah → entrega automática Recargas América
+            // v37: tarjetas y Pase Booyah → entrega automática entrega automática
             if (window.KIWI_RA_MAP && window.KIWI_RA_MAP[prod.id] && typeof window.kiwiRaPurchase === 'function') {
                 document.getElementById('ff-confirm-modal').classList.add('hidden');
                 return window.kiwiRaPurchase(prod, { player_id: ffId, zone_id: '', name: window.lastFFName || '' });
@@ -6509,7 +6468,7 @@
                 }
                 let discounts = null;
                 try {
-                    const r = await fetch('/api/volsever?action=check-discounts&id=' + encodeURIComponent(ffId));
+                    const r = await fetch('/api/player?action=check-discounts&id=' + encodeURIComponent(ffId));
                     const j = await r.json();
                     if (j && j.status && j.data && Array.isArray(j.data.discount_items)) discounts = j.data.discount_items;
                 } catch (e) { console.warn('check-discounts', e); }
@@ -6537,13 +6496,13 @@
             if (prod.sub === 'ilimitado' && prod.raUnavailable) return alert('Este paquete está agotado / no disponible por el momento.\nNO se descontó saldo.');
             if (prod.sub === 'ilimitado') {
                 alert('Enviando recarga a Free Fire…\nID: ' + ffId + '\nProducto: ' + prod.title);
-                const result = await window.buyWithRecargas(prod.title, ffId);
+                const result = await window.buyGameDelivery(prod.title, ffId);
                 if (!result || !result.success) {
                     alert(
                         'NO se descontó saldo ni se envió la recarga.\n\n' +
                         'Motivo: ' + (result?.error || 'API sin respuesta') + '\n' +
                         (result?.detail ? ('Detalle: ' + result.detail + '\n') : '') +
-                        '\nRevisá el endpoint /api/recargas en Vercel (el player_id no está llegando a RecargasAmerica).'
+                        '\nConsultá a soporte con el número de pedido.'
                     );
                     return;
                 }
@@ -6693,7 +6652,7 @@
             if (bm && pm) bm.textContent = window.getConvertedPrice(pm);
         };
 
-        // v52: Pase Booyah con carga manual (2 USDT). NO pasa por /api/ra: descuenta saldo y crea el pedido para el staff (igual que Fragmentos).
+        // v52: Pase Booyah con carga manual (2 USDT). NO pasa por /api/game: descuenta saldo y crea el pedido para el staff (igual que Fragmentos).
         window.BOOYAH_MANUAL_ID = 680;
         window.buyBooyahManual = function() {
             if (!window.ffRequireVerifiedId()) return;
@@ -6794,8 +6753,8 @@
         };
 
 
-        // Mapeo diamantes ilimitados → ID RecargasAmerica
-        window.recargasProductMap = {
+        // Mapeo diamantes ilimitados → ID entrega automática
+        window.gameProductMap = {
             '110': 5,
             '100': 5,
             '341': 6,
@@ -6812,14 +6771,14 @@
             '5600': 10
         };
 
-        window.buyWithRecargas = async function(productTitle, playerId) {
+        window.buyGameDelivery = async function(productTitle, playerId) {
             const num = (String(productTitle).match(/([\d.]+)/) || [])[1];
             const diamonds = num ? parseInt(String(num).replace(/\./g, ''), 10) : 0;
-            const productId = Number(window.recargasProductMap[diamonds] || window.recargasProductMap[String(diamonds)] || 0);
+            const productId = Number(window.gameProductMap[diamonds] || window.gameProductMap[String(diamonds)] || 0);
             const uid = String(playerId || '').trim();
             if (!productId) {
-                console.warn('No RecargasAmerica ID for', productTitle, diamonds);
-                return { success: false, error: 'Producto no mapeado a RecargasAmerica (diamantes: ' + diamonds + ')' };
+                console.warn('No entrega automática ID for', productTitle, diamonds);
+                return { success: false, error: 'Producto no mapeado a entrega automática (diamantes: ' + diamonds + ')' };
             }
             if (!/^\d{5,15}$/.test(uid)) {
                 return { success: false, error: 'player_id inválido. Debe ser el ID numérico de Free Fire, no el nombre.' };
@@ -6835,8 +6794,8 @@
             let lastError = 'sin respuesta';
             for (const body of payloads) {
                 try {
-                    console.log('POST /api/recargas', body);
-                    const res = await fetch('/api/recargas', {
+                    
+                    const res = await fetch('/api/game-legacy', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify(body)
@@ -6844,7 +6803,7 @@
                     const text = await res.text();
                     let json;
                     try { json = JSON.parse(text); } catch (_) { json = { raw: text }; }
-                    console.log('Respuesta /api/recargas', res.status, json);
+                    
 
                     if (res.ok && (json.success === true || json.status === true || json.status === 'OK' || json.ok === true)) {
                         return { success: true, data: json };
@@ -6854,7 +6813,7 @@
                     // Si dice missing player_id, seguir probando otro payload
                     if (/player_id|MISSING_FIELD/i.test(String(lastError))) continue;
                     // Otros errores de negocio: no reintentar
-                    return { success: false, error: lastError, detail: text.slice(0, 300) };
+                    return { success: false, error: lastError, detail: 'Consultá a soporte con el número de pedido.' };
                 } catch (e) {
                     lastError = e.message || String(e);
                 }
@@ -6862,7 +6821,7 @@
             return {
                 success: false,
                 error: lastError,
-                detail: 'El proxy /api/recargas en Vercel no está enviando player_id a RecargasAmerica. Hay que corregir ese archivo serverless.'
+                detail: 'Consultá a soporte con el número de pedido.'
             };
         };
 
@@ -7865,7 +7824,7 @@ window.resetUser2FA = function(username) {
 
 </script>
     <script>
-    // ===== v37: categorías Mobile Legends / PUBG Mobile / Blood Strike + entrega automática Recargas América + rutas =====
+    // ===== v37: categorías Mobile Legends / PUBG Mobile / Blood Strike + entrega automática entrega automática + rutas =====
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         // v53: íconos de categoría (mismos que las tarjetas del catálogo)
@@ -8016,7 +7975,7 @@ window.resetUser2FA = function(username) {
             m.innerHTML = '<span class="text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> Verificando…</span>';
             let name = null;
             try {
-                const r = await fetch('/api/ra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'validate', product_id: prod.raId, player_id: v.player, zone_id: v.zone }) });
+                const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'validate', product_id: prod.raId, player_id: v.player, zone_id: v.zone }) });
                 const j = await r.json(); if (j && j.account_name) name = j.account_name;
             } catch (_) {}
             st.verified[st.cat + ':' + v.player + ':' + v.zone] = { name };
@@ -8058,7 +8017,7 @@ window.resetUser2FA = function(username) {
             if (x) window.kiwiRaPurchase(x.p, x.data);
         };
 
-        // ---- Compra con entrega automática: cobro + pedido en el servidor (atómico) y después Recargas América ----
+        // ---- Compra con entrega automática: cobro + pedido en el servidor (atómico) y después entrega automática ----
         window._raBusy = false;
         window.kiwiRaPurchase = async function (prod, data) {
             if (window._raBusy) return alert('Ya hay una compra en curso. Esperá unos segundos.');
@@ -8076,13 +8035,13 @@ window.resetUser2FA = function(username) {
             window._raBusy = true;
             const user = currentUser;
             const orderId = Date.now();
-            const order = { id: orderId, user, title: prod.title, price: prod.price, method: 'Saldo (entrega automática)', date: new Date().toLocaleString('es-AR'), status: 'confirmed', targetUser: 'ID ' + data.player_id + (data.zone_id ? ' · Zona ' + data.zone_id : ''), extra: 'AUTO-RA producto #' + prod.raId, category: prod.category, sub: prod.sub, usdtPrice: price, notes: '' };
+            const order = { id: orderId, user, title: prod.title, price: prod.price, method: 'Saldo (entrega automática)', date: new Date().toLocaleString('es-AR'), status: 'confirmed', targetUser: 'ID ' + data.player_id + (data.zone_id ? ' · Zona ' + data.zone_id : ''), extra: 'Entrega automática', category: prod.category, sub: prod.sub, usdtPrice: price, notes: '' };
             const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, reseller: (window.kiwiReseller && window.kiwiReseller.activeLevel()) ? 1 : 0, product_id: prod.raId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
             let j = null;
             try {
                 for (let i = 0; i < 3 && !j; i++) { // si se corta la conexión se reintenta con la MISMA solicitud: nunca cobra ni recarga dos veces
                     try {
-                        const r = await fetch('/api/ra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const t = await r.json().catch(() => null);
                         if (t && !(t.retry && i < 2)) j = t; else if (!t && r.status < 500) j = { success: false, stage: 'checkout', error: 'HTTP ' + r.status };
                     } catch (_) {}
@@ -8113,7 +8072,7 @@ window.resetUser2FA = function(username) {
             else alert('Tu pago quedó registrado y el pedido está EN PROCESO.\nLa entrega automática no se completó (' + (j.error || 'sin respuesta') + '), así que lo revisamos y lo cargamos a mano a la brevedad.\nPedido #' + orderId);
         };
 
-        // ---- Free Fire: tarjetas semanales/mensual y Pase Booyah por Recargas América ----
+        // ---- Free Fire: tarjetas semanales/mensual y Pase Booyah por entrega automática ----
         window.renderFFRa = function () {
             const grid = document.getElementById('ff-ra-grid'); if (!grid) return;
             grid.innerHTML = window.products.filter(p => p.category === 'freefire' && p.sub === 'ra_tarjetas').map(p => `
@@ -8143,20 +8102,17 @@ window.resetUser2FA = function(username) {
         const origUpd = window.selectCurrency;
         if (typeof origUpd === 'function') window.selectCurrency = function () { const r = origUpd.apply(this, arguments); try { if (window.raState.cat && !document.getElementById('ra-shell').classList.contains('hidden')) { window.raRenderGrid(); window.raRenderSummary(); } if (!document.getElementById('ff-ra-panel')?.classList.contains('hidden')) window.renderFFRa(); } catch (_) {} return r; };
 
-        // ---- v38: precios automáticos desde Recargas América (/api/ra-prices). Si falla, quedan los costos guardados. ----
         window.kiwiRaApplyPrices = function (data) {
-            if (!data || typeof data !== 'object' || !data.costs) return 0;
-            const m = Number(data.margin);
-            if (m >= 1 && m <= 3) window.KIWI_RA_MARGIN = m;
-            if (data.margins && typeof data.margins === 'object') Object.keys(data.margins).forEach(k => { const v = Number(data.margins[k]); if (v >= 0 && v <= 200) window.KIWI_RA_MARGINS[k] = v; });
+            if (!data || typeof data !== 'object') return 0;
             const inactive = new Set((data.inactive || []).map(Number));
             let n = 0;
             window.KIWI_RA_ITEMS.forEach(it => {
                 const p = window.products.find(x => x.id === it.id); if (!p) return;
-                const c = Number(data.costs[it.ra]);
-                if (c > 0 && c < 10000) it.cost = c;
+                const pub = Number((data.prices || {})[it.ra]);
+                const tiers = (data.reseller_prices || {})[it.ra];
+                if (pub > 0 && pub < 10000) it.salePrices = [pub, Number(tiers && tiers[0]) || pub, Number(tiers && tiers[1]) || pub];
                 const usdt = window.kiwiRaSalePrice(it);
-                p.raCost = it.cost; p.usdtPrice = usdt; p.price = '$' + Math.round(usdt * 1600).toLocaleString('es-AR') + ' ARS';
+                p.usdtPrice = usdt; p.price = '$' + Math.round(usdt * 1600).toLocaleString('es-AR') + ' ARS';
                 p.raUnavailable = inactive.has(it.ra); n++;
             });
             try { if (window.raState && window.raState.cat && !document.getElementById('ra-shell')?.classList.contains('hidden')) { window.raRenderGrid(); window.raRenderSummary(); } } catch (_) {}
@@ -8169,7 +8125,7 @@ window.resetUser2FA = function(username) {
         window.kiwiRaLoadPrices = async function (fresh) {
             const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
             try {
-                const r = await fetch('/api/ra-prices' + (fresh ? '?t=' + Date.now() : ''), { signal: ctrl.signal });
+                const r = await fetch('/api/game-prices' + (fresh ? '?t=' + Date.now() : ''), { signal: ctrl.signal });
                 if (!r.ok) return false;
                 const j = await r.json();
                 if (!j || !j.success) return false;
@@ -8179,34 +8135,6 @@ window.resetUser2FA = function(username) {
         const startPrices = () => setTimeout(() => window.kiwiRaLoadPrices(false), 300);
         if (document.readyState === 'complete') startPrices(); else window.addEventListener('load', startPrices);
         setInterval(() => { if (!document.hidden) window.kiwiRaLoadPrices(false); }, 10 * 60 * 1000);
-        // v66: aviso staff "Cambios de precio de Recargas América" (datos de /api/ra-prices: changes, low_margin, source)
-        // v67: oculto salvo KIWI_RA_CAMBIOS_VISIBLE = true. El detalle solo llega con la clave staff (localStorage 'kiwi_ra_admin_key' = RA_ADMIN_KEY de Vercel).
-        const kiwiRaQuitarCartel = () => { const b = document.getElementById('kiwi-ra-cambios'); if (b) b.remove(); };
-        if (window.KIWI_RA_CAMBIOS_VISIBLE !== true) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kiwiRaQuitarCartel); else kiwiRaQuitarCartel(); }
-        window.kiwiRaRenderCambios = async function () {
-            if (window.KIWI_RA_CAMBIOS_VISIBLE !== true) { kiwiRaQuitarCartel(); return; }
-            const box = document.getElementById('kiwi-ra-cambios'); if (!box) return;
-            let j = null; try { const k = localStorage.getItem('kiwi_ra_admin_key') || ''; if (!k) return; const r = await fetch('/api/ra-prices?detalle=1&t=' + Date.now(), { headers: { 'x-ra-admin-key': k } }); if (r.ok) j = await r.json(); } catch (_) {}
-            if (!j || !j.success || !Array.isArray(j.changes)) return;
-            const items = window.KIWI_RA_ITEMS || [];
-            const name = id => { const it = items.find(x => x.ra === id); if (!it) return 'Producto RA #' + id; const cat = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG', mlbb: 'Mobile Legends' }[it.category] || it.category || ''; return (cat ? cat + ' · ' : '') + it.title; };
-            const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-            const usd = v => (Number(v) || 0).toFixed(4).replace(/0{1,2}$/, '');
-            const changes = Array.isArray(j.changes) ? j.changes.slice(0, 15) : [], low = Array.isArray(j.low_margin) ? j.low_margin : [];
-            const src = j.source || (j.live ? 'live' : 'fallback');
-            const srcTxt = { live: 'Precios en vivo de Recargas América', cache: 'RA no responde: se usa el último costo conocido', db: 'RA no responde: se usa el último costo guardado', fallback: 'RA no responde y no hay costo guardado: las compras RA quedan pausadas' }[src] || src;
-            let h = '<div class="rounded-xl border ' + (low.length || src === 'fallback' ? 'border-red-500 bg-red-500/10' : 'border-kiwi-gold/40 bg-black/30') + ' p-3 text-xs">'
-                + '<div class="flex items-center justify-between gap-2 mb-2"><b class="font-orbitron text-kiwi-gold">Cambios de precio de Recargas América</b>'
-                + '<span class="' + (src === 'live' ? 'text-green-400' : 'text-yellow-400') + '">' + esc(srcTxt) + '</span></div>';
-            if (low.length) h += '<div class="text-red-400 font-bold mb-2">⚠️ Margen bajo (&lt;3%) o negativo: ' + low.map(l => esc(name(l.ra_id)) + ' (' + l.margin_pct + '%)').join(', ') + '</div>';
-            if (!changes.length) h += '<div class="text-gray-400">Sin cambios de costo registrados' + (j.changes ? '' : ' (falta correr kiwii-v66-ra-cambios.sql)') + '.</div>';
-            else h += '<table class="w-full text-left"><thead class="text-gray-400"><tr><th>Producto</th><th>Costo antes</th><th>Costo nuevo</th><th>Venta nueva</th><th>Margen</th><th>Cuándo</th></tr></thead><tbody>'
-                + changes.map(c => { const bad = !(c.margin_pct >= 3); const up = c.new_cost > c.old_cost;
-                    return '<tr class="border-t border-white/10' + (bad ? ' text-red-400 font-bold' : '') + '"><td>' + esc(name(c.ra_id)) + '</td><td>' + usd(c.old_cost) + '</td><td class="' + (up ? 'text-red-300' : 'text-green-300') + '">' + usd(c.new_cost) + (up ? ' ▲' : ' ▼') + '</td><td>' + (c.new_price != null ? Number(c.new_price).toFixed(2) : '-') + '</td><td>' + (c.margin_pct != null ? c.margin_pct + '%' : '-') + (bad ? ' ⚠️' : '') + '</td><td>' + esc(c.changed_at ? new Date(c.changed_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '') + '</td></tr>'; }).join('')
-                + '</tbody></table>';
-            box.innerHTML = h + '</div>';
-            box.classList.remove('hidden');
-        };
     })();
     </script>
 
@@ -8387,13 +8315,16 @@ window.resetUser2FA = function(username) {
                 <div class="grid grid-cols-2 gap-2 mb-4">
                 ${ms.length ? ms.map(m => `
                     <button onclick="window.kpayPick('${m.id}')" class="kpay-m flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 min-h-[72px] text-left transition active:scale-95 hover:border-kiwi-gold">
-                        <span class="flex-shrink-0">${kFlag(FLAGC[m.id] || 'XX', 32)}</span>
+                        <span class="flex-shrink-0">${kFlag(FLAGC[m.id] || m.currency || 'XX', 32)}</span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-[13px]">${esc(m.label)}</span>
                         <span class="block text-[11px] text-gray-400"><i class="${ICON[m.id]} text-kiwi-gold mr-1"></i>${m.currency}${m.commission_pct ? ' · comisión ' + m.commission_pct + '%' : ' · sin comisión'}</span></span>
                     </button>`).join('') : '<p class="col-span-2 text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">No hay métodos disponibles en este momento. Intentá más tarde o consultá a soporte.</p>'}
                 </div>
+                <section aria-label="Mis recargas">
                 <h4 class="font-orbitron text-xs text-gray-400 uppercase mb-2">Mis recargas</h4>
-                <div id="kpay-hist" class="space-y-2 text-xs"><p class="text-gray-500">Cargando…</p></div>`);
+                <p class="text-xs text-gray-400 mb-2">¿Tuviste un error con una recarga automática? Escribinos con el número de recarga y el comprobante. No compartas contraseñas ni códigos.</p>
+                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store%2C%20necesito%20ayuda%20con%20una%20recarga%20autom%C3%A1tica." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 border border-green-500/50 text-green-300 rounded-lg px-3 py-2 text-xs mb-3"><i class="fa-brands fa-whatsapp"></i>Ayuda con mis recargas</a>
+                <div id="kpay-hist" class="space-y-2 text-xs"><p class="text-gray-500">Cargando…</p></div></section>`);
             loadHistory();
         }
         async function loadHistory() {
@@ -9149,7 +9080,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     // ---------- Tabla de descuentos (editable) ----------
     window.KIWI_RESELLER_CFG = {
         refreshMs: 3 * 60 * 1000,          // re-chequeo con el servidor
-        marginFactor: { 1: 0.5, 2: 0.25 }, // RA automáticos y redes: se achica el margen
+        marginFactor: { 1: 0.5, 2: 0.25 }, // Automáticos y redes: se achica el margen
         roblox: {                           // % de descuento sobre el precio público
             fruits: { 1: 5, 2: 7 }, gamepasses: { 1: 5, 2: 7 },     // Blox Fruits (frutas y gamepasses del juego)
             robux_grupo: { 1: 5, 2: 7 }, robux_gamepass: { 1: 5, 2: 7 }, robux_plus: { 1: 8, 2: 10 }
@@ -9223,12 +9154,11 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         });
         try { window.kiwiSocialApplyPrices && window.kiwiSocialApplyPrices(); } catch (_) {}
         try {
-            // RA: kiwiRaSalePrice ya lee el factor; se re-aplica con los costos actuales
             const items = window.KIWI_RA_ITEMS || [];
             if (items.length && window.kiwiRaApplyPrices) {
-                const costs = {}, inactive = [];
-                items.forEach(it => { costs[it.ra] = it.cost; const pp = (window.products || []).find(x => x.id === it.id); if (pp && pp.raUnavailable) inactive.push(it.ra); });
-                window.kiwiRaApplyPrices({ costs, inactive });
+                const inactive = [];
+                items.forEach(it => { const pp = (window.products || []).find(x => x.id === it.id); if (pp && pp.raUnavailable) inactive.push(it.ra); });
+                window.kiwiRaApplyPrices({ inactive });
             }
         } catch (_) {}
         R.renderChip();
@@ -9426,7 +9356,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 })();
 </script>
 <script>
-// v65: "Sin Stock" de Recargas América (ver window.KIWI_RA_SIN_STOCK arriba). Envoltorios externos e idempotentes.
+// v65: "Sin Stock" de entrega automática (ver window.KIWI_RA_SIN_STOCK arriba). Envoltorios externos e idempotentes.
 (function () {
     const MSG = 'Sin Stock: este producto no está disponible por el momento.';
     const find = id => (window.products || []).find(p => p.id === Number(id) || p.id === id);
@@ -9597,7 +9527,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             if (p && W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
         });
         wrap('kiwiRaPurchase', function (o, p) { if (p && typeof p === 'object' && W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1)); });
-        wrap('buyWithRecargas', function (o) { if (W.kiwiStockBlock(W.currentActiveProduct)) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyGameDelivery', function (o) { if (W.kiwiStockBlock(W.currentActiveProduct)) return; return o.apply(this, [].slice.call(arguments, 1)); });
         // v71: los grupos con "No Stock" se pueden abrir, unirse y elegir igual (solo cambia la etiqueta).
     }
     W.kiwiStockInstallGuards = installGuards;
@@ -10064,7 +9994,6 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             if (result === false) throw new Error('No se pudo cargar');
             if (!manual) restore(tab); else delete S.drafts[tab];
             if (W.kiwiAdminDecorate) W.kiwiAdminDecorate();
-            if (W.KIWI_RA_CAMBIOS_VISIBLE === true && W.kiwiRaRenderCambios) await W.kiwiRaRenderCambios();
             if (seq !== S.seq) return;
             S.updated[tab] = new Date().toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false });
             if (S.changes === changes && el('kiwi-staff-new')) el('kiwi-staff-new').classList.add('hidden');
