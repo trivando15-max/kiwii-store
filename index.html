@@ -647,7 +647,7 @@
                 </button>
                 <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border">
                     <span class="kd-ico kd-gold"><i class="fa-solid fa-coins"></i></span>
-                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Cambiar moneda de precios</span><span class="block text-[11px] text-gray-400">Ver precios en ARS, MXN, COP, PEN o USDT</span></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Cambiar moneda de precios</span><span class="block text-[11px] text-gray-400">Ver precios en ARS, MXN, COP, PEN, CLP, CRC, UYU o USDT</span></span>
                     <span class="flex flex-col items-center gap-0.5 rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span id="currency-flag"></span><span id="currency-code" class="text-[10px] font-orbitron font-bold text-gray-200">USDT</span></span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
@@ -1383,7 +1383,28 @@
                     </span>
                     <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 3,57 PEN</span>
                 </button>
-                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 col-span-2">
+                <button id="curr-card-CLP" onclick="window.selectCurrency('CLP', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/cl.png" srcset="https://flagcdn.com/w80/cl.png 2x" alt="CLP" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">CLP</span><span class="block text-[11px] text-gray-400">Peso chileno</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 991,62 CLP</span>
+                </button>
+                <button id="curr-card-CRC" onclick="window.selectCurrency('CRC', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/cr.png" srcset="https://flagcdn.com/w80/cr.png 2x" alt="CRC" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">CRC</span><span class="block text-[11px] text-gray-400">Colón costarricense</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 457,71 CRC</span>
+                </button>
+                <button id="curr-card-UYU" onclick="window.selectCurrency('UYU', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/uy.png" srcset="https://flagcdn.com/w80/uy.png 2x" alt="UYU" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">UYU</span><span class="block text-[11px] text-gray-400">Peso uruguayo</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 43,47 UYU</span>
+                </button>
+                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400">
                     <span class="flex items-center gap-3">
                         <span class="flex-shrink-0"><span style="width:36px;height:27px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:20px;display:flex;align-items:center;justify-content:center">₮</span></span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">USDT</span><span class="block text-[11px] text-gray-400">Tether (dólar digital)</span></span>
@@ -1751,15 +1772,18 @@
             'MXN': 19.152,
             'COP': 3299.97,
             'PEN': 3.566,
-            // v78: solo para Recargar saldo (Chile / Costa Rica); bases aprox. CLP 976, CRC 450,5 (+1,6%)
+            // v78/v79: Chile, Costa Rica y Uruguay (precios y Recargar saldo); bases aprox. CLP 976, CRC 450,5, UYU 42,79 (+1,6%)
             'CLP': 991.62,
             'CRC': 457.71,
+            'UYU': 43.474,
             'USDT': 1
         };
         // v75: como Hexz, mejor anuncio BUY sin filtro de banco (~10 USDT), pero con margen fijo de +1,6%.
         // /api/binance-p2p devuelve la base cruda; se multiplica una sola vez.
-        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016 };
-        window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
+        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, UYU: 1.016 };
+        window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'CLP': '$', 'CRC': '₡', 'UYU': '$U ', 'USDT': '₮' };
+        // v79: decimales al mostrar precios (CLP y CRC sin decimales)
+        window.kiwiCurDec = function (code) { return code === 'CLP' || code === 'CRC' ? 0 : 2; };
 
         window.getConvertedPrice = function(prod) {
             let usdtVal = 0;
@@ -1777,7 +1801,7 @@
             const rate = window.exchangeRates[window.currentCurrency] || 1;
             const converted = usdtVal * rate;
             const sym = window.currencySymbols[window.currentCurrency] || '';
-            return sym + converted.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ' + window.currentCurrency;
+            return sym + converted.toLocaleString('es-AR', { maximumFractionDigits: window.kiwiCurDec(window.currentCurrency) }) + ' ' + window.currentCurrency;
         };
 
         window.getConvertedVariantPrice = function(priceString) {
@@ -2214,7 +2238,7 @@
         // --- BANDERAS EN IMAGEN (los emoji de bandera se ven como letras en Windows) ---
         window.kiFlag = function (code, w) {
             w = w || 28; const h = Math.round(w * 0.75);
-            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', CLP: 'cl', CRC: 'cr', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe', cl: 'cl', cr: 'cr' }[code];
+            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', CLP: 'cl', CRC: 'cr', UYU: 'uy', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe', cl: 'cl', cr: 'cr', uy: 'uy' }[code];
             if (iso) return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + code + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle;box-shadow:0 1px 4px rgba(0,0,0,.5)">';
             if (code === 'USDT') return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:' + Math.round(h * 0.75) + 'px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">₮</span>';
             return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#2563eb;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:' + Math.round(h * 0.7) + 'px;vertical-align:middle"><i class="fa-solid fa-globe"></i></span>';
@@ -3831,8 +3855,8 @@
             // Solo Service IDs públicos (no secretos)
             services: {
                 ig_followers_baja: 15234,
-                ig_followers_media: 15217,
-                ig_followers_premium: 2004,
+                ig_followers_media: 67,      // v79
+                ig_followers_premium: 289,   // v79
                 ig_likes: 18105,
                 ig_views: 6821,
                 tt_likes: 16216,
@@ -4012,50 +4036,63 @@
             premium: {
                 label: 'Calidad Premium',
                 bullets: [
-                    '3 Meses de garantía completa',
+                    'Cuentas reales y antiguas: prácticamente no tienen caída, por eso no incluyen garantía de reposición',
                     'Tardanza estimada: entre 10 minutos y 6 horas',
-                    'Se garantiza que lleguen completos',
-                    'Tasa de caídas: 0–5%',
-                    'Calidad de seguidores: perfiles reales',
+                    'Se entregan completos',
+                    'Tasa de caídas: casi nula',
+                    'Calidad de seguidores: perfiles reales y antiguos',
                     'Es necesario tener el perfil público'
                 ]
             }
         };
 
-        // ===== v60: PRECIOS DE REDES SOCIALES (tabla editable) =====
-        // costo: USD cada 1000 unidades (servicio Social, id de servicio). margen: % según tamaño del paquete.
-        // Regla (por línea de producto, paquete por paquete, de menor a mayor):
-        //   base   = costo × cantidad/1000 × (1 + margen × factor)  (redondeo hacia arriba al centavo)
-        //   precio = máx(base, escalera[cantidad] × piso, paquete anterior + 0,20)
-        //   seguidores: media ≥ baja + 0,20 · premium ≥ media + 0,30 (mismo paquete)
-        //   likes ≥ escalera + 0,10 · vistas = máx(base, escalera) → vistas siempre un poco más baratas que likes
-        //   público: factor 1, piso 1 · revendedor N1: factor 0,5, piso 0,9 · N2: factor 0,25, piso 0,8
+        // ===== v79: PRECIOS DE REDES SOCIALES (tablas ya calculadas, en USDT por paquete) =====
+        // '1' = precio público · '0.5' = revendedor Nivel 1 · '0.25' = revendedor Nivel 2.
+        // Las tablas se generan fuera de la web; acá no van costos ni márgenes.
         window.KIWI_SOCIAL_PRICING = {
             escalera: { 100: 0.30, 500: 0.50, 1000: 0.80, 2000: 1.10, 5000: 1.50, 10000: 2.00, 20000: 2.60, 50000: 3.50, 100000: 5.00 },
-            pasoMinimo: 0.20,
-            difMedia: 0.20, difPremium: 0.30, difLikesVistas: 0.10,
             pisoRevendedor: { 1: 1, 0.5: 0.9, 0.25: 0.8 },
-            costos: {
-                'ig_seg_baja':    { servicio: 15234, usdPor1000: 0.17 },
-                'ig_seg_media':   { servicio: 15217, usdPor1000: 1.00 },
-                'ig_seg_premium': { servicio: 2004,  usdPor1000: 3.00 },
-                'ig_likes':       { servicio: 18105, usdPor1000: 0.14 },
-                'ig_vistas':      { servicio: 6821,  usdPor1000: 0.006 },
-                'tt_likes':       { servicio: 16216, usdPor1000: 0.5085 },
-                'tt_vistas':      { servicio: 18527, usdPor1000: 0.0057 }
-            },
-            margenes: { 100: 50, 500: 40, 1000: 30, 2000: 28, 5000: 25, 10000: 20, 20000: 18, 50000: 15, 100000: 12 }
+            tablas: {
+                'ig_seg_baja': {
+                    '1': { 100: 0.3, 500: 0.5, 1000: 0.8, 2000: 1.1, 5000: 1.5, 10000: 2.04, 20000: 4.02, 50000: 9.78 },
+                    '0.5': { 100: 0.27, 500: 0.47, 1000: 0.72, 2000: 0.99, 5000: 1.35, 10000: 1.87, 20000: 3.71, 50000: 9.14 },
+                    '0.25': { 100: 0.24, 500: 0.44, 1000: 0.64, 2000: 0.88, 5000: 1.2, 10000: 1.79, 20000: 3.56, 50000: 8.82 }
+                },
+                'ig_seg_media': {
+                    '1': { 100: 0.5, 500: 1.13, 1000: 2.1, 2000: 4.13, 5000: 10.07, 10000: 19.32, 20000: 38, 50000: 92.58 },
+                    '0.5': { 100: 0.47, 500: 0.97, 1000: 1.86, 2000: 3.68, 5000: 9.06, 10000: 17.71, 20000: 35.1, 50000: 86.54 },
+                    '0.25': { 100: 0.44, 500: 0.89, 1000: 1.74, 2000: 3.45, 5000: 8.56, 10000: 16.91, 20000: 33.65, 50000: 83.52 }
+                },
+                'ig_seg_premium': {
+                    '1': { 100: 0.8, 500: 2.35, 1000: 4.36, 2000: 8.58, 5000: 20.94, 10000: 40.2, 20000: 79.06, 50000: 192.63 },
+                    '0.5': { 100: 0.77, 500: 2.01, 1000: 3.86, 2000: 7.64, 5000: 18.85, 10000: 36.85, 20000: 73.03, 50000: 180.07 },
+                    '0.25': { 100: 0.74, 500: 1.85, 1000: 3.61, 2000: 7.17, 5000: 17.8, 10000: 35.18, 20000: 70.02, 50000: 173.79 }
+                },
+                'ig_likes': {
+                    '1': { 500: 0.6, 1000: 0.9, 2000: 1.2, 5000: 1.6, 10000: 2.1, 20000: 3.31, 50000: 8.05, 100000: 15.68 },
+                    '0.5': { 500: 0.55, 1000: 0.82, 2000: 1.09, 5000: 1.45, 10000: 1.9, 20000: 3.06, 50000: 7.53, 100000: 14.84 },
+                    '0.25': { 500: 0.5, 1000: 0.74, 2000: 0.98, 5000: 1.3, 10000: 1.7, 20000: 2.93, 50000: 7.27, 100000: 14.42 }
+                },
+                'ig_vistas': {
+                    '1': { 500: 0.5, 1000: 0.8, 2000: 1.1, 5000: 1.5, 10000: 2, 20000: 2.6, 50000: 3.5, 100000: 5 },
+                    '0.5': { 500: 0.45, 1000: 0.72, 2000: 0.99, 5000: 1.35, 10000: 1.8, 20000: 2.34, 50000: 3.15, 100000: 4.5 },
+                    '0.25': { 500: 0.4, 1000: 0.64, 2000: 0.88, 5000: 1.2, 10000: 1.6, 20000: 2.08, 50000: 2.8, 100000: 4 }
+                },
+                'tt_likes': {
+                    '1': { 500: 0.6, 1000: 0.9, 2000: 1.31, 5000: 3.18, 10000: 6.11, 20000: 12.01, 50000: 29.24, 100000: 56.96 },
+                    '0.5': { 500: 0.55, 1000: 0.82, 2000: 1.16, 5000: 2.87, 10000: 5.6, 20000: 11.09, 50000: 27.34, 100000: 53.91 },
+                    '0.25': { 500: 0.5, 1000: 0.74, 2000: 1.09, 5000: 2.71, 10000: 5.34, 20000: 10.63, 50000: 26.38, 100000: 52.38 }
+                },
+                'tt_vistas': {
+                    '1': { 500: 0.5, 1000: 0.8, 2000: 1.1, 5000: 1.5, 10000: 2, 20000: 2.6, 50000: 3.5, 100000: 5 },
+                    '0.5': { 500: 0.45, 1000: 0.72, 2000: 0.99, 5000: 1.35, 10000: 1.8, 20000: 2.34, 50000: 3.15, 100000: 4.5 },
+                    '0.25': { 500: 0.4, 1000: 0.64, 2000: 0.88, 5000: 1.2, 10000: 1.6, 20000: 2.08, 50000: 2.8, 100000: 4 }
+                }
+            }
         };
         window.kiwiSocialQty = function (prod) {
             const m = String(prod && prod.title || '').match(/^([\d.]+)/);
             return m ? parseInt(m[1].replace(/\./g, ''), 10) : 0;
-        };
-        window.kiwiSocialMargin = function (qty) {
-            const M = window.KIWI_SOCIAL_PRICING.margenes;
-            const ks = Object.keys(M).map(Number).sort((a, b) => a - b);
-            let pick = ks[0];
-            ks.forEach(k => { if (qty >= k) pick = k; });
-            return M[pick];
         };
         window.kiwiSocialLadder = function (qty) {
             const E = window.KIWI_SOCIAL_PRICING.escalera;
@@ -4075,11 +4112,6 @@
             return null;
         };
         const kR = v => Math.round(v * 100) / 100;
-        const kCeil = v => Math.ceil(Math.round(v * 1e6) / 1e4) / 100;
-        window.kiwiSocialBase = function (key, qty, f) {
-            const c = window.KIWI_SOCIAL_PRICING.costos[key];
-            return kCeil(c.usdPor1000 * qty / 1000 * (1 + window.kiwiSocialMargin(qty) * f / 100));
-        };
         // paquetes de cada línea (salen del catálogo)
         window.kiwiSocialPacks = function (key) {
             const isF = key.indexOf('ig_seg_') === 0, cat = key.indexOf('tt_') === 0 ? 'tiktok' : 'instagram';
@@ -4087,33 +4119,21 @@
                 .map(window.kiwiSocialQty).filter(Boolean).sort((a, b) => a - b);
         };
         window._kiwiSocialCache = {};
-        // tabla completa {qty: precio} de una línea para un factor de margen
+        // tabla completa {qty: precio} de una línea para un factor de margen (v79: tabla fija)
         window.kiwiSocialTable = function (key, f) {
-            const C = window.KIWI_SOCIAL_PRICING, ck = key + '|' + f;
-            if (window._kiwiSocialCache[ck]) return window._kiwiSocialCache[ck];
-            const piso = C.pisoRevendedor[f] != null ? C.pisoRevendedor[f] : 1;
-            const dep = { ig_seg_media: ['ig_seg_baja', C.difMedia], ig_seg_premium: ['ig_seg_media', C.difPremium] }[key];
-            const depT = dep ? window.kiwiSocialTable(dep[0], f) : null;
-            const out = {}; let prev = 0;
-            window.kiwiSocialPacks(key).forEach(q => {
-                let p = window.kiwiSocialBase(key, q, f);
-                let lad = kR(window.kiwiSocialLadder(q) * piso);
-                if (/_likes$/.test(key)) lad = kR(lad + C.difLikesVistas);
-                p = Math.max(p, lad);
-                if (depT && depT[q] != null) p = Math.max(p, kR(depT[q] + dep[1]));
-                if (prev) p = Math.max(p, kR(prev + C.pasoMinimo));
-                out[q] = kR(p); prev = out[q];
-            });
-            return (window._kiwiSocialCache[ck] = out);
+            const t = (window.KIWI_SOCIAL_PRICING.tablas || {})[key] || {};
+            return t[String(f)] || t['1'] || {};
         };
         // marginFactor: 1 = público, 0.5 = revendedor Nivel 1, 0.25 = Nivel 2
         window.kiwiSocialPriceRaw = function (key, qty, marginFactor) {
             const C = window.KIWI_SOCIAL_PRICING;
-            if (!key || !C.costos[key] || !qty) return 0;
+            if (!key || !C.tablas[key] || !qty) return 0;
             const f = marginFactor == null ? 1 : marginFactor;
             const t = window.kiwiSocialTable(key, f);
             if (t[qty] != null) return t[qty];
-            return Math.max(window.kiwiSocialBase(key, qty, f), kR(window.kiwiSocialLadder(qty) * (C.pisoRevendedor[f] || 1)));
+            // paquete fuera de tabla: mínimo de la escalera (nunca más barato que el paquete menor de la tabla)
+            const qs = Object.keys(t).map(Number).sort((a, b) => a - b); let near = 0; qs.forEach(q => { if (qty >= q) near = t[q]; });
+            return Math.max(near, kR(window.kiwiSocialLadder(qty) * (C.pisoRevendedor[f] || 1)));
         };
         window.kiwiSocialPrice = function (prod, variant, marginFactor) {
             if (marginFactor == null) marginFactor = window.kiwiReseller ? window.kiwiReseller.marginFactor('social') : 1;
@@ -4414,7 +4434,7 @@
             const cur = window.currentCurrency || 'USDT';
             const conv = cur === 'USDT' ? usd : usd * ((window.exchangeRates || {})[cur] || 1);
             const sym = (window.currencySymbols || {})[cur] || '';
-            const fmt = cur === 'USDT' ? conv.toFixed(2) : conv.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            const fmt = cur === 'USDT' ? conv.toFixed(2) : conv.toLocaleString('es-AR', { maximumFractionDigits: window.kiwiCurDec(cur) });
             const links = window.KRX_MAYOR_GROUPS.map((g, i) => `<a href="${g.url}" target="_blank" rel="noopener" class="krx-mlink"><span class="krx-gnum">${i + 1}</span><span class="truncate">${g.name}</span><i class="fa-solid fa-arrow-up-right-from-square ml-auto text-xs"></i></a>`).join('');
             return `<div id="krx-mayor-box" class="krx-mayor">
                 <h4 class="font-orbitron font-black text-lg md:text-2xl text-white leading-tight">🔥 OFERTAS ESPECIALES EN ESTAS 2 NUEVAS COMUNIDADES / GRUPOS DE ROBLOX</h4>
@@ -4601,7 +4621,7 @@
             let finalConverted = window.currentCurrency === 'USDT' ? usdtTotal : usdtTotal * window.exchangeRates[window.currentCurrency];
             
             const sym = window.currencySymbols[window.currentCurrency];
-            const formatted = window.currentCurrency === 'USDT' ? finalConverted.toFixed(2) : finalConverted.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            const formatted = window.currentCurrency === 'USDT' ? finalConverted.toFixed(2) : finalConverted.toLocaleString('es-AR', { maximumFractionDigits: window.kiwiCurDec(window.currentCurrency) });
             
             const priceEl = document.getElementById('robux-calculated-price');
             if(priceEl) priceEl.innerHTML = `${sym}${formatted} <span class="text-lg text-gray-400">${window.currentCurrency}</span>`;
@@ -4629,7 +4649,7 @@
             const rate = window.exchangeRates[window.currentCurrency] || 1;
             const converted = window.currentCurrency === 'USDT' ? usdtPrice : usdtPrice * rate;
             const sym = window.currencySymbols[window.currentCurrency] || '';
-            const totalStr = sym + converted.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + window.currentCurrency;
+            const totalStr = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(window.currentCurrency)}) + ' ' + window.currentCurrency;
 
             window.currentActiveProduct = {
                 title: amount + ' Robux (' + methodText + ')',
@@ -5257,7 +5277,7 @@
             const rate = (window.exchangeRates && window.exchangeRates[window.currentCurrency]) || 1;
             const converted = window.currentCurrency === 'USDT' ? balUSDT : balUSDT * rate;
             const sym = window.currencySymbols[window.currentCurrency] || '';
-            return sym + converted.toLocaleString('es-AR', {maximumFractionDigits: 2}) + ' ' + window.currentCurrency;
+            return sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(window.currentCurrency)}) + ' ' + window.currentCurrency;
         };
         window.updateBalanceDisplay = function() {
             const el = document.getElementById('user-balance-display');
@@ -5267,7 +5287,7 @@
             const rate = (window.exchangeRates && window.exchangeRates[window.currentCurrency]) || 1;
             const converted = window.currentCurrency === 'USDT' ? balUSDT : balUSDT * rate;
             const sym = window.currencySymbols[window.currentCurrency] || '';
-            const txt = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: 2}) + ' ' + window.currentCurrency;
+            const txt = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(window.currentCurrency)}) + ' ' + window.currentCurrency;
             if (el) el.textContent = txt;
             if (el2) el2.textContent = txt;
             if (headerBal && currentUser) {
@@ -6567,7 +6587,7 @@
             }
             const rate = (window.exchangeRates && window.exchangeRates[code]) || 1;
             const converted = usdt * rate;
-            return sym + converted.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ' + code;
+            return sym + converted.toLocaleString('es-AR', { maximumFractionDigits: window.kiwiCurDec(code) }) + ' ' + code;
         };
 
         // Lee una cantidad entera; devuelve null si está vacía, no es entera o es menor al mínimo (sin tocar el input)
@@ -6979,12 +6999,27 @@
             if (typeof window.switchStaffTab === 'function') window.switchStaffTab('cuentas');
         };
 
-        window.goToCatalog = function() {
-            document.getElementById('home-view').classList.add('hidden');
-            document.getElementById('category-view').classList.add('hidden');
-            document.getElementById('catalog-view').classList.remove('hidden');
-            history.pushState({}, '', '/catalogo');
+        // v79: /catalogo siempre muestra el catálogo (carga directa, atrás/adelante) y arranca arriba de todo.
+        // Antes: al entrar desde abajo de la página, o volver con "atrás", quedaba el fondo negro sin contenido.
+        window.kiwiShowCatalogView = function () {
+            ['home-view', 'category-view', 'ra-shell', 'orders-panel', 'events-view', 'admin-page'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hidden'); });
+            try { window.stopEventsRefresh && window.stopEventsRefresh(); } catch (_) {}
+            try { if (typeof window.kiwiSetMeta === 'function') window.kiwiSetMeta(null); } catch (_) {}
+            const cv = document.getElementById('catalog-view'); if (cv) cv.classList.remove('hidden');
+            window.scrollTo(0, 0);
         };
+        window.goToCatalog = function() {
+            window.kiwiShowCatalogView();
+            if ((location.pathname.replace(/\/+$/, '') || '/').toLowerCase() !== '/catalogo') history.pushState({}, '', '/catalogo');
+        };
+        (function () {
+            const isCat = () => (location.pathname.replace(/\/+$/, '') || '/').toLowerCase() === '/catalogo';
+            window.addEventListener('popstate', () => {
+                if (isCat()) setTimeout(window.kiwiShowCatalogView, 0);
+                else { const cv = document.getElementById('catalog-view'); if (cv) cv.classList.add('hidden'); }
+            });
+            window.addEventListener('load', () => { if (isCat()) setTimeout(() => { if (isCat()) window.kiwiShowCatalogView(); }, 350); });
+        })();
         // v41: botón "Volver al catálogo" de las páginas de juego/categoría
         window.kiwiBackToCatalog = function() {
             try { if (typeof window.kiwiSetMeta === 'function') window.kiwiSetMeta(null); } catch (_) {}
@@ -7422,8 +7457,8 @@ window.resetUser2FA = function(username) {
 
 
         window.loadBinanceRates = async function() {
-            const fiats = ['ARS', 'MXN', 'COP', 'PEN'];
-            for (const fiat of fiats) {
+            const fiats = ['ARS', 'MXN', 'COP', 'PEN', 'CLP', 'CRC', 'UYU'];   // v79: + CLP, CRC, UYU (en paralelo)
+            await Promise.all(fiats.map(async fiat => {
                 try {
                     const res = await fetch('/api/binance-p2p?fiat=' + fiat);
                     const data = await res.json();
@@ -7433,13 +7468,8 @@ window.resetUser2FA = function(username) {
                         window.exchangeRates[fiat] = Math.round(base * m * (base >= 100 ? 100 : 1000)) / (base >= 100 ? 100 : 1000);
                     }
                 } catch (e) {}
-            }
+            }));
             if (typeof window.refreshAllPrices === 'function') window.refreshAllPrices();
-            // v78: CLP/CRC (solo Recargar saldo) en segundo plano, sin demorar los precios del catálogo
-            ['CLP', 'CRC'].forEach(fiat => fetch('/api/binance-p2p?fiat=' + fiat).then(r => r.json()).then(data => {
-                const base = Number(data && data.rate);
-                if (base > 0 && window.exchangeRates) window.exchangeRates[fiat] = Math.round(base * (Number((window.KIWI_RATE_MARGIN || {})[fiat]) || 1) * 100) / 100;
-            }).catch(() => {}));
             // Update rate displays in currency modal
             document.querySelectorAll('[data-rate]').forEach(el => {
                 const fiat = el.dataset.rate;
@@ -7453,7 +7483,7 @@ window.resetUser2FA = function(username) {
             document.querySelectorAll('span').forEach(el => {
                 const t = el.textContent || '';
                 if (t.includes('1 USDT ≈')) {
-                    const fiat = t.includes('ARS') ? 'ARS' : t.includes('MXN') ? 'MXN' : t.includes('COP') ? 'COP' : t.includes('PEN') ? 'PEN' : null;
+                    const fiat = ['ARS', 'MXN', 'COP', 'PEN', 'CLP', 'CRC', 'UYU'].find(c => t.includes(c)) || null;
                     if (fiat && window.exchangeRates[fiat]) {
                         el.textContent = '1 USDT ≈ ' + window.exchangeRates[fiat].toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + fiat;
                     }
@@ -7475,7 +7505,7 @@ window.resetUser2FA = function(username) {
 
         // v61: moneda automática según país (solo si no hay preferencia guardada)
         // Orden: /api/pay?action=geo (header x-vercel-ip-country) → api.country.is → zona horaria / idioma.
-        window.KIWI_GEO_CURRENCY = { AR: 'ARS', MX: 'MXN', PE: 'PEN', CO: 'COP' };
+        window.KIWI_GEO_CURRENCY = { AR: 'ARS', MX: 'MXN', PE: 'PEN', CO: 'COP', CL: 'CLP', CR: 'CRC', UY: 'UYU' };
         window.kiwiGeoTimeout = function (url, ms) {
             const c = typeof AbortController !== 'undefined' ? new AbortController() : null;
             const t = setTimeout(() => c && c.abort(), ms);
@@ -7488,6 +7518,9 @@ window.resetUser2FA = function(username) {
                 if (/^America\/(Mexico_City|Cancun|Merida|Monterrey|Matamoros|Chihuahua|Ciudad_Juarez|Ojinaga|Mazatlan|Bahia_Banderas|Hermosillo|Tijuana)$/.test(tz)) return 'MX';
                 if (tz === 'America/Lima') return 'PE';
                 if (tz === 'America/Bogota') return 'CO';
+                if (tz === 'America/Santiago' || tz === 'America/Punta_Arenas') return 'CL';
+                if (tz === 'America/Costa_Rica') return 'CR';
+                if (tz === 'America/Montevideo') return 'UY';
             } catch (_) {}
             const langs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']);
             for (const l of langs) { const m = /^[a-z]{2,3}-([A-Z]{2})$/i.exec(l || ''); if (m) return m[1].toUpperCase(); }
