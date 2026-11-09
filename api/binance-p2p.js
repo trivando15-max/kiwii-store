@@ -9,6 +9,8 @@ const CONFIG = {
   MXN: { payTypes: [], transAmount: 190 },
   COP: { payTypes: [], transAmount: 32000 },
   PEN: { payTypes: [], transAmount: 35 },
+  CLP: { payTypes: [], transAmount: 9800 },   // v78: Chile (~10 USDT)
+  CRC: { payTypes: [], transAmount: 4500 },   // v78: Costa Rica (~10 USDT)
 };
 const URL = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
 
