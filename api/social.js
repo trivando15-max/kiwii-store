@@ -120,6 +120,17 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({status:data.status,remains:data.remains,start_count:data.start_count});
     }
 
+    // v79: saldo y catálogo con costos SOLO con el secreto de admin (header x-pay-secret = PAY_NOTIF_SECRET).
+    // Antes respondían a cualquiera y mostraban los costos públicamente.
+    if (action === 'balance' || action === 'services') {
+      const secret = String(process.env.PAY_NOTIF_SECRET || '');
+      const given = String((req.headers && (req.headers['x-pay-secret'] || req.headers['x-admin-secret'])) || '');
+      const a = Buffer.from(given), b = Buffer.from(secret);
+      if (secret.length < 16 || a.length !== b.length || !require('crypto').timingSafeEqual(a, b)) {
+        return res.status(401).json({ success: false, error: 'no autorizado' });
+      }
+    }
+
     if (action === 'balance') {
       const { data } = await callDelivery({
         key: apiKey,
