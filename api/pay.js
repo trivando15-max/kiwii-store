@@ -1,4 +1,4 @@
-// KIWII STORE v60 - Recargas de saldo automáticas (Vercel serverless, Node 18+, sin dependencias)
+// KIWII STORE v60 (+v78 Chile/Costa Rica) - Recargas de saldo automáticas (Vercel serverless, Node 18+, sin dependencias)
 // UNA sola función con acciones (?action=... o { action } en el JSON):
 //   GET  config                                  -> métodos activos y datos para pagar (salen de variables de entorno)
 //   POST create  { token, method, usdt, purpose? } -> crea la recarga con monto único y tasa congelada
@@ -35,13 +35,17 @@ const METHODS = {
   // v70: USD (ACH, Takenos) y EUR (SEPA, Wise). El cliente escribe el monto en su moneda; centavo único igual que el resto.
   us_takenos:     { label: 'Dólares (USD) · Takenos', currency: 'USD', step: 0.01, round: 0.01, kind: 'notif' },
   eu_wise:        { label: 'Euros (EUR) · Wise',      currency: 'EUR', step: 0.01, round: 0.01, kind: 'notif' },
+  // v78: Chile (CLP, sin decimales: "últimos pesos" únicos) y Costa Rica (CRC, colones enteros por SINPE Móvil)
+  cl_bancoestado: { label: 'BancoEstado (Chile)',     currency: 'CLP', step: 1, round: 10, kind: 'notif' },
+  cr_sinpe:       { label: 'SINPE Móvil (Costa Rica)', currency: 'CRC', step: 1, round: 10, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
-const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4, USD: 0, EUR: 0 };
+const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4, USD: 0, EUR: 0, CLP: 4, CRC: 5 };
 // Margen sobre P2P igual al de la web (KIWI_RATE_MARGIN)
-const RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, USD: 1.00, EUR: 1.01 };
+const RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, USD: 1.00, EUR: 1.01 };
 const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: [], transAmount: 190 },
-  COP: { payTypes: [], transAmount: 32000 }, PEN: { payTypes: [], transAmount: 35 } };
+  COP: { payTypes: [], transAmount: 32000 }, PEN: { payTypes: [], transAmount: 35 },
+  CLP: { payTypes: [], transAmount: 9800 }, CRC: { payTypes: [], transAmount: 4500 } };   // v78 (~10 USDT)
 
 function jsonEnv(k, d) { try { const v = env(k); return v ? Object.assign({}, d, JSON.parse(v)) : d; } catch (_) { return d; } }
 function accountData(m) {
@@ -97,6 +101,17 @@ function accountData(m) {
       return [['IBAN', env('PAY_EU_IBAN')]]
         .concat(env('PAY_EU_BIC') ? [['Swift / BIC', env('PAY_EU_BIC')]] : [], env('PAY_EU_BANCO') ? [['Banco y dirección', env('PAY_EU_BANCO')]] : [],
                 env('PAY_EU_TITULAR') ? [['Titular', env('PAY_EU_TITULAR')]] : []);
+    case 'cl_bancoestado':
+      // v78: CuentaRUT BancoEstado. Hace falta el número de cuenta; el resto se muestra si está cargado.
+      if (!env('PAY_CL_CUENTA')) return null;
+      return [['Banco', env('PAY_CL_BANCO', 'BancoEstado')], ['Tipo de cuenta', env('PAY_CL_TIPO', 'CuentaRUT')], ['Número de cuenta', env('PAY_CL_CUENTA')]]
+        .concat(env('PAY_CL_RUT') ? [['RUT', env('PAY_CL_RUT')]] : [], env('PAY_CL_EMAIL') ? [['Email', env('PAY_CL_EMAIL')]] : [],
+                env('PAY_CL_TITULAR') ? [['Titular', env('PAY_CL_TITULAR')]] : []);
+    case 'cr_sinpe':
+      // v78: SINPE Móvil (número de celular). Hace falta el número.
+      if (!env('PAY_CR_SINPE_NUMERO')) return null;
+      return [['Número SINPE Móvil', env('PAY_CR_SINPE_NUMERO')]]
+        .concat(env('PAY_CR_BANCO') ? [['Banco', env('PAY_CR_BANCO')]] : [], env('PAY_CR_TITULAR') ? [['Titular', env('PAY_CR_TITULAR')]] : []);
     case 'pe_yape':
       return env('PAY_PE_YAPE_NUMERO') ? [['Celular Yape', env('PAY_PE_YAPE_NUMERO')]].concat(env('PAY_PE_TITULAR') ? [['Titular', env('PAY_PE_TITULAR')]] : []) : null;
   }
@@ -105,6 +120,9 @@ function accountData(m) {
 // v66: Colombia (transferencia normal Bancolombia/otros bancos) puede tardar ~1 día → la recarga queda abierta 24 h (PAY_CO_MINUTES, máx. 1500).
 function methodMinutes(method, def) {
   if (method === 'mx_hey') { const m = Number(env('PAY_MX_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }
+  // v78: Chile (TEF) y Costa Rica (SINPE Móvil) son inmediatos → 15 min como Hey Banco
+  if (method === 'cl_bancoestado') { const m = Number(env('PAY_CL_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }
+  if (method === 'cr_sinpe') { const m = Number(env('PAY_CR_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }
   if (method === 'co_bancolombia') { const m = Number(env('PAY_CO_MINUTES', '1440')); return m >= 10 ? Math.min(1500, m) : def; }
   // v70: ACH puede tardar hasta 48 h hábiles → 2 días por defecto (máx. 4320 = 3 días, mismo tope que kiwi_pay_create v70)
   if (method === 'us_takenos') { const m = Number(env('PAY_US_MINUTES', '2880')); return m >= 10 ? Math.min(4320, m) : def; }
@@ -387,9 +405,11 @@ const DEFAULT_APPS = {
   'com.bcp.innovacxion.yapeapp': 'pe_yape',
   'com.takenos': 'us_takenos',               // v70: Takenos (Google Play id=com.takenos, verificado en su centro de ayuda)
   'com.transferwise.android': 'eu_wise',     // v70: Wise
+  'net.veritran.becl.prod': 'cl_bancoestado', // v78: App BancoEstado (Google Play id verificado)
+  'cl.bancoestado.cirrus.prod': 'cl_bancoestado', // v78: Rutpay (BancoEstado, CuentaRUT)
 };
-const CUR_OF = { mx_hey: 'MXN', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR' };
-const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
+const CUR_OF = { mx_hey: 'MXN', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC' };
+const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|ha recibido|te depositaron|te deposit[oó]|recepci[oó]n de (?:fondos|transferencia)|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
 const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr|you sent|you paid|you spent|sent to|is on its way|withdraw|card payment|you converted|convertiste)/i;
 
 // "$ 16.501", "16.501,50", "$1,234.56", "S/ 35.5", "COP 32.001" -> número
@@ -411,7 +431,7 @@ function parseAmountStr(s) {
 // v73: nombre de quien transfiere. Ejemplos REALES: Global66 "Recibiste 17.401 COP de SIGGY ALEJANDRO." ·
 // Mercado Pago "De Lautaro Uriel Bajo desde su cuenta de Mercado Pago." · variantes: "JUAN PEREZ te envió", "John Smith sent you", "from John Smith".
 const NAME_RX = "([A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*(?:\\s+(?:(?:de|del|la|los|y)\\s+)?[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*){0,4})";
-const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero)\b/i;
+const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|CLP|CRC|Colones|SINPE|BancoEstado|CuentaRUT|Rutpay|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero)\b/i;
 function extractSender(all) {
   const tries = [
     new RegExp(NAME_RX + '\\s+(?:te\\s+(?:envi|transfiri|yape|pag|mand|deposit)|(?:has\\s+)?sent\\s+you|paid\\s+you)'),
@@ -453,13 +473,32 @@ function parseNotification(n, forcedMethod) {
   out.incoming = INCOMING.test(all) && !(OUTGOING.test(all) && !INCOMING.test(all.replace(OUTGOING, '')));
   if (!out.incoming) return out;
   // v63: tomar el monto que aparece primero (prefijo "$"/"COP" o sufijo "COP"/"pesos"), no un saldo posterior
-  const amA = all.match(/(?:S\/\.?|\$|€|COP|MXN|ARS|PEN|USD|EUR|soles?)\s*\$?\s*([\d][\d.,]*)/i), amB = all.match(/([\d][\d.,]*)\s*(?:pesos|soles|d[oó]lares|euros?|COP|MXN|ARS|PEN|USD|EUR|€)(?![A-Za-z])/i);
+  const amA = all.match(/(?:S\/\.?|\$|€|₡|¢|COP|MXN|ARS|PEN|USD|EUR|CLP|CRC|soles?)\s*\$?\s*([\d][\d.,]*)/i), amB = all.match(/([\d][\d.,]*)\s*(?:pesos|soles|d[oó]lares|euros?|colones|COP|MXN|ARS|PEN|USD|EUR|CLP|CRC|€|₡)(?![A-Za-z])/i);
   const am = amA && amB ? (amA.index <= amB.index ? amA : amB) : (amA || amB);
   if (am) out.amount = parseAmountStr(am[1]);
+  // v78: CLP y CRC se cobran en montos enteros. CLP usa "." de miles ($10.000); CRC puede venir "₡15 000,00" o "15,000.00 Colones".
+  if (method === 'cl_bancoestado' || method === 'cr_sinpe') {
+    const sp = all.match(/(?:₡|¢|CRC|CLP|\$)\s*(\d{1,3}(?:[ \u00a0.,]\d{3})+(?:[.,]\d{1,2})?)(?!\d)/i)
+            || all.match(/(\d{1,3}(?:[ \u00a0.,]\d{3})+(?:[.,]\d{1,2})?)\s*(?:colones|CRC|CLP|pesos|₡)/i);
+    const sv = sp ? parseAmountStr(sp[1].replace(/[ \u00a0]/g, '')) : null;
+    if (sv && (!out.amount || (am && sp.index <= am.index))) out.amount = sv;
+    if (out.amount != null && Math.abs(out.amount - Math.round(out.amount)) > 0.004) out.amount = null; // con céntimos raros → revisión manual
+  }
+  // v78: SINPE Móvil por SMS: cualquiera puede mandarte un SMS falso al número SINPE (que es público).
+  // Si la notificación viene de una app de mensajes, el remitente (título) tiene que estar en PAY_CR_SMS_SENDERS;
+  // si no está (o la variable falta) se guarda para revisión manual en PAGOS, nunca se acredita sola.
+  if (method === 'cr_sinpe' && isSmsApp(app) && !crSmsSenderOk(title)) { out.method = null; out.untrusted = true; }
   out.sender = extractSender(all); // v73: nombre de quien envió (se compara con el declarado por el cliente)
   const op = all.match(/(?:operaci[oó]n|n[uú]mero de operaci[oó]n|referencia|ref\.?|c[oó]digo|comprobante|folio|clave de rastreo)\s*(?:n[°º.o]*|#|:)?\s*([A-Za-z0-9-]{4,40})/i);
   if (op) out.op = op[1];
   return out;
+}
+// v78: apps de SMS/mensajería de Android (Google Mensajes, Samsung, Xiaomi, etc.)
+function isSmsApp(app) { return /(messag|mms|sms|telephony|\.mensajes)/i.test(String(app || '')); }
+function crSmsSenderOk(title) {
+  const list = env('PAY_CR_SMS_SENDERS').split(',').map(x => x.toLowerCase().replace(/[^a-z0-9]/g, '')).filter(x => x.length >= 3);
+  const t = String(title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return !!(t && list.some(x => t === x || (x.length >= 4 && t.endsWith(x))));
 }
 function notifHash(n, p) {
   const key = n.key || n.notificationKey || n.id || '';
@@ -502,6 +541,9 @@ async function handler(req, res) {
       if (!secret || secret.length < 16 || !safeEq(given, secret)) return send(res, 401, { error: 'no autorizado' });
       if (body.test === true || /^test$/i.test(String(body.title || ''))) return send(res, 200, { ok: true, test: true });
       const p = parseNotification(body, String(q.m || body.method || ''));
+      // v78: con m=cr_sinpe la regla puede estar sobre la app de SMS: los SMS que no hablan de SINPE no se guardan (privacidad)
+      if (String(q.m || body.method || '') === 'cr_sinpe' && isSmsApp(p.app) && !/sinpe/i.test(p.title + ' ' + p.text))
+        return send(res, 200, { ok: true, status: 'ignored' });
       const posted = Date.parse(body.post_time || body.postedAt || '') || Number(body.timestamp) || null;
       const r = await supaRpc('kiwi_pay_notif_ingest', {
         p_hash: notifHash(body, p), p_method: p.incoming ? p.method : null, p_app: p.app, p_title: p.title, p_body: p.text,
@@ -646,5 +688,5 @@ async function handler(req, res) {
 
 module.exports = handler;
 module.exports.notifyOrders = notifyOrders;
-module.exports._t = { extractSender, nameMatch, nameTokens, nameCheckOn, notifyNameReview, parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
+module.exports._t = { isSmsApp, crSmsSenderOk, extractSender, nameMatch, nameTokens, nameCheckOn, notifyNameReview, parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
   checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, notifyOrders, notifyTopup, orderTgText, tgTime, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
