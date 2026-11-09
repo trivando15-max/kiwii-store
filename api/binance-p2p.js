@@ -11,6 +11,7 @@ const CONFIG = {
   PEN: { payTypes: [], transAmount: 35 },
   CLP: { payTypes: [], transAmount: 9800 },   // v78: Chile (~10 USDT)
   CRC: { payTypes: [], transAmount: 4500 },   // v78: Costa Rica (~10 USDT)
+  UYU: { payTypes: [], transAmount: 430 },    // v79: Uruguay (~10 USDT, solo para mostrar precios)
 };
 const URL = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
 
