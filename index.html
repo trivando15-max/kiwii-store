@@ -1751,11 +1751,14 @@
             'MXN': 19.152,
             'COP': 3299.97,
             'PEN': 3.566,
+            // v78: solo para Recargar saldo (Chile / Costa Rica); bases aprox. CLP 976, CRC 450,5 (+1,6%)
+            'CLP': 991.62,
+            'CRC': 457.71,
             'USDT': 1
         };
         // v75: como Hexz, mejor anuncio BUY sin filtro de banco (~10 USDT), pero con margen fijo de +1,6%.
         // /api/binance-p2p devuelve la base cruda; se multiplica una sola vez.
-        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016 };
+        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016 };
         window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'USDT': '₮' };
 
         window.getConvertedPrice = function(prod) {
@@ -2211,7 +2214,7 @@
         // --- BANDERAS EN IMAGEN (los emoji de bandera se ven como letras en Windows) ---
         window.kiFlag = function (code, w) {
             w = w || 28; const h = Math.round(w * 0.75);
-            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe' }[code];
+            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', CLP: 'cl', CRC: 'cr', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe', cl: 'cl', cr: 'cr' }[code];
             if (iso) return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + code + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle;box-shadow:0 1px 4px rgba(0,0,0,.5)">';
             if (code === 'USDT') return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:' + Math.round(h * 0.75) + 'px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">₮</span>';
             return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#2563eb;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:' + Math.round(h * 0.7) + 'px;vertical-align:middle"><i class="fa-solid fa-globe"></i></span>';
@@ -7432,6 +7435,11 @@ window.resetUser2FA = function(username) {
                 } catch (e) {}
             }
             if (typeof window.refreshAllPrices === 'function') window.refreshAllPrices();
+            // v78: CLP/CRC (solo Recargar saldo) en segundo plano, sin demorar los precios del catálogo
+            ['CLP', 'CRC'].forEach(fiat => fetch('/api/binance-p2p?fiat=' + fiat).then(r => r.json()).then(data => {
+                const base = Number(data && data.rate);
+                if (base > 0 && window.exchangeRates) window.exchangeRates[fiat] = Math.round(base * (Number((window.KIWI_RATE_MARGIN || {})[fiat]) || 1) * 100) / 100;
+            }).catch(() => {}));
             // Update rate displays in currency modal
             document.querySelectorAll('[data-rate]').forEach(el => {
                 const fiat = el.dataset.rate;
@@ -8239,8 +8247,9 @@ window.resetUser2FA = function(username) {
         const K = window.KPAY = { cfg: null, method: null, topup: null, timer: null, poll: null };
         const ICON = { usdt: 'fa-solid fa-coins', binance_pay: 'fa-solid fa-wallet', ar_transfer: 'fa-solid fa-building-columns',
                        mx_hey: 'fa-solid fa-credit-card', mx_nu: 'fa-solid fa-credit-card', co_bancolombia: 'fa-solid fa-landmark', pe_yape: 'fa-solid fa-mobile-screen',
-                       us_takenos: 'fa-solid fa-dollar-sign', eu_wise: 'fa-solid fa-euro-sign' };
-        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_hey: 'MXN', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR' };
+                       us_takenos: 'fa-solid fa-dollar-sign', eu_wise: 'fa-solid fa-euro-sign',
+                       cl_bancoestado: 'fa-solid fa-building-columns', cr_sinpe: 'fa-solid fa-mobile-screen' };
+        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_hey: 'MXN', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC' };
         // v70: banderas USD/EUR solo dentro de Recargar (no toca window.kiFlag ni el selector de moneda)
         const kFlag = (c, w) => { const iso = { USD: 'us', EUR: 'eu' }[c]; if (!iso) return window.kiFlag(c, w); const h = Math.round(w * 0.75);
             return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + c + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle">'; };
@@ -8248,7 +8257,8 @@ window.resetUser2FA = function(username) {
         const REF_LABEL = { usdt: 'TxID / Hash de la transacción', binance_pay: 'ID de orden de Binance Pay',
                             ar_transfer: 'Número de operación / comprobante', mx_hey: 'Clave de rastreo / folio', mx_nu: 'Clave de rastreo / folio',
                             co_bancolombia: 'Número de comprobante', pe_yape: 'Número de operación',
-                            us_takenos: 'Referencia / ID de la transferencia', eu_wise: 'Referencia / ID de la transferencia' };
+                            us_takenos: 'Referencia / ID de la transferencia', eu_wise: 'Referencia / ID de la transferencia',
+                            cl_bancoestado: 'Número de operación / comprobante', cr_sinpe: 'Número de comprobante SINPE' };
         const ST = { pending: ['Esperando tu pago', 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', 'fa-hourglass-half'],
                      submitted: ['Verificando…', 'bg-blue-500/20 text-blue-300 border-blue-500/40', 'fa-magnifying-glass'],
                      review: ['En revisión del staff', 'bg-orange-500/20 text-orange-300 border-orange-500/40', 'fa-user-shield'],
@@ -8260,10 +8270,10 @@ window.resetUser2FA = function(username) {
         window.kpayTopupState = topupState;
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const fmt = (n, cur) => {
-            const d = cur === 'ARS' || cur === 'COP' ? 0 : 2;
-            return (cur === 'PEN' ? 'S/ ' : cur === 'EUR' ? '€ ' : cur === 'USDT' ? '' : '$ ') + Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ' + cur;
+            const d = cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' ? 0 : 2;
+            return (cur === 'PEN' ? 'S/ ' : cur === 'EUR' ? '€ ' : cur === 'CRC' ? '₡ ' : cur === 'USDT' ? '' : '$ ') + Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ' + cur;
         };
-        const plain = (n, cur) => cur === 'ARS' || cur === 'COP' ? String(Math.round(n)) : Number(n).toFixed(2);
+        const plain = (n, cur) => cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' ? String(Math.round(n)) : Number(n).toFixed(2);
         async function api(action, data) {
             const r = await fetch(API + '?action=' + action, action === 'config' ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(Object.assign({ token: window.kiwiToken ? window.kiwiToken() : '' }, data || {})) });
@@ -8503,6 +8513,8 @@ window.resetUser2FA = function(username) {
                 co_bancolombia: 'Transferí a la cuenta Bancolombia de arriba (desde Bancolombia o desde cualquier otro banco). <b>Respetá los últimos pesos</b> del monto.',
                 pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.',
                 us_takenos: '🇺🇸 Transferencia <b>ACH</b> en dólares a la cuenta de arriba. Mandá el <b>monto exacto con los centavos</b>: así reconocemos tu pago. ACH puede tardar <b>hasta 48 h hábiles</b> en llegar. El nombre y la dirección del banco se muestran tal como los da la cuenta.',
+                cl_bancoestado: '🇨🇱 Transferencia (TEF) desde <b>cualquier banco de Chile</b> a la CuentaRUT de arriba: llega al instante. Mandá el monto <b>exacto</b>: <b>respetá los últimos pesos</b>, así reconocemos tu pago.',
+                cr_sinpe: '🇨🇷 Pagá por <b>SINPE Móvil</b> al número de arriba desde la app de tu banco: llega al instante. Mandá el monto <b>exacto en colones</b> (<b>respetá los últimos colones</b>), así reconocemos tu pago.',
                 eu_wise: '🇪🇺 Transferencia <b>SEPA</b> en euros al IBAN de arriba: llega en minutos y hasta 1 día hábil. Mandá el <b>monto exacto con los céntimos</b>. El Swift/BIC es solo para transferencias internacionales (fuera de SEPA).'
             }[id] || '';
         }
@@ -8879,7 +8891,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 BancoEstado (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
