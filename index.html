@@ -34,7 +34,7 @@
             if (!p) return null;
             const cat = String(p.category || ''), sub = String(p.sub || '');
             if (cat === 'roblox' && (sub === 'fruits' || sub === 'gamepasses')) return 'bloxfruits';
-            if (cat === 'roblox' && /^robux_/.test(sub)) return 'robux:' + sub + ((p.wholesale || /al por mayor/i.test(String(p.title || ''))) ? ':mayor' : '');
+            if (cat === 'roblox' && /^robux_/.test(sub)) return 'robux:' + sub + ((p.wholesale || /al por mayor/i.test(String(p.title || ''))) ? ':mayor' : ((sub === 'robux_gamepass' && (p.offer || /oferta especial/i.test(String(p.title || '')))) ? ':ofertas' : ''));
             if (p.catalogId && p.variantName) return 'v:' + p.catalogId + '::' + p.variantName;
             if (p.kind === 'frag' || window.KIWI_STOCK_FRAG_IDS.includes(Number(p.id))) return 'ff:frag';
             if (p.kind === 'box' || window.KIWI_STOCK_BOX_IDS.includes(Number(p.id))) return 'ff:box';
@@ -43,6 +43,8 @@
             return null;
         };
         window.kiwiStockOffKey = k => !!k && window.KIWI_STOCK_OFF.has(k);
+        // v80: en los nombres solo se muestra el total: "86 Diamantes (78 + 8)" → "86 Diamantes" (todos los productos, también pedidos viejos)
+        window.kiwiCleanTitle = t => t == null ? t : String(t).replace(/\s*\(\s*\d[\d.,]*\s*\+\s*\d[\d.,]*\s*\)/g, '');
         window.kiwiStockOff = p => window.kiwiStockOffKey(window.kiwiStockKey(p));
         window.kiwiRaSinStock = p => (!!window.KIWI_RA_SIN_STOCK && window.kiwiRaIsRaProd(p)) || window.kiwiStockOff(p);
         window.kiwiRaOff = p => !!(p && (p.raUnavailable || window.kiwiRaSinStock(p)));
@@ -647,7 +649,7 @@
                 </button>
                 <button onclick="window.toggleUserDrawer(); window.openCurrencyModal();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border">
                     <span class="kd-ico kd-gold"><i class="fa-solid fa-coins"></i></span>
-                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Cambiar moneda de precios</span><span class="block text-[11px] text-gray-400">Ver precios en ARS, MXN, COP, PEN, CLP, CRC, UYU o USDT</span></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Cambiar moneda de precios</span><span class="block text-[11px] text-gray-400">Ver precios en ARS, MXN, COP, PEN, CLP, CRC, UYU, EUR o USDT</span></span>
                     <span class="flex flex-col items-center gap-0.5 rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span id="currency-flag"></span><span id="currency-code" class="text-[10px] font-orbitron font-bold text-gray-200">USDT</span></span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
@@ -1060,17 +1062,17 @@
                 </h4>
                 <p class="text-sm text-gray-300 font-rajdhani mb-3">Todos los artículos de Roblox son <span class="kdel-badge kdel-manual">🕒 Carga manual</span>: un miembro del staff los carga manualmente.</p>
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 font-rajdhani font-bold">
-                    <button id="tab-roblox-fruits" onclick="window.filterRobloxSub('fruits')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
-                        <span class="text-xl">🍎</span> FRUTAS / GAMEPASS
+                    <button id="tab-roblox-robux_plus" onclick="window.filterRobloxSub('robux_plus')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
+                        <span class="text-xl">💎</span> ROBUX VIA PLUS
                     </button>
-                    <button id="tab-roblox-robux_grupo" onclick="window.filterRobloxSub('robux_grupo')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
+                <button id="tab-roblox-robux_grupo" onclick="window.filterRobloxSub('robux_grupo')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
                         <span class="text-xl">💎</span> ROBUX VIA GRUPO
                     </button>
                     <button id="tab-roblox-robux_gamepass" onclick="window.filterRobloxSub('robux_gamepass')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
                         <span class="text-xl">💎</span> ROBUX VIA GAMEPASS
                     </button>
-                    <button id="tab-roblox-robux_plus" onclick="window.filterRobloxSub('robux_plus')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
-                        <span class="text-xl">💎</span> ROBUX VIA PLUS
+                    <button id="tab-roblox-fruits" onclick="window.filterRobloxSub('fruits')" class="roblox-sub-btn krx-tab bg-kiwi-dark border border-kiwi-border text-gray-200 p-3 rounded-xl hover:border-blue-500 hover:text-white transition flex items-center justify-center gap-3 text-base">
+                        <span class="text-xl">🍎</span> FRUTAS / GAMEPASS
                     </button>
                 </div>
             </div>
@@ -1404,7 +1406,14 @@
                     </span>
                     <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 43,47 UYU</span>
                 </button>
-                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400">
+                <button id="curr-card-EUR" onclick="window.selectCurrency('EUR', '')" class="curr-card border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400 ">
+                    <span class="flex items-center gap-3">
+                        <span class="flex-shrink-0"><img src="https://flagcdn.com/w40/eu.png" srcset="https://flagcdn.com/w80/eu.png 2x" alt="EUR" style="width:36px;height:27px;object-fit:cover;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></span>
+                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">EUR</span><span class="block text-[11px] text-gray-400">Euro</span></span>
+                    </span>
+                    <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT ≈ 0,937 EUR</span>
+                </button>
+                <button id="curr-card-USDT" onclick="window.selectCurrency('USDT', '')" class="curr-card col-span-2 border-2 border-kiwi-border bg-kiwi-dark rounded-2xl p-3 text-left transition active:scale-95 hover:border-gray-400">
                     <span class="flex items-center gap-3">
                         <span class="flex-shrink-0"><span style="width:36px;height:27px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:20px;display:flex;align-items:center;justify-content:center">₮</span></span>
                         <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-sm">USDT</span><span class="block text-[11px] text-gray-400">Tether (dólar digital)</span></span>
@@ -1776,12 +1785,14 @@
             'CLP': 991.62,
             'CRC': 457.71,
             'UYU': 43.474,
+            // v80: Euro (solo para mostrar precios); base aprox. 0,922 EUR por USDT (+1,6%)
+            'EUR': 0.937,
             'USDT': 1
         };
         // v75: como Hexz, mejor anuncio BUY sin filtro de banco (~10 USDT), pero con margen fijo de +1,6%.
         // /api/binance-p2p devuelve la base cruda; se multiplica una sola vez.
-        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, UYU: 1.016 };
-        window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'CLP': '$', 'CRC': '₡', 'UYU': '$U ', 'USDT': '₮' };
+        window.KIWI_RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, UYU: 1.016, EUR: 1.016 };
+        window.currencySymbols = { 'ARS': '$', 'MXN': '$', 'COP': '$', 'PEN': 'S/', 'CLP': '$', 'CRC': '₡', 'UYU': '$U ', 'EUR': '€', 'USDT': '₮' };
         // v79: decimales al mostrar precios (CLP y CRC sin decimales)
         window.kiwiCurDec = function (code) { return code === 'CLP' || code === 'CRC' ? 0 : 2; };
 
@@ -1815,7 +1826,7 @@
             
             if (window.currentCurrency === 'USDT') return `₮ ${(usdtVal).toFixed(2)} USDT`;
             let converted = usdtVal * window.exchangeRates[window.currentCurrency];
-            let formatted = converted.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+            let formatted = converted.toLocaleString('es-AR', { maximumFractionDigits: window.kiwiCurDec(window.currentCurrency) });
             return `${window.currencySymbols[window.currentCurrency]}${formatted} ${window.currentCurrency}`;
         }
 
@@ -2092,7 +2103,8 @@
                 let date = r.date_str || loc.date || '';
                 if (!date && r.created_at) date = new Date(r.created_at).toLocaleString('es-AR');
                 return Object.assign({}, loc, {
-                    id: r.id, user: r.user_name, title: r.title, price: r.price, method: r.method,
+                    id: r.id, user: r.user_name, title: window.kiwiCleanTitle(r.title), price: r.price, method: r.method,
+                    paidUsdt: r.paid_usdt != null ? Number(r.paid_usdt) : loc.paidUsdt, refundedUsdt: r.refunded_usdt != null ? Number(r.refunded_usdt) : loc.refundedUsdt,
                     status: r.status || loc.status || 'pending',
                     claimedBy: r.claimedBy ?? r.claimed_by ?? loc.claimedBy ?? null,
                     targetUser: r.target_user ?? loc.targetUser ?? '',
@@ -2238,7 +2250,7 @@
         // --- BANDERAS EN IMAGEN (los emoji de bandera se ven como letras en Windows) ---
         window.kiFlag = function (code, w) {
             w = w || 28; const h = Math.round(w * 0.75);
-            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', CLP: 'cl', CRC: 'cr', UYU: 'uy', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe', cl: 'cl', cr: 'cr', uy: 'uy' }[code];
+            const iso = { ARS: 'ar', MXN: 'mx', COP: 'co', PEN: 'pe', CLP: 'cl', CRC: 'cr', UYU: 'uy', EUR: 'eu', ar: 'ar', mx: 'mx', co: 'co', pe: 'pe', cl: 'cl', cr: 'cr', uy: 'uy' }[code];
             if (iso) return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + code + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle;box-shadow:0 1px 4px rgba(0,0,0,.5)">';
             if (code === 'USDT') return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#10b981;color:#000;font-weight:900;font-size:' + Math.round(h * 0.75) + 'px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">₮</span>';
             return '<span style="width:' + w + 'px;height:' + h + 'px;border-radius:3px;background:#2563eb;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:' + Math.round(h * 0.7) + 'px;vertical-align:middle"><i class="fa-solid fa-globe"></i></span>';
@@ -3326,36 +3338,36 @@
             { id: 608, ra: 32, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Elite', salePrices: [3.85, 3.62, 3.51], emoji: '🎖️' },
             { id: 609, ra: 33, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Premium', salePrices: [8.17, 7.8, 7.62], emoji: '🏆', tag: 'Premium', popular: true },
             // PUBG MOBILE
-            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC (57 + 3)', salePrices: [1.08, 0.99, 0.95], emoji: '🪙' },
-            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC (300 + 25)', salePrices: [5.33, 4.92, 4.72], emoji: '🪙' },
-            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC (600 + 60)', salePrices: [10.48, 9.76, 9.4], emoji: '💰', tag: 'Más Elegido', popular: true },
-            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC (1.500 + 300)', salePrices: [25.75, 24.17, 23.38], emoji: '💰' },
-            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC (3.000 + 850)', salePrices: [50.61, 47.9, 46.54], emoji: '💰' },
-            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC (6.000 + 2.100)', salePrices: [99.42, 94.9, 92.64], emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC', salePrices: [1.08, 0.99, 0.95], emoji: '🪙' },
+            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC', salePrices: [5.33, 4.92, 4.72], emoji: '🪙' },
+            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC', salePrices: [10.48, 9.76, 9.4], emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC', salePrices: [25.75, 24.17, 23.38], emoji: '💰' },
+            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC', salePrices: [50.61, 47.9, 46.54], emoji: '💰' },
+            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC', salePrices: [99.42, 94.9, 92.64], emoji: '👑', tag: 'Mejor Oferta', popular: true },
             // MOBILE LEGENDS (global)
-            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes (78 + 8)', salePrices: [1.39, 1.27, 1.22], emoji: '💎' },
+            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes', salePrices: [1.39, 1.27, 1.22], emoji: '💎' },
             { id: 641, ra: 250, category: 'mlbb', sub: 'global', title: 'Pase Semanal de Diamantes', salePrices: [1.74, 1.6, 1.53], emoji: '🎟️', tag: 'Popular', popular: true },
-            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes (156 + 16)', salePrices: [2.73, 2.52, 2.42], emoji: '💎' },
-            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes (234 + 23)', salePrices: [4.02, 3.74, 3.6], emoji: '💎' },
+            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes', salePrices: [2.73, 2.52, 2.42], emoji: '💎' },
+            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes', salePrices: [4.02, 3.74, 3.6], emoji: '💎' },
             { id: 644, ra: 253, category: 'mlbb', sub: 'global', title: 'Twilight Pass', salePrices: [8.81, 8.22, 7.92], emoji: '🌙' },
-            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes (625 + 81)', salePrices: [10.58, 9.91, 9.58], emoji: '💎', tag: 'Más Elegido', popular: true },
-            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes (1.860 + 335)', salePrices: [31.46, 29.59, 28.65], emoji: '💎' },
-            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes (3.099 + 589)', salePrices: [51.73, 48.96, 47.58], emoji: '💎' },
-            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes (4.649 + 883)', salePrices: [76.91, 73.1, 71.19], emoji: '💎' },
-            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes (7.740 + 1.548)', salePrices: [127.02, 121.25, 118.36], emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes', salePrices: [10.58, 9.91, 9.58], emoji: '💎', tag: 'Más Elegido', popular: true },
+            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes', salePrices: [31.46, 29.59, 28.65], emoji: '💎' },
+            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes', salePrices: [51.73, 48.96, 47.58], emoji: '💎' },
+            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes', salePrices: [76.91, 73.1, 71.19], emoji: '💎' },
+            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes', salePrices: [127.02, 121.25, 118.36], emoji: '👑', tag: 'Mejor Oferta', popular: true },
             // MOBILE LEGENDS (cuentas región US)
-            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes (51 + 5) · US', salePrices: [1.04, 0.95, 0.91], emoji: '💎' },
-            { id: 661, ra: 260, category: 'mlbb', sub: 'us', title: '112 Diamantes (102 + 10) · US', salePrices: [2.05, 1.89, 1.8], emoji: '💎' },
+            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes · US', salePrices: [1.04, 0.95, 0.91], emoji: '💎' },
+            { id: 661, ra: 260, category: 'mlbb', sub: 'us', title: '112 Diamantes · US', salePrices: [2.05, 1.89, 1.8], emoji: '💎' },
             { id: 662, ra: 261, category: 'mlbb', sub: 'us', title: 'Pase Semanal de Diamantes · US', salePrices: [2.03, 1.88, 1.8], emoji: '🎟️' },
-            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes (253 + 25) · US', salePrices: [5.05, 4.67, 4.49], emoji: '💎' },
-            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes (505 + 66) · US', salePrices: [10.01, 9.3, 8.95], emoji: '💎' },
+            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes · US', salePrices: [5.05, 4.67, 4.49], emoji: '💎' },
+            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes · US', salePrices: [10.01, 9.3, 8.95], emoji: '💎' },
             { id: 665, ra: 264, category: 'mlbb', sub: 'us', title: 'Twilight Pass · US', salePrices: [9.92, 9.26, 8.92], emoji: '🌙' },
-            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes (1.010 + 182) · US', salePrices: [19.66, 18.42, 17.8], emoji: '💎' },
-            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes (1.515 + 273) · US', salePrices: [29.24, 27.5, 26.63], emoji: '💎' },
-            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes (2.525 + 480) · US', salePrices: [48.3, 45.61, 44.27], emoji: '💎' },
-            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes (3.030 + 576) · US', salePrices: [57.7, 54.61, 53.06], emoji: '💎' },
-            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes (4.008 + 802) · US', salePrices: [76.24, 72.46, 70.57], emoji: '💎' },
-            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes (5.010 + 1.002) · US', salePrices: [94.44, 90.15, 88], emoji: '👑' }
+            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes · US', salePrices: [19.66, 18.42, 17.8], emoji: '💎' },
+            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes · US', salePrices: [29.24, 27.5, 26.63], emoji: '💎' },
+            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes · US', salePrices: [48.3, 45.61, 44.27], emoji: '💎' },
+            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes · US', salePrices: [57.7, 54.61, 53.06], emoji: '💎' },
+            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes · US', salePrices: [76.24, 72.46, 70.57], emoji: '💎' },
+            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes · US', salePrices: [94.44, 90.15, 88], emoji: '👑' }
         ];
         window.kiwiRaSalePrice = function(it) {
             const rf = window.kiwiReseller ? window.kiwiReseller.marginFactor('ra') : 1;
@@ -3384,13 +3396,16 @@
                     return;
                 }
                 window.products.push({
-                    id: it.id, category: it.category, sub: it.sub,
+                    id: it.id, category: it.category, sub: it.sub, // (títulos ya limpios: ver kiwiCleanTitle)
                     title: (it.category === 'freefire' ? 'Free Fire · ' : GAME[it.category] + ' · ') + it.title,
                     shortTitle: it.title, price: ars, usdtPrice: usdt, emoji: it.emoji || '💎',
                     tag: it.tag, popular: !!it.popular, raId: it.ra, autoDelivery: true
                 });
             });
         })();
+        // v80: limpieza genérica de nombres "(base + bono)" en todo el catálogo (por si se agrega un producto nuevo con ese formato)
+        (window.products || []).forEach(p => { if (p.title) p.title = window.kiwiCleanTitle(p.title); if (p.shortTitle) p.shortTitle = window.kiwiCleanTitle(p.shortTitle); });
+        (window.KIWI_RA_ITEMS || []).forEach(it => { if (it.title) it.title = window.kiwiCleanTitle(it.title); });
 
         // --- CATALOGO CON VARIANTES ---
         window.catalogVariant = [
@@ -4427,7 +4442,48 @@
             { name: 'Nova-Group-Est-2026', url: 'https://www.roblox.com/es/communities/511330430/Nova-Group-Est-2026' }
         ];
         window.krxMayorUsdt = function (amount) { return Math.round(amount * window.KRX_MAYOR_USDT_PER_100) / 100; };
-        window.krxMin = function () { return (window.krxGrupo === 'mayor' && document.getElementById('krx-mayor-box')) ? window.KRX_MAYOR_MIN : window.ROBUX_MIN; };
+        // v80: Robux vía Gamepass: precio normal 0,08 USDT c/10 y "Ofertas especiales Robux via gamepass" 0,075 USDT c/10 (mín. 1.000)
+        window.KGP_USDT_PER_10 = 0.08;
+        window.KGP_OFFER_USDT_PER_10 = 0.075;
+        window.KGP_OFFER_MIN = 1000;
+        window.KGP_OFFER_LABEL = 'Oferta especial · Gamepass';
+        window.KGP_OFFER_TITLE = 'Ofertas especiales Robux via gamepass';
+        window.KGP_OFFER_KEY = 'robux:robux_gamepass:ofertas';   // interruptor en Panel Staff → STOCK
+        window.krxGp = 'normal';
+        window.krxGpOfferOff = function () { return !!(window.kiwiStockOffKey && window.kiwiStockOffKey(window.KGP_OFFER_KEY)); };
+        window.krxSetGp = function (m) { window.krxGp = m === 'oferta' ? 'oferta' : 'normal'; window.renderRobuxCalculator('robux_gamepass'); };
+        window.krxIsOfferProd = function (p) { return !!(p && (p.offer || /oferta especial/i.test(String(p.title || '')))); };
+        window.krxProdMin = function (p) {
+            if (p && (p.wholesale || /al por mayor/i.test(String(p.title || '')))) return window.KRX_MAYOR_MIN;
+            if (p && p.sub === 'robux_gamepass' && window.krxIsOfferProd(p)) return window.KGP_OFFER_MIN;
+            return window.ROBUX_MIN || 100;
+        };
+        window.krxGpOfferHtml = function () {
+            const usd = window.KGP_OFFER_USDT_PER_10;
+            const cur = window.currentCurrency || 'USDT';
+            const conv = cur === 'USDT' ? usd : usd * ((window.exchangeRates || {})[cur] || 1);
+            const sym = (window.currencySymbols || {})[cur] || '';
+            const fmt = cur === 'USDT' ? conv.toFixed(3) : conv.toLocaleString('es-AR', { maximumFractionDigits: Math.max(2, window.kiwiCurDec(cur)) });
+            const off = window.krxGpOfferOff();
+            return `<div id="krx-gpoffer-box" class="krx-mayor mb-4">
+                <h4 class="font-orbitron font-black text-lg md:text-2xl text-white leading-tight">🔥 ${window.KGP_OFFER_TITLE.toUpperCase()}</h4>
+                <p class="text-sm text-gray-200 font-rajdhani mt-1">Precio especial: <b class="text-kiwi-gold">${sym}${fmt} ${cur}</b> cada 10 Robux. Compra mínima: <b class="text-white">${window.KGP_OFFER_MIN.toLocaleString('es-AR')} Robux</b>.</p>
+                <p class="text-[13px] text-gray-300 font-rajdhani mt-1">Funciona igual que Robux vía Gamepass. Stock limitado.</p>
+                <div id="krx-gpoffer-nostock" class="${off ? '' : 'hidden '}mt-3 rounded-xl border-2 border-red-500/70 bg-red-950/50 p-3 text-center">
+                    <p class="font-orbitron font-black text-red-300 text-base md:text-lg"><i class="fa-solid fa-ban mr-1"></i> Sin stock por ahora</p>
+                    <p class="text-xs text-gray-300 font-rajdhani mt-1">Esta oferta se agotó. Podés comprar en "Robux vía Gamepass" al precio normal o volver más tarde.</p>
+                </div>
+            </div>`;
+        };
+        window.krxGpOfferStockUI = function () {
+            const nb = document.getElementById('krx-gpoffer-nostock'); if (!nb) return;
+            nb.classList.toggle('hidden', !window.krxGpOfferOff());
+        };
+        window.krxMin = function () {
+            if (window.krxGrupo === 'mayor' && document.getElementById('krx-mayor-box')) return window.KRX_MAYOR_MIN;
+            if (document.getElementById('krx-gpoffer-box')) return window.KGP_OFFER_MIN;
+            return window.ROBUX_MIN;
+        };
         window.krxSetGrupo = function (m) { window.krxGrupo = m === 'mayor' ? 'mayor' : 'menor'; window.renderRobuxCalculator('robux_grupo'); };
         window.krxMayorHtml = function () {
             const usd = window.KRX_MAYOR_USDT_PER_100;
@@ -4483,12 +4539,15 @@
                 `;
                 }
             } else if (type === 'robux_gamepass') {
-                title = "Robux via Gamepass"; multiplier = 9.12; methodText = "Vía Gamepass";
-                infoHtml = `
+                // v80: 0,08 USDT c/10 (12,8 en la escala ARS/1600 de calculateRobux); oferta 0,075 USDT c/10 (12)
+                title = "Robux via Gamepass"; multiplier = window.KGP_USDT_PER_10 * 160; methodText = "Vía Gamepass";
+                const gpOffer = window.krxGp === 'oferta';
+                if (gpOffer) { title = window.KGP_OFFER_TITLE; multiplier = window.KGP_OFFER_USDT_PER_10 * 160; methodText = window.KGP_OFFER_LABEL; }
+                infoHtml = (gpOffer ? window.krxGpOfferHtml() : '') + `
                     <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
                          <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
                          <ul class="text-[15px] md:text-base text-gray-100 font-rajdhani space-y-2 list-disc pl-5">
-                             <li>No se cubre el 30% de lo que roblox te quita por gamepass. podes comprar mas robux para cubrir ese porcentaje vos mismo.</li>
+                             <li class="font-bold text-green-300">SE ACREDITA EL 30% QUE ROBLOX TE QUITA POR COMISION PARA QUE TE LLEGUE EL TOTAL DE ROBUX QUE INDICASTE COMPRAR.</li>
                              <li>Se tiene que crear un pase en una experiencia PÚBLICA que poseas.</li>
                              <li>Los Robux llegan como "pendientes" y demoran 5 días en acreditarse.</li>
                              <li>Se compra el pase en un plazo de 1 hora a 24 horas.</li>
@@ -4514,22 +4573,23 @@
 
             const KRX = {
                 robux_grupo: { icon: 'fa-users', name: 'Vía Grupo', how: 'Te unís a nuestros grupos de Roblox y, después de 15 días dentro de TODOS, te enviamos los Robux. Solo necesitás tu usuario. Se acredita el 100% de lo que comprás.' },
-                robux_gamepass: { icon: 'fa-ticket', name: 'Vía Gamepass', how: 'Creás un pase en una experiencia PÚBLICA tuya y nosotros lo compramos. Roblox se queda con el 30% y los Robux quedan "pendientes" 5 días.' },
+                robux_gamepass: { icon: 'fa-ticket', name: 'Vía Gamepass', how: 'Creás un pase en una experiencia PÚBLICA tuya y nosotros lo compramos. Cubrimos el 30% de comisión de Roblox para que te llegue el total. Los Robux quedan "pendientes" 5 días.' },
                 robux_plus: { icon: 'fa-bolt', name: 'Vía Plus', how: 'Solo con tu usuario de Roblox. Se acredita el total que comprás. Ojo: Roblox tiene un límite diario/mensual para recibir por este método.' }
             }[type] || {};
             const step = (n, t) => `<div class="flex items-center gap-3 mb-3"><span class="krx-step">${n}</span><h4 class="font-orbitron font-bold text-white text-base md:text-lg">${t}</h4></div>`;
             const isMayor = type === 'robux_grupo' && window.krxGrupo === 'mayor';
-            const KMIN = isMayor ? window.KRX_MAYOR_MIN : window.ROBUX_MIN;
+            const isGpOffer = type === 'robux_gamepass' && window.krxGp === 'oferta';
+            const KMIN = isMayor ? window.KRX_MAYOR_MIN : (isGpOffer ? window.KGP_OFFER_MIN : window.ROBUX_MIN);
             const KMAX = (type === 'robux_grupo' && !isMayor) ? window.ROBUX_MAX_MENOR : null;
-            const seg = type === 'robux_grupo' ? `<div class="krx-seg" role="tablist"><button type="button" role="tab" aria-selected="${!isMayor}" onclick="window.krxSetGrupo('menor')" class="${!isMayor ? 'is-on' : ''}">🛍️ Robux al por menor<small>De 100 a 10.000 Robux</small></button><button type="button" role="tab" aria-selected="${isMayor}" onclick="window.krxSetGrupo('mayor')" class="${isMayor ? 'is-on' : ''}">📦 Robux al por mayor<small>Desde 1.000 Robux · oferta</small></button></div>` : '';
-            const quick = (isMayor ? [1000, 2000, 5000, 10000] : [100, 400, 800, 1000, 2000, 5000]).map(v => `<button type="button" onclick="window.krxSet(${v}, ${multiplier})" class="krx-chip">${v.toLocaleString('es-AR')}</button>`).join('');
+            const seg = type === 'robux_grupo' ? `<div class="krx-seg" role="tablist"><button type="button" role="tab" aria-selected="${!isMayor}" onclick="window.krxSetGrupo('menor')" class="${!isMayor ? 'is-on' : ''}">🛍️ Robux al por menor<small>De 100 a 10.000 Robux</small></button><button type="button" role="tab" aria-selected="${isMayor}" onclick="window.krxSetGrupo('mayor')" class="${isMayor ? 'is-on' : ''}">📦 Robux al por mayor<small>Desde 1.000 Robux · oferta</small></button></div>` : (type === 'robux_gamepass' ? `<div class="krx-seg" role="tablist"><button type="button" role="tab" aria-selected="${!isGpOffer}" onclick="window.krxSetGp('normal')" class="${!isGpOffer ? 'is-on' : ''}">🎟️ Robux via gamepass<small>Desde 100 Robux</small></button><button type="button" role="tab" aria-selected="${isGpOffer}" onclick="window.krxSetGp('oferta')" class="${isGpOffer ? 'is-on' : ''}">🔥 Ofertas especiales Robux via gamepass<small>Desde 1.000 Robux · oferta${window.krxGpOfferOff() ? ' · sin stock' : ''}</small></button></div>` : '');
+            const quick = (isMayor || isGpOffer ? [1000, 2000, 5000, 10000] : [100, 400, 800, 1000, 2000, 5000]).map(v => `<button type="button" onclick="window.krxSet(${v}, ${multiplier})" class="krx-chip">${v.toLocaleString('es-AR')}</button>`).join('');
             container.innerHTML = `
                 <div class="reveal col-span-1 md:col-span-2 lg:col-span-3 krx-wrap">
                     ${seg}
                     <div class="krx-head">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Robux_2019_Logo_gold.svg" alt="Robux" class="w-12 h-12 md:w-14 md:h-14 shrink-0">
                         <div class="min-w-0">
-                            <p class="text-[11px] md:text-xs font-bold tracking-[0.2em] text-blue-300 uppercase">Robux ${KRX.name || ''}${isMayor ? ' · Al por mayor' : ''}</p>
+                            <p class="text-[11px] md:text-xs font-bold tracking-[0.2em] text-blue-300 uppercase">Robux ${KRX.name || ''}${isMayor ? ' · Al por mayor' : ''}${isGpOffer ? ' · Oferta especial' : ''}</p>
                             <h3 class="font-orbitron font-black text-2xl md:text-3xl text-white leading-tight">${title}</h3>
                             <p class="text-sm md:text-base text-gray-200 font-rajdhani mt-1 leading-snug">${KRX.how || ''}</p>
                             <span class="kdel-badge kdel-manual mt-2">🕒 Carga manual · Un miembro del staff la carga manualmente</span>
@@ -4539,9 +4599,9 @@
                     <div class="krx-card">
                         ${step(2, '¿Cuántos Robux querés?')}
                         <div class="flex items-stretch gap-2 mb-3">
-                            <button type="button" onclick="window.krxStep(${isMayor ? -500 : -100}, ${multiplier})" class="krx-pm" aria-label="Restar 100">−</button>
+                            <button type="button" onclick="window.krxStep(${isMayor || isGpOffer ? -500 : -100}, ${multiplier})" class="krx-pm" aria-label="Restar 100">−</button>
                             <input type="number" inputmode="numeric" id="custom-robux-amount" value="${KMIN}" min="${KMIN}"${KMAX ? ` max="${KMAX}" data-max="${KMAX}"` : ''} step="10" oninput="window.calculateRobux(${multiplier})" class="krx-input">
-                            <button type="button" onclick="window.krxStep(${isMayor ? 500 : 100}, ${multiplier})" class="krx-pm" aria-label="Sumar 100">+</button>
+                            <button type="button" onclick="window.krxStep(${isMayor || isGpOffer ? 500 : 100}, ${multiplier})" class="krx-pm" aria-label="Sumar 100">+</button>
                         </div>
                         <div class="flex flex-wrap gap-2 mb-1">${quick}</div>
                         <p class="text-xs text-gray-400 font-rajdhani mt-2">Mínimo ${KMIN.toLocaleString('es-AR')} Robux${KMAX ? ' · Máximo ' + KMAX.toLocaleString('es-AR') + ' Robux' : ''}.</p>
@@ -4556,6 +4616,7 @@
                                 <p class="text-gray-400 text-sm font-rajdhani uppercase mt-3">Total a pagar</p>
                                 <p class="text-4xl md:text-5xl font-orbitron font-black text-green-400 break-words" id="robux-calculated-price"></p>
                                 <span id="robux-calculated-price-display" class="hidden"></span>
+                                ${type === 'robux_gamepass' ? `<p class="text-xs text-gray-300 font-rajdhani mt-3">Precio que tenés que ponerle a tu pase: <b id="krx-gp-pass" class="text-white">—</b> Robux (cubrimos el 30% de Roblox para que te lleguen los <span id="krx-gp-net">—</span>).</p>` : ''}
                             </div>
                             <div>
                                 <button id="krx-buy-btn" onclick="window.buyCustomRobuxBtn('${methodText}', '${type}')" class="krx-buy"><i class="fa-solid fa-cart-shopping"></i> Comprar Robux</button>
@@ -4567,6 +4628,7 @@
             `;
             window.krxSyncTabs && window.krxSyncTabs(type);
             window.calculateRobux(multiplier);
+            if (window.kiwiStockDomPass) { try { window.kiwiStockDomPass(); } catch (e) {} }
             if(type === 'robux_grupo') window.renderInlineRobloxGroups();
             setTimeout(reveal, 100);
         }
@@ -4614,6 +4676,7 @@
             if (minErr) minErr.classList.add('hidden');
             if (kbuy) { kbuy.disabled = false; kbuy.classList.remove('opacity-50', 'cursor-not-allowed'); }
             const kab = document.getElementById('krx-amount-big'); if (kab) kab.textContent = amount.toLocaleString('es-AR');
+            const kgp = document.getElementById('krx-gp-pass'); if (kgp) { kgp.textContent = Math.ceil(amount / 0.7).toLocaleString('es-AR'); const kgn = document.getElementById('krx-gp-net'); if (kgn) kgn.textContent = amount.toLocaleString('es-AR'); }
             const arsTotal = (amount / 10) * multiplier * 10;
             let usdtTotal = document.getElementById('krx-mayor-box') ? window.krxMayorUsdt(amount) : arsTotal / 1600;
             if (window.kiwiReseller) usdtTotal = window.kiwiReseller.robuxPrice(usdtTotal, window.kiwiRobuxSub);
@@ -4633,7 +4696,9 @@
             const amountRaw = document.getElementById('custom-robux-amount').value;
             const amount = parseInt(amountRaw, 10);
             const isMayor = subType === 'robux_grupo' && !!document.getElementById('krx-mayor-box');
-            const BMIN = isMayor ? window.KRX_MAYOR_MIN : window.ROBUX_MIN;
+            const isGpOffer = subType === 'robux_gamepass' && !!document.getElementById('krx-gpoffer-box');
+            if (isGpOffer && window.krxGpOfferOff()) return alert('Sin stock por ahora: las Ofertas especiales Robux via gamepass están agotadas.');
+            const BMIN = isMayor ? window.KRX_MAYOR_MIN : (isGpOffer ? window.KGP_OFFER_MIN : window.ROBUX_MIN);
             const BMAX = (subType === 'robux_grupo' && !isMayor) ? window.ROBUX_MAX_MENOR : Infinity;
             if (!Number.isFinite(amount) || amount < BMIN || amount > BMAX || String(amount) !== String(amountRaw).trim()) {
                 const minErr = document.getElementById('robux-min-error');
@@ -4642,8 +4707,9 @@
                 return alert(msg);
             }
             if (isMayor) methodText = window.KRX_MAYOR_LABEL;
-            // Calculate USDT price (0.075 per 10 Robux for grupo, adjust as needed)
-            const multiplier = subType === 'robux_gamepass' ? 0.057 : (subType === 'robux_plus' ? 0.09 : 0.075);
+            if (isGpOffer) methodText = window.KGP_OFFER_LABEL;
+            // USDT cada 10 Robux: grupo 0,075 · plus 0,09 · gamepass 0,08 (v80) · oferta gamepass 0,075 (v80)
+            const multiplier = subType === 'robux_gamepass' ? (isGpOffer ? window.KGP_OFFER_USDT_PER_10 : window.KGP_USDT_PER_10) : (subType === 'robux_plus' ? 0.09 : 0.075);
             const usdtPublic = isMayor ? window.krxMayorUsdt(amount) : (amount / 10) * multiplier;
             const usdtPrice = window.kiwiReseller ? window.kiwiReseller.robuxPrice(usdtPublic, subType) : usdtPublic;
             const rate = window.exchangeRates[window.currentCurrency] || 1;
@@ -4655,7 +4721,7 @@
                 title: amount + ' Robux (' + methodText + ')',
                 price: totalStr,
                 usdtPrice: usdtPrice,
-                isLimited: false, category: 'roblox', sub: subType, wholesale: isMayor,
+                isLimited: false, category: 'roblox', sub: subType, wholesale: isMayor, offer: isGpOffer,
                 resellerLevel: (window.kiwiReseller && usdtPrice < usdtPublic) ? window.kiwiReseller.activeLevel() : 0
             };
 
@@ -4935,7 +5001,7 @@
             if (category === 'roblox') {
                 if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
                 document.getElementById('roblox-subcategories').classList.remove('hidden');
-                window.filterRobloxSub('fruits');
+                window.filterRobloxSub('robux_plus');   // v80: primero Robux vía Plus (Blox Fruits queda último)
             } else if (category === 'freefire') {
                 if (grid) { grid.classList.remove('hidden'); grid.innerHTML = ''; }
                 // (sin pestañas: todo en el panel)
@@ -5496,7 +5562,7 @@
             if (!prod) return alert('Error de producto');
             if (prod.category === 'roblox' && String(prod.sub || '').startsWith('robux_')) {
                 const rbx = parseInt(String(prod.title || '').match(/^(\d+)\s*Robux/i)?.[1] || '0', 10);
-                const wmin = (prod.wholesale || /al por mayor/i.test(String(prod.title || ''))) ? window.KRX_MAYOR_MIN : (window.ROBUX_MIN || 100);
+                const wmin = window.krxProdMin(prod);
                 if (!(rbx >= wmin)) return alert('El monto mínimo es de ' + wmin.toLocaleString('es-AR') + ' Robux');
                 if (prod.sub === 'robux_grupo' && wmin !== window.KRX_MAYOR_MIN && rbx > window.ROBUX_MAX_MENOR) return alert('El monto máximo es de ' + window.ROBUX_MAX_MENOR.toLocaleString('es-AR') + ' Robux');
             }
@@ -5518,8 +5584,8 @@
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 const order = {
                     id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
-                    method: 'Vía Gamepass', date: new Date().toLocaleString('es-AR'),
-                    status: 'confirmed', targetUser, extra, category: 'roblox', sub: 'robux_gamepass', usdtPrice, notes: ''
+                    method: window.krxIsOfferProd(prod) ? window.KGP_OFFER_LABEL : 'Vía Gamepass', date: new Date().toLocaleString('es-AR'),
+                    status: 'confirmed', targetUser, extra, category: 'roblox', sub: 'robux_gamepass', offer: window.krxIsOfferProd(prod), usdtPrice, notes: ''
                 };
                 const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
                 purchases.push(order);
@@ -5598,7 +5664,8 @@
                     price: window.currentActiveProduct.price,
                     targetUser: robloxUser,
                     extra: gamepassLink,
-                    method: 'Vía Gamepass',
+                    method: window.krxIsOfferProd(window.currentActiveProduct) ? window.KGP_OFFER_LABEL : 'Vía Gamepass',
+                    offer: window.krxIsOfferProd(window.currentActiveProduct),
                     date: new Date().toLocaleString('es-AR'),
                     status: 'confirmed',
                     category: 'roblox',
@@ -6401,7 +6468,8 @@
             try {
                 if (!supabaseClient || !window.supabaseOnline || !window.kiwiToken()) throw new Error('Sin conexión con el servidor.');
                 const list = window.readPurchases().filter(pp => !pp._synced && pp.user && window.sameUser(pp.user, username));
-                const rows = list.map(pp => window.purchaseToRow(pp, true));
+                // v80: "usdt" = lo que costó cada pedido; kiwi_checkout lo guarda como paid_usdt (ajustado al total cobrado) para poder devolverlo al cancelar
+                const rows = list.map(pp => Object.assign(window.purchaseToRow(pp, true), Number(pp.usdtPrice) > 0 ? { usdt: Math.round(Number(pp.usdtPrice) * 1e6) / 1e6 } : {}));
                 let r;
                 try { r = await window.kiwiRpc('kiwi_checkout', { p_token: window.kiwiToken(), p_request_id: req.id, p_amount: req.amount, p_orders: rows }); }
                 catch (e) {
@@ -7236,9 +7304,14 @@
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             const p = purchases.find(x => String(x.id) === String(id));
             if (!p) return alert('Pedido no encontrado');
-            const refund = (status === 'cancelled' && p.status !== 'cancelled' && p.usdtPrice) ? Number(p.usdtPrice) : 0;
+            // v80: cancelar SIEMPRE devuelve el saldo. El monto real lo decide la base (paid_usdt guardado al cobrar);
+            // esto es solo el estimado para pedidos viejos. La base nunca devuelve dos veces el mismo pedido.
+            const estimate = status === 'cancelled' ? window.kiwiOrderRefundEstimate(p) : 0;
+            let refund = 0, rpcRes = null;
             try {
-                await window.kiwiStaffRpc('kiwi_staff_order_status', { p_id: String(id), p_status: status, p_refund: refund });
+                rpcRes = await window.kiwiStaffRpc('kiwi_staff_order_status', { p_id: String(id), p_status: status, p_refund: estimate });
+                if (rpcRes && typeof rpcRes === 'object' && 'refunded' in rpcRes) refund = Number(rpcRes.refunded) || 0;
+                else if (status === 'cancelled' && p.status !== 'cancelled') refund = estimate; // SQL anterior a v80
             } catch (e) {
                 alert('No se pudo cambiar el estado: ' + (e.message || e));
                 if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
@@ -7250,15 +7323,35 @@
                 if (u) { u.balance = (Number(u.balance) || 0) + refund; localStorage.setItem('kiwi_users', JSON.stringify(users)); }
             }
             p.status = status;
+            if (refund > 0) p.refundedUsdt = (Number(p.refundedUsdt) || 0) + refund;
             localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
             if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-            alert('Estado actualizado a: ' + status);
+            if (status === 'cancelled') {
+                const already = rpcRes && rpcRes.already_refunded;
+                alert('Pedido cancelado.\n' + (refund > 0 ? 'Se devolvieron ' + refund.toFixed(2) + ' USDT al saldo de ' + p.user + '.'
+                    : (already ? 'Este pedido ya tenía el saldo devuelto: no se devolvió otra vez.' : 'No se encontró un monto pagado para devolver. Si corresponde, acreditalo a mano.')));
+            } else alert('Estado actualizado a: ' + status);
+        };
+        // v80: monto estimado a devolver (USDT) para el aviso y para pedidos viejos sin paid_usdt en la base
+        window.kiwiOrderRefundEstimate = function (p) {
+            if (!p) return 0;
+            const r6 = x => Math.round(x * 1e6) / 1e6;
+            if (Number(p.paidUsdt) > 0) return r6(Number(p.paidUsdt));
+            if (Number(p.usdtPrice) > 0) return r6(Number(p.usdtPrice));
+            const s = String(p.price || '');
+            const num = (t, es) => { t = String(t || ''); if (es) t = t.replace(/\./g, '').replace(',', '.'); else t = (/,/.test(t) && !/\./.test(t)) ? t.replace(',', '.') : t.replace(/,/g, ''); const n = parseFloat(t); return Number.isFinite(n) ? n : 0; };
+            let m = s.match(/([0-9][0-9.,]*)\s*USDT/i);
+            if (m) return r6(num(m[1], false));
+            m = s.match(/([0-9][0-9.,]*)\s*(ARS|MXN|COP|PEN|CLP|CRC|UYU|EUR)\b/i);
+            if (m) { const rate = Number((window.exchangeRates || {})[m[2].toUpperCase()]); if (rate > 0) return r6(num(m[1], true) / rate); }
+            return 0;
         };
         // v72: botones rápidos (mismo RPC con rango validado en la base; cancelar devuelve el saldo pagado)
         window.kpedStaffSet = function (id, status) {
             const p = (window.readPurchases ? window.readPurchases() : []).find(x => String(x.id) === String(id));
-            const msg = status === 'cancelled' ? '¿Cancelar este pedido?' + (p && p.usdtPrice ? '\nSe le devuelven ' + Number(p.usdtPrice).toFixed(2) + ' USDT de saldo al cliente.' : '') + '\nEl cliente lo verá en Mis pedidos.' : '¿Marcar como COMPLETADO? El cliente recibe el aviso en Mis pedidos.';
+            const est = status === 'cancelled' ? window.kiwiOrderRefundEstimate(p) : 0;
+            const msg = status === 'cancelled' ? '¿Cancelar este pedido?\n' + (p && Number(p.refundedUsdt) > 0 ? 'Este pedido ya tiene el saldo devuelto (no se devuelve dos veces).' : 'Se le devuelve al cliente el saldo que pagó' + (est > 0 ? ' (≈ ' + est.toFixed(2) + ' USDT)' : '') + '.') + '\nEl cliente lo verá en Mis pedidos.' : '¿Marcar como COMPLETADO? El cliente recibe el aviso en Mis pedidos.';
             if (!confirm(msg)) return;
             return window.setOrderStatus(id, status);
         };
@@ -7457,7 +7550,7 @@ window.resetUser2FA = function(username) {
 
 
         window.loadBinanceRates = async function() {
-            const fiats = ['ARS', 'MXN', 'COP', 'PEN', 'CLP', 'CRC', 'UYU'];   // v79: + CLP, CRC, UYU (en paralelo)
+            const fiats = ['ARS', 'MXN', 'COP', 'PEN', 'CLP', 'CRC', 'UYU', 'EUR'];   // v80: + EUR   // v79: + CLP, CRC, UYU (en paralelo)
             await Promise.all(fiats.map(async fiat => {
                 try {
                     const res = await fetch('/api/binance-p2p?fiat=' + fiat);
@@ -7483,7 +7576,7 @@ window.resetUser2FA = function(username) {
             document.querySelectorAll('span').forEach(el => {
                 const t = el.textContent || '';
                 if (t.includes('1 USDT ≈')) {
-                    const fiat = ['ARS', 'MXN', 'COP', 'PEN', 'CLP', 'CRC', 'UYU'].find(c => t.includes(c)) || null;
+                    const fiat = ['ARS', 'MXN', 'COP', 'PEN', 'CLP', 'CRC', 'UYU', 'EUR'].find(c => t.includes(c)) || null;
                     if (fiat && window.exchangeRates[fiat]) {
                         el.textContent = '1 USDT ≈ ' + window.exchangeRates[fiat].toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + fiat;
                     }
@@ -8546,7 +8639,7 @@ window.resetUser2FA = function(username) {
                 co_bancolombia: 'Transferí a la cuenta Bancolombia de arriba (desde Bancolombia o desde cualquier otro banco). <b>Respetá los últimos pesos</b> del monto.',
                 pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.',
                 us_takenos: '🇺🇸 Transferencia <b>ACH</b> en dólares a la cuenta de arriba. Mandá el <b>monto exacto con los centavos</b>: así reconocemos tu pago. ACH puede tardar <b>hasta 48 h hábiles</b> en llegar. El nombre y la dirección del banco se muestran tal como los da la cuenta.',
-                cl_bancoestado: '🇨🇱 Transferencia (TEF) desde <b>cualquier banco de Chile</b> a la CuentaRUT de arriba: llega al instante. Mandá el monto <b>exacto</b>: <b>respetá los últimos pesos</b>, así reconocemos tu pago.',
+                cl_bancoestado: '🇨🇱 Transferencia (TEF) desde <b>cualquier banco de Chile</b> a la cuenta de arriba: llega al instante. Mandá el monto <b>exacto</b>: <b>respetá los últimos pesos</b>, así reconocemos tu pago.',
                 cr_sinpe: '🇨🇷 Pagá por <b>SINPE Móvil</b> al número de arriba desde la app de tu banco: llega al instante. Mandá el monto <b>exacto en colones</b> (<b>respetá los últimos colones</b>), así reconocemos tu pago.',
                 eu_wise: '🇪🇺 Transferencia <b>SEPA</b> en euros al IBAN de arriba: llega en minutos y hasta 1 día hábil. Mandá el <b>monto exacto con los céntimos</b>. El Swift/BIC es solo para transferencias internacionales (fuera de SEPA).'
             }[id] || '';
@@ -8798,7 +8891,7 @@ window.resetUser2FA = function(username) {
                 if (pr.subType === 'robux_grupo' && pr.methodText !== W.KRX_MAYOR_LABEL && pr.amount > W.ROBUX_MAX_MENOR) { say('El monto máximo es de ' + W.ROBUX_MAX_MENOR.toLocaleString('es-AR') + ' Robux'); return false; }
             } else if (prod && prod.category === 'roblox' && String(prod.sub || '').startsWith('robux_')) {
                 const rbx = parseInt(String(prod.title || '').match(/^(\d+)\s*Robux/i)?.[1] || '0', 10);
-                const wmin = (prod.wholesale || /al por mayor/i.test(String(prod.title || ''))) ? W.KRX_MAYOR_MIN : (W.ROBUX_MIN || 100);
+                const wmin = W.krxProdMin ? W.krxProdMin(prod) : ((prod.wholesale || /al por mayor/i.test(String(prod.title || ''))) ? W.KRX_MAYOR_MIN : (W.ROBUX_MIN || 100));
                 if (!(rbx >= wmin)) { say('El monto mínimo es de ' + wmin.toLocaleString('es-AR') + ' Robux'); return false; }
             }
             return true;
@@ -8924,7 +9017,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 BancoEstado (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 Chile (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
@@ -9549,7 +9642,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             return o.apply(this, [].slice.call(arguments, 1));
         });
         wrap('buyCustomRobuxBtn', function (o, m, type) {
-            var p = { category: 'roblox', sub: type, wholesale: !!document.getElementById('krx-mayor-box') };
+            var p = { category: 'roblox', sub: type, wholesale: !!document.getElementById('krx-mayor-box'), offer: !!document.getElementById('krx-gpoffer-box') };
             if (W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
         });
         wrap('buyVariant', function (o, cid) {
@@ -9628,13 +9721,14 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     }
     W.kiwiStockDomPass = function () {
         if (!W.kiwiStockOff) return;
-        var mayor = !!document.getElementById('krx-mayor-box');
+        var mayor = !!document.getElementById('krx-mayor-box'), gpOffer = !!document.getElementById('krx-gpoffer-box');
+        if (W.krxGpOfferStockUI) { try { W.krxGpOfferStockUI(); } catch (e) {} }
         document.querySelectorAll(SEL).forEach(function (el) {
             if (el.closest('#admin-page')) return;
             var oc = el.getAttribute('onclick') || '', m, p = null, card = false;
             if ((m = oc.match(/(openCheckout|buyInstagramFollowers|buySocialLikesViews)\((\d+)/))) p = prodById(m[2]);
             else if ((m = oc.match(/(ffSelectProduct|raSelect)\((\d+)/))) { p = prodById(m[2]); card = true; }
-            else if ((m = oc.match(/buyCustomRobuxBtn\([^,]*,\s*'([a-z_]+)'/))) p = { category: 'roblox', sub: m[1], wholesale: mayor };
+            else if ((m = oc.match(/buyCustomRobuxBtn\([^,]*,\s*'([a-z_]+)'/))) p = { category: 'roblox', sub: m[1], wholesale: mayor, offer: gpOffer };
             else if ((m = oc.match(/buyVariant\('([^']+)'/))) { var s = document.getElementById('select-' + m[1]); p = s ? variantProd(m[1], s.value) : null; }
             else if (/buyFragments\(/.test(oc)) p = { id: 222 };
             else if (/buyBoxes\(/.test(oc)) p = { id: 227 };
@@ -9685,6 +9779,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         add('Roblox', 'robux:robux_grupo', 'Robux por Grupo (minorista)');
         add('Roblox', 'robux:robux_grupo:mayor', 'Robux por Grupo (mayorista)');
         add('Roblox', 'robux:robux_gamepass', 'Robux por Gamepass');
+        add('Roblox', 'robux:robux_gamepass:ofertas', 'Ofertas especiales Robux via gamepass', 'Apagalo cuando no haya más stock: la tienda muestra "Sin stock por ahora"');
         add('Roblox', 'robux:robux_plus', 'Roblox Premium / Plus');
         (W.products || []).forEach(function (p) {
             var k = W.kiwiStockKey(p); if (k === 'bloxfruits') return;
