@@ -44,7 +44,32 @@
         };
         window.kiwiStockOffKey = k => !!k && window.KIWI_STOCK_OFF.has(k);
         // v80: en los nombres solo se muestra el total: "86 Diamantes (78 + 8)" → "86 Diamantes" (todos los productos, también pedidos viejos)
-        window.kiwiCleanTitle = t => t == null ? t : String(t).replace(/\s*\(\s*\d[\d.,]*\s*\+\s*\d[\d.,]*\s*\)/g, '');
+        window.kiwiCleanTitle = t => t == null ? t : window.kiwiRobuxTitle(String(t).replace(/\s*\(\s*\d[\d.,]*\s*\+\s*\d[\d.,]*\s*\)/g, ''));
+        // v80: modalidad de Robux bien clara en pedidos ("1000 Robux via Gamepass (AL POR MENOR)"). Los títulos viejos se muestran con el formato nuevo.
+        window.KRX_MENOR_LABEL = 'Robux via Grupo (AL POR MENOR)';
+        window.KGP_MENOR_LABEL = 'Robux via Gamepass (AL POR MENOR)';
+        window.KPLUS_LABEL = 'Robux via Plus';
+        window.krxTitle = (amount, label) => amount + ' ' + label;
+        window.kiwiRobuxTitle = function (t) {
+            const m = /^(\d+)\s*Robux\s*\(\s*(V[ií]a Grupo|Al por mayor · Grupo|V[ií]a Gamepass|Oferta especial · Gamepass|V[ií]a Plus)\s*\)\s*$/i.exec(String(t || ''));
+            if (!m) return t;
+            const k = m[2].toLowerCase();
+            const lab = /mayor/.test(k) ? 'Robux via Grupo (AL POR MAYOR)' : /oferta/.test(k) ? 'Robux via Gamepass (AL POR MAYOR · Oferta especial)'
+                : /grupo/.test(k) ? 'Robux via Grupo (AL POR MENOR)' : /gamepass/.test(k) ? 'Robux via Gamepass (AL POR MENOR)' : 'Robux via Plus';
+            return m[1] + ' ' + lab;
+        };
+        // { qty, label, mode: 'MENOR'|'MAYOR'|'' } para pedidos de Robux (null si no es Robux)
+        window.kiwiOrderMode = function (p) {
+            const t = window.kiwiRobuxTitle(String((p && p.title) || ''));
+            const m = /^(\d+)\s+(Robux via (Grupo|Gamepass|Plus)(?:\s*\((AL POR M[AE]NOR|AL POR MAYOR[^)]*)\))?)$/i.exec(t);
+            if (!m) return null;
+            return { qty: Number(m[1]), label: m[2], mode: /MAYOR/i.test(m[4] || '') ? 'MAYOR' : /MENOR/i.test(m[4] || '') ? 'MENOR' : '', offer: /oferta/i.test(m[4] || '') };
+        };
+        window.kiwiOrderModeChip = function (p) {
+            const o = window.kiwiOrderMode(p); if (!o || !o.mode) return '';
+            return o.mode === 'MAYOR' ? '<span class="kmode kmode-mayor"><i class="fa-solid fa-boxes-stacked"></i>AL POR MAYOR' + (o.offer ? ' · Oferta' : '') + '</span>'
+                                      : '<span class="kmode kmode-menor"><i class="fa-solid fa-box"></i>AL POR MENOR</span>';
+        };
         window.kiwiStockOff = p => window.kiwiStockOffKey(window.kiwiStockKey(p));
         window.kiwiRaSinStock = p => (!!window.KIWI_RA_SIN_STOCK && window.kiwiRaIsRaProd(p)) || window.kiwiStockOff(p);
         window.kiwiRaOff = p => !!(p && (p.raUnavailable || window.kiwiRaSinStock(p)));
@@ -150,18 +175,12 @@
     <style id="kiwi-perf">
         /* v36: rendimiento. Se quitan las animaciones que repintan toda la pantalla en cada cuadro
            (borde con degradado en movimiento, brillos, sombras pulsantes, logos flotando con filtros). */
-        .kev { animation: none !important; background-size: 100% 100% !important; }
-        .kev-in::after { display: none !important; }
-        .kev-img, .kev-shield, .kev-logo { animation: none !important; }
-        .kev-cta { animation: none !important; position: relative; }
-        .kev-cta::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid rgba(255,30,39,.75); pointer-events: none; animation: kevRing 2.2s ease-out infinite; will-change: transform, opacity; }
-        @keyframes kevRing { 0% { transform: scale(1); opacity: .8; } 70%, 100% { transform: scale(1.12, 1.3); opacity: 0; } }
         .khero { animation: none !important; box-shadow: 0 0 30px rgba(225,29,42,.28); }
         .khero::after { display: none !important; }
         .kiwi-hero-mascot { animation: none !important; }
         .kiwi-spark { animation: kiwiSpark 3s ease-in-out infinite; box-shadow: none !important; will-change: opacity; }
         header.sticky { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgba(7,7,10,.97) !important; }
-        @media (prefers-reduced-motion: reduce) { .kev-cta::after, .kiwi-spark { animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { .kiwi-spark { animation: none !important; } }
     </style>
 <style>body[data-kpage="otra"] #discord-reviews{display:none!important}</style>
 <style>
@@ -247,19 +266,6 @@
   #home-view .khero-btns{gap:.6rem!important;margin-top:1.1rem!important}
   #home-view .khero-btns .khero-btn{height:2.9rem!important;font-size:.9rem!important;gap:.5rem!important;border-radius:.85rem!important;padding:0 1rem!important}
   #home-view .khero .max-w-xl>div:last-child{margin-top:.9rem!important;gap:.4rem 1rem!important;font-size:10px!important}
-  #home-view .kev{margin-bottom:1.1rem!important;border-radius:1.25rem!important}
-  #home-view .kev-in{padding:1rem!important;border-radius:calc(1.25rem - 2px)!important}
-  #home-view .kev-in .kev-pill{font-size:9px!important;padding:.2rem .6rem!important}
-  #home-view .kev-pre{font-size:1rem!important;margin-top:.5rem!important}
-  #home-view .kev-prize{font-size:2.4rem!important}
-  #home-view .kev-desc{font-size:.85rem!important;margin-top:.35rem!important}
-  #home-view .kev-shield{max-width:120px!important}
-  #home-view .kev-logo-wrap{padding:0!important}
-  #home-view .kev-cd{gap:.4rem!important;margin-top:.7rem!important}
-  #home-view .kev-cd>div{min-width:2.9rem!important;padding:.25rem 0!important;border-radius:.6rem!important}
-  #home-view .kev-cd>div>p:first-child{font-size:1.05rem!important}
-  #home-view .kev-cd>div>p:last-child{font-size:9px!important}
-  #home-view .kev-cta{height:2.7rem!important;font-size:.85rem!important;margin-top:.8rem!important;padding:0 1rem!important}
   /* el saldo no se superpone con el logo: en celular va dentro del menú */
   #header-balance{display:none!important}
 }
@@ -370,29 +376,19 @@
                 </button>
             </div>
 
-            <!-- Evento general -->
-            <section class="relative overflow-hidden rounded-2xl border border-kiwi-red/60 bg-gradient-to-br from-[#2a0306] via-kiwi-card to-black p-5 mb-5 shadow-[0_0_40px_rgba(255,30,39,0.15)]">
-                <div class="absolute -top-16 -right-16 w-48 h-48 bg-kiwi-red/20 rounded-full blur-3xl"></div>
-                <p class="relative text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Evento especial KiwiiStore x LPMX</p>
-                <h3 id="ev-name" class="relative font-orbitron text-lg sm:text-2xl font-black text-white mt-1">Evento especial KiwiiStore x LPMX</h3>
-                <p id="ev-desc" class="relative text-sm text-gray-300 mt-2"></p>
-                <div id="ev-prizes" class="relative grid grid-cols-3 gap-2 mt-4"></div>
-                <div id="ev-countdown" class="relative mt-4"></div>
-                <div class="relative flex flex-wrap gap-2 mt-4 text-xs font-bold">
-                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-coins text-kiwi-red"></i> <span id="ev-rule-usdt">1 pt por cada 1 USDT</span></span>
-                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-user-check text-kiwi-red"></i> <span id="ev-rule-reg">+2 por estar registrado</span></span>
-                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-share-nodes text-kiwi-red"></i> <span id="ev-rule-ref">+1 por compartir tu link</span></span>
+            <!-- v80: el sorteo de 5.000 Robux terminó: se quitó su tarjeta (nombre, premios y cuenta regresiva). Quedan los puntos. -->
+            <section class="rounded-2xl border border-kiwi-gold/40 bg-gradient-to-br from-kiwi-gold/10 via-kiwi-card to-black p-5 mb-5">
+                <h4 class="font-orbitron text-sm font-bold text-white mb-1"><i class="fa-solid fa-star text-kiwi-gold"></i> CÓMO SUMAR PUNTOS</h4>
+                <p class="text-xs text-gray-400">Tus compras suman puntos para el ranking y los próximos sorteos.</p>
+                <div class="flex flex-wrap gap-2 mt-3 text-xs font-bold">
+                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-coins text-kiwi-gold"></i> <span id="ev-rule-usdt">1 pt por cada 1 USDT</span></span>
+                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-user-check text-kiwi-gold"></i> <span id="ev-rule-reg">+2 por estar registrado</span></span>
+                    <span class="bg-black/40 border border-kiwi-border rounded-full px-3 py-1 text-gray-300"><i class="fa-solid fa-share-nodes text-kiwi-gold"></i> <span id="ev-rule-ref">+1 por compartir tu link</span></span>
                 </div>
             </section>
 
             <!-- Mis puntos -->
             <section id="ev-me" class="rounded-2xl border border-kiwi-border bg-kiwi-card p-5 mb-5"></section>
-
-            <!-- Ganadores del evento -->
-            <section id="ev-winners-wrap" class="hidden rounded-2xl border border-kiwi-gold/60 bg-kiwi-card p-5 mb-5">
-                <h4 class="font-orbitron text-sm font-bold text-kiwi-gold mb-3"><i class="fa-solid fa-trophy"></i> GANADORES DEL SORTEO</h4>
-                <div id="ev-winners" class="space-y-2"></div>
-            </section>
 
             <!-- Ranking -->
             <section class="rounded-2xl border border-kiwi-border bg-kiwi-card p-5 mb-5">
@@ -423,50 +419,98 @@
     </div>
 
     <!-- APARTADO GESTIÓN DE PEDIDOS (CLIENTE) -->
+    <!-- v80: Mi Perfil rediseñado (mismos IDs y funciones) -->
+    <style id="pf-v80">
+        #orders-panel{background:radial-gradient(90% 40% at 100% 0%,rgba(255,183,3,.08),transparent 60%),rgba(8,8,10,.97)}
+        #orders-panel .pf-card{background:linear-gradient(180deg,#121419,#0e1014);border:1px solid #20242e;border-radius:22px;padding:18px}
+        #orders-panel .pf-hero{position:relative;overflow:hidden;border-radius:24px;padding:18px;border:1px solid rgba(255,183,3,.45);background:radial-gradient(120% 90% at 100% 0%,rgba(255,183,3,.18),transparent 55%),radial-gradient(70% 60% at 0% 100%,rgba(255,30,39,.10),transparent 60%),#0f1115;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+        #orders-panel .pf-ava{width:64px;height:64px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font:900 26px Orbitron,sans-serif;color:#111;background:linear-gradient(135deg,#ffd166,#ffb703 60%,#f59e0b);box-shadow:0 0 0 3px #0f1115,0 0 0 5px rgba(255,183,3,.55),0 10px 26px rgba(255,183,3,.25);overflow:hidden}
+        #orders-panel .pf-chip{display:inline-flex;align-items:center;gap:5px;font:700 11px Rajdhani,sans-serif;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}
+        #orders-panel .pf-c-gold{color:#ffcf5a;background:rgba(255,183,3,.10);border-color:rgba(255,183,3,.4)}
+        #orders-panel .pf-c-green{color:#86efac;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4)}
+        #orders-panel .pf-c-purple{color:#d8b4fe;background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.4)}
+        #orders-panel .pf-c-gray{color:#cbd5e1;background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.35)}
+        #orders-panel .pf-copy{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,183,3,.4);color:#ffcf5a;border-radius:10px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
+        #orders-panel .pf-copy:hover{background:rgba(255,183,3,.12)}
+        #orders-panel .pf-bal{margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;background:rgba(0,0,0,.35);border:1px solid #232834}
+        #orders-panel .pf-btn{background:linear-gradient(135deg,#ffd166,#ffb703 55%,#f59e0b);color:#111;font-weight:800;border-radius:14px;box-shadow:0 8px 22px rgba(255,183,3,.22);transition:filter .15s}
+        #orders-panel .pf-btn:hover{filter:brightness(1.07)}
+        #orders-panel .pf-ok{background:linear-gradient(135deg,#4ade80,#22c55e);color:#04130a;font-weight:800;border-radius:14px;box-shadow:0 8px 22px rgba(34,197,94,.22)}
+        #orders-panel .pf-ghost{border:1px solid #2a303c;color:#e5e7eb;border-radius:14px;background:#111318;transition:.15s}
+        #orders-panel .pf-ghost:hover{border-color:#ffb703}
+        #orders-panel .pf-out{border:1px solid rgba(248,113,113,.45);background:rgba(220,38,38,.07);color:#fecaca;font-weight:700;border-radius:14px;transition:.15s}
+        #orders-panel .pf-out:hover{background:rgba(220,38,38,.15)}
+        #orders-panel .pf-h{display:flex;align-items:center;gap:8px;font:700 12px Orbitron,sans-serif;color:#fff;letter-spacing:.08em;text-transform:uppercase}
+        #orders-panel .pf-h i{color:#ffb703}
+        #orders-panel .pf-lbl{display:block;font:600 12px Rajdhani,sans-serif;color:#9ca3af;margin-bottom:4px}
+        #orders-panel .pf-in{position:relative}
+        #orders-panel .pf-in>i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:13px;pointer-events:none}
+        #orders-panel .pf-in>input{width:100%;background:#0b0d11;border:1.5px solid #262b36;border-radius:14px;padding:11px 12px 11px 36px;color:#fff;font-size:14px;transition:border-color .15s,box-shadow .15s}
+        #orders-panel .pf-in>input:focus{outline:none;border-color:#ffb703;box-shadow:0 0 0 4px rgba(255,183,3,.13)}
+        #orders-panel .pf-o{display:block;width:100%;text-align:left;background:#111318;border:1px solid #20242e;border-radius:18px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s}
+        #orders-panel .pf-o:hover{border-color:rgba(255,183,3,.6);transform:translateY(-1px)}
+        #orders-panel .pf-oic{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#0b0d11;border:1px solid #262b36;color:#ffb703}
+        #orders-panel .pf-s{display:inline-flex;align-items:center;gap:5px;font:700 11px Rajdhani,sans-serif;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap}
+        #orders-panel .pf-s-pending{color:#fcd34d;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4)}
+        #orders-panel .pf-s-process{color:#7dd3fc;background:rgba(14,165,233,.12);border-color:rgba(14,165,233,.4)}
+        #orders-panel .pf-s-done{color:#86efac;background:rgba(34,197,94,.13);border-color:rgba(34,197,94,.45)}
+        #orders-panel .pf-s-cancel{color:#fca5a5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
+        #orders-panel .pf-s-problem{color:#fdba74;background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.4)}
+        #orders-panel .pf-s-other{color:#cbd5e1;background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.35)}
+        /* MIS PUNTOS (perfil) */
+        #profile-points-card.pf-points{border-radius:22px;padding:18px;border:1px solid rgba(255,183,3,.35);background:radial-gradient(100% 70% at 0% 0%,rgba(255,183,3,.12),transparent 60%),#0f1115}
+    </style>
     <div id="orders-panel" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <div class="flex items-center justify-between mb-6">
+        <div class="max-w-5xl mx-auto px-4 py-6 sm:py-8 font-rajdhani">
+            <div class="flex items-center justify-between mb-5 gap-3">
                 <div>
-                    <h2 class="font-orbitron text-2xl font-black text-white">MI <span class="text-kiwi-red">PERFIL</span></h2>
+                    <p class="text-[11px] font-bold tracking-[0.2em] text-kiwi-gold uppercase">Kiwii Store · Cuenta</p>
+                    <h2 class="font-orbitron text-2xl font-black text-white leading-tight">MI <span class="text-kiwi-gold">PERFIL</span></h2>
                     <p class="text-xs text-gray-400 font-rajdhani">Cuenta y pedidos en un solo lugar</p>
                 </div>
-                <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('orders-panel').classList.add('hidden');" class="bg-kiwi-dark border border-kiwi-border hover:border-kiwi-red text-white font-rajdhani font-bold px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <button onclick="history.pushState({}, '', '/inicio'); document.getElementById('orders-panel').classList.add('hidden');" class="pf-ghost shrink-0 font-rajdhani font-bold px-4 py-2 flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> VOLVER
                 </button>
             </div>
-            <div id="profile-summary-in-orders" class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
+            <div id="profile-summary-in-orders" class="pf-hero mb-5">
                 <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-full bg-kiwi-red flex items-center justify-center text-2xl font-bold" id="profile-avatar-letter">U</div>
-                    <div>
-                        <p class="font-orbitron font-bold text-white" id="profile-username-display">Usuario</p>
-                        <p class="text-xs text-gray-400" id="profile-id-display">ID: —</p>
+                    <div class="pf-ava" id="profile-avatar-letter">U</div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-orbitron font-black text-white text-lg sm:text-xl truncate" id="profile-username-display">Usuario</p>
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            <p class="text-xs text-gray-300 font-mono" id="profile-id-display">ID: —</p>
+                            <button type="button" onclick="window.kiwiCopyProfileId(this)" class="pf-copy" aria-label="Copiar ID"><i class="fa-regular fa-copy"></i> Copiar ID</button>
+                        </div>
+                        <div id="profile-chips" class="flex flex-wrap gap-1.5 mt-2"></div>
                     </div>
                 </div>
+                <div class="pf-bal">
+                    <div class="min-w-0">
+                        <p class="text-[11px] text-gray-400 uppercase font-orbitron tracking-widest">Saldo disponible</p>
+                        <p class="text-2xl font-orbitron font-black text-kiwi-gold break-all" id="orders-balance-display">$0 ARS</p>
+                    </div>
+                    <button onclick="window.kpayOpen()" class="pf-ok w-full sm:w-auto shrink-0 px-4 py-3 text-sm"><i class="fa-solid fa-bolt mr-1"></i>Recarga automática</button>
+                </div>
             </div>
-            <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
-                <h3 class="font-orbitron text-sm font-bold text-kiwi-gold mb-3">EDITAR PERFIL</h3>
+            <div class="grid lg:grid-cols-5 gap-5 items-start">
+            <div class="pf-card lg:col-span-2">
+                <h3 class="pf-h mb-4"><i class="fa-solid fa-user-pen"></i> Editar perfil</h3>
                 <div class="space-y-3">
-                    <input type="email" id="profile-email-full" placeholder="Email" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
-                    <input type="text" id="profile-phone-full" placeholder="Teléfono (opcional)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
-                    <input type="text" id="profile-ff-id-full" placeholder="ID Free Fire" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
-                    <input type="password" id="profile-new-pass-full" placeholder="Nueva contraseña (dejar vacío para no cambiar)" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white text-sm">
-                    <button onclick="window.saveProfileFull()" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-sm">Guardar cambios</button>
-                    <button onclick="if(confirm('¿Cerrar sesión?')){localStorage.removeItem('kiwi_logged_user');localStorage.removeItem('kiwi_session_expiry');location.href='/inicio';}" class="w-full mt-2 bg-red-900/50 border border-red-700 hover:bg-red-900/70 text-red-300 font-bold py-2.5 rounded-xl text-sm transition">
+                    <div><label for="profile-email-full" class="pf-lbl">Email</label><div class="pf-in"><i class="fa-regular fa-envelope"></i><input type="email" id="profile-email-full" placeholder="Email"></div></div>
+                    <div><label for="profile-phone-full" class="pf-lbl">Teléfono (opcional)</label><div class="pf-in"><i class="fa-solid fa-phone"></i><input type="text" id="profile-phone-full" placeholder="Teléfono (opcional)"></div></div>
+                    <div><label for="profile-ff-id-full" class="pf-lbl">ID de Free Fire</label><div class="pf-in"><i class="fa-solid fa-gamepad"></i><input type="text" id="profile-ff-id-full" placeholder="ID Free Fire"></div></div>
+                    <div><label for="profile-new-pass-full" class="pf-lbl">Nueva contraseña</label><div class="pf-in"><i class="fa-solid fa-lock"></i><input type="password" id="profile-new-pass-full" placeholder="Dejar vacío para no cambiar"></div></div>
+                    <button onclick="window.saveProfileFull()" class="pf-btn w-full py-3 text-sm"><i class="fa-solid fa-floppy-disk mr-1"></i>Guardar cambios</button>
+                    <button onclick="if(confirm('¿Cerrar sesión?')){localStorage.removeItem('kiwi_logged_user');localStorage.removeItem('kiwi_session_expiry');location.href='/inicio';}" class="pf-out w-full py-3 text-sm">
                         <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
                     </button>
                 </div>
             </div>
-            <div class="flex items-center justify-between mb-3"><h3 class="font-orbitron text-sm font-bold text-white">MIS PEDIDOS</h3><button onclick="window.kpedOpen()" class="relative text-xs font-bold bg-kiwi-gold text-black px-3 py-1.5 rounded-lg"><i class="fa-solid fa-box-open"></i> Ver estado y notas<span class="kped-badge hidden absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-kiwi-red text-white text-[10px] leading-[18px] text-center">0</span></button></div>
-            <div class="bg-kiwi-card border border-kiwi-border rounded-2xl p-5 mb-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-gray-400 uppercase font-orbitron">Saldo disponible</p>
-                        <p class="text-xl font-orbitron font-black text-kiwi-gold" id="orders-balance-display">$0 ARS</p>
-                    </div>
-                    <button onclick="window.kpayOpen()" class="bg-green-500 text-black font-bold px-4 py-3 rounded-xl text-sm shadow-[0_0_16px_rgba(34,197,94,0.4)]"><i class="fa-solid fa-bolt mr-1"></i>Recarga automática</button>
-                </div>
-            </div>
+            <div class="lg:col-span-3 min-w-0">
+            <div class="flex items-center justify-between mb-3 gap-2"><h3 class="pf-h"><i class="fa-solid fa-bag-shopping"></i> Mis pedidos</h3><button onclick="window.kpedOpen()" class="pf-btn relative text-xs px-3 py-2"><i class="fa-solid fa-box-open"></i> Ver estado y notas<span class="kped-badge hidden absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-kiwi-red text-white text-[10px] leading-[18px] text-center">0</span></button></div>
             <div id="client-orders-list" class="space-y-3"></div>
+            </div>
+            </div>
         </div>
     </div>
 
@@ -764,92 +808,6 @@
                     </div>
                 </div>
             </section>
-            <style>
-                .kev{position:relative;overflow:hidden;border-radius:1.5rem;padding:2px;margin-bottom:1.5rem;background:linear-gradient(120deg,#ff1e27,#ffb800,#a020f0,#ff1e27);background-size:300% 300%;animation:kevBorder 6s linear infinite;box-shadow:0 0 28px rgba(255,30,39,.35),0 0 60px rgba(160,32,240,.22);}
-                .kev-in{position:relative;overflow:hidden;border-radius:calc(1.5rem - 2px);background:radial-gradient(70% 90% at 100% 0%,rgba(160,32,240,.45),transparent 60%),radial-gradient(60% 80% at 0% 100%,rgba(255,184,0,.22),transparent 65%),linear-gradient(135deg,#2a0306 0%,#12060f 55%,#07040a 100%);}
-                .kev-in::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-20deg);animation:kevShine 4.5s ease-in-out infinite;pointer-events:none;}
-                .kev-prize{background:linear-gradient(90deg,#ffe27a,#ffb800 40%,#ff5a3c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,184,0,.45));}
-                .kev-img{animation:kevFloat 5s ease-in-out infinite;filter:drop-shadow(0 0 26px rgba(255,184,0,.45)) drop-shadow(0 0 40px rgba(160,32,240,.35));}
-                .kev-bglogo{position:absolute;z-index:0;pointer-events:none;object-fit:contain;mix-blend-mode:screen;opacity:.3;filter:blur(3px) saturate(1.1);width:150%;max-width:none;left:-25%;top:-6%;-webkit-mask-image:radial-gradient(60% 60% at 50% 50%,#000 45%,transparent 100%);mask-image:radial-gradient(60% 60% at 50% 50%,#000 45%,transparent 100%);}
-                @media (min-width:768px){.kev-bglogo{width:115%;left:-12%;top:50%;transform:translateY(-50%)}}
-                .kev-bgfade{position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,rgba(10,4,10,.75) 0%,rgba(10,4,10,.45) 50%,rgba(10,4,10,.15) 100%);}
-                @media (max-width:767px){.kev-bgfade{background:linear-gradient(180deg,rgba(10,4,10,.2) 0%,rgba(10,4,10,.6) 40%,rgba(10,4,10,.8) 100%)}}
-                .kev-shield{mix-blend-mode:screen;aspect-ratio:1/1;filter:none;-webkit-mask-image:radial-gradient(closest-side,#000 80%,transparent 100%);mask-image:radial-gradient(closest-side,#000 80%,transparent 100%);animation-name:kevLogoFloat;}
-                .kev-logo{mix-blend-mode:screen;aspect-ratio:1537/1023;filter:none;-webkit-mask-image:radial-gradient(75% 72% at 50% 50%,#000 55%,transparent 100%);mask-image:radial-gradient(75% 72% at 50% 50%,#000 55%,transparent 100%);animation-name:kevLogoFloat;}
-                .kev-logo-wrap{position:relative;}.kev-logo-wrap::before{content:"";position:absolute;inset:18% 15%;background:radial-gradient(closest-side,rgba(255,30,39,.35),transparent);filter:blur(18px);pointer-events:none;}
-                @keyframes kevLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-                .kev-cta{animation:kevPulse 2s ease-in-out infinite;}
-                .kev-cd>div{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:.75rem;padding:.4rem 0;text-align:center;min-width:3.4rem}
-                @keyframes kevBorder{0%{background-position:0% 50%}100%{background-position:300% 50%}}
-                @keyframes kevShine{0%,55%{left:-60%}100%{left:130%}}
-                @keyframes kevFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(2deg)}}
-                @keyframes kevPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,30,39,.65)}50%{box-shadow:0 0 0 12px rgba(255,30,39,0)}}
-                /* v29: banner más grande en escritorio (móvil igual a v28) */
-                @media (min-width:768px) and (max-width:1023px){
-                    .kev-in{min-height:340px;padding:2.5rem!important}
-                    .kev-prize{font-size:4.75rem!important}
-                    .kev-shield{max-width:280px!important}
-                }
-                @media (min-width:1024px){
-                    .kev-in{min-height:460px;padding:3.5rem 4rem!important;gap:2.5rem!important;grid-template-columns:1fr minmax(0,460px)!important}
-                    .kev-in .kev-pill{font-size:13px!important;padding:.45rem 1rem!important}
-                    .kev-in .kev-pre{font-size:2.25rem!important;margin-top:1.25rem!important}
-                    .kev-prize{font-size:clamp(5.5rem,7.2vw,8.5rem)!important;line-height:1!important}
-                    .kev-in .kev-desc{font-size:1.25rem!important;max-width:34rem!important}
-                    .kev-cd{gap:.75rem!important;margin-top:1.5rem!important}
-                    .kev-cd>div{min-width:5.25rem;padding:.75rem 0;border-radius:1rem}
-                    .kev-cd>div>p:first-child{font-size:2rem!important}
-                    .kev-cd>div>p:last-child{font-size:12px!important}
-                    .kev-cta{height:4.25rem!important;font-size:1.25rem!important;padding:0 3rem!important;margin-top:2rem!important;border-radius:1.25rem!important}
-                    .kev-shield{max-width:400px!important}
-                }
-                @media (prefers-reduced-motion:reduce){.kev,.kev-in::after,.kev-img,.kev-cta{animation:none}}
-            </style>
-            <section class="kev" aria-label="Evento especial KiwiiStore x LPMX">
-                <div class="kev-in grid md:grid-cols-[1fr_auto] items-center gap-2 p-5 sm:p-7 md:p-9">
-                    <img src="/images/Logo.png" alt="" aria-hidden="true" decoding="async" class="kev-bglogo" onerror="this.style.display='none'">
-                    <div class="kev-bgfade" aria-hidden="true"></div>
-                    <div class="relative z-10 order-2 md:order-1">
-                        <span class="kev-pill inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-rajdhani font-bold uppercase tracking-[0.18em] text-[#ffd34d] bg-black/40 border border-[#ffb800]/40 px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-[#ff1e27] animate-pulse"></span> <span class="kev-label">Evento especial KiwiiStore x LPMX</span></span>
-                        <p class="kev-pre font-orbitron font-black text-white text-xl sm:text-2xl mt-3 leading-none">SORTEAMOS</p>
-                        <p class="kev-prize font-orbitron font-black text-5xl sm:text-6xl md:text-7xl leading-[1.02]">5.000 <span class="whitespace-nowrap">ROBUX</span></p>
-                        <p class="kev-desc font-rajdhani text-gray-300 text-sm sm:text-base mt-2 max-w-md">Cada compra suma puntos: más puntos, más chances. Además hay premios semanales.</p>
-                        <div id="kev-cd" class="kev-cd flex gap-2 mt-4 font-rajdhani"></div>
-                        <a href="/sorteos-y-eventos" onclick="window.goToEvents(); return false;" class="kev-cta mt-5 inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-gradient-to-r from-[#ff1e27] to-[#d4145a] hover:brightness-110 text-white font-orbitron font-black text-base px-8 h-14 rounded-2xl transition">PARTICIPAR <i class="fa-solid fa-arrow-right"></i></a>
-                    </div>
-                    <div class="kev-logo-wrap relative z-10 order-1 md:order-2 flex justify-center p-2 md:p-6">
-                        <img src="/images/LPMX.png" alt="Comunidad LPMX" decoding="async" fetchpriority="high" class="kev-img kev-shield block w-full max-w-[200px] sm:max-w-[240px] md:max-w-[300px] h-auto object-contain" onerror="this.style.display='none'">
-                    </div>
-                </div>
-            </section>
-            <script>
-            (function () {
-                var end = null;
-                function pad(n) { return String(n).padStart(2, '0'); }
-                function draw() {
-                    var el = document.getElementById('kev-cd'); if (!el) return;
-                    if (!end) { el.innerHTML = '<p class="text-xs text-gray-400"><i class="fa-regular fa-clock"></i> Fecha de cierre: se anuncia pronto.</p>'; return; }
-                    var left = end - Date.now();
-                    if (left <= 0) { el.innerHTML = '<p class="text-sm font-bold text-[#ffd34d]"><i class="fa-solid fa-flag-checkered"></i> Evento cerrado</p>'; return; }
-                    var parts = [[Math.floor(left / 864e5), 'Días'], [Math.floor(left / 36e5) % 24, 'Hs'], [Math.floor(left / 6e4) % 60, 'Min'], [Math.floor(left / 1e3) % 60, 'Seg']];
-                    var nums = el.querySelectorAll('[data-kcd]');
-                    if (nums.length === 4) { for (var i = 0; i < 4; i++) { var t = pad(parts[i][0]); if (nums[i].textContent !== t) nums[i].textContent = t; } return; }
-                    el.innerHTML = parts.map(function (p) { return '<div><p data-kcd class="font-orbitron text-lg sm:text-xl font-black text-white leading-none">' + pad(p[0]) + '</p><p class="text-[10px] text-gray-400 uppercase mt-1">' + p[1] + '</p></div>'; }).join('');
-                }
-                var tries = 0;
-                function load() {
-                    if (!(window.kiwiRpc && window.supabaseOnline)) { if (++tries < 30) setTimeout(load, 1000); draw(); return; }
-                    window.kiwiRpc('kiwi_event_public', { p_limit: 1 }).then(function (d) {
-                        var ev = d && d.event;
-                        end = ev && ev.ends_at ? new Date(ev.ends_at).getTime() : null;
-                        draw();
-                    }).catch(function () { draw(); });
-                }
-                window.kiwiHomeEventRefresh = load;
-                setInterval(function () { if (!document.hidden) draw(); }, 1000);
-                window.addEventListener('load', function () { setTimeout(load, 800); });
-            })();
-            </script>
             <!-- v60: acceso al Panel de revendedores -->
             <a href="/Panel-de-revendedores" onclick="window.goToResellerPanel(); return false;" class="mt-4 flex items-center gap-3 rounded-2xl border border-kiwi-gold/50 bg-gradient-to-r from-[#2a1f00] to-kiwi-card px-4 py-3 hover:border-kiwi-gold transition">
                 <span class="w-10 h-10 shrink-0 rounded-xl bg-kiwi-gold/15 border border-kiwi-gold/40 flex items-center justify-center text-kiwi-gold"><i class="fa-solid fa-crown"></i></span>
@@ -1421,7 +1379,7 @@
                     <span class="block text-kiwi-gold text-[11px] font-bold mt-2">1 USDT</span>
                 </button>
             </div>
-            <button onclick="localStorage.setItem('kiwi_preferred_currency', window.currentCurrency); alert('Moneda preferida: ' + window.currentCurrency)" class="mt-4 w-full bg-kiwi-gold text-black font-bold py-2.5 rounded-xl text-sm">Guardar como preferida</button>
+            <button onclick="window.kiwiSavePreferredCurrency()" class="mt-4 w-full bg-kiwi-gold text-black font-bold py-2.5 rounded-xl text-sm">Guardar como preferida</button>
         </div>
     </div>
 
@@ -2276,9 +2234,12 @@
             setTimeout(() => m.classList.add('hidden'), 300);
         };
 
-        window.selectCurrency = function(code, flag) {
+        // v80: opts.auto = elegida por país → NO se guarda como preferencia (la preferencia guardada siempre gana)
+        window.selectCurrency = function(code, flag, opts) {
+            const auto = !!(opts && opts.auto);
             window.currentCurrency = code;
-            localStorage.setItem('kiwi_preferred_currency', code);
+            window.kiwiCurrencySource = auto ? 'auto' : 'pref';
+            if (!auto) { localStorage.setItem('kiwi_preferred_currency', code); localStorage.setItem('kiwi_pref_explicit', '1'); const t = document.getElementById('kiwi-geo-toast'); if (t) t.remove(); }
             document.getElementById('currency-code').textContent = code;
             const headerBal = document.getElementById('header-balance');
             if (headerBal && typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
@@ -2295,7 +2256,7 @@
                 activeCard.classList.add('border-kiwi-gold', 'bg-kiwi-gold/10');
             }
 
-            window.closeCurrencyModal();
+            if (!auto) window.closeCurrencyModal();
 
             // Actualizar calculadoras FF si están visibles
             if (typeof window.updateFragPrice === 'function') window.updateFragPrice();
@@ -3117,17 +3078,18 @@
 
                 let delBtn = (myRole === 'owner' || myRole === 'ceo') ? `<button onclick="window.deletePurchase(${p.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-300 transition"><i class="fa-solid fa-xmark text-lg"></i></button>` : '';
 
-                const extra = p.targetUser ? `<br><span class="text-gray-200">Dato:</span> <span class="text-white font-bold">${p.targetUser}</span>` : '';
+                const extra = (p.targetUser ? `<br><span class="text-gray-200">Dato:</span> <span class="text-white font-bold">${p.targetUser}</span>` : '')
+                    + (p.extra && typeof p.extra === 'string' ? `<br><span class="text-gray-200">${/^https?:/i.test(p.extra) ? 'Link:' : 'Extra:'}</span> <span class="text-sky-300 break-all">${String(p.extra).replace(/[<>]/g, '')}</span>` : ''); // v80: link del pase
                 const note = p.notes ? `<br><span class="text-yellow-400">Nota:</span> ${p.notes}` : '';
                 container.innerHTML += `
                     <div class="bg-[#1a170d] border border-yellow-900/30 p-3 rounded-xl flex flex-col relative">
                         ${delBtn}
                         <div class="flex justify-between items-start mb-2 pr-6">
-                            <div><p class="text-white text-sm font-bold leading-tight">${p.title}</p><p class="text-kiwi-gold text-xs">${p.price}</p></div>
+                            <div><p class="text-white text-sm font-bold leading-tight">${window.kiwiCleanTitle(p.title)}</p>${window.kiwiOrderModeChip(p)}<p class="text-kiwi-gold text-xs">${p.price}</p></div>
                         </div>
                         <div class="text-xs text-gray-400 mb-3 border-t border-kiwi-border/50 pt-1">
                             <span class="text-gray-200">Cliente:</span> <span class="font-bold text-white">${p.user}</span> <br>
-                            <span class="text-gray-200">Método:</span> ${p.method || p.sub || '—'} <br>
+                            <span class="text-gray-200">${window.kiwiOrderMode(p) ? 'Modalidad' : 'Método'}:</span> ${(window.kiwiOrderMode(p) || {}).label || p.method || p.sub || '—'} <br>
                             <span class="text-gray-200">Fecha:</span> ${p.date}
                             ${extra}${note}
                         </div>
@@ -4436,7 +4398,7 @@
         window.KRX_MAYOR_MIN = 1000;
         window.KRX_MAYOR_USDT_PER_100 = 0.68;
         window.KRX_MAYOR_MULT = window.KRX_MAYOR_USDT_PER_100 / 100 * 1600; // compatible con calculateRobux (ARS/1600)
-        window.KRX_MAYOR_LABEL = 'Al por mayor · Grupo';
+        window.KRX_MAYOR_LABEL = 'Robux via Grupo (AL POR MAYOR)'; // v80: antes 'Al por mayor · Grupo'
         window.KRX_MAYOR_GROUPS = [
             { name: 'MagicalUGC', url: 'https://www.roblox.com/communities/35165307/MagicalUGC#!/about' },
             { name: 'Nova-Group-Est-2026', url: 'https://www.roblox.com/es/communities/511330430/Nova-Group-Est-2026' }
@@ -4446,7 +4408,7 @@
         window.KGP_USDT_PER_10 = 0.08;
         window.KGP_OFFER_USDT_PER_10 = 0.075;
         window.KGP_OFFER_MIN = 1000;
-        window.KGP_OFFER_LABEL = 'Oferta especial · Gamepass';
+        window.KGP_OFFER_LABEL = 'Robux via Gamepass (AL POR MAYOR · Oferta especial)'; // v80: antes 'Oferta especial · Gamepass'
         window.KGP_OFFER_TITLE = 'Ofertas especiales Robux via gamepass';
         window.KGP_OFFER_KEY = 'robux:robux_gamepass:ofertas';   // interruptor en Panel Staff → STOCK
         window.krxGp = 'normal';
@@ -4454,8 +4416,8 @@
         window.krxSetGp = function (m) { window.krxGp = m === 'oferta' ? 'oferta' : 'normal'; window.renderRobuxCalculator('robux_gamepass'); };
         window.krxIsOfferProd = function (p) { return !!(p && (p.offer || /oferta especial/i.test(String(p.title || '')))); };
         window.krxProdMin = function (p) {
+            if (p && p.sub === 'robux_gamepass') return window.krxIsOfferProd(p) ? window.KGP_OFFER_MIN : (window.ROBUX_MIN || 100); // v80: el gamepass no usa el mínimo de grupo
             if (p && (p.wholesale || /al por mayor/i.test(String(p.title || '')))) return window.KRX_MAYOR_MIN;
-            if (p && p.sub === 'robux_gamepass' && window.krxIsOfferProd(p)) return window.KGP_OFFER_MIN;
             return window.ROBUX_MIN || 100;
         };
         window.krxGpOfferHtml = function () {
@@ -4507,7 +4469,7 @@
             document.getElementById('category-info-container').classList.add('hidden');
 
             if (type === 'robux_grupo') {
-                title = "Robux via Grupo"; multiplier = 12; methodText = "Vía Grupo";
+                title = "Robux via Grupo"; multiplier = 12; methodText = window.KRX_MENOR_LABEL;
                 if (window.krxGrupo === 'mayor') {
                     multiplier = window.KRX_MAYOR_MULT; methodText = window.KRX_MAYOR_LABEL;
                     infoHtml = window.krxMayorHtml();
@@ -4540,7 +4502,7 @@
                 }
             } else if (type === 'robux_gamepass') {
                 // v80: 0,08 USDT c/10 (12,8 en la escala ARS/1600 de calculateRobux); oferta 0,075 USDT c/10 (12)
-                title = "Robux via Gamepass"; multiplier = window.KGP_USDT_PER_10 * 160; methodText = "Vía Gamepass";
+                title = "Robux via Gamepass"; multiplier = window.KGP_USDT_PER_10 * 160; methodText = window.KGP_MENOR_LABEL;
                 const gpOffer = window.krxGp === 'oferta';
                 if (gpOffer) { title = window.KGP_OFFER_TITLE; multiplier = window.KGP_OFFER_USDT_PER_10 * 160; methodText = window.KGP_OFFER_LABEL; }
                 infoHtml = (gpOffer ? window.krxGpOfferHtml() : '') + `
@@ -4557,7 +4519,7 @@
                     </div>
                 `;
             } else if (type === 'robux_plus') {
-                title = "Robux via Plus"; multiplier = 14.4; methodText = "Vía Plus";
+                title = "Robux via Plus"; multiplier = 14.4; methodText = window.KPLUS_LABEL;
                 infoHtml = `
                     <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
                          <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
@@ -4718,7 +4680,7 @@
             const totalStr = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(window.currentCurrency)}) + ' ' + window.currentCurrency;
 
             window.currentActiveProduct = {
-                title: amount + ' Robux (' + methodText + ')',
+                title: window.krxTitle(amount, methodText),
                 price: totalStr,
                 usdtPrice: usdtPrice,
                 isLimited: false, category: 'roblox', sub: subType, wholesale: isMayor, offer: isGpOffer,
@@ -4737,9 +4699,9 @@
             const titleEl = document.getElementById('checkout-product-title');
             const priceEl = document.getElementById('checkout-product-price') || document.getElementById('modal-product-price');
             const mTitle = document.getElementById('modal-product-title');
-            if (mTitle) mTitle.textContent = amount + ' Robux (' + methodText + ')';
+            if (mTitle) mTitle.textContent = window.krxTitle(amount, methodText);
             const userInput = document.getElementById('user-account-input');
-            if (titleEl) titleEl.textContent = amount + ' Robux (' + methodText + ')';
+            if (titleEl) titleEl.textContent = window.krxTitle(amount, methodText);
             if (priceEl) priceEl.textContent = totalStr;
             if (userInput) {
                 userInput.value = '';
@@ -5299,7 +5261,7 @@
                 li.classList.toggle('border-transparent', !on);
             });
         };
-        window.BALANCE_COMMISSION = { ARS: 0, MXN: 6, COP: 4, PEN: 4, USDT: 0 };
+        window.BALANCE_COMMISSION = { ARS: 0, MXN: 4, COP: 4, PEN: 4, USDT: 0, USD: 2, EUR: 2, CLP: 4, CRC: 5 };
         window.balanceCommissionCalc = function(amount, curr) {
             const pct = window.BALANCE_COMMISSION[curr] || 0;
             const a = Number(amount) || 0;
@@ -5338,22 +5300,25 @@
             return users[currentUser]?.balance || 0;
         };
 
+        // v80: el saldo se muestra en USDT mientras la moneda de los precios sea la automática (por país)
+        window.kiwiBalanceCurrency = function() { return window.kiwiCurrencySource === 'auto' ? 'USDT' : (window.currentCurrency || 'USDT'); };
         window.formatUserBalance = function() {
-            const balUSDT = window.getUserBalance();
-            const rate = (window.exchangeRates && window.exchangeRates[window.currentCurrency]) || 1;
-            const converted = window.currentCurrency === 'USDT' ? balUSDT : balUSDT * rate;
-            const sym = window.currencySymbols[window.currentCurrency] || '';
-            return sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(window.currentCurrency)}) + ' ' + window.currentCurrency;
+            const balUSDT = window.getUserBalance(), cur = window.kiwiBalanceCurrency();
+            const rate = (window.exchangeRates && window.exchangeRates[cur]) || 1;
+            const converted = cur === 'USDT' ? balUSDT : balUSDT * rate;
+            const sym = window.currencySymbols[cur] || '';
+            return sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(cur)}) + ' ' + cur;
         };
         window.updateBalanceDisplay = function() {
             const el = document.getElementById('user-balance-display');
             const el2 = document.getElementById('orders-balance-display');
             const headerBal = document.getElementById('header-balance');
             const balUSDT = window.getUserBalance(); // stored in USDT
-            const rate = (window.exchangeRates && window.exchangeRates[window.currentCurrency]) || 1;
-            const converted = window.currentCurrency === 'USDT' ? balUSDT : balUSDT * rate;
-            const sym = window.currencySymbols[window.currentCurrency] || '';
-            const txt = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(window.currentCurrency)}) + ' ' + window.currentCurrency;
+            const cur = window.kiwiBalanceCurrency ? window.kiwiBalanceCurrency() : window.currentCurrency; // v80
+            const rate = (window.exchangeRates && window.exchangeRates[cur]) || 1;
+            const converted = cur === 'USDT' ? balUSDT : balUSDT * rate;
+            const sym = window.currencySymbols[cur] || '';
+            const txt = sym + converted.toLocaleString('es-AR', {maximumFractionDigits: window.kiwiCurDec(cur)}) + ' ' + cur;
             if (el) el.textContent = txt;
             if (el2) el2.textContent = txt;
             if (headerBal && currentUser) {
@@ -5584,7 +5549,7 @@
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 const order = {
                     id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
-                    method: window.krxIsOfferProd(prod) ? window.KGP_OFFER_LABEL : 'Vía Gamepass', date: new Date().toLocaleString('es-AR'),
+                    method: window.krxIsOfferProd(prod) ? window.KGP_OFFER_LABEL : window.KGP_MENOR_LABEL, date: new Date().toLocaleString('es-AR'),
                     status: 'confirmed', targetUser, extra, category: 'roblox', sub: 'robux_gamepass', offer: window.krxIsOfferProd(prod), usdtPrice, notes: ''
                 };
                 const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
@@ -5607,7 +5572,7 @@
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
                 const order = {
                     id: Date.now(), user: currentUser, title: prod.title, price: prod.price,
-                    method: prod.sub === 'robux_grupo' ? (prod.wholesale ? window.KRX_MAYOR_LABEL : 'Vía Grupo') : 'Vía Plus', wholesale: !!prod.wholesale,
+                    method: prod.sub === 'robux_grupo' ? (prod.wholesale ? window.KRX_MAYOR_LABEL : window.KRX_MENOR_LABEL) : window.KPLUS_LABEL, wholesale: !!prod.wholesale,
                     date: new Date().toLocaleString('es-AR'), status: 'confirmed',
                     targetUser, extra, category: 'roblox', sub: prod.sub, usdtPrice, notes: ''
                 };
@@ -5664,7 +5629,7 @@
                     price: window.currentActiveProduct.price,
                     targetUser: robloxUser,
                     extra: gamepassLink,
-                    method: window.krxIsOfferProd(window.currentActiveProduct) ? window.KGP_OFFER_LABEL : 'Vía Gamepass',
+                    method: window.krxIsOfferProd(window.currentActiveProduct) ? window.KGP_OFFER_LABEL : window.KGP_MENOR_LABEL,
                     offer: window.krxIsOfferProd(window.currentActiveProduct),
                     date: new Date().toLocaleString('es-AR'),
                     status: 'confirmed',
@@ -6015,26 +5980,34 @@
             const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
             const mine = purchases.filter(p => window.sameUser(p.user, currentUser)).reverse();
             if (mine.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No tenés pedidos todavía.</p>';
+                container.innerHTML = '<div class="pf-card text-center py-10"><i class="fa-solid fa-bag-shopping text-3xl text-gray-600 mb-3"></i><p class="text-gray-400 text-sm">No tenés pedidos todavía.</p><button onclick="window.goToCatalog && window.goToCatalog()" class="pf-btn mt-4 px-5 py-2.5 text-sm">Ver catálogo</button></div>';
                 return;
             }
             container.innerHTML = mine.map(p => {
                 const statusText = window.getStatusLabel ? window.getStatusLabel(p.status) : p.status;
-                let color = 'text-gray-400';
-                if (p.status === 'receipt_review' || p.status === 'pending') color = 'text-yellow-400';
-                else if (p.status === 'confirmed' || p.status === 'claimed') color = 'text-blue-400';
-                else if (p.status === 'delivered' || p.status === 'accredited') color = 'text-green-400';
-                else if (p.status === 'cancelled') color = 'text-red-400';
+                // v80: chips de estado con color + ícono
+                let sk = 'other', si = 'fa-circle-info', sh = statusText;
+                if (p.status === 'receipt_review' || p.status === 'pending') { sk = 'pending'; si = 'fa-hourglass-half'; sh = 'En revisión'; }
+                else if (p.status === 'confirmed' || p.status === 'claimed') { sk = 'process'; si = 'fa-gears'; sh = 'En proceso'; }
+                else if (p.status === 'delivered' || p.status === 'accredited') { sk = 'done'; si = 'fa-circle-check'; sh = 'Entregado'; }
+                else if (p.status === 'cancelled') { sk = 'cancel'; si = 'fa-ban'; sh = 'Cancelado'; }
+                else if (p.status === 'problem') { sk = 'problem'; si = 'fa-triangle-exclamation'; sh = 'Con problema'; }
+                const cat = String(p.category || p.title || '').toLowerCase();
+                const oic = /robux|roblox|blox/.test(cat) ? 'fa-cube' : /free ?fire|diamant/.test(cat) ? 'fa-gem' : /netflix|disney|spotify|stream|max|prime|crunchy/.test(cat) ? 'fa-tv' : /instagram|tiktok|seguidor|likes/.test(cat) ? 'fa-heart' : 'fa-bag-shopping';
                 return `
-                    <div onclick="window.showOrderDetail(${p.id})" class="bg-kiwi-dark border border-kiwi-border rounded-xl p-4 mb-3 cursor-pointer hover:border-kiwi-red transition">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-orbitron font-bold text-white text-sm">${p.title}</p>
-                                <p class="text-xs text-gray-400">${p.date} · ${p.price}</p>
-                                <p class="text-xs text-gray-500 mt-1">ID: ${p.id} · Datos: ${p.targetUser || '-'}</p>
-                                ${p.notes ? `<p class="text-xs text-yellow-400 mt-1"><i class="fa-solid fa-note-sticky"></i> Nota: ${p.notes}</p>` : ''}
+                    <div onclick="window.showOrderDetail(${p.id})" class="pf-o">
+                        <div class="flex items-start gap-3">
+                            <span class="pf-oic"><i class="fa-solid ${oic}"></i></span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p class="font-rajdhani font-bold text-white text-[15px] leading-tight">${window.kiwiCleanTitle(p.title)}</p>
+                                    <span class="pf-s pf-s-${sk}" title="${String(statusText).replace(/"/g, '&quot;')}"><i class="fa-solid ${si} text-[10px]"></i>${sh}</span>
+                                </div>
+                                ${window.kiwiOrderModeChip(p)}
+                                <p class="text-xs text-gray-400 mt-1">${p.date} · <b class="text-kiwi-gold">${p.price}</b></p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">ID: ${p.id} · Datos: ${p.targetUser || '-'}</p>
+                                ${p.notes ? `<p class="text-xs text-yellow-200 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-2 py-1 mt-2"><i class="fa-solid fa-note-sticky"></i> Nota: ${p.notes}</p>` : ''}
                             </div>
-                            <span class="text-[10px] font-bold uppercase ${color}">${statusText}</span>
                         </div>
                         ${window.kiReviewBtn ? window.kiReviewBtn(p) : ''}
                     </div>
@@ -7119,6 +7092,8 @@
             if (nameEl) nameEl.textContent = currentUser;
             if (idEl) idEl.textContent = 'ID: ' + (u.accountId || u.id || '—');
             if (letterEl) letterEl.textContent = (currentUser || 'U')[0].toUpperCase();
+            if (typeof window.kiwiProfileChips === 'function') try { window.kiwiProfileChips(u); } catch (_) {}
+            if (typeof window.updateBalanceDisplay === 'function') try { window.updateBalanceDisplay(); } catch (_) {}
             const emailF = document.getElementById('profile-email-full');
             const phoneF = document.getElementById('profile-phone-full');
             const ffF = document.getElementById('profile-ff-id-full');
@@ -7151,6 +7126,23 @@
         });
 
 
+        // v80: chips del perfil (rango y nivel de revendedor) y copiar ID
+        window.kiwiProfileChips = function (u) {
+            const el = document.getElementById('profile-chips'); if (!el) return;
+            const role = String((u && u.role) || '').toLowerCase();
+            const RL = { owner: ['Owner', 'pf-c-gold', 'fa-crown'], ceo: ['CEO', 'pf-c-gold', 'fa-star'], mod: ['Moderador', 'pf-c-purple', 'fa-shield-halved'], client: ['Cliente', 'pf-c-green', 'fa-circle-check'] };
+            const chips = [];
+            const r = RL[role]; chips.push(r ? r : ['Miembro', 'pf-c-gray', 'fa-user']);
+            try { const lv = window.kiwiReseller && window.kiwiReseller.level ? window.kiwiReseller.level() : 0; if (lv) chips.push(['Revendedor Nivel ' + lv, 'pf-c-purple', 'fa-gem']); } catch (_) {}
+            chips.push(['Saldo en USDT', 'pf-c-gray', 'fa-wallet']);
+            el.innerHTML = chips.map(([t, c, i]) => '<span class="pf-chip ' + c + '"><i class="fa-solid ' + i + ' text-[10px]"></i>' + t + '</span>').join('');
+        };
+        window.kiwiCopyProfileId = function (btn) {
+            const id = String((document.getElementById('profile-id-display') || {}).textContent || '').replace(/^ID:\s*/, '').trim();
+            if (!id || id === '—') return;
+            const done = () => { if (!btn) return; const o = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => { btn.innerHTML = o; }, 1500); };
+            try { navigator.clipboard.writeText(id).then(done, done); } catch (_) { done(); }
+        };
         window.saveProfileFull = function() {
             if (!currentUser) return alert('Iniciá sesión');
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
@@ -7399,7 +7391,7 @@
             const pmin = methodText === window.KRX_MAYOR_LABEL ? window.KRX_MAYOR_MIN : (window.ROBUX_MIN || 100);
             if (!(amount >= pmin)) return alert('El monto mínimo es de ' + pmin.toLocaleString('es-AR') + ' Robux');
             if (subType === 'robux_grupo' && methodText !== window.KRX_MAYOR_LABEL && amount > window.ROBUX_MAX_MENOR) return alert('El monto máximo es de ' + window.ROBUX_MAX_MENOR.toLocaleString('es-AR') + ' Robux');
-            if (bal < priceNum) return window.kiwiLowBal(bal, priceNum, 'checkout', amount + ' Robux (' + methodText + ')');
+            if (bal < priceNum) return window.kiwiLowBal(bal, priceNum, 'checkout', window.krxTitle(amount, methodText));
             users[currentUser].balance = bal - priceNum;
             localStorage.setItem('kiwi_users', JSON.stringify(users));
                 if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
@@ -7408,7 +7400,7 @@
             purchases.push({
                 id: Date.now(),
                 user: currentUser,
-                title: amount + ' Robux (' + methodText + ')',
+                title: window.krxTitle(amount, methodText),
                 price: totalStr,
                 targetUser: user,
                 method: methodText,
@@ -7586,19 +7578,36 @@ window.resetUser2FA = function(username) {
 
 
         // Load preferred currency
+        // v80: preferencia guardada (kiwi_preferred_currency) > moneda automática por país (kiwi_currency_auto, otra clave) > USDT
         (function() {
-            const pref = localStorage.getItem('kiwi_preferred_currency') || 'USDT';
-            const flags = { ARS: '🇦🇷', MXN: '🇲🇽', COP: '🇨🇴', PEN: '🇵🇪', USDT: '₮' };
-            window.currentCurrency = pref;
+            let auto = null; try { auto = JSON.parse(localStorage.getItem('kiwi_currency_auto') || 'null'); } catch (_) {}
+            let pref = localStorage.getItem('kiwi_preferred_currency');
+            if (pref && !localStorage.getItem('kiwi_pref_explicit')) {
+                // Antes de v80 la detección automática guardaba su elección como "preferida": si coincide con la automática, no era del usuario.
+                if (auto && auto.code === pref) { localStorage.removeItem('kiwi_preferred_currency'); pref = null; }
+                else localStorage.setItem('kiwi_pref_explicit', '1');
+            }
+            const cur = pref || (auto && auto.code) || 'USDT';
+            window.currentCurrency = cur;
+            window.kiwiCurrencySource = pref ? 'pref' : (auto && auto.code ? 'auto' : 'default');
             const codeEl = document.getElementById('currency-code');
             const flagEl = document.getElementById('currency-flag');
-            if (codeEl) codeEl.textContent = pref;
-            if (flagEl) flagEl.innerHTML = window.kiFlag(pref, 22);
+            if (codeEl) codeEl.textContent = cur;
+            if (flagEl) flagEl.innerHTML = window.kiFlag(cur, 22);
+            document.querySelectorAll('.curr-card').forEach(c => { const on = c.id === 'curr-card-' + cur; c.classList.toggle('border-kiwi-gold', on); c.classList.toggle('bg-kiwi-gold/10', on); c.classList.toggle('border-kiwi-border', !on); c.classList.toggle('bg-kiwi-dark', !on); });
         })();
+        window.kiwiSavePreferredCurrency = function () {
+            const code = window.currentCurrency || 'USDT';
+            window.selectCurrency(code, '');
+            if (window.updateBalanceDisplay) window.updateBalanceDisplay();
+            alert('Moneda preferida guardada: ' + code + '. Ya no se cambia sola según el país.');
+        };
 
         // v61: moneda automática según país (solo si no hay preferencia guardada)
         // Orden: /api/pay?action=geo (header x-vercel-ip-country) → api.country.is → zona horaria / idioma.
         window.KIWI_GEO_CURRENCY = { AR: 'ARS', MX: 'MXN', PE: 'PEN', CO: 'COP', CL: 'CLP', CR: 'CRC', UY: 'UYU' };
+        // v80: zona euro → EUR (el resto del mundo → USDT)
+        'AT BE HR CY EE FI FR DE GR IE IT LV LT LU MT NL PT SK SI ES AD MC SM VA ME XK'.split(' ').forEach(c => { window.KIWI_GEO_CURRENCY[c] = 'EUR'; });
         window.kiwiGeoTimeout = function (url, ms) {
             const c = typeof AbortController !== 'undefined' ? new AbortController() : null;
             const t = setTimeout(() => c && c.abort(), ms);
@@ -7614,6 +7623,9 @@ window.resetUser2FA = function(username) {
                 if (tz === 'America/Santiago' || tz === 'America/Punta_Arenas') return 'CL';
                 if (tz === 'America/Costa_Rica') return 'CR';
                 if (tz === 'America/Montevideo') return 'UY';
+                const EU = { Madrid: 'ES', Ceuta: 'ES', Berlin: 'DE', Paris: 'FR', Rome: 'IT', Lisbon: 'PT', Amsterdam: 'NL', Brussels: 'BE', Vienna: 'AT', Dublin: 'IE', Helsinki: 'FI', Athens: 'GR', Luxembourg: 'LU', Malta: 'MT', Bratislava: 'SK', Ljubljana: 'SI', Tallinn: 'EE', Riga: 'LV', Vilnius: 'LT', Zagreb: 'HR', Nicosia: 'CY', Andorra: 'AD', Monaco: 'MC' };
+                const m = /^(Europe|Atlantic)\/(\w+)$/.exec(tz); if (m && EU[m[2]]) return EU[m[2]];
+                if (tz === 'Atlantic/Canary' || tz === 'Atlantic/Madeira' || tz === 'Atlantic/Azores') return tz === 'Atlantic/Canary' ? 'ES' : 'PT';
             } catch (_) {}
             const langs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']);
             for (const l of langs) { const m = /^[a-z]{2,3}-([A-Z]{2})$/i.exec(l || ''); if (m) return m[1].toUpperCase(); }
@@ -7626,13 +7638,20 @@ window.resetUser2FA = function(username) {
             const c = window.kiwiGuessCountryLocal();
             return { country: c, via: c ? 'local' : 'none' };
         };
+        // v80: aviso chico (una sola vez por moneda) con botón "Cambiar" que abre el selector de moneda
         window.kiwiGeoToast = function (code) {
+            const old = document.getElementById('kiwi-geo-toast'); if (old) old.remove();
             const d = document.createElement('div');
-            d.id = 'kiwi-geo-toast';
-            d.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;max-width:92vw;background:#111827;border:1px solid rgba(250,204,21,.55);color:#e5e7eb;font-size:12px;padding:9px 14px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.5);text-align:center;transition:opacity .4s';
-            d.textContent = 'Mostrando precios en ' + code + ' según tu país (podés cambiarlo en "Moneda de los precios")';
+            d.id = 'kiwi-geo-toast'; d.setAttribute('role', 'status');
+            d.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;max-width:94vw;display:flex;align-items:center;gap:10px;background:rgba(14,16,20,.97);border:1px solid rgba(255,183,3,.55);color:#e5e7eb;font:600 13px Rajdhani,sans-serif;padding:8px 8px 8px 12px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 0 3px rgba(255,183,3,.08);transition:opacity .4s;white-space:nowrap';
+            d.innerHTML = '<span style="display:inline-flex">' + (window.kiFlag ? window.kiFlag(code, 20) : '') + '</span><span>Precios en <b style="color:#ffb703">' + code + '</b> según tu país</span>'
+                + '<button type="button" id="kiwi-geo-change" style="background:#ffb703;color:#111;font-weight:800;border-radius:999px;padding:5px 12px">Cambiar</button>'
+                + '<button type="button" aria-label="Cerrar" id="kiwi-geo-x" style="color:#9ca3af;padding:0 6px;font-size:16px">&times;</button>';
             document.body.appendChild(d);
-            setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 500); }, 5500);
+            const hide = () => { d.style.opacity = '0'; setTimeout(() => d.remove(), 450); };
+            d.querySelector('#kiwi-geo-change').onclick = () => { d.remove(); if (window.openCurrencyModal) window.openCurrencyModal(); };
+            d.querySelector('#kiwi-geo-x').onclick = hide;
+            setTimeout(hide, 10000);
         };
         window.kiwiAutoCurrency = async function () {
             try {
@@ -7640,10 +7659,11 @@ window.resetUser2FA = function(username) {
                 const r = await window.kiwiDetectCountry();
                 if (localStorage.getItem('kiwi_preferred_currency')) return null;   // el usuario eligió mientras detectábamos
                 const code = window.KIWI_GEO_CURRENCY[r.country] || 'USDT';
+                // v80: la elección automática va en OTRA clave (kiwi_currency_auto); nunca en kiwi_preferred_currency
                 localStorage.setItem('kiwi_currency_auto', JSON.stringify({ country: r.country, via: r.via, code, t: Date.now() }));
-                if (typeof window.selectCurrency === 'function') window.selectCurrency(code);
-                else { window.currentCurrency = code; localStorage.setItem('kiwi_preferred_currency', code); }
-                if (code !== 'USDT') window.kiwiGeoToast(code);
+                if (typeof window.selectCurrency === 'function') window.selectCurrency(code, '', { auto: true });
+                else { window.currentCurrency = code; window.kiwiCurrencySource = 'auto'; }
+                if (code !== 'USDT' && localStorage.getItem('kiwi_currency_hint') !== code) { localStorage.setItem('kiwi_currency_hint', code); window.kiwiGeoToast(code); }
                 return code;
             } catch (e) { return null; }
         };
@@ -7697,7 +7717,9 @@ window.resetUser2FA = function(username) {
 
     function renderEvent() {
         const ev = evData && evData.event;
-        const $ = id => document.getElementById(id);
+        // v80: la tarjeta del sorteo de 5.000 Robux y sus ganadores se quitaron del HTML → los elementos que faltan se ignoran
+        const NOEL = { style: {}, classList: { add() {}, remove() {}, toggle() {} } };
+        const $ = id => document.getElementById(id) || NOEL;
         if (!ev) {
             $('ev-name').textContent = 'No hay un evento activo';
             $('ev-desc').textContent = 'Pronto anunciamos el próximo. ¡Atento al Discord!';
@@ -7755,7 +7777,7 @@ window.resetUser2FA = function(username) {
         const el = document.getElementById(targetId);
         if (!el) return;
         if (!loggedUser()) {
-            el.innerHTML = `<h4 class="font-orbitron text-sm font-bold text-white mb-2"><i class="fa-solid fa-star text-kiwi-red"></i> MIS PUNTOS</h4>
+            el.innerHTML = `<h4 class="font-orbitron text-sm font-bold text-white mb-2"><i class="fa-solid fa-star text-kiwi-gold"></i> MIS PUNTOS</h4>
                 <p class="text-sm text-gray-300 mb-3">Iniciá sesión o registrate para participar. Solo por registrarte ya sumás puntos.</p>
                 <button onclick="window.openAuthModal && window.openAuthModal()" class="bg-kiwi-red hover:bg-red-700 text-white font-orbitron text-xs font-bold px-4 py-2 rounded-xl">INGRESAR / REGISTRARME</button>`;
             return;
@@ -7763,17 +7785,17 @@ window.resetUser2FA = function(username) {
         if (!meData) { el.innerHTML = '<p class="text-sm text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> Calculando tus puntos…</p>'; return; }
         if (meData.error) { el.innerHTML = '<p class="text-sm text-gray-400">No se pudieron cargar tus puntos: ' + esc(meData.error) + '</p>'; return; }
         const link = refLink(meData.account_id);
-        const row = (l, v) => `<div class="flex justify-between text-sm"><span class="text-gray-400">${l}</span><span class="font-bold text-white">${v}</span></div>`;
+        const row = (l, v) => `<div class="flex justify-between items-center text-sm py-1.5 border-b border-white/5 last:border-0"><span class="text-gray-400">${l}</span><span class="font-bold text-white">${v}</span></div>`;
         el.innerHTML = `
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="font-orbitron text-sm font-bold text-white"><i class="fa-solid fa-star text-kiwi-red"></i> MIS PUNTOS</h4>
-                ${meData.rank ? `<span class="text-xs font-bold text-gray-300">Puesto #${meData.rank}</span>` : ''}
+            <div class="flex items-center justify-between mb-3 gap-2">
+                <h4 class="font-orbitron text-sm font-bold text-white"><i class="fa-solid fa-star text-kiwi-gold"></i> MIS PUNTOS</h4>
+                ${meData.rank ? `<span class="inline-flex items-center gap-1 text-xs font-bold text-kiwi-gold bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-full px-2.5 py-0.5"><i class="fa-solid fa-ranking-star"></i>Puesto #${meData.rank}</span>` : ''}
             </div>
             <div class="grid grid-cols-2 gap-3 mb-3">
-                <div class="rounded-xl bg-black/40 border border-kiwi-border p-3 text-center"><p class="font-orbitron text-2xl font-black text-kiwi-red">${fmtPts(meData.points)}</p><p class="text-[11px] text-gray-400 uppercase">Puntos</p></div>
-                <div class="rounded-xl bg-black/40 border border-kiwi-border p-3 text-center"><p class="font-orbitron text-2xl font-black text-white">${meData.eligible ? fmtPct(meData.chance) : '—'}</p><p class="text-[11px] text-gray-400 uppercase">Chance de ganar</p></div>
+                <div class="rounded-2xl bg-black/40 border border-kiwi-gold/30 p-3 text-center"><p class="font-orbitron text-3xl font-black text-kiwi-gold" style="text-shadow:0 0 18px rgba(255,183,3,.35)">${fmtPts(meData.points)}</p><p class="text-[11px] text-gray-400 uppercase tracking-wider">Puntos</p></div>
+                <div class="rounded-2xl bg-black/40 border border-kiwi-border p-3 text-center"><p class="font-orbitron text-3xl font-black text-white">${meData.eligible ? fmtPct(meData.chance) : '—'}</p><p class="text-[11px] text-gray-400 uppercase tracking-wider">Chance de ganar</p></div>
             </div>
-            <div class="space-y-1 mb-3">
+            <div class="rounded-2xl bg-black/25 border border-kiwi-border px-3 py-1 mb-3">
                 ${row('Compras (' + fmtPts(meData.orders) + ') · ' + Number(meData.usdt || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' USDT', fmtPts(meData.purchase_points) + ' pts')}
                 ${row('Registro', '+' + fmtPts(meData.register_points) + ' pts')}
                 ${row('Link compartido', meData.referral_points > 0 ? '+' + fmtPts(meData.referral_points) + ' pts ✓' : 'pendiente')}
@@ -7781,8 +7803,8 @@ window.resetUser2FA = function(username) {
             ${meData.eligible === false ? '<p class="text-xs text-kiwi-gold mb-3">Tu cuenta no participa del sorteo (staff o cuenta suspendida).</p>' : ''}
             <p class="text-xs text-gray-400 mb-1">Tu link para compartir (sumás el punto cuando alguien se registra con él):</p>
             <div class="flex gap-2">
-                <input readonly value="${esc(link)}" class="flex-1 min-w-0 bg-kiwi-dark border border-kiwi-border rounded-lg px-3 py-2 text-xs text-gray-200" onclick="this.select()">
-                <button onclick="window.copyKiwiRefLink(this)" data-link="${esc(link)}" class="shrink-0 bg-kiwi-red hover:bg-red-700 text-white text-xs font-bold px-3 rounded-lg"><i class="fa-regular fa-copy"></i> Copiar</button>
+                <input readonly value="${esc(link)}" class="flex-1 min-w-0 bg-kiwi-dark border border-kiwi-border rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-kiwi-gold" onclick="this.select()">
+                <button onclick="window.copyKiwiRefLink(this)" data-link="${esc(link)}" class="shrink-0 bg-kiwi-gold hover:brightness-110 text-black text-xs font-bold px-3 rounded-xl"><i class="fa-regular fa-copy"></i> Copiar</button>
             </div>
             ${meData.referrals ? `<p class="text-[11px] text-gray-500 mt-1">${fmtPts(meData.referrals)} ${meData.referrals == 1 ? 'persona se registró' : 'personas se registraron'} con tu link.</p>` : ''}`;
     }
@@ -7934,7 +7956,7 @@ window.resetUser2FA = function(username) {
         if (!card) {
             card = document.createElement('div');
             card.id = 'profile-points-card';
-            card.className = 'bg-kiwi-card border border-kiwi-red/50 rounded-2xl p-5 mb-6 font-rajdhani';
+            card.className = 'pf-points mb-5 font-rajdhani';
             summary.insertAdjacentElement('afterend', card);
         }
         card.innerHTML = '<p class="text-sm text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> Calculando tus puntos…</p>';
@@ -7942,7 +7964,7 @@ window.resetUser2FA = function(username) {
         if (!meData || meData.error) { card.classList.add('hidden'); return; }
         card.classList.remove('hidden');
         renderMe('profile-points-card');
-        card.insertAdjacentHTML('beforeend', '<button onclick="window.goToEvents()" class="mt-3 w-full border border-kiwi-red text-white font-orbitron text-xs font-bold rounded-xl py-2 hover:bg-kiwi-red transition">VER RANKING Y SORTEOS <i class="fa-solid fa-arrow-right"></i></button>');
+        card.insertAdjacentHTML('beforeend', '<button onclick="window.goToEvents()" class="mt-4 w-full border border-kiwi-gold/60 text-kiwi-gold font-orbitron text-xs font-bold rounded-xl py-3 hover:bg-kiwi-gold hover:text-black transition"><i class="fa-solid fa-trophy mr-1"></i>VER RANKING Y SORTEOS <i class="fa-solid fa-arrow-right"></i></button>');
     }
     const _origGoToProfile = window.goToProfile;
     if (typeof _origGoToProfile === 'function') {
@@ -8359,11 +8381,100 @@ window.resetUser2FA = function(username) {
     })();
     </script>
     <!-- ===== v54: RECARGA AUTOMÁTICA DE SALDO ===== -->
+    <!-- v80: nuevo diseño de "Recargar saldo" (solo estilos; IDs y lógica sin cambios) -->
+    <style id="kpay-v80">
+        #kpay-modal .kp-card{background:radial-gradient(120% 55% at 100% 0%,rgba(255,183,3,.11),transparent 55%),radial-gradient(90% 45% at 0% 100%,rgba(255,183,3,.05),transparent 60%),#0e1014;border:1px solid rgba(255,183,3,.45);box-shadow:0 24px 70px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.04)}
+        #kpay-modal .kp-head-ic{width:42px;height:42px;border-radius:14px;flex-shrink:0;background:linear-gradient(135deg,#ffd166,#ffb703 55%,#f59e0b);color:#111;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(255,183,3,.35)}
+        #kpay-modal .kp-x{width:38px;height:38px;border-radius:12px;color:#9ca3af;background:#14171d;border:1px solid #232834;display:flex;align-items:center;justify-content:center;transition:.15s}
+        #kpay-modal .kp-x:hover{color:#fff;border-color:#3a4150}
+        #kpay-title>i{display:none}
+        /* stepper */
+        #kpay-steps .kp-st{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+        #kpay-steps .kp-st:not(:first-child)::before{content:"";position:absolute;top:14px;right:calc(50% + 16px);width:calc(100% - 32px);height:2px;border-radius:2px;background:#262b36}
+        #kpay-steps .kp-st.done::before,#kpay-steps .kp-st.cur::before{background:linear-gradient(90deg,#ffb703,#ffd166)}
+        #kpay-steps .kp-dot{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:700 12px Orbitron,sans-serif;background:#14171d;border:2px solid #2a303c;color:#6b7280;transition:.2s}
+        #kpay-steps .kp-st.done .kp-dot{background:#ffb703;border-color:#ffb703;color:#111}
+        #kpay-steps .kp-st.cur .kp-dot{border-color:#ffb703;color:#ffcf5a;background:rgba(255,183,3,.12);box-shadow:0 0 0 4px rgba(255,183,3,.16)}
+        #kpay-steps .kp-st p{font:600 10px Orbitron,sans-serif;margin-top:6px;color:#6b7280;letter-spacing:.04em}
+        #kpay-steps .kp-st.done p,#kpay-steps .kp-st.cur p{color:#ffcf5a}
+        /* métodos */
+        #kpay-modal .kp-intro{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:rgba(255,183,3,.07);border:1px solid rgba(255,183,3,.22)}
+        #kpay-modal .kp-gh{display:flex;align-items:center;gap:8px;font:700 11px Orbitron,sans-serif;color:#cbd5e1;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px}
+        #kpay-modal .kp-gh i{color:#ffb703}
+        #kpay-modal .kp-gh small{font:600 11px Rajdhani,sans-serif;letter-spacing:0;text-transform:none;color:#6b7280}
+        #kpay-modal .kp-gh::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#2a303c,transparent)}
+        #kpay-modal .kp-m{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px;border-radius:16px;background:linear-gradient(180deg,#161920,#111318);border:1.5px solid #232834;min-height:70px;position:relative;transition:transform .15s,border-color .15s,box-shadow .15s,background .15s}
+        #kpay-modal .kp-m:hover{border-color:rgba(255,183,3,.75);transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.35),0 0 0 3px rgba(255,183,3,.08)}
+        #kpay-modal .kp-m:active{transform:scale(.98)}
+        #kpay-modal .kp-m:focus-visible{outline:2px solid #ffb703;outline-offset:2px}
+        #kpay-modal .kp-m.is-sel{border-color:#ffb703;background:linear-gradient(180deg,rgba(255,183,3,.16),rgba(255,183,3,.04));box-shadow:0 0 0 3px rgba(255,183,3,.18)}
+        #kpay-modal .kp-m.is-sel::after{content:"\f00c";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;top:-6px;right:-6px;font-size:10px;color:#111;background:#ffb703;border-radius:999px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+        #kpay-modal .kp-flag{width:40px;height:40px;border-radius:12px;background:#0b0d11;border:1px solid #262b36;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+        #kpay-modal .kp-b{display:inline-flex;align-items:center;gap:4px;font:700 10.5px Rajdhani,sans-serif;padding:1px 7px;border-radius:999px;border:1px solid;white-space:nowrap;line-height:1.5}
+        #kpay-modal .kp-b-free{color:#4ade80;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}
+        #kpay-modal .kp-b-fee{color:#fbbf24;background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.22)}
+        #kpay-modal .kp-b-cur{color:#9ca3af;background:#0b0d11;border-color:#262b36}
+        /* monto */
+        #kpay-modal .kp-sel{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:#111318;border:1px solid #2a303c}
+        #kpay-modal .kp-chg{font:600 12px Rajdhani,sans-serif;color:#ffcf5a;border:1px solid rgba(255,183,3,.4);border-radius:10px;padding:6px 10px;white-space:nowrap}
+        #kpay-modal .kp-chg:hover{background:rgba(255,183,3,.1)}
+        #kpay-modal .kp-in{background:#0b0d11!important;border:2px solid #2a303c!important;border-radius:18px!important;transition:border-color .15s,box-shadow .15s}
+        #kpay-modal .kp-in:focus{outline:none;border-color:#ffb703!important;box-shadow:0 0 0 4px rgba(255,183,3,.14)}
+        #kpay-modal .kp-q{background:#111318;border:1.5px solid #262b36;border-radius:14px;padding:9px 4px;color:#fff;font-weight:700;transition:.15s}
+        #kpay-modal .kp-q:hover{border-color:#ffb703;background:rgba(255,183,3,.08)}
+        #kpay-modal .kp-est{border-radius:14px;padding:10px 12px;background:linear-gradient(90deg,rgba(255,183,3,.10),rgba(255,183,3,.03));border:1px dashed rgba(255,183,3,.4)}
+        #kpay-modal .kp-est:empty{display:none}
+        #kpay-modal .kp-btn{background:linear-gradient(135deg,#ffd166,#ffb703 55%,#f59e0b);color:#111;font-weight:800;border-radius:16px;box-shadow:0 10px 26px rgba(255,183,3,.25);transition:filter .15s,transform .15s}
+        #kpay-modal .kp-btn:hover{filter:brightness(1.07)} #kpay-modal .kp-btn:active{transform:scale(.99)} #kpay-modal .kp-btn:disabled{opacity:.7}
+        #kpay-modal .kp-ok{background:linear-gradient(135deg,#4ade80,#22c55e);color:#04130a;font-weight:800;border-radius:16px;box-shadow:0 10px 26px rgba(34,197,94,.25)}
+        #kpay-modal .kp-ok:hover{filter:brightness(1.07)}
+        /* pagar */
+        #kpay-modal .kp-amt{border-radius:22px;padding:18px 16px;text-align:center;background:radial-gradient(90% 80% at 50% 0%,rgba(255,183,3,.22),rgba(255,183,3,.04) 70%),#0f1115;border:2px solid #ffb703;box-shadow:0 0 34px rgba(255,183,3,.18)}
+        #kpay-modal .kp-amt-v{font-family:Orbitron,sans-serif;font-weight:900;color:#ffc73a;text-shadow:0 0 22px rgba(255,183,3,.45);letter-spacing:.01em}
+        #kpay-modal .kp-recv{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.3);color:#bbf7d0;font-size:12px}
+        #kpay-modal .kp-cdw{margin-top:14px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.35);border:1px solid #232834;text-align:left}
+        #kpay-modal .kp-bar{height:6px;border-radius:999px;background:#1f2430;overflow:hidden;margin-top:7px}
+        #kpay-modal .kp-bar>i{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#22c55e,#ffb703);transition:width 1s linear}
+        #kpay-modal .kp-bar.low>i{background:linear-gradient(90deg,#ef4444,#f97316)}
+        #kpay-modal .kp-acc{border-radius:18px;background:#0f1115;border:1px solid #232834;padding:12px}
+        #kpay-modal .kp-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:#14171d;border:1px solid #20242e}
+        #kpay-modal .kp-copy{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,183,3,.4);color:#ffcf5a;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;transition:.15s}
+        #kpay-modal .kp-copy:hover{background:rgba(255,183,3,.12)}
+        #kpay-modal .kp-tip{border-radius:14px;padding:10px 12px;background:#111318;border:1px solid #232834;border-left:3px solid #ffb703}
+        #kpay-modal .kp-cancel{border:1.5px solid rgba(248,113,113,.55);background:rgba(220,38,38,.08);color:#fecaca;font-weight:700;border-radius:16px;transition:.15s}
+        #kpay-modal .kp-cancel:hover{background:rgba(220,38,38,.16)}
+        #kpay-modal .kp-ghost{border:1px solid #2a303c;color:#e5e7eb;border-radius:16px;background:#111318}
+        #kpay-modal .kp-ghost:hover{border-color:#ffb703}
+        #kpay-modal .kp-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#9ca3af;padding:4px 0}
+        #kpay-modal .kp-back:hover{color:#ffcf5a}
+        #kpay-modal .kp-file{width:100%;font-size:12px;color:#d1d5db;padding:8px;border-radius:14px;background:#0b0d11;border:1.5px dashed #2a303c}
+        #kpay-modal .kp-file::file-selector-button{margin-right:10px;border:0;border-radius:10px;padding:7px 12px;background:#ffb703;color:#111;font-weight:700}
+        /* Mis recargas */
+        #kpay-modal .kp-hist{margin-top:20px;padding-top:16px;border-top:1px solid #1f2430}
+        #kpay-modal .kp-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#111318;border:1px solid #20242e}
+        #kpay-modal .kp-h .kp-flag{width:34px;height:34px;border-radius:10px}
+        #kpay-modal .kp-chip{display:inline-flex;align-items:center;gap:5px;font:700 11px Rajdhani,sans-serif;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap}
+        #kpay-modal .kp-c-pending{color:#fcd34d;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4)}
+        #kpay-modal .kp-c-submitted{color:#7dd3fc;background:rgba(14,165,233,.12);border-color:rgba(14,165,233,.4)}
+        #kpay-modal .kp-c-review{color:#fdba74;background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.4)}
+        #kpay-modal .kp-c-credited{color:#86efac;background:rgba(34,197,94,.13);border-color:rgba(34,197,94,.45)}
+        #kpay-modal .kp-c-expired{color:#9ca3af;background:rgba(107,114,128,.12);border-color:rgba(107,114,128,.35)}
+        #kpay-modal .kp-c-cancelled{color:#d4d4d8;background:rgba(82,82,91,.18);border-color:rgba(161,161,170,.3);text-decoration:none}
+        #kpay-modal .kp-c-rejected{color:#fca5a5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
+        #kpay-modal .kp-sic{width:64px;height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:26px;border:2px solid}
+        #kpay-modal .kp-wa{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(34,197,94,.45);color:#86efac;background:rgba(34,197,94,.07);border-radius:12px;padding:8px 12px;font-size:12px;font-weight:600}
+        #kpay-modal .kp-wa:hover{background:rgba(34,197,94,.14)}
+        @media (prefers-reduced-motion:reduce){#kpay-modal .kp-m,#kpay-modal .kp-bar>i{transition:none}}
+    </style>
     <div id="kpay-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[120] hidden flex items-center justify-center p-3">
-        <div class="bg-kiwi-card border border-kiwi-gold w-full max-w-md rounded-2xl p-5 relative max-h-[94vh] overflow-y-auto">
-            <button onclick="window.kpayClose()" class="absolute top-3 right-3 w-10 h-10 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 id="kpay-title" class="font-orbitron text-lg font-bold text-kiwi-gold mb-1"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</h3>
-            <div id="kpay-steps" class="flex gap-1 mb-4"></div>
+        <div class="kp-card w-full max-w-md sm:max-w-lg rounded-3xl p-4 sm:p-6 relative max-h-[94vh] overflow-y-auto">
+            <div class="flex items-center gap-3 mb-4 pr-11">
+                <div class="kp-head-ic"><i class="fa-solid fa-bolt"></i></div>
+                <div class="min-w-0"><h3 id="kpay-title" class="font-orbitron text-lg font-bold text-kiwi-gold leading-tight"><i class="fa-solid fa-bolt mr-1"></i>Recargar saldo</h3>
+                <p class="text-[11px] text-gray-400 font-rajdhani">Pago automático · se acredita en USDT</p></div>
+            </div>
+            <button onclick="window.kpayClose()" aria-label="Cerrar" class="kp-x absolute top-4 right-4"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div id="kpay-steps" class="flex mb-5"></div>
             <div id="kpay-body"></div>
         </div>
     </div>
@@ -8394,6 +8505,12 @@ window.resetUser2FA = function(username) {
         window.KPAY_STATUS = ST;
         const topupState = t => t.status === 'rejected' && /cancelado_por_cliente/.test(t.note || '') ? ['Cancelada', ST.rejected[1], 'fa-ban'] : (ST[t.status] || ST.pending);
         window.kpayTopupState = topupState;
+        // v80: agrupación de métodos, insignia de comisión y colores de estado (solo presentación)
+        const kGroup = m => (['usdt', 'binance_pay'].includes(m.id) || m.currency === 'USDT') ? 'crypto' : (['USD', 'EUR'].includes(m.currency) ? 'intl' : 'latam');
+        const KGROUPS = [['crypto', 'Cripto', 'fa-brands fa-bitcoin', 'USDT · al instante'], ['latam', 'Latinoamérica', 'fa-solid fa-earth-americas', 'transferencia en tu moneda'], ['intl', 'Internacional', 'fa-solid fa-globe', 'dólares y euros']];
+        const kBadge = m => Number(m.commission_pct) > 0 ? `<span class="kp-b kp-b-fee">+${m.commission_pct}%</span>` : '<span class="kp-b kp-b-free"><i class="fa-solid fa-check text-[9px]"></i>Sin comisión</span>';
+        const kKey = t => t.status === 'rejected' && /cancelado_por_cliente/.test(t.note || '') ? 'cancelled' : (ST[t.status] ? t.status : 'pending');
+        const KSHORT = { pending: 'Pendiente', submitted: 'Verificando', review: 'En revisión', credited: 'Acreditada', expired: 'Vencida', cancelled: 'Cancelada', rejected: 'Rechazada' };
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const fmt = (n, cur) => {
             const d = cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' ? 0 : 2;
@@ -8410,8 +8527,11 @@ window.resetUser2FA = function(username) {
         const say = (m) => (window.showKiwiAlert ? window.showKiwiAlert(m) : alert(m));
         function steps(n) {
             const names = ['Método', 'Monto', 'Pagar', 'Listo'];
-            document.getElementById('kpay-steps').innerHTML = names.map((t, i) =>
-                `<div class="flex-1 text-center"><div class="h-1.5 rounded-full ${i <= n ? 'bg-kiwi-gold' : 'bg-kiwi-border'}"></div><p class="text-[10px] mt-1 ${i <= n ? 'text-kiwi-gold' : 'text-gray-500'} font-orbitron">${t}</p></div>`).join('');
+            const card = document.querySelector('#kpay-modal .kp-card'); if (card && K.stepN !== n) card.scrollTop = 0; K.stepN = n; // v80: cada paso arranca arriba
+            // v80: stepper con círculos (hecho ✓ / actual / pendiente)
+            document.getElementById('kpay-steps').innerHTML = names.map((t, i) => {
+                const c = i < n || (n === 3 && i === 3) ? 'done' : i === n ? 'cur' : '';
+                return `<div class="kp-st ${c}"${i === n ? ' aria-current="step"' : ''}><div class="kp-dot">${c === 'done' ? '<i class="fa-solid fa-check"></i>' : i + 1}</div><p>${t}</p></div>`; }).join('');
         }
         const body = h => { document.getElementById('kpay-body').innerHTML = h; };
         window.kpayCopy = function (txt, el) {
@@ -8429,7 +8549,7 @@ window.resetUser2FA = function(username) {
             // v71: Compra directa → recarga normal por el total exacto del producto (K.directUsdt)
             K.directUsdt = K.purpose === 'direct' ? Number(opts.usdt) || 0 : 0; K.directTitle = K.purpose === 'direct' ? String(opts.title || '') : '';
             document.getElementById('kpay-title').innerHTML = K.purpose === 'direct' ? '<i class="fa-solid fa-bolt mr-1"></i>Compra directa' : '<i class="fa-solid fa-bolt mr-1"></i>Recargar saldo';
-            document.getElementById('kpay-modal').classList.remove('hidden');
+            document.getElementById('kpay-modal').classList.remove('hidden'); K.stepN = -1;
             if (opts && opts.resumeId) { try { const r = await api('check', { id: opts.resumeId }); K.cfg = K.cfg || await api('config'); K.topup = r.topup; K.method = (K.cfg.methods || []).find(m => m.id === r.topup.method); return r.topup.status === 'pending' ? renderPay() : renderStatus(); } catch (_) {} }
             const act = K.purpose === 'direct' ? null : JSON.parse(localStorage.getItem('kpay_active') || 'null');
             steps(0); body('<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando…</p>');
@@ -8446,20 +8566,20 @@ window.resetUser2FA = function(username) {
             body(`
                 ${K.purpose === 'direct' ? window.kiwiDirectBanner(K.directTitle, K.directUsdt) : ''}
                 ${K.purpose === 'reseller' ? '<div class="mb-3 rounded-xl border border-kiwi-gold/60 bg-kiwi-gold/10 p-3 text-xs text-kiwi-gold font-bold"><i class="fa-solid fa-crown mr-1"></i>Recarga de revendedor: mínimo 50 USDT. Suma a tu plan y se acredita como saldo normal.</div>' : ''}
-                <p class="text-sm text-white font-bold mb-1">1. Elegí cómo querés pagar</p>
-                <p class="text-xs text-gray-300 mb-3">El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago.</p>
-                <div class="grid grid-cols-2 gap-2 mb-4">
-                ${ms.length ? ms.map(m => `
-                    <button onclick="window.kpayPick('${m.id}')" class="kpay-m flex items-center gap-3 rounded-xl border-2 border-kiwi-border bg-kiwi-dark p-3 min-h-[72px] text-left transition active:scale-95 hover:border-kiwi-gold">
-                        <span class="flex-shrink-0">${kFlag(FLAGC[m.id] || m.currency || 'XX', 32)}</span>
-                        <span class="leading-tight min-w-0"><span class="block font-orbitron font-bold text-white text-[13px]">${esc(m.label)}</span>
-                        <span class="block text-[11px] text-gray-400"><i class="${ICON[m.id]} text-kiwi-gold mr-1"></i>${m.currency}${m.commission_pct ? ' · comisión ' + m.commission_pct + '%' : ' · sin comisión'}</span></span>
-                    </button>`).join('') : '<p class="col-span-2 text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">No hay métodos disponibles en este momento. Intentá más tarde o consultá a soporte.</p>'}
-                </div>
-                <section aria-label="Mis recargas">
-                <h4 class="font-orbitron text-xs text-gray-400 uppercase mb-2">Mis recargas</h4>
-                <p class="text-xs text-gray-400 mb-2">¿Tuviste un error con una recarga automática? Escribinos con el número de recarga y el comprobante. No compartas contraseñas ni códigos.</p>
-                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store%2C%20necesito%20ayuda%20con%20una%20recarga%20autom%C3%A1tica." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 border border-green-500/50 text-green-300 rounded-lg px-3 py-2 text-xs mb-3"><i class="fa-brands fa-whatsapp"></i>Ayuda con mis recargas</a>
+                <p class="font-orbitron text-sm text-white font-bold mb-2">Elegí cómo querés pagar</p>
+                <div class="kp-intro mb-1"><i class="fa-solid fa-circle-info text-kiwi-gold mt-0.5"></i><p class="text-xs text-gray-300 leading-snug">El saldo se acredita en <b class="text-kiwi-gold">USDT</b> automáticamente cuando detectamos tu pago. Primero elegís el método, después el monto.</p></div>
+                ${ms.length ? KGROUPS.map(([g, gl, gi, gd]) => { const gm = ms.filter(m => kGroup(m) === g); return gm.length ? `
+                <p class="kp-gh"><i class="${gi}"></i>${gl} <small>· ${gd}</small></p>
+                <div class="grid grid-cols-2 gap-2">${gm.map(m => `
+                    <button onclick="window.kpayPick('${m.id}')" class="kpay-m kp-m${K.lastMethod === m.id ? ' is-sel' : ''}">
+                        <span class="kp-flag">${kFlag(FLAGC[m.id] || m.currency || 'XX', 28)}</span>
+                        <span class="leading-tight min-w-0"><span class="block font-rajdhani font-bold text-white text-[14px] leading-[1.1]">${esc(m.label)}</span>
+                        <span class="flex flex-wrap items-center gap-1 mt-1"><span class="kp-b kp-b-cur"><i class="${ICON[m.id] || 'fa-solid fa-money-bill'} text-kiwi-gold"></i>${m.currency}</span>${kBadge(m)}</span></span>
+                    </button>`).join('')}</div>` : ''; }).join('') : '<p class="text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mt-3">No hay métodos disponibles en este momento. Intentá más tarde o consultá a soporte.</p>'}
+                <section aria-label="Mis recargas" class="kp-hist">
+                <div class="flex items-center justify-between gap-2 mb-2"><h4 class="font-orbitron text-xs text-gray-300 uppercase tracking-widest"><i class="fa-solid fa-clock-rotate-left text-kiwi-gold mr-1"></i>Mis recargas</h4>
+                <a href="https://wa.me/5491139172595?text=Hola%20Kiwi%20Store%2C%20necesito%20ayuda%20con%20una%20recarga%20autom%C3%A1tica." target="_blank" rel="noopener noreferrer" class="kp-wa"><i class="fa-brands fa-whatsapp text-sm"></i>Ayuda con mis recargas</a></div>
+                <p class="text-[11px] text-gray-500 mb-3">¿Tuviste un error con una recarga automática? Escribinos con el número de recarga y el comprobante. No compartas contraseñas ni códigos.</p>
                 <div id="kpay-hist" class="space-y-2 text-xs"><p class="text-gray-500">Cargando…</p></div></section>`);
             loadHistory();
         }
@@ -8468,11 +8588,12 @@ window.resetUser2FA = function(username) {
             try {
                 const list = window.KPAY_MOCK_HIST || await window.kiwiRpc('kiwi_pay_my', { p_token: window.kiwiToken() });
                 box.innerHTML = (list || []).length ? list.slice(0, 10).map(t => {
-                    const s = topupState(t);
-                    return `<div class="flex items-center justify-between bg-kiwi-dark border border-kiwi-border rounded-lg p-2">
-                        <div><p class="text-white font-bold">${Number(t.usdt).toFixed(2)} USDT <span class="text-gray-500 font-normal">· ${fmt(t.pay_amount, t.currency)}</span></p>
-                        <p class="text-gray-500">#${t.id} · ${new Date(t.created_at).toLocaleString('es-AR')}</p></div>
-                        <span class="px-2 py-1 rounded-full border text-[10px] ${s[1]}">${s[0]}</span></div>`; }).join('') : '<p class="text-gray-500">Todavía no hiciste recargas.</p>';
+                    const s = topupState(t), k = kKey(t);
+                    return `<div class="kp-h">
+                        <span class="kp-flag">${kFlag(FLAGC[t.method] || t.currency || 'XX', 22)}</span>
+                        <div class="min-w-0 flex-1"><p class="text-white font-bold text-[13px]">${Number(t.usdt).toFixed(2)} USDT <span class="text-gray-500 font-normal">· ${fmt(t.pay_amount, t.currency)}</span></p>
+                        <p class="text-gray-500 text-[11px]">#${t.id} · ${new Date(t.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p></div>
+                        <span class="kp-chip kp-c-${k}" title="${esc(s[0])}"><i class="fa-solid ${s[2]} text-[10px]"></i>${KSHORT[k] || s[0]}</span></div>`; }).join('') : '<div class="text-center py-6 rounded-2xl border border-dashed border-kiwi-border"><i class="fa-solid fa-receipt text-2xl text-gray-600 mb-2"></i><p class="text-gray-500">Todavía no hiciste recargas.</p></div>';
             } catch (e) { box.innerHTML = '<p class="text-gray-500">No se pudo cargar el historial.</p>'; }
         }
         // v61: transferencia AR se carga en pesos (lo que el cliente transfiere); el resto en USDT
@@ -8521,9 +8642,9 @@ window.resetUser2FA = function(username) {
         const kNameOk = v => String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').split(' ').filter(w => w.length >= 2 && !['de', 'del', 'la', 'las', 'los', 'y'].includes(w)).length >= 2;
         const kPayerSaved = () => { try { return localStorage.getItem('kiwi_payer_name') || ''; } catch (_) { return ''; } };
         function payerBox(val, idSuffix) {
-            return `<div id="kpay-payer-box${idSuffix || ''}" class="bg-sky-500/10 border-2 border-sky-400/70 rounded-xl p-3 my-3">
+            return `<div id="kpay-payer-box${idSuffix || ''}" class="bg-sky-500/10 border-2 border-sky-400/60 rounded-2xl p-3 my-3">
                 <label for="kpay-payer${idSuffix || ''}" class="block text-sm text-white font-bold mb-1"><i class="fa-solid fa-id-card text-sky-300 mr-1"></i>Nombre completo del titular de la cuenta desde la que vas a pagar *</label>
-                <input id="kpay-payer${idSuffix || ''}" autocomplete="name" value="${esc(val || '')}" placeholder="Ej: Juan Carlos Pérez Gómez" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-sky-300 rounded-xl p-3 text-white">
+                <input id="kpay-payer${idSuffix || ''}" autocomplete="name" value="${esc(val || '')}" placeholder="Ej: Juan Carlos Pérez Gómez" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-sky-300 focus:outline-none rounded-xl p-3 text-white">
                 <p class="text-[11px] text-sky-100 mt-1">Se usa para <b>verificar el pago automáticamente</b>; tiene que coincidir con el nombre de quien transfiere. Si pagás desde la cuenta de otra persona (un familiar, un amigo), escribí <b>el nombre de esa persona</b>; si no coincide, el pago lo revisa el staff a mano y puede demorar.</p>
             </div>`;
         }
@@ -8541,26 +8662,27 @@ window.resetUser2FA = function(username) {
             btn.disabled = false;
         };
         window.kpayPick = function (id) {
-            K.method = K.cfg.methods.find(m => m.id === id); steps(1); stopRate();
+            K.method = K.cfg.methods.find(m => m.id === id); K.lastMethod = id; steps(1); stopRate();
             if (K.purpose === 'direct') return directPick();
             const m = K.method, min = kMin(), res = K.purpose === 'reseller', ars = kIsArs();
             const arsMin = ars ? kArsMin(min) : 0;
             const quick = res ? [50, 150].filter(v => v >= min) : [];
             body(`
-                <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
-                <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
-                <label class="block text-xs text-gray-400 mb-1 mt-3">${ars ? kFI().label : '¿Cuánto saldo querés cargar? (USDT)'}</label>
-                ${ars ? `<div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-orbitron text-gray-400">${kSym()}</span>
-                <input id="kpay-usdt" type="text" inputmode="${kDec() ? 'decimal' : 'numeric'}" autocomplete="off" value="${kShow(res ? arsMin : Math.max(arsMin, kFI().def))}" oninput="window.kpayFmtArs(this)" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 pl-10 text-2xl font-orbitron text-white text-center"></div>`
-                : `<input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-4 text-2xl font-orbitron text-white text-center">`}
-                ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button ${ars ? `data-kq="${v}" ` : ''}onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="bg-kiwi-dark border border-kiwi-border rounded-lg py-3 text-white font-bold">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ ' + kSym() + ' ' + kShow(kArsMin(v)) + '</span>' : ''}</button>`).join('')}</div>` : ''}
-                <p id="kpay-est" class="text-sm text-gray-300 mt-3 text-center"></p>
-                <p class="text-xs text-red-200 bg-red-600/15 border border-red-500/60 rounded-lg px-3 py-2 my-2 text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i>En el siguiente paso te mostramos el monto <b>EXACTO</b> (con centavos) a transferir. Mandá <b>ese</b> monto exacto para que se acredite solo.</p>
+                <div class="kp-sel mb-4"><span class="kp-flag">${kFlag(FLAGC[m.id] || m.currency || 'XX', 28)}</span>
+                    <div class="min-w-0 flex-1"><p class="text-white font-bold font-rajdhani text-[15px] leading-tight truncate">${esc(m.label)}</p><p class="flex items-center gap-1 mt-1"><span class="kp-b kp-b-cur">${m.currency}</span>${kBadge(m)}</p></div>
+                    <button onclick="window.kpayBack()" class="kp-chg"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button></div>
+                <label for="kpay-usdt" class="block font-orbitron text-sm text-white font-bold mb-2">${ars ? kFI().label : '¿Cuánto saldo querés cargar? (USDT)'}</label>
+                ${ars ? `<div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-orbitron text-kiwi-gold/70">${kSym()}</span>
+                <input id="kpay-usdt" type="text" inputmode="${kDec() ? 'decimal' : 'numeric'}" autocomplete="off" value="${kShow(res ? arsMin : Math.max(arsMin, kFI().def))}" oninput="window.kpayFmtArs(this)" class="kp-in w-full p-4 pl-10 text-3xl font-orbitron font-bold text-white text-center"><span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-orbitron text-gray-500">${m.currency}</span></div>`
+                : `<div class="relative"><input id="kpay-usdt" type="number" inputmode="decimal" min="${min}" step="0.01" value="${res ? min : Math.max(min, 5)}" oninput="window.kpayEst()" class="kp-in w-full p-4 text-3xl font-orbitron font-bold text-white text-center"><span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-orbitron text-gray-500">USDT</span></div>`}
+                ${quick.length ? `<div class="grid grid-cols-2 gap-2 mt-2">${quick.map(v => `<button ${ars ? `data-kq="${v}" ` : ''}onclick="${ars ? `window.kpaySetArs(${v})` : `document.getElementById('kpay-usdt').value=${v};window.kpayEst()`}" class="kp-q">${v} USDT${ars ? '<span class="block text-[10px] text-gray-400 font-normal">≈ ' + kSym() + ' ' + kShow(kArsMin(v)) + '</span>' : ''}</button>`).join('')}</div>` : ''}
+                <p id="kpay-est" class="kp-est text-sm text-gray-200 mt-3 text-center"></p>
+                <p class="text-xs text-red-200 bg-red-600/15 border border-red-500/60 rounded-2xl px-3 py-2 my-3 text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i>En el siguiente paso te mostramos el monto <b>EXACTO</b> (con centavos) a transferir. Mandá <b>ese</b> monto exacto para que se acredite solo.</p>
                 ${kDec() ? '<p id="kpay-rate" class="text-[11px] text-gray-400 text-center mb-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Cargando cotización…</p>' : ''}
-                <p id="kpay-min-note" class="text-xs text-center text-white bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-lg px-3 py-2 mb-2"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${res ? 'Monto mínimo para recargas de revendedor' : 'Monto mínimo para recargas automáticas'}: <b>${min} USDT</b>${kDec() ? '<span id="kpay-min-eq" class="text-gray-300">' + (arsMin ? ' (≈ ' + kSym() + ' ' + kShow(arsMin) + ' ' + m.currency + ')' : '') + '</span>' : ars && arsMin ? ' <span class="text-gray-300">(≈ $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ')</span>' : ''}</p>
+                <p id="kpay-min-note" class="text-xs text-center text-white bg-kiwi-gold/10 border border-kiwi-gold/40 rounded-2xl px-3 py-2 mb-2"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${res ? 'Monto mínimo para recargas de revendedor' : 'Monto mínimo para recargas automáticas'}: <b>${min} USDT</b>${kDec() ? '<span id="kpay-min-eq" class="text-gray-300">' + (arsMin ? ' (≈ ' + kSym() + ' ' + kShow(arsMin) + ' ' + m.currency + ')' : '') + '</span>' : ars && arsMin ? ' <span class="text-gray-300">(≈ $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ')</span>' : ''}</p>
                 <p class="text-[11px] text-gray-500 text-center">${res ? '50 USDT = Nivel 1 · 150 USDT en una sola recarga = Nivel 2. ' : ''}${ars ? (kDec() ? '' : arsMin ? 'Mínimo $ ' + arsMin.toLocaleString('es-AR') + ' ' + m.currency + ' (≈ ' + min + ' USDT). ' : '') + (m.commission_pct ? 'El monto que transferís ya incluye ' + m.commission_pct + '% de comisión. ' : '') + 'El saldo se acredita en USDT según la cotización del momento; el monto exacto a transferir se fija en el siguiente paso.' : 'Mínimo ' + min + ' USDT. El monto exacto a pagar se fija en el siguiente paso.'}</p>
                 ${kIsPerson(m.id) ? payerBox(kPayerSaved()) : ''}
-                <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-4 text-base">Continuar</button>`);
+                <button id="kpay-go" onclick="window.kpayCreate()" class="kp-btn w-full py-4 mt-4 text-base">Continuar <i class="fa-solid fa-arrow-right ml-1"></i></button>`);
             window.kpayEst();
             if (kDec()) { const cur = m.currency; kpayRate(cur); K.rateT = setInterval(() => kpayRate(cur), 30000); }
         };
@@ -8570,27 +8692,28 @@ window.resetUser2FA = function(username) {
             const m = K.method, u = K.directUsdt, ars = kIsArs();
             const cur = m.currency, est = cur === 'USDT' ? fmt(u * (1 + (m.commission_pct || 0) / 100), 'USDT') : (kRate() ? (ars ? kSym() + ' ' + kShow(kArsMin(u)) + ' ' + cur : fmt(u * (1 + (m.commission_pct || 0) / 100) * kRate(), cur)) : '');
             body(`
-                <button onclick="window.kpayBack()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button>
                 ${window.kiwiDirectBanner(K.directTitle, u)}
-                <p class="text-sm text-white font-bold mb-1">${FLAG[m.id]} ${esc(m.label)}</p>
-                <div class="bg-kiwi-dark border-2 border-kiwi-gold/60 rounded-xl p-4 text-center my-3">
+                <div class="kp-sel my-3"><span class="kp-flag">${kFlag(FLAGC[m.id] || m.currency || 'XX', 28)}</span>
+                    <div class="min-w-0 flex-1"><p class="text-white font-bold font-rajdhani text-[15px] leading-tight truncate">${esc(m.label)}</p><p class="flex items-center gap-1 mt-1"><span class="kp-b kp-b-cur">${m.currency}</span>${kBadge(m)}</p></div>
+                    <button onclick="window.kpayBack()" class="kp-chg"><i class="fa-solid fa-arrow-left mr-1"></i>Cambiar método</button></div>
+                <div class="kp-amt my-3">
                     <p class="text-xs text-gray-400 uppercase font-orbitron">Vas a pagar aprox.</p>
                     <p id="kdir-est" class="text-2xl font-orbitron font-black text-kiwi-gold">${est || '<i class="fa-solid fa-spinner fa-spin"></i>'}</p>
                     <p class="text-[11px] text-gray-400 mt-1">El monto <b>exacto</b> (con centavos) se fija en el siguiente paso${m.commission_pct ? ' · incluye ' + m.commission_pct + '% de comisión' : ''}.</p>
                 </div>
                 ${kIsPerson(m.id) ? payerBox(kPayerSaved()) : ''}
-                <button id="kpay-go" onclick="window.kpayCreate()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl mt-2 text-base">Continuar al pago</button>`);
+                <button id="kpay-go" onclick="window.kpayCreate()" class="kp-btn w-full py-4 mt-2 text-base">Continuar al pago <i class="fa-solid fa-arrow-right ml-1"></i></button>`);
             if (kDec() && !kRate()) kpayRate(cur).then(() => { if (K.purpose === 'direct' && document.getElementById('kdir-est')) directPick(); });
         }
         window.kpayEst = function () {
             const m = K.method, inp = document.getElementById('kpay-usdt'), el = document.getElementById('kpay-est'), r = kRate();
             if (kIsArs()) {
                 const v = kNum(inp), u = r ? Math.floor(v / r / (1 + (m.commission_pct || 0) / 100) * 100) / 100 : 0;
-                el.innerHTML = v > 0 && r ? 'Se acreditarán aprox. <b class="text-kiwi-gold">' + u.toFixed(2) + ' USDT</b> en tu saldo' : '';
+                el.innerHTML = v > 0 && r ? '<i class="fa-solid fa-wallet text-kiwi-gold mr-1"></i>Se acreditarán aprox. <b class="text-kiwi-gold">' + u.toFixed(2) + ' USDT</b> en tu saldo' : '';
                 return;
             }
             const v = Number(inp.value) || 0;
-            el.innerHTML = v > 0 && r ? 'Vas a pagar aprox. <b class="text-kiwi-gold">' + fmt(v * (1 + m.commission_pct / 100) * r, m.currency) + '</b>' : '';
+            el.innerHTML = v > 0 && r ? '<i class="fa-solid fa-money-bill-transfer text-kiwi-gold mr-1"></i>Vas a pagar aprox. <b class="text-kiwi-gold">' + fmt(v * (1 + m.commission_pct / 100) * r, m.currency) + '</b>' : '';
         };
         window.kpayCreate = async function () {
             const inp = document.getElementById('kpay-usdt'), ars = kIsArs();
@@ -8652,7 +8775,7 @@ window.resetUser2FA = function(username) {
         }
         window.kpayExactWarn = exactWarn;
         function cancelButton(t) {
-            return ['pending', 'submitted'].includes(t.status) ? '<button onclick="window.kpayCancel(this)" class="w-full border-2 border-red-400 bg-red-600/15 text-red-200 font-bold rounded-xl py-3 mt-3">Cancelar pedido</button>' : '';
+            return ['pending', 'submitted'].includes(t.status) ? '<button onclick="window.kpayCancel(this)" class="kp-cancel w-full py-3 mt-3"><i class="fa-solid fa-ban mr-1"></i>Cancelar pedido</button>' : '';
         }
         window.kpayCancel = async function (button) {
             if (K.cancelling || !K.topup) return;
@@ -8690,33 +8813,37 @@ window.resetUser2FA = function(username) {
                 }
             }
             body(`
-                <div class="bg-gradient-to-br from-kiwi-gold/20 to-transparent border-2 border-kiwi-gold rounded-2xl p-4 text-center mb-3">
-                    <p class="text-xs text-gray-300 uppercase font-orbitron">Pagá exactamente</p>
-                    <p class="text-4xl font-orbitron font-black text-kiwi-gold my-1 break-all" id="kpay-amt" style="text-shadow:0 0 18px rgba(245,215,110,.45)">${fmt(t.pay_amount, t.currency)}</p>
-                    <button onclick="window.kpayCopy('${plain(t.pay_amount, t.currency)}', this)" class="bg-kiwi-gold text-black font-bold rounded-lg px-5 py-3 text-base"><i class="fa-regular fa-copy mr-1"></i>Copiar monto exacto</button>
-                    <p class="text-xs text-gray-300 mt-2">Recibís <b class="text-white">${Number(t.usdt).toFixed(2)} USDT</b> de saldo${K.purpose === 'direct' ? ' y la compra se hace sola' : ''}</p>
+                <div class="kp-amt mb-3">
+                    <p class="text-[11px] text-gray-300 uppercase font-orbitron tracking-[0.18em]">${FLAG[m.id] || ''} Pagá exactamente</p>
+                    <p class="kp-amt-v text-[2.1rem] sm:text-5xl leading-tight my-2 break-all" id="kpay-amt">${fmt(t.pay_amount, t.currency)}</p>
+                    <button onclick="window.kpayCopy('${plain(t.pay_amount, t.currency)}', this)" class="kp-btn px-6 py-3 text-base"><i class="fa-regular fa-copy mr-1"></i>Copiar monto exacto</button>
+                    <p class="mt-3"><span class="kp-recv"><i class="fa-solid fa-wallet"></i>Recibís <b class="text-white">${Number(t.usdt).toFixed(2)} USDT</b> de saldo${K.purpose === 'direct' ? ' y la compra se hace sola' : ''}</span></p>
+                    <div class="kp-cdw"><div class="flex items-center justify-between text-sm text-gray-300"><span><i class="fa-regular fa-clock text-kiwi-gold mr-1"></i>Tiempo para pagar:</span><b id="kpay-cd" class="text-white font-orbitron">--:--</b></div>
+                    <div id="kpay-cd-bar" class="kp-bar"><i></i></div></div>
                 </div>
                 ${exactWarn(t)}
                 ${coTabs}
-                <div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 mb-3 space-y-2">
-                    <p class="text-xs text-kiwi-gold font-orbitron uppercase">${FLAG[m.id] || ''} ${esc(m.label)}${coMode ? (coMode === 'breb' ? ' · Llave Bre-B' : ' · Transferencia') : ''}</p>
-                    ${titular ? `<div id="kpay-titular" class="flex items-center gap-2 bg-kiwi-gold/15 border border-kiwi-gold rounded-full px-3 py-1.5"><i class="fa-solid fa-user-check text-kiwi-gold"></i><p class="text-sm text-white min-w-0 truncate">Titular: <b>${esc(titular)}</b></p></div>` : ''}
-                    ${acc.map(([k, v]) => `<div class="flex items-center justify-between gap-2"><div class="min-w-0"><p class="text-[11px] text-gray-500">${esc(k)}</p><p class="text-white font-bold text-sm break-all">${esc(v)}</p></div>
-                        <button onclick="window.kpayCopy('${esc(v).replace(/'/g, '')}', this)" class="shrink-0 border border-kiwi-border rounded-lg px-3 py-2 text-xs text-gray-200"><i class="fa-regular fa-copy"></i></button></div>`).join('')}
+                <div class="kp-acc mb-3 space-y-2">
+                    <p class="text-xs text-kiwi-gold font-orbitron uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-building-columns"></i>Datos para transferir · ${esc(m.label)}${coMode ? (coMode === 'breb' ? ' · Llave Bre-B' : ' · Transferencia') : ''}</p>
+                    ${titular ? `<div id="kpay-titular" class="flex items-center gap-2 bg-kiwi-gold/15 border border-kiwi-gold/70 rounded-full px-3 py-1.5"><i class="fa-solid fa-user-check text-kiwi-gold"></i><p class="text-sm text-white min-w-0 truncate">Titular: <b>${esc(titular)}</b></p></div>` : ''}
+                    ${acc.map(([k, v]) => `<div class="kp-row"><div class="min-w-0"><p class="text-[11px] text-gray-500">${esc(k)}</p><p class="text-white font-bold text-sm break-all">${esc(v)}</p></div>
+                        <button onclick="window.kpayCopy('${esc(v).replace(/'/g, '')}', this)" aria-label="Copiar ${esc(k)}" class="kp-copy"><i class="fa-regular fa-copy"></i> Copiar</button></div>`).join('')}
                 </div>
-                <p class="text-xs text-gray-300 bg-kiwi-dark/60 border border-kiwi-border rounded-xl p-3 mb-3"><i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>${tip(m.id, accAll, coMode)}</p>
-                <p class="text-center text-sm text-gray-300 mb-3">Tiempo para pagar: <b id="kpay-cd" class="text-white font-orbitron">--:--</b></p>
-                ${kIsPerson(m.id) ? `<div id="kpay-payer-pay-box" class="bg-sky-500/10 border-2 border-sky-400/70 rounded-xl p-3 mb-3">
+                <p class="kp-tip text-xs text-gray-300 mb-3"><i class="fa-solid fa-lightbulb text-kiwi-gold mr-1"></i>${tip(m.id, accAll, coMode)}</p>
+                ${kIsPerson(m.id) ? `<div id="kpay-payer-pay-box" class="bg-sky-500/10 border-2 border-sky-400/60 rounded-2xl p-3 mb-3">
                     <label for="kpay-payer-pay" class="block text-xs text-white font-bold mb-1"><i class="fa-solid fa-id-card text-sky-300 mr-1"></i>Nombre completo del titular de la cuenta desde la que vas a pagar *</label>
                     <div class="flex gap-2"><input id="kpay-payer-pay" autocomplete="name" value="${esc(t.payer_name || kPayerSaved())}" class="flex-1 min-w-0 bg-kiwi-dark border-2 border-kiwi-border focus:border-sky-300 rounded-xl p-2 text-white text-sm">
                     <button onclick="window.kpaySavePayer(this)" class="shrink-0 border border-sky-300 text-sky-200 rounded-lg px-3 text-xs font-bold">Guardar</button></div>
                     <p class="text-[11px] text-sky-100 mt-1">Se usa para verificar el pago automáticamente; tiene que coincidir con el nombre de quien transfiere. Si no coincide, el staff lo revisa a mano.</p>
                 </div>` : ''}
-                <button onclick="window.kpayPaid()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl text-base"><i class="fa-solid fa-check mr-1"></i>Ya pagué</button>
+                <button onclick="window.kpayPaid()" class="kp-ok w-full py-4 text-base"><i class="fa-solid fa-check mr-1"></i>Ya pagué</button>
                 ${cancelButton(t)}`);
+            const total = Math.max(60, Math.floor((Date.parse(t.expires_at) - Date.parse(t.created_at)) / 1000) || 900);
             const tick = () => {
                 const s = Math.max(0, Math.floor((Date.parse(t.expires_at) - Date.now()) / 1000));
                 const el = document.getElementById('kpay-cd'); if (!el) return stopTimers();
+                const bar = document.getElementById('kpay-cd-bar'); // v80: barra de tiempo restante
+                if (bar) { bar.firstElementChild.style.width = Math.min(100, s / total * 100) + '%'; bar.classList.toggle('low', s < 180); el.classList.toggle('text-red-300', s < 180); }
                 el.textContent = s >= 3600 ? Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ' min' : String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
                 if (s <= 0) el.textContent = 'vencido';
             };
@@ -8726,18 +8853,18 @@ window.resetUser2FA = function(username) {
             const t = K.topup, isT = !['usdt', 'binance_pay'].includes(t.method);
             if (isT) { const pv = ((document.getElementById('kpay-payer-pay') || {}).value || '').replace(/\s+/g, ' ').trim(); if (pv) K.payerDraft = pv; }
             body(`
-                <button onclick="window.kpayResume()" class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-arrow-left mr-1"></i>Volver a los datos de pago</button>
+                <button onclick="window.kpayResume()" class="kp-back mb-3"><i class="fa-solid fa-arrow-left"></i>Volver a los datos de pago</button>
                 <p class="text-sm text-gray-300 mb-3">Pagaste <b class="text-kiwi-gold">${fmt(t.pay_amount, t.currency)}</b>. Completá esto para encontrar tu pago más rápido:</p>
                 <p class="text-xs text-red-200 bg-red-600/15 border border-red-500/60 rounded-lg p-2 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Recordá: tenía que ser el monto <b>EXACTO</b> (${fmt(t.pay_amount, t.currency)}). Si mandaste otro monto, el staff lo revisa a mano (puede demorar).</p>
                 <label class="block text-xs text-gray-400 mb-1">${REF_LABEL[t.method]}${['usdt', 'binance_pay'].includes(t.method) ? ' *' : ' (opcional)'}</label>
-                <input id="kpay-ref" class="w-full bg-kiwi-dark border-2 border-kiwi-border focus:border-kiwi-gold rounded-xl p-3 text-white mb-3" placeholder="${t.method === 'usdt' ? 'Ej: 9f3c…a71b' : t.method === 'binance_pay' ? 'Ej: 462576928883449856' : 'Opcional pero ayuda'}">
+                <input id="kpay-ref" class="kp-in w-full p-3 text-white mb-3" placeholder="${t.method === 'usdt' ? 'Ej: 9f3c…a71b' : t.method === 'binance_pay' ? 'Ej: 462576928883449856' : 'Opcional pero ayuda'}">
                 ${isT ? `<label class="block text-xs text-gray-400 mb-1">Nombre completo del titular de la cuenta desde la que pagaste *</label>
-                <input id="kpay-name" value="${esc(K.payerDraft || t.payer_name || kPayerSaved())}" class="w-full bg-kiwi-dark border-2 border-kiwi-border rounded-xl p-3 text-white mb-1" placeholder="Como figura en el comprobante">
+                <input id="kpay-name" value="${esc(K.payerDraft || t.payer_name || kPayerSaved())}" class="kp-in w-full p-3 text-white mb-1" placeholder="Como figura en el comprobante">
                 <p class="text-[11px] text-sky-200 mb-3">Tiene que coincidir con el nombre de quien transfirió: así se verifica el pago automáticamente.</p>` : ''}
                 <label class="block text-xs text-gray-400 mb-1">Foto del comprobante (opcional)</label>
-                <input id="kpay-proof" type="file" accept="image/*" class="w-full text-xs text-gray-300 mb-1">
+                <input id="kpay-proof" type="file" accept="image/*" class="kp-file mb-1">
                 <p class="text-[11px] text-gray-500 mb-4">El comprobante solo ayuda al staff: el saldo se acredita cuando el pago aparece en la cuenta.</p>
-                <button id="kpay-send" onclick="window.kpaySubmit()" class="w-full bg-kiwi-gold text-black font-bold py-4 rounded-xl text-base">Enviar</button>`);
+                <button id="kpay-send" onclick="window.kpaySubmit()" class="kp-btn w-full py-4 text-base">Enviar</button>`);
         };
         window.kpayResume = renderPay;
         function shrink(file) {
@@ -8776,13 +8903,14 @@ window.resetUser2FA = function(username) {
             body(`
                 ${K.purpose === 'direct' && window.kiwiDirectProgress ? window.kiwiDirectProgress(t.status === 'credited' ? 1 : 0) : ''}
                 <div class="text-center py-4">
-                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border ${s[1]} text-sm font-bold mb-4"><i class="fa-solid ${s[2]} ${t.status === 'submitted' ? 'fa-beat-fade' : ''}"></i>${s[0]}</div>
-                    <p class="text-2xl font-orbitron font-black text-white">${Number(t.usdt).toFixed(2)} USDT</p>
+                    <div class="kp-sic kp-c-${kKey(t)}"><i class="fa-solid ${s[2]} ${t.status === 'submitted' ? 'fa-beat-fade' : ''}"></i></div>
+                    <div class="kp-chip kp-c-${kKey(t)} text-sm mb-4 px-4 py-1.5">${s[0]}</div>
+                    <p class="text-3xl font-orbitron font-black text-white">${Number(t.usdt).toFixed(2)} <span class="text-kiwi-gold text-xl">USDT</span></p>
                     <p class="text-xs text-gray-400 mb-4">Recarga #${t.id} · ${fmt(t.pay_amount, t.currency)}</p>
-                    <p class="text-sm text-gray-300">${msg}</p>
+                    <p class="text-sm text-gray-300 bg-black/30 border border-kiwi-border rounded-2xl p-3">${msg}</p>
                 </div>
                 ${cancelButton(t)}
-                <button onclick="window.kpayBack()" class="w-full border border-kiwi-border text-gray-200 rounded-xl py-3 text-sm mt-2">Ver mis recargas</button>`);
+                <button onclick="window.kpayBack()" class="kp-ghost w-full py-3 text-sm mt-2"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Ver mis recargas</button>`);
             if (t.status === 'credited' && K.purpose === 'direct' && window.kiwiDirectOnCredited) { localStorage.removeItem('kpay_active'); window.kiwiDirectOnCredited(t); }
             else if (t.status === 'credited') {
                 localStorage.removeItem('kpay_active');
@@ -8934,7 +9062,7 @@ window.resetUser2FA = function(username) {
             if (!curUser()) return say('Iniciá sesión primero');
             if (!validateCheckout()) return;
             const prod = W.currentActiveProduct || {};
-            const title = W.pendingRobux ? (W.pendingRobux.amount + ' Robux (' + W.pendingRobux.methodText + ')') : (prod.title || prod.name);
+            const title = W.pendingRobux ? W.krxTitle(W.pendingRobux.amount, W.pendingRobux.methodText) : (prod.title || prod.name);
             W.kiwiDirectStart(checkoutPrice(), title, 'checkout');
         };
         // Saldo insuficiente → elegir: Compra directa / Cargar saldo
@@ -9921,15 +10049,32 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 </script>
 
 <!-- v72: MIS PEDIDOS (estado + notas del staff + avisos) -->
-<div id="kped-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)window.kpedClose()">
-    <div class="bg-kiwi-card border border-kiwi-border w-full sm:max-w-lg max-h-[92vh] rounded-t-2xl sm:rounded-2xl flex flex-col">
-        <div class="flex items-center justify-between p-4 border-b border-kiwi-border">
-            <h3 class="font-orbitron font-bold text-white text-base"><i class="fa-solid fa-box-open text-kiwi-gold mr-2"></i>MIS PEDIDOS</h3>
-            <button onclick="window.kpedClose()" class="h-9 w-9 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+<!-- v80: diseño nuevo (mismos IDs y funciones) -->
+<style id="kped-v80">
+    #kped-modal .kq-card{background:radial-gradient(120% 50% at 100% 0%,rgba(255,183,3,.11),transparent 55%),#0e1014;border:1px solid rgba(255,183,3,.4);box-shadow:0 24px 70px rgba(0,0,0,.65)}
+    #kped-modal .kq-ic{width:42px;height:42px;border-radius:14px;flex-shrink:0;background:linear-gradient(135deg,#ffd166,#ffb703 55%,#f59e0b);color:#111;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(255,183,3,.3)}
+    #kped-modal .kq-f{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font:700 12px Rajdhani,sans-serif;border:1px solid #2a303c;background:#111318;color:#cbd5e1;transition:.15s;white-space:nowrap}
+    #kped-modal .kq-f:hover{border-color:#ffb703}
+    #kped-modal .kq-f b{font-size:10px;min-width:18px;padding:0 5px;border-radius:999px;background:rgba(255,255,255,.08);text-align:center}
+    #kped-modal .kq-f.on{background:#ffb703;color:#111;border-color:#ffb703} #kped-modal .kq-f.on b{background:rgba(0,0,0,.15)}
+    #kped-modal .kq-o{border-radius:18px;background:linear-gradient(180deg,#14171d,#101216);border:1px solid #22262f;padding:13px;transition:border-color .15s}
+    #kped-modal .kq-o:hover{border-color:rgba(255,183,3,.45)}
+    #kped-modal .kq-o.is-new{border-color:rgba(255,183,3,.75);box-shadow:0 0 0 3px rgba(255,183,3,.12)}
+    #kped-modal .kq-oic{width:42px;height:42px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;border:1px solid}
+    #kped-modal .kq-copy{min-height:0!important;height:auto!important;line-height:1.5;display:inline-flex;align-items:center;gap:4px;border:1px solid #2a303c;color:#cbd5e1;border-radius:8px;padding:2px 7px;font-size:10.5px;font-weight:700;transition:.15s}
+    #kped-modal .kq-copy:hover{border-color:#ffb703;color:#ffcf5a}
+    #kped-filters{scrollbar-width:none} #kped-filters::-webkit-scrollbar{display:none}
+</style>
+<div id="kped-modal" class="hidden fixed inset-0 z-[130] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)window.kpedClose()">
+    <div class="kq-card w-full sm:max-w-lg max-h-[92vh] rounded-t-3xl sm:rounded-3xl flex flex-col">
+        <div class="flex items-center justify-between gap-3 p-4 border-b border-white/5">
+            <div class="flex items-center gap-3 min-w-0"><div class="kq-ic"><i class="fa-solid fa-box-open"></i></div>
+                <div class="min-w-0"><h3 class="font-orbitron font-bold text-kiwi-gold text-base leading-tight">MIS PEDIDOS</h3><p id="kped-sub" class="text-[11px] text-gray-400 font-rajdhani">Estado, notas del staff y avisos</p></div></div>
+            <button onclick="window.kpedClose()" aria-label="Cerrar" class="h-10 w-10 shrink-0 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white hover:border-white/30"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div id="kped-filters" class="flex flex-wrap gap-2 px-4 pt-3"></div>
+        <div id="kped-filters" class="flex gap-2 px-4 pt-3 pb-1 overflow-x-auto"></div>
         <div id="kped-list" class="overflow-y-auto p-4 space-y-3"></div>
-        <p class="text-[11px] text-gray-500 px-4 pb-4">Se actualiza solo cada minuto. Te avisamos acá cuando un pedido se completa, se cancela o el staff te deja una nota.</p>
+        <p class="text-[11px] text-gray-500 px-4 pb-4"><i class="fa-solid fa-rotate mr-1"></i>Se actualiza solo cada minuto. Te avisamos acá cuando un pedido se completa, se cancela o el staff te deja una nota.</p>
     </div>
 </div>
 <div id="kped-toasts" class="fixed top-20 right-3 left-3 sm:left-auto sm:w-96 z-[150] space-y-2 pointer-events-none"></div>
@@ -9952,6 +10097,16 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     };
     W.kpedBucket = s => BUCKET[s] || 'pendiente';
     const pill = b => { const p = PILL[b] || PILL.pendiente; return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase ${p[1]}"><i class="fa-solid ${p[2]}"></i>${p[0]}</span>`; };
+    // v80: ícono y color por categoría + copiar número de pedido
+    const CATI = { roblox: ['fa-cube', '#60a5fa'], freefire: ['fa-gem', '#fb923c'], mlbb: ['fa-shield-halved', '#a78bfa'], pubg: ['fa-crosshairs', '#facc15'], bloodstrike: ['fa-skull', '#f87171'],
+                   streaming: ['fa-tv', '#f472b6'], instagram: ['fa-heart', '#f472b6'], tiktok: ['fa-music', '#22d3ee'], social: ['fa-heart', '#f472b6'], other: ['fa-bag-shopping', '#ffb703'] };
+    const catOf = p => { const c = String((W.kiwiPurchaseCat ? W.kiwiPurchaseCat(p) : '') || p.category || '').toLowerCase(), t = String(p.title || '').toLowerCase();
+        if (CATI[c]) return c; if (/robux|roblox|blox/.test(t)) return 'roblox'; if (/diamant|free ?fire/.test(t)) return 'freefire'; if (/netflix|disney|spotify|max|prime|crunchy/.test(t)) return 'streaming'; return 'other'; };
+    const catIcon = p => { const k = CATI[catOf(p)] || CATI.other; return `<span class="kq-oic" style="color:${k[1]};background:${k[1]}1a;border-color:${k[1]}55"><i class="fa-solid ${k[0]}"></i></span>`; };
+    W.kpedCopyId = function (id, btn) {
+        const done = () => { if (!btn) return; const o = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => { btn.innerHTML = o; }, 1400); };
+        try { navigator.clipboard.writeText(String(id)).then(done, done); } catch (_) { done(); }
+    };
     const fmt = d => { try { return new Date(d).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } };
     const mine = () => { const u = me(); if (!u) return []; try { return (W.readPurchases ? W.readPurchases() : JSON.parse(localStorage.getItem('kiwi_purchases') || '[]')).filter(p => W.sameUser ? W.sameUser(p.user, u) : p.user === u); } catch (_) { return []; } };
 
@@ -10016,20 +10171,36 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         const orders = mine().slice().reverse();
         const cnt = { all: orders.length }; orders.forEach(p => { const b = W.kpedBucket(p.status); cnt[b] = (cnt[b] || 0) + 1; });
         fl.innerHTML = [['all', 'Todos']].concat(Object.keys(PILL).map(k => [k, PILL[k][0]])).filter(x => x[0] === 'all' || cnt[x[0]])
-            .map(x => `<button onclick="window.kpedFilter('${x[0]}')" class="px-3 py-1 rounded-full text-[11px] font-bold border ${S.filter === x[0] ? 'bg-kiwi-gold text-black border-kiwi-gold' : 'bg-kiwi-dark text-gray-300 border-kiwi-border'}">${x[1]} (${cnt[x[0]] || 0})</button>`).join('');
+            .map(x => `<button onclick="window.kpedFilter('${x[0]}')" class="kq-f ${S.filter === x[0] ? 'on' : ''}">${x[0] === 'all' ? '<i class="fa-solid fa-layer-group"></i>' : '<i class="fa-solid ' + PILL[x[0]][2] + '"></i>'}${x[1]} <b>${cnt[x[0]] || 0}</b></button>`).join('');
+        const sub = document.getElementById('kped-sub'); if (sub) sub.textContent = orders.length ? orders.length + (orders.length === 1 ? ' pedido' : ' pedidos') + ' · estado y notas del staff' : 'Estado, notas del staff y avisos';
         const shown = S.filter === 'all' ? orders : orders.filter(p => W.kpedBucket(p.status) === S.filter);
-        if (!shown.length) { list.innerHTML = '<p class="text-gray-500 text-sm text-center py-10">' + (orders.length ? 'No hay pedidos con este estado.' : 'Todavía no tenés pedidos.') + '</p>'; return; }
+        if (!shown.length) { list.innerHTML = '<div class="text-center py-10 px-4"><div class="mx-auto mb-3 w-16 h-16 rounded-full flex items-center justify-center bg-kiwi-gold/10 border border-kiwi-gold/30"><i class="fa-solid ' + (orders.length ? 'fa-filter' : 'fa-bag-shopping') + ' text-2xl text-kiwi-gold"></i></div>'
+            + '<p class="font-orbitron text-sm text-white font-bold">' + (orders.length ? 'No hay pedidos con este estado' : 'Todavía no tenés pedidos') + '</p>'
+            + '<p class="text-xs text-gray-400 mt-1">' + (orders.length ? 'Probá con otro filtro.' : 'Cuando compres algo, lo vas a ver acá con su estado.') + '</p>'
+            + (orders.length ? '<button onclick="window.kpedFilter(\'all\')" class="mt-4 text-xs font-bold text-kiwi-gold border border-kiwi-gold/50 rounded-xl px-4 py-2">Ver todos</button>' : '<button onclick="window.kpedClose(); window.goToCatalog && window.goToCatalog()" class="mt-4 text-sm font-bold text-black bg-kiwi-gold rounded-xl px-5 py-2.5">Ver catálogo</button>') + '</div>'; return; }
         list.innerHTML = shown.map(p => {
             const evs = S.events.filter(e => String(e.order_id) === String(p.id));
             const notes = evs.filter(e => e.kind === 'note');
             const thread = notes.length ? notes : (p.notes ? [{ body: p.notes, created_at: null, legacy: 1 }] : []);
             const isNew = evs.some(e => e.id > S.seen);
-            return `<div id="kped-o-${esc(p.id)}" class="rounded-xl border ${isNew ? 'border-kiwi-gold/70' : 'border-kiwi-border'} bg-kiwi-dark p-3">
-                <div class="flex justify-between gap-2 items-start">
-                    <div class="min-w-0"><p class="font-rajdhani font-bold text-white text-base leading-tight">${esc(p.title)}</p>
-                    <p class="text-[11px] text-gray-400 mt-0.5">${esc(p.date || '')} · <span class="text-kiwi-gold">${esc(p.usdtPrice ? Number(p.usdtPrice).toFixed(2) + ' USDT' : p.price)}</span></p>
-                    <p class="text-[11px] text-gray-500">Pedido #${esc(p.id)}${p.targetUser ? ' · ' + esc(p.targetUser) : ''}</p></div>
-                    <div class="shrink-0 text-right">${pill(W.kpedBucket(p.status))}${isNew ? '<p class="text-[10px] text-kiwi-gold font-bold mt-1">NUEVO</p>' : ''}</div>
+            return `<div id="kped-o-${esc(p.id)}" class="kq-o ${isNew ? 'is-new' : ''}">
+                <div class="flex gap-3 items-start">
+                    ${catIcon(p)}
+                    <div class="min-w-0 flex-1">
+                        <div class="flex justify-between gap-2 items-start">
+                            <p class="font-rajdhani font-bold text-white text-[15px] leading-tight">${esc(W.kiwiCleanTitle ? W.kiwiCleanTitle(p.title) : p.title)}</p>
+                            <div class="shrink-0 text-right">${pill(W.kpedBucket(p.status))}${isNew ? '<p class="text-[10px] text-kiwi-gold font-bold mt-1">NUEVO</p>' : ''}</div>
+                        </div>
+                        ${W.kiwiOrderModeChip ? W.kiwiOrderModeChip(p) : ''}
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                            <span class="font-orbitron text-sm font-black text-kiwi-gold">${esc(p.usdtPrice ? Number(p.usdtPrice).toFixed(2) + ' USDT' : p.price)}</span>
+                            <span class="text-[11px] text-gray-400"><i class="fa-regular fa-calendar mr-1"></i>${esc(p.date || '')}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-gray-500">
+                            <span>Pedido #${esc(p.id)}</span><button type="button" onclick="window.kpedCopyId('${esc(p.id)}', this)" class="kq-copy" aria-label="Copiar número de pedido"><i class="fa-regular fa-copy"></i> Copiar</button>
+                            ${p.targetUser ? '<span class="truncate max-w-full"><i class="fa-solid fa-user mr-1"></i>' + esc(p.targetUser) + '</span>' : ''}
+                        </div>
+                    </div>
                 </div>
                 ${thread.length ? `<div class="mt-2 space-y-1.5 border-t border-kiwi-border/60 pt-2">${thread.map(n => `<div class="rounded-lg bg-kiwi-card border border-yellow-500/20 px-2.5 py-1.5"><p class="text-[10px] text-yellow-400 font-bold"><i class="fa-solid fa-headset"></i> Staff${n.created_at ? ' · ' + esc(fmt(n.created_at)) : ''}</p><p class="text-xs text-gray-200 whitespace-pre-wrap break-words">${esc(n.body)}</p></div>`).join('')}</div>` : ''}
             </div>`;
@@ -10147,5 +10318,94 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 })(window);
 </script>
 
+<!-- v80: MÁS COLOR Y VIDA (solo estilos: no cambia lógica ni IDs) -->
+<style id="color-v80">
+    /* modalidad de Robux en pedidos */
+    .kmode{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:2px 9px;border-radius:999px;font:800 10px/1.6 Rajdhani,sans-serif;letter-spacing:.06em;text-transform:uppercase;border:1px solid;white-space:normal}
+    .kmode-mayor{color:#ffd166;background:linear-gradient(90deg,rgba(255,183,3,.2),rgba(255,122,69,.12));border-color:rgba(255,183,3,.55)}
+    .kmode-menor{color:#7dd3fc;background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.45)}
+
+    /* fondo con luces suaves (fijo, sin animación) */
+    body.animated-bg{background-image:radial-gradient(42rem 30rem at 0% 0%,rgba(255,30,39,.10),transparent 60%),radial-gradient(38rem 28rem at 100% 35%,rgba(255,183,3,.07),transparent 60%),radial-gradient(40rem 30rem at 15% 100%,rgba(99,102,241,.07),transparent 60%);background-attachment:fixed}
+    /* encabezado: línea de marca rojo → dorado */
+    body > header.sticky{box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    body > header.sticky::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,#ff1e27 20%,#ffb703 50%,#ff1e27 80%,transparent);opacity:.75;pointer-events:none}
+    /* botones principales con degradé y brillo */
+    button.bg-kiwi-red,a.bg-kiwi-red{background-image:linear-gradient(135deg,#ff5a62 0%,#ff1e27 50%,#c8101a 100%);box-shadow:0 6px 22px rgba(255,30,39,.28);transition:transform .15s,box-shadow .2s,filter .2s}
+    button.bg-kiwi-red:hover,a.bg-kiwi-red:hover{box-shadow:0 8px 30px rgba(255,30,39,.45);filter:brightness(1.07)}
+    button.bg-kiwi-gold,a.bg-kiwi-gold{background-image:linear-gradient(135deg,#ffd166 0%,#ffb703 55%,#f59e0b 100%);box-shadow:0 6px 22px rgba(255,183,3,.25)}
+    button.bg-kiwi-gold:hover,a.bg-kiwi-gold:hover{box-shadow:0 8px 28px rgba(255,183,3,.4);filter:brightness(1.05)}
+    button:focus-visible,a:focus-visible{outline:2px solid #ffb703;outline-offset:2px}
+
+    /* títulos de sección con subrayado de marca */
+    #why-us > h3,#faq > h3,#discord-reviews > h3{position:relative;padding-bottom:14px}
+    #why-us > h3::after,#faq > h3::after,#discord-reviews > h3::after{content:"";position:absolute;left:50%;bottom:0;width:90px;height:3px;border-radius:3px;transform:translateX(-50%);background:linear-gradient(90deg,#ff1e27,#ffb703);box-shadow:0 0 14px rgba(255,90,40,.6)}
+    #why-us{border-top-color:rgba(255,30,39,.25)!important}
+    /* tarjetas "por qué elegirnos": cada una con su color */
+    #why-us .grid > div{--c:255,30,39;background:radial-gradient(120% 70% at 50% 0%,rgba(var(--c),.16),transparent 65%),linear-gradient(180deg,#14161c,#0f1115);border-color:rgba(var(--c),.3)!important;transition:transform .2s,box-shadow .2s,border-color .2s}
+    #why-us .grid > div:nth-child(2){--c:34,197,94} #why-us .grid > div:nth-child(3){--c:56,189,248} #why-us .grid > div:nth-child(4){--c:255,183,3}
+    #why-us .grid > div > i{color:rgb(var(--c))!important;width:72px;height:72px;line-height:72px;border-radius:22px;font-size:30px!important;background:rgba(var(--c),.13);border:1px solid rgba(var(--c),.4);box-shadow:0 0 26px rgba(var(--c),.3)}
+    #why-us .grid > div:hover{transform:translateY(-4px);border-color:rgba(var(--c),.75)!important;box-shadow:0 12px 34px rgba(var(--c),.18)}
+    /* FAQ */
+    #faq .space-y-3 > div{background:linear-gradient(180deg,#14161c,#101216);transition:border-color .2s,box-shadow .2s}
+    #faq .space-y-3 > div:hover{border-color:rgba(255,30,39,.5);box-shadow:0 0 22px rgba(255,30,39,.1)}
+    /* reseñas */
+    #discord-reviews-list > *{transition:transform .2s,border-color .2s,box-shadow .2s}
+    #discord-reviews-list > *:hover{transform:translateY(-3px);border-color:rgba(88,101,242,.6)!important;box-shadow:0 10px 30px rgba(88,101,242,.18)}
+
+    /* CATÁLOGO */
+    #catalog-view > div:first-child h2{background:linear-gradient(90deg,#fff 0%,#ffd166 55%,#ff1e27 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(255,90,40,.25))}
+    .kdel-fbtn{transition:border-color .2s,box-shadow .2s,background .2s}
+    .kdel-fbtn:hover{border-color:#ffb703}
+    .kdel-fbtn.is-on{background:linear-gradient(135deg,#ff5a62,#ff1e27 55%,#c8101a);border-color:#ff1e27;box-shadow:0 6px 20px rgba(255,30,39,.35)}
+    #kdel-cat-grid > button{--c:255,30,39;border-color:rgba(var(--c),.35)!important;background-color:#111217;background-image:radial-gradient(120% 90% at 100% 0%,rgba(var(--c),.22),transparent 60%),linear-gradient(180deg,#14161c,#0e0f13);transition:transform .2s,box-shadow .25s,border-color .2s}
+    #kdel-cat-grid > button[onclick*="'roblox'"]{--c:59,130,246}
+    #kdel-cat-grid > button[onclick*="'freefire'"]{--c:249,115,22}
+    #kdel-cat-grid > button[onclick*="'streaming'"]{--c:168,85,247}
+    #kdel-cat-grid > button[onclick*="'instagram'"]{--c:236,72,153}
+    #kdel-cat-grid > button[onclick*="'mlbb'"]{--c:129,140,248}
+    #kdel-cat-grid > button[onclick*="'pubg'"]{--c:234,179,8}
+    #kdel-cat-grid > button[onclick*="'bloodstrike'"]{--c:239,68,68}
+    #kdel-cat-grid > button::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:3;background:linear-gradient(90deg,rgba(var(--c),1),rgba(var(--c),.15));opacity:.9}
+    #kdel-cat-grid > button::after{content:"\f061";font:900 13px "Font Awesome 6 Free";position:absolute;right:16px;bottom:16px;z-index:3;width:32px;height:32px;line-height:32px;text-align:center;border-radius:10px;color:#fff;background:rgba(var(--c),.85);box-shadow:0 0 18px rgba(var(--c),.55);transition:transform .2s}
+    #kdel-cat-grid > button:hover{transform:translateY(-4px);border-color:rgba(var(--c),.9)!important;box-shadow:0 14px 36px rgba(var(--c),.28),0 0 0 1px rgba(var(--c),.35)}
+    #kdel-cat-grid > button:hover::after{transform:translateX(3px)}
+    #kdel-cat-grid > button > .relative.z-10.w-14{box-shadow:0 0 22px rgba(var(--c),.45)!important;border-color:rgba(var(--c),.6)!important}
+    #kdel-cat-grid > button > p.font-orbitron{letter-spacing:.03em}
+
+    /* PÁGINA DE CATEGORÍA */
+    #category-header-banner{position:relative;overflow:hidden;border-color:rgba(255,183,3,.35)!important;background:radial-gradient(70% 140% at 100% 0%,rgba(255,30,39,.22),transparent 60%),radial-gradient(60% 120% at 0% 100%,rgba(255,183,3,.12),transparent 60%),linear-gradient(135deg,#15171d,#0c0d11)!important;box-shadow:0 14px 40px rgba(0,0,0,.4),0 0 30px rgba(255,30,39,.08)}
+    #category-header-banner::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#ff1e27,#ffb703)}
+    #category-view > button:first-child{background:linear-gradient(135deg,#16181f,#0f1014)}
+    #category-view > button:first-child:hover{border-color:#ff1e27;box-shadow:0 6px 22px rgba(255,30,39,.3)}
+    #roblox-subcategories{background:radial-gradient(80% 120% at 100% 0%,rgba(59,130,246,.16),transparent 60%),#101216!important;box-shadow:0 0 30px rgba(59,130,246,.08)}
+    #roblox-subcategories .roblox-sub-btn{transition:transform .15s,box-shadow .2s,border-color .2s,background .2s}
+    #roblox-subcategories .roblox-sub-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(59,130,246,.25)}
+    /* tarjetas de producto */
+    #product-grid > div,#streaming-grid > div,#ai-grid > div,#tools-grid > div{background-image:radial-gradient(120% 60% at 50% 0%,rgba(255,183,3,.07),transparent 60%),linear-gradient(180deg,#15171d,#0f1115);transition:transform .2s,box-shadow .25s,border-color .2s!important}
+    #product-grid > div:hover,#streaming-grid > div:hover,#ai-grid > div:hover,#tools-grid > div:hover{transform:translateY(-4px);border-color:rgba(255,183,3,.6)!important;box-shadow:0 14px 36px rgba(0,0,0,.45),0 0 26px rgba(255,183,3,.14)}
+    #product-grid > div.glow-red:hover{border-color:#ff1e27!important;box-shadow:0 14px 36px rgba(0,0,0,.45),0 0 30px rgba(255,30,39,.35)}
+    #streaming-category-wrapper h2{border-image:linear-gradient(90deg,#a855f7,#ffb703,transparent) 1}
+
+    /* menú lateral */
+    #user-drawer{background:radial-gradient(90% 40% at 100% 0%,rgba(255,30,39,.14),transparent 60%),radial-gradient(90% 40% at 0% 100%,rgba(255,183,3,.08),transparent 60%),#101216!important}
+    .kd-btn:hover{transform:translateX(-2px);border-color:rgba(255,183,3,.55)!important;box-shadow:0 0 22px rgba(255,183,3,.12)}
+    .kd-sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,183,3,.4),transparent)}
+
+    /* pie de página */
+    body > footer{position:relative;background:radial-gradient(60% 140% at 50% 100%,rgba(255,30,39,.12),transparent 70%),#08080a!important;border-top-color:transparent!important}
+    body > footer::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,#ff1e27 25%,#ffb703 50%,#ff1e27 75%,transparent);opacity:.7}
+    body > footer .font-orbitron{background:linear-gradient(90deg,#fff,#ffd166 60%,#ff1e27);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+    /* scroll de la página */
+    html{scrollbar-color:#ff1e27 #0b0b0e}
+    @media (prefers-reduced-motion:reduce){
+        #why-us .grid > div,#kdel-cat-grid > button,#product-grid > div,#streaming-grid > div,#ai-grid > div,#tools-grid > div,#discord-reviews-list > *,.kd-btn{transition:none!important;transform:none!important}
+    }
+    @media (max-width:640px){
+        body.animated-bg{background-attachment:scroll}
+        #why-us .grid > div > i{width:62px;height:62px;line-height:62px;font-size:26px!important}
+    }
+</style>
 </body>
 </html>
