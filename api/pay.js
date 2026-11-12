@@ -41,7 +41,7 @@ const METHODS = {
   cr_sinpe:       { label: 'SINPE Móvil (Costa Rica)', currency: 'CRC', step: 1, round: 10, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
-const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 6, COP: 4, PEN: 4, USD: 0, EUR: 0, CLP: 4, CRC: 5 };
+const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 4, COP: 4, PEN: 4, USD: 2, EUR: 2, CLP: 4, CRC: 5 };
 // Margen sobre P2P igual al de la web (KIWI_RATE_MARGIN)
 const RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, USD: 1.00, EUR: 1.01 };
 const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: [], transAmount: 190 },
@@ -210,16 +210,46 @@ function orderUsdt(o) {
   const m = String((o && o.price) || '').match(/([\d.,]+)\s*USDT/i);
   return m ? m[1] + ' USDT' : (clean(o && o.price, 60) || '—');
 }
+// v80: modalidad de Robux bien clara (también para títulos viejos: "1000 Robux (Vía Grupo)" → "Robux via Grupo (AL POR MENOR)")
+function robuxInfo(title) {
+  const t = String(title || '').trim();
+  let m = /^(\d+)\s*Robux\s*\(\s*(V[ií]a Grupo|Al por mayor · Grupo|V[ií]a Gamepass|Oferta especial · Gamepass|V[ií]a Plus)\s*\)\s*$/i.exec(t);
+  if (m) {
+    const k = m[2].toLowerCase();
+    const label = /mayor/.test(k) ? 'Robux via Grupo (AL POR MAYOR)' : /oferta/.test(k) ? 'Robux via Gamepass (AL POR MAYOR · Oferta especial)'
+      : /grupo/.test(k) ? 'Robux via Grupo (AL POR MENOR)' : /gamepass/.test(k) ? 'Robux via Gamepass (AL POR MENOR)' : 'Robux via Plus';
+    return { qty: Number(m[1]), label };
+  }
+  m = /^(\d+)\s+(Robux via (?:Grupo|Gamepass|Plus)(?:\s*\([^)]*\))?)\s*$/i.exec(t);
+  return m ? { qty: Number(m[1]), label: m[2] } : null;
+}
+const fmtInt = n => Number(n || 0).toLocaleString('es-AR');
 function orderTgText(o, src) {
   const direct = src === 'direct' && o.topup_id;
-  return '🛒 <b>Nueva compra completada</b>\n'
-    + '📦 Producto: <b>' + tgEsc(clean(o.title, 200)) + '</b>\n'
-    + '💵 Monto: <b>' + tgEsc(orderUsdt(o)) + '</b>\n'
-    + '👤 Comprador: <b>' + tgEsc(clean(o.user_name || o.username || o.user, 60)) + '</b>'
-    + (o.target_user ? '\n🎯 Para: ' + tgEsc(clean(o.target_user, 80)) : '') + '\n'
-    + '🧾 Pedido: <code>' + tgEsc(clean(o.id, 64)) + '</code>\n'
-    + '🕒 ' + tgEsc(tgTime(o.created_at)) + '\n'
-    + '💳 Origen: ' + (direct ? 'Compra directa (recarga #' + tgEsc(o.topup_id) + ' acreditada)' : 'Saldo');
+  const rx = robuxInfo(o.title);
+  const ex = typeof o.extra === 'string' ? clean(o.extra, 300) : '';
+  const isGp = rx && /gamepass/i.test(rx.label);
+  const paid = Number(o.paid_usdt) > 0 ? Number(o.paid_usdt).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT' : orderUsdt(o);
+  const shown = clean(o.price, 60);
+  const pay = direct ? 'Compra directa (recarga #' + tgEsc(o.topup_id) + ' acreditada)'
+    : (/saldo/i.test(String(o.method || '')) || rx ? 'Saldo de la cuenta' : (clean(o.method, 60) || 'Saldo de la cuenta'));
+  const L = ['🛒 <b>Nueva compra completada</b>'];
+  if (rx) {
+    L.push('📦 Producto: <b>' + tgEsc(rx.label) + '</b>');
+    L.push('🔢 Cantidad: <b>' + tgEsc(fmtInt(rx.qty)) + ' Robux</b>');
+  } else {
+    L.push('📦 Producto: <b>' + tgEsc(clean(o.title, 200)) + '</b>');
+    if (o.category) L.push('🗂️ Categoría: ' + tgEsc(clean(o.category, 40)));
+  }
+  L.push('💵 Precio: <b>' + tgEsc(paid) + '</b>' + (shown && !/USDT/i.test(shown) ? ' (mostrado: ' + tgEsc(shown) + ')' : ''));
+  if (o.target_user) L.push((rx ? '🎮 Usuario de Roblox: ' : '🎯 Datos: ') + '<b>' + tgEsc(clean(o.target_user, 120)) + '</b>');
+  if (ex) L.push((isGp ? '🔗 Link del gamepass: ' : '📎 Extra: ') + tgEsc(ex));
+  else if (isGp) L.push('🔗 Link del gamepass: (no indicado)');
+  L.push('👤 Cliente: <b>' + tgEsc(clean(o.user_name || o.username || o.user, 60)) + '</b>');
+  L.push('🧾 Pedido: <code>' + tgEsc(clean(o.id, 64)) + '</code>');
+  L.push('💳 Pago: ' + pay);
+  L.push('🕒 ' + tgEsc(tgTime(o.created_at)));
+  return L.join('\n');
 }
 // El servidor reclama en la base (service role) SOLO pedidos reales y recientes del dueño del token; cada pedido se avisa una vez.
 async function notifyOrders(token, ids, src) {
@@ -693,4 +723,4 @@ async function handler(req, res) {
 module.exports = handler;
 module.exports.notifyOrders = notifyOrders;
 module.exports._t = { isSmsApp, crSmsSenderOk, extractSender, nameMatch, nameTokens, nameCheckOn, notifyNameReview, parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
-  checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, notifyOrders, notifyTopup, orderTgText, tgTime, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
+  checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, notifyOrders, notifyTopup, orderTgText, robuxInfo, tgTime, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
