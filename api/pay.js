@@ -36,7 +36,8 @@ const METHODS = {
   us_takenos:     { label: 'Dólares (USD) · Takenos', currency: 'USD', step: 0.01, round: 0.01, kind: 'notif' },
   eu_wise:        { label: 'Euros (EUR) · Wise',      currency: 'EUR', step: 0.01, round: 0.01, kind: 'notif' },
   // v78: Chile (CLP, sin decimales: "últimos pesos" únicos) y Costa Rica (CRC, colones enteros por SINPE Móvil)
-  cl_bancoestado: { label: 'BancoEstado (Chile)',     currency: 'CLP', step: 1, round: 10, kind: 'notif' },
+  // v80: el id sigue siendo cl_bancoestado (compatibilidad), pero la cuenta puede ser de cualquier banco/billetera (Tenpo, BancoEstado…): se define en PAY_CL_*
+  cl_bancoestado: { label: 'Transferencia Chile (CLP)', currency: 'CLP', step: 1, round: 10, kind: 'notif' },
   cr_sinpe:       { label: 'SINPE Móvil (Costa Rica)', currency: 'CRC', step: 1, round: 10, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
@@ -102,10 +103,9 @@ function accountData(m) {
         .concat(env('PAY_EU_BIC') ? [['Swift / BIC', env('PAY_EU_BIC')]] : [], env('PAY_EU_BANCO') ? [['Banco y dirección', env('PAY_EU_BANCO')]] : [],
                 env('PAY_EU_TITULAR') ? [['Titular', env('PAY_EU_TITULAR')]] : []);
     case 'cl_bancoestado':
-      // v78: CuentaRUT BancoEstado. Hace falta el número de cuenta; el resto se muestra si está cargado.
+      // v78/v80: cuenta en Chile (Tenpo, BancoEstado u otra). Hace falta el número de cuenta; banco, tipo, RUT, email y titular se muestran si están cargados.
       if (!env('PAY_CL_CUENTA')) return null;
-      return [['Banco', env('PAY_CL_BANCO', 'BancoEstado')], ['Tipo de cuenta', env('PAY_CL_TIPO', 'CuentaRUT')], ['Número de cuenta', env('PAY_CL_CUENTA')]]
-        .concat(env('PAY_CL_RUT') ? [['RUT', env('PAY_CL_RUT')]] : [], env('PAY_CL_EMAIL') ? [['Email', env('PAY_CL_EMAIL')]] : [],
+      return [].concat(env('PAY_CL_BANCO') ? [['Banco', env('PAY_CL_BANCO')]] : [], env('PAY_CL_TIPO') ? [['Tipo de cuenta', env('PAY_CL_TIPO')]] : [], [['Número de cuenta', env('PAY_CL_CUENTA')]],env('PAY_CL_RUT') ? [['RUT', env('PAY_CL_RUT')]] : [], env('PAY_CL_EMAIL') ? [['Email', env('PAY_CL_EMAIL')]] : [],
                 env('PAY_CL_TITULAR') ? [['Titular', env('PAY_CL_TITULAR')]] : []);
     case 'cr_sinpe':
       // v78: SINPE Móvil (número de celular). Hace falta el número.
@@ -407,9 +407,13 @@ const DEFAULT_APPS = {
   'com.transferwise.android': 'eu_wise',     // v70: Wise
   'net.veritran.becl.prod': 'cl_bancoestado', // v78: App BancoEstado (Google Play id verificado)
   'cl.bancoestado.cirrus.prod': 'cl_bancoestado', // v78: Rutpay (BancoEstado, CuentaRUT)
+  'com.krealo.tenpo': 'cl_bancoestado',       // v80: Tenpo (Google Play id=com.krealo.tenpo, verificado)
 };
+// v80: alias de método en la URL de la notificación (m=cl_tenpo → mismo método de Chile)
+const METHOD_ALIAS = { cl_tenpo: 'cl_bancoestado', cl: 'cl_bancoestado', cl_transfer: 'cl_bancoestado' };
+const normMethod = m => { const k = String(m || '').trim().toLowerCase(); return METHOD_ALIAS[k] || String(m || '').trim(); };
 const CUR_OF = { mx_hey: 'MXN', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC' };
-const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|ha recibido|te depositaron|te deposit[oó]|recepci[oó]n de (?:fondos|transferencia)|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
+const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|ha recibido|te depositaron|te deposit[oó]|te (?:pagaron|abonaron|cargaron|transfirieron|hicieron una transferencia)|te (?:ha|han) (?:enviado|transferido|depositado|abonado|pagado)|(?:lleg[oó]|tienes) una transferencia|nueva transferencia de|recepci[oó]n de (?:fondos|transferencia)|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
 const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr|you sent|you paid|you spent|sent to|is on its way|withdraw|card payment|you converted|convertiste)/i;
 
 // "$ 16.501", "16.501,50", "$1,234.56", "S/ 35.5", "COP 32.001" -> número
@@ -431,10 +435,10 @@ function parseAmountStr(s) {
 // v73: nombre de quien transfiere. Ejemplos REALES: Global66 "Recibiste 17.401 COP de SIGGY ALEJANDRO." ·
 // Mercado Pago "De Lautaro Uriel Bajo desde su cuenta de Mercado Pago." · variantes: "JUAN PEREZ te envió", "John Smith sent you", "from John Smith".
 const NAME_RX = "([A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*(?:\\s+(?:(?:de|del|la|los|y)\\s+)?[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*){0,4})";
-const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|CLP|CRC|Colones|SINPE|BancoEstado|CuentaRUT|Rutpay|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero)\b/i;
+const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|CLP|CRC|Colones|SINPE|BancoEstado|CuentaRUT|Rutpay|Tenpo|Tenpista|Teenpo|Cuenta Vista|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero)\b/i;
 function extractSender(all) {
   const tries = [
-    new RegExp(NAME_RX + '\\s+(?:te\\s+(?:envi|transfiri|yape|pag|mand|deposit)|(?:has\\s+)?sent\\s+you|paid\\s+you)'),
+    new RegExp(NAME_RX + '\\s+(?:te\\s+(?:envi|transfiri|yape|pag|mand|deposit)|te\\s+(?:ha|han)\\s+(?:enviado|transferido|depositado|pagado)|(?:has\\s+)?sent\\s+you|paid\\s+you)'),
     new RegExp('(?:^|[\\s·—:,(-])(?:[Dd]e|DE|[Dd]esde|DESDE|[Ff]rom|FROM|[Rr]emitente:?|[Ee]nviado por|[Ss]ent by)\\s+' + NAME_RX, 'g'),
   ];
   for (const rx of tries) {
@@ -540,7 +544,7 @@ async function handler(req, res) {
       const given = req.headers['x-pay-secret'] || q.s || '';
       if (!secret || secret.length < 16 || !safeEq(given, secret)) return send(res, 401, { error: 'no autorizado' });
       if (body.test === true || /^test$/i.test(String(body.title || ''))) return send(res, 200, { ok: true, test: true });
-      const p = parseNotification(body, String(q.m || body.method || ''));
+      const p = parseNotification(body, normMethod(q.m || body.method || ''));
       // v78: con m=cr_sinpe la regla puede estar sobre la app de SMS: los SMS que no hablan de SINPE no se guardan (privacidad)
       if (String(q.m || body.method || '') === 'cr_sinpe' && isSmsApp(p.app) && !/sinpe/i.test(p.title + ' ' + p.text))
         return send(res, 200, { ok: true, status: 'ignored' });
