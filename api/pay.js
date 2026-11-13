@@ -39,14 +39,17 @@ const METHODS = {
   // v80: el id sigue siendo cl_bancoestado (compatibilidad), pero la cuenta puede ser de cualquier banco/billetera (Tenpo, BancoEstado…): se define en PAY_CL_*
   cl_bancoestado: { label: 'Transferencia Chile (CLP)', currency: 'CLP', step: 1, round: 10, kind: 'notif' },
   cr_sinpe:       { label: 'SINPE Móvil (Costa Rica)', currency: 'CRC', step: 1, round: 10, kind: 'notif' },
+  // v81: Uruguay (UYU, pesos enteros: "últimos pesos" únicos). Cuenta Prex; se transfiere desde cualquier banco uruguayo o desde Prex.
+  uy_prex:        { label: 'Prex (Uruguay)', currency: 'UYU', step: 1, round: 10, kind: 'notif' },
 };
 // Comisiones iguales a las del modal "Cargar Saldo" (BALANCE_COMMISSION). Se pueden cambiar con PAY_COMMISSION_JSON.
-const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 4, COP: 4, PEN: 4, USD: 2, EUR: 2, CLP: 4, CRC: 5 };
+const DEFAULT_COMMISSION = { USDT: 0, ARS: 0, MXN: 4, COP: 4, PEN: 4, USD: 2, EUR: 2, CLP: 4, CRC: 5, UYU: 2 };
 // Margen sobre P2P igual al de la web (KIWI_RATE_MARGIN)
-const RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, USD: 1.00, EUR: 1.01 };
+const RATE_MARGIN = { ARS: 1.016, MXN: 1.016, COP: 1.016, PEN: 1.016, CLP: 1.016, CRC: 1.016, UYU: 1.016, USD: 1.00, EUR: 1.01 };
 const P2P = { ARS: { payTypes: [], transAmount: 16500 }, MXN: { payTypes: [], transAmount: 190 },
   COP: { payTypes: [], transAmount: 32000 }, PEN: { payTypes: [], transAmount: 35 },
-  CLP: { payTypes: [], transAmount: 9800 }, CRC: { payTypes: [], transAmount: 4500 } };   // v78 (~10 USDT)
+  CLP: { payTypes: [], transAmount: 9800 }, CRC: { payTypes: [], transAmount: 4500 },   // v78 (~10 USDT)
+  UYU: { payTypes: [], transAmount: 430 } };   // v81: Uruguay (~10 USDT), igual que /api/binance-p2p
 
 function jsonEnv(k, d) { try { const v = env(k); return v ? Object.assign({}, d, JSON.parse(v)) : d; } catch (_) { return d; } }
 function accountData(m) {
@@ -112,6 +115,11 @@ function accountData(m) {
       if (!env('PAY_CR_SINPE_NUMERO')) return null;
       return [['Número SINPE Móvil', env('PAY_CR_SINPE_NUMERO')]]
         .concat(env('PAY_CR_BANCO') ? [['Banco', env('PAY_CR_BANCO')]] : [], env('PAY_CR_TITULAR') ? [['Titular', env('PAY_CR_TITULAR')]] : []);
+    case 'uy_prex':
+      // v81: cuenta Prex Uruguay. Hace falta el número de cuenta (PAY_UY_CUENTA); el titular se muestra si está cargado.
+      if (!env('PAY_UY_CUENTA')) return null;
+      return [['Banco de destino', env('PAY_UY_BANCO', 'Prex')], ['Número de cuenta', env('PAY_UY_CUENTA')]]
+        .concat(env('PAY_UY_TITULAR') ? [['Titular (nombre completo)', env('PAY_UY_TITULAR')]] : []);
     case 'pe_yape':
       return env('PAY_PE_YAPE_NUMERO') ? [['Celular Yape', env('PAY_PE_YAPE_NUMERO')]].concat(env('PAY_PE_TITULAR') ? [['Titular', env('PAY_PE_TITULAR')]] : []) : null;
   }
@@ -123,6 +131,7 @@ function methodMinutes(method, def) {
   // v78: Chile (TEF) y Costa Rica (SINPE Móvil) son inmediatos → 15 min como Hey Banco
   if (method === 'cl_bancoestado') { const m = Number(env('PAY_CL_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }
   if (method === 'cr_sinpe') { const m = Number(env('PAY_CR_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }
+  if (method === 'uy_prex') { const m = Number(env('PAY_UY_MINUTES', '15')); return m >= 10 ? Math.min(4320, m) : 15; }   // v81
   if (method === 'co_bancolombia') { const m = Number(env('PAY_CO_MINUTES', '1440')); return m >= 10 ? Math.min(1500, m) : def; }
   // v70: ACH puede tardar hasta 48 h hábiles → 2 días por defecto (máx. 4320 = 3 días, mismo tope que kiwi_pay_create v70)
   if (method === 'us_takenos') { const m = Number(env('PAY_US_MINUTES', '2880')); return m >= 10 ? Math.min(4320, m) : def; }
@@ -438,12 +447,13 @@ const DEFAULT_APPS = {
   'net.veritran.becl.prod': 'cl_bancoestado', // v78: App BancoEstado (Google Play id verificado)
   'cl.bancoestado.cirrus.prod': 'cl_bancoestado', // v78: Rutpay (BancoEstado, CuentaRUT)
   'com.krealo.tenpo': 'cl_bancoestado',       // v80: Tenpo (Google Play id=com.krealo.tenpo, verificado)
+  'air.Prex': 'uy_prex',                      // v81: Prex Uruguay (Google Play id=air.Prex, verificado; Prex Argentina es otra app: air.PrexArgentina)
 };
 // v80: alias de método en la URL de la notificación (m=cl_tenpo → mismo método de Chile)
-const METHOD_ALIAS = { cl_tenpo: 'cl_bancoestado', cl: 'cl_bancoestado', cl_transfer: 'cl_bancoestado' };
+const METHOD_ALIAS = { cl_tenpo: 'cl_bancoestado', cl: 'cl_bancoestado', cl_transfer: 'cl_bancoestado', uy: 'uy_prex', prex: 'uy_prex', uy_transfer: 'uy_prex' };
 const normMethod = m => { const k = String(m || '').trim().toLowerCase(); return METHOD_ALIAS[k] || String(m || '').trim(); };
-const CUR_OF = { mx_hey: 'MXN', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC' };
-const INCOMING = /(recibiste|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|ha recibido|te depositaron|te deposit[oó]|te (?:pagaron|abonaron|cargaron|transfirieron|hicieron una transferencia)|te (?:ha|han) (?:enviado|transferido|depositado|abonado|pagado)|(?:lleg[oó]|tienes) una transferencia|nueva transferencia de|recepci[oó]n de (?:fondos|transferencia)|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
+const CUR_OF = { mx_hey: 'MXN', ar_transfer: 'ARS', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC', uy_prex: 'UYU' };
+const INCOMING = /(recibiste|recibida|carga recibida|ingreso de dinero|acreditamos|se acredit[oó]|te acreditaron|te transfirieron|ingresaste|ya est[aá] disponible|dinero disponible|ingres[oó] (?:a tu|en tu)|te (?:envi[oó]|enviaron|transfiri[oó]|pag[oó]|yape[oó])|te lleg[oó]|ingres[oó]|ingreso|abono|abonaron|recibido|recibimos|dep[oó]sito recibido|transferencia recibida|has recibido|ha recibido|te depositaron|te deposit[oó]|te (?:pagaron|abonaron|cargaron|transfirieron|hicieron una transferencia)|te (?:ha|han) (?:enviado|transferido|depositado|abonado|pagado)|(?:lleg[oó]|tienes) una transferencia|nueva transferencia de|recepci[oó]n de (?:fondos|transferencia)|you(?:'ve| have)? received|money received|received|sent you|has arrived|arrived in your)/i;
 const OUTGOING = /(enviaste|pagaste|transferiste|yapeaste|realizaste|compra|retiro|d[eé]bito|cargo|pago de servicio|te cobr|you sent|you paid|you spent|sent to|is on its way|withdraw|card payment|you converted|convertiste)/i;
 
 // "$ 16.501", "16.501,50", "$1,234.56", "S/ 35.5", "COP 32.001" -> número
@@ -465,7 +475,7 @@ function parseAmountStr(s) {
 // v73: nombre de quien transfiere. Ejemplos REALES: Global66 "Recibiste 17.401 COP de SIGGY ALEJANDRO." ·
 // Mercado Pago "De Lautaro Uriel Bajo desde su cuenta de Mercado Pago." · variantes: "JUAN PEREZ te envió", "John Smith sent you", "from John Smith".
 const NAME_RX = "([A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*(?:\\s+(?:(?:de|del|la|los|y)\\s+)?[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'.-]*){0,4})";
-const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|CLP|CRC|Colones|SINPE|BancoEstado|CuentaRUT|Rutpay|Tenpo|Tenpista|Teenpo|Cuenta Vista|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero)\b/i;
+const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|CLP|CRC|Colones|SINPE|BancoEstado|CuentaRUT|Rutpay|Tenpo|Tenpista|Teenpo|Cuenta Vista|Global66|Global|Bancolombia|Nequi|Wise|Takenos|Mercado|Yape|Nu|Tu|Su|Your|Un|Una|La|El|Este|Esta|Cuenta|Banco|Transferencia|Dinero|Prex|Fortex|Fortigold|Abitab|RedPagos|Red Pagos|BROU|Santander|Ita[uú]|Scotiabank|BBVA|HSBC|Heritage|Midinero|OCA|UYU|Pesos|Carga|Ingreso|Recibiste)\b/i;
 function extractSender(all) {
   const tries = [
     new RegExp(NAME_RX + '\\s+(?:te\\s+(?:envi|transfiri|yape|pag|mand|deposit)|te\\s+(?:ha|han)\\s+(?:enviado|transferido|depositado|pagado)|(?:has\\s+)?sent\\s+you|paid\\s+you)'),
@@ -475,6 +485,8 @@ function extractSender(all) {
     const list = rx.global ? [...all.matchAll(rx)] : [all.match(rx)].filter(Boolean);
     for (const m of list) {
       let n = m[1].replace(/([A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,})\.(?:\s.*)?$/, '$1').replace(/\s+(?:de|del|la|los|y)$/i, '').trim(); // cortar en fin de oración
+      // v81: "desde BROU de CARLOS GOMEZ" → la entidad (banco/billetera) queda afuera y se toma la persona
+      if (n && NOT_NAME.test(n)) { const sub = n.match(/^.*?\s(?:de|del|DE)\s+([A-ZÁÉÍÓÚÑÜ].*)$/); if (sub) n = sub[1].trim(); }
       if (!n || NOT_NAME.test(n) || n.length < 2) continue;
       return n.slice(0, 120);
     }
@@ -518,10 +530,23 @@ function parseNotification(n, forcedMethod) {
     if (sv && (!out.amount || (am && sp.index <= am.index))) out.amount = sv;
     if (out.amount != null && Math.abs(out.amount - Math.round(out.amount)) > 0.004) out.amount = null; // con céntimos raros → revisión manual
   }
+  // v81: Uruguay (Prex). "$ 1.250", "$U 1.250", "UYU 1.250,00", "1.250 pesos". "$" en Uruguay = pesos; U$S/US$/USD = dólares (no se toma).
+  // Solo pesos enteros: con centésimos distintos de 0 → sin monto (queda para revisión manual en PAGOS).
+  if (method === 'uy_prex') {
+    const NUM = '(\\d{1,3}(?:[.\\u00a0 ]\\d{3})+(?:,\\d{1,2})?|\\d{1,3}(?:,\\d{3})+(?:\\.\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?)(?![\\d])';
+    const t2 = all.replace(/U\$S|US\$|U\$D/gi, ' USD ');
+    const a1 = t2.match(new RegExp('(?:\\$\\s*U|UYU|\\$)\\s*' + NUM, 'i')), a2 = t2.match(new RegExp(NUM + '\\s*(?:pesos(?:\\s+uruguayos)?|UYU)\\b', 'i'));
+    const a = a1 && a2 ? (a1.index <= a2.index ? a1 : a2) : (a1 || a2);
+    let v = a ? parseAmountStr(a[1].replace(/[ \u00a0]/g, '')) : null;
+    if (v != null && Math.abs(v - Math.round(v)) > 0.004) v = null;
+    out.amount = v;
+  }
   // v78: SINPE Móvil por SMS: cualquiera puede mandarte un SMS falso al número SINPE (que es público).
   // Si la notificación viene de una app de mensajes, el remitente (título) tiene que estar en PAY_CR_SMS_SENDERS;
   // si no está (o la variable falta) se guarda para revisión manual en PAGOS, nunca se acredita sola.
   if (method === 'cr_sinpe' && isSmsApp(app) && !crSmsSenderOk(title)) { out.method = null; out.untrusted = true; }
+  // v81: Prex avisa por su app (air.Prex); un SMS que diga "Recibiste…" no se acredita solo (va a revisión en PAGOS)
+  if (method === 'uy_prex' && isSmsApp(app)) { out.method = null; out.untrusted = true; }
   out.sender = extractSender(all); // v73: nombre de quien envió (se compara con el declarado por el cliente)
   const op = all.match(/(?:operaci[oó]n|n[uú]mero de operaci[oó]n|referencia|ref\.?|c[oó]digo|comprobante|folio|clave de rastreo)\s*(?:n[°º.o]*|#|:)?\s*([A-Za-z0-9-]{4,40})/i);
   if (op) out.op = op[1];
