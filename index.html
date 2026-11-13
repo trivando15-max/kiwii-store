@@ -5261,7 +5261,7 @@
                 li.classList.toggle('border-transparent', !on);
             });
         };
-        window.BALANCE_COMMISSION = { ARS: 0, MXN: 4, COP: 4, PEN: 4, USDT: 0, USD: 2, EUR: 2, CLP: 4, CRC: 5 };
+        window.BALANCE_COMMISSION = { ARS: 0, MXN: 4, COP: 4, PEN: 4, USDT: 0, USD: 2, EUR: 2, CLP: 4, CRC: 5, UYU: 2 };
         window.balanceCommissionCalc = function(amount, curr) {
             const pct = window.BALANCE_COMMISSION[curr] || 0;
             const a = Number(amount) || 0;
@@ -8485,8 +8485,8 @@ window.resetUser2FA = function(username) {
         const ICON = { usdt: 'fa-solid fa-coins', binance_pay: 'fa-solid fa-wallet', ar_transfer: 'fa-solid fa-building-columns',
                        mx_hey: 'fa-solid fa-credit-card', mx_nu: 'fa-solid fa-credit-card', co_bancolombia: 'fa-solid fa-landmark', pe_yape: 'fa-solid fa-mobile-screen',
                        us_takenos: 'fa-solid fa-dollar-sign', eu_wise: 'fa-solid fa-euro-sign',
-                       cl_bancoestado: 'fa-solid fa-building-columns', cr_sinpe: 'fa-solid fa-mobile-screen' };
-        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_hey: 'MXN', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC' };
+                       cl_bancoestado: 'fa-solid fa-building-columns', cr_sinpe: 'fa-solid fa-mobile-screen', uy_prex: 'fa-solid fa-building-columns' };
+        const FLAGC = { usdt: 'USDT', binance_pay: 'USDT', ar_transfer: 'ARS', mx_hey: 'MXN', mx_nu: 'MXN', co_bancolombia: 'COP', pe_yape: 'PEN', us_takenos: 'USD', eu_wise: 'EUR', cl_bancoestado: 'CLP', cr_sinpe: 'CRC', uy_prex: 'UYU' };
         // v70: banderas USD/EUR solo dentro de Recargar (no toca window.kiFlag ni el selector de moneda)
         const kFlag = (c, w) => { const iso = { USD: 'us', EUR: 'eu' }[c]; if (!iso) return window.kiFlag(c, w); const h = Math.round(w * 0.75);
             return '<img src="https://flagcdn.com/w40/' + iso + '.png" srcset="https://flagcdn.com/w80/' + iso + '.png 2x" alt="' + c + '" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:3px;display:inline-block;vertical-align:middle">'; };
@@ -8495,7 +8495,7 @@ window.resetUser2FA = function(username) {
                             ar_transfer: 'Número de operación / comprobante', mx_hey: 'Clave de rastreo / folio', mx_nu: 'Clave de rastreo / folio',
                             co_bancolombia: 'Número de comprobante', pe_yape: 'Número de operación',
                             us_takenos: 'Referencia / ID de la transferencia', eu_wise: 'Referencia / ID de la transferencia',
-                            cl_bancoestado: 'Número de operación / comprobante', cr_sinpe: 'Número de comprobante SINPE' };
+                            cl_bancoestado: 'Número de operación / comprobante', cr_sinpe: 'Número de comprobante SINPE', uy_prex: 'Número de comprobante / transacción' };
         const ST = { pending: ['Esperando tu pago', 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', 'fa-hourglass-half'],
                      submitted: ['Verificando…', 'bg-blue-500/20 text-blue-300 border-blue-500/40', 'fa-magnifying-glass'],
                      review: ['En revisión del staff', 'bg-orange-500/20 text-orange-300 border-orange-500/40', 'fa-user-shield'],
@@ -8513,10 +8513,10 @@ window.resetUser2FA = function(username) {
         const KSHORT = { pending: 'Pendiente', submitted: 'Verificando', review: 'En revisión', credited: 'Acreditada', expired: 'Vencida', cancelled: 'Cancelada', rejected: 'Rechazada' };
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const fmt = (n, cur) => {
-            const d = cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' ? 0 : 2;
+            const d = cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' || cur === 'UYU' ? 0 : 2;   // v81: UYU en pesos enteros
             return (cur === 'PEN' ? 'S/ ' : cur === 'EUR' ? '€ ' : cur === 'CRC' ? '₡ ' : cur === 'USDT' ? '' : '$ ') + Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ' + cur;
         };
-        const plain = (n, cur) => cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' ? String(Math.round(n)) : Number(n).toFixed(2);
+        const plain = (n, cur) => cur === 'ARS' || cur === 'COP' || cur === 'CLP' || cur === 'CRC' || cur === 'UYU' ? String(Math.round(n)) : Number(n).toFixed(2);
         async function api(action, data) {
             const r = await fetch(API + '?action=' + action, action === 'config' ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(Object.assign({ token: window.kiwiToken ? window.kiwiToken() : '' }, data || {})) });
@@ -8763,6 +8763,7 @@ window.resetUser2FA = function(username) {
                 pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.',
                 us_takenos: '🇺🇸 Transferencia <b>ACH</b> en dólares a la cuenta de arriba. Mandá el <b>monto exacto con los centavos</b>: así reconocemos tu pago. ACH puede tardar <b>hasta 48 h hábiles</b> en llegar. El nombre y la dirección del banco se muestran tal como los da la cuenta.',
                 cl_bancoestado: '🇨🇱 Transferencia (TEF) desde <b>cualquier banco de Chile</b> a la cuenta de arriba: llega al instante. Mandá el monto <b>exacto</b>: <b>respetá los últimos pesos</b>, así reconocemos tu pago.',
+                uy_prex: '🇺🇾 Transferí <b>en pesos uruguayos</b> desde <b>cualquier banco de Uruguay</b> (BROU, Santander, Itaú, Scotiabank, BBVA) o <b>de Prex a Prex</b>. Como banco de destino elegí <b>Prex</b> (en Santander figura como <b>“Prex (Fortex)”</b>) y poné el <b>número de cuenta</b> y el <b>nombre completo del titular</b> de arriba. Hasta <b>$ 22.000</b> se acredita al instante (montos mayores, en horario bancario). Mandá el monto <b>exacto</b>: <b>respetá los últimos pesos</b>, así reconocemos tu pago. <b>No envíes dólares.</b>',
                 cr_sinpe: '🇨🇷 Pagá por <b>SINPE Móvil</b> al número de arriba desde la app de tu banco: llega al instante. Mandá el monto <b>exacto en colones</b> (<b>respetá los últimos colones</b>), así reconocemos tu pago.',
                 eu_wise: '🇪🇺 Transferencia <b>SEPA</b> en euros al IBAN de arriba: llega en minutos y hasta 1 día hábil. Mandá el <b>monto exacto con los céntimos</b>. El Swift/BIC es solo para transferencias internacionales (fuera de SEPA).'
             }[id] || '';
@@ -9145,7 +9146,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 Chile (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 Chile (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)', uy_prex: '🇺🇾 Prex (UYU)' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
