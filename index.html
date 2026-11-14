@@ -9146,7 +9146,7 @@ window.resetUser2FA = function(username) {
     <script>
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Alias', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 Chile (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)', uy_prex: '🇺🇾 Prex (UYU)' };
+        const ML = { usdt: 'USDT', binance_pay: 'Binance Pay', ar_transfer: '🇦🇷 Mercado Pago / Alias (ARS)', mx_hey: '🇲🇽 Hey Banco', mx_nu: '🇲🇽 Nu (anterior)', co_bancolombia: '🇨🇴 Bancolombia', pe_yape: '🇵🇪 Yape', us_takenos: '🇺🇸 Takenos (USD)', eu_wise: '🇪🇺 Wise (EUR)', cl_bancoestado: '🇨🇱 Chile (CLP)', cr_sinpe: '🇨🇷 SINPE Móvil (CRC)', uy_prex: '🇺🇾 Prex (UYU)' };
         const P = window.KPAY_STAFF = { status: 'open', method: '', data: null };
         const rpc = (fn, a) => window.KPAY_MOCK_STAFF ? window.KPAY_MOCK_STAFF(fn, a) : window.kiwiStaffRpc(fn, a);
         window.loadAdminPagos = async function () {
@@ -9214,6 +9214,8 @@ window.resetUser2FA = function(username) {
                     <div class="flex gap-2 mt-2"><input id="kps-link-${n.id}" type="number" placeholder="Nº de recarga" value="${n.topup_id && /^name_/.test(n.status) ? n.topup_id : ''}" class="flex-1 bg-black/40 border border-kiwi-border rounded-lg p-2 text-white">
                     <button onclick="window.kpayStaffLink(${n.id})" class="bg-kiwi-gold text-black font-bold rounded-lg px-3">Acreditar</button>
                     <button onclick="window.kpayStaffIgnore(${n.id})" class="border border-kiwi-border text-gray-300 rounded-lg px-3">Ignorar</button></div>
+                    ${n.amount != null ? `<div class="flex gap-2 mt-2"><select id="kps-re-${n.id}" class="flex-1 bg-black/40 border border-kiwi-border rounded-lg p-2 text-white">${Object.entries(ML).filter(([v]) => !/binance|usdt/i.test(v)).map(([v, l]) => `<option value="${v}" ${n.method === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                    <button onclick="window.kpayStaffReprocess(${n.id})" class="border border-sky-400 text-sky-300 rounded-lg px-3" title="Si la notificación entró con el método/moneda equivocado: elegí el correcto y se vuelve a buscar la recarga">Reasignar</button></div>` : ''}
                 </div>`).join('') : '<p class="text-gray-500 text-sm">Nada pendiente.</p>';
             const autos = tops.filter(t => t.status === 'credited');
             document.getElementById('kps-log').innerHTML = autos.length ? autos.map(t => `<p class="text-gray-300">✅ #${t.id} ${esc(t.username)} +${Number(t.credited_usdt || t.usdt).toFixed(2)} USDT · ${ML[t.method] || t.method} · ${esc(t.source || '')} · ${esc(t.credited_by || '')} · ${new Date(t.credited_at).toLocaleString('es-AR')}</p>`).join('') : '<p class="text-gray-500">Elegí el filtro "Acreditadas" o "Todas" para ver el registro.</p>';
@@ -9245,8 +9247,32 @@ window.resetUser2FA = function(username) {
         };
         window.kpayStaffLink = async function (nid) {
             const id = Number(document.getElementById('kps-link-' + nid).value); if (!id) return alert('Escribí el número de recarga (#).');
-            if (!confirm('¿Acreditar la recarga #' + id + ' con esta notificación?')) return;
+            // v82: mostrar qué se acredita (USDT de la recarga) y avisar si la notificación es de otra moneda o monto
+            const t = (P.data.topups || []).find(x => Number(x.id) === id), n = (P.data.notifs || []).find(x => Number(x.id) === Number(nid)) || {};
+            let msg = '¿Acreditar la recarga #' + id + ' con esta notificación?';
+            if (t) {
+                msg += '\n\nRecarga #' + id + ': ' + Number(t.usdt).toFixed(2) + ' USDT ← ' + Number(t.pay_amount).toLocaleString('es-AR') + ' ' + t.currency + ' (' + (ML[t.method] || t.method) + ')';
+                if (n.amount != null) msg += '\nNotificación: ' + Number(n.amount).toLocaleString('es-AR') + ' ' + (n.currency || '');
+                if (n.amount != null && Math.abs(Number(n.amount) - Number(t.pay_amount)) >= 0.01) msg += '\n\n⚠️ El monto NO es igual. Se acreditan igual los ' + Number(t.usdt).toFixed(2) + ' USDT de la recarga.';
+                if (n.currency && n.currency !== t.currency) msg += '\nℹ️ La notificación había entrado como ' + n.currency + ': se corrige a ' + t.currency + '.';
+            } else msg += '\n\nSe acreditan los USDT que dice la recarga #' + id + ' (sin importar la moneda con la que entró la notificación).';
+            if (!confirm(msg)) return;
             try { await rpc('kiwi_pay_staff_approve', { p_id: id, p_notif_id: nid, p_usdt: null }); window.loadAdminPagos(); } catch (e) { alert(e.message); }
+        };
+        // v82: reasignar el método/moneda de una notificación y volver a buscar su recarga (monto exacto + nombre)
+        window.kpayStaffReprocess = async function (nid) {
+            const sel = document.getElementById('kps-re-' + nid); if (!sel) return;
+            if (!confirm('¿Tratar esta notificación como ' + (ML[sel.value] || sel.value) + ' y volver a buscar la recarga?')) return;
+            try {
+                const r = await rpc('kiwi_pay_staff_notif_reprocess', { p_notif_id: nid, p_method: sel.value }) || {};
+                const M = { matched: '✅ Acreditada automáticamente' + (r.topup_id ? ' (#' + r.topup_id + ')' : '') + '.',
+                            name_mismatch: '⚠️ Encontré la recarga #' + r.topup_id + ' pero el nombre no coincide: revisá y usá Acreditar.',
+                            name_missing: '⚠️ Encontré la recarga #' + r.topup_id + ' pero la notificación no trae nombre: revisá y usá Acreditar.',
+                            ambiguous: 'Hay ' + (r.candidates || 'varias') + ' recargas con ese monto: usá Acreditar con el Nº correcto.',
+                            unmatched: r.topup_id ? 'Recarga #' + r.topup_id + ': no se pudo acreditar sola, usá Acreditar.' : 'No hay recarga abierta con ese monto (o venció hace más de 2 h): usá Acreditar con el Nº.' };
+                alert(M[r.status] || 'Listo.');
+            } catch (e) { alert(e.message); }
+            window.loadAdminPagos();
         };
         window.kpayStaffIgnore = async function (nid) {
             try { await rpc('kiwi_pay_staff_notif_ignore', { p_notif_id: nid }); window.loadAdminPagos(); } catch (e) { alert(e.message); }
