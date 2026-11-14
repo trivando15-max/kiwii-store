@@ -479,7 +479,7 @@ const NOT_NAME = /^(?:COP|USD|EUR|MXN|ARS|PEN|CLP|CRC|Colones|SINPE|BancoEstado|
 function extractSender(all) {
   const tries = [
     new RegExp(NAME_RX + '\\s+(?:te\\s+(?:envi|transfiri|yape|pag|mand|deposit)|te\\s+(?:ha|han)\\s+(?:enviado|transferido|depositado|pagado)|(?:has\\s+)?sent\\s+you|paid\\s+you)'),
-    new RegExp('(?:^|[\\s·—:,(-])(?:[Dd]e|DE|[Dd]esde|DESDE|[Ff]rom|FROM|[Rr]emitente:?|[Ee]nviado por|[Ss]ent by)\\s+' + NAME_RX, 'g'),
+    new RegExp('(?:^|[\\s·—:,(-])(?:[Dd]e|DE|[Dd]esde|DESDE|[Ff]rom|FROM|[Rr]emitente:?|REMITENTE:?|[Oo]rdenante:?|ORDENANTE:?|[Nn]ombre del ordenante:?|[Ee]misor:?|EMISOR:?|[Ee]nviado por|[Ss]ent by)\\s+' + NAME_RX, 'g'),
   ];
   for (const rx of tries) {
     const list = rx.global ? [...all.matchAll(rx)] : [all.match(rx)].filter(Boolean);
@@ -493,29 +493,49 @@ function extractSender(all) {
   }
   return null;
 }
-// v73: misma regla que kiwi_pay_name_match (SQL): sin tildes/mayúsculas, por palabras, >= 2 en común (o todas si una tiene 1)
+// v73: tokens para VALIDAR lo que escribe el cliente (nombre y apellido = 2 palabras de 2+ letras)
 const NAME_STOP = new Set(['de','del','la','las','los','le','y','e','da','das','do','dos','di','van','von','el','sr','sra','mr','mrs','ms']);
 function nameTokens(s) {
   return [...new Set(String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').split(' ')
     .filter(w => w.length >= 2 && !NAME_STOP.has(w)))];
 }
+// v82: misma regla que kiwi_pay_name_match (SQL): sin tildes/mayúsculas; palabras de 3+ letras (sin "de", "del", "la", "y"…).
+// Coinciden si comparten AL MENOS UN nombre o apellido. Ej.: "Ivan Martin Estrada Esqueti" ~ "Ivan Estrada" (y ~ "Estrada").
+// true = coinciden · false = no · null = a alguno le falta el nombre (revisión manual)
+function matchTokens(s) { return [...new Set(nameTokens(s).filter(w => w.length >= 3))]; }
 function nameMatch(a, b) {
-  const ta = nameTokens(a), tb = nameTokens(b);
+  const ta = matchTokens(a), tb = matchTokens(b);
   if (!ta.length || !tb.length) return null;
-  const c = ta.filter(x => tb.includes(x)).length;
-  return c >= Math.min(2, ta.length, tb.length);
+  return ta.some(x => tb.includes(x));
 }
 const nameCheckOn = () => !/^(off|0|false|no)$/i.test(env('PAY_NAME_CHECK'));
 const NAME_ERR = 'Escribí el nombre completo (nombre y apellido) del titular de la cuenta desde la que vas a pagar: se usa para verificar el pago automáticamente y tiene que coincidir con el nombre de quien transfiere.';
 const cleanName = s => clean(s, 80).replace(/\s+/g, ' ').trim();
+// v82: firmas de texto inconfundibles (solo para corregir una regla mal apuntada; el paquete manda si viene)
+function textMethod(all) {
+  // Mercado Pago Argentina: "…te envió dinero y ya está generando rendimientos en tu cuenta." / "De X desde su cuenta de Mercado Pago."
+  // (no alcanza con "Mercado Pago" suelto: un SPEI o un pago a Prex pueden venir DESDE Mercado Pago de otro país)
+  if (!/\bprex\b/i.test(all) && /(generando rendimientos|desde su cuenta de mercado\s*pago)/i.test(all)) return 'ar_transfer';
+  if (/\bprex\b/i.test(all)) return 'uy_prex';
+  return null;
+}
 function parseNotification(n, forcedMethod) {
   const app = clean(n.package || n.packageName || n.app_package || n.app || '', 120);
   const title = clean(n.title || '', 300);
   const text = clean([n.big_text || n.bigText, n.text, n.sub_text || n.subText].filter(Boolean).join(' · ') || n.message || n._raw || '', 2000);
   const apps = jsonEnv('PAY_NOTIF_APPS_JSON', DEFAULT_APPS);
-  let method = METHODS[forcedMethod] && METHODS[forcedMethod].kind === 'notif' ? forcedMethod : (apps[app] || null);
   const all = (title + ' · ' + text).replace(/\s+/g, ' ');
+  // v82: el método se decide así (el primero que aplique):
+  //  1) el PAQUETE de la app, si es conocido (com.mercadopago.wallet = Mercado Pago ARS, air.Prex = Prex UY, …): manda sobre m=
+  //  2) una firma clara del texto que contradice m= ("generando rendimientos", "Mercado Pago" → ARS; "Prex" → UY)
+  //  3) m= de la URL de la regla  ·  4) nada (queda "sin asignar")
+  const forced = METHODS[forcedMethod] && METHODS[forcedMethod].kind === 'notif' ? forcedMethod : null;
+  const byPkg = apps[app] && METHODS[apps[app]] ? apps[app] : null;
+  const byText = textMethod(all);
+  // la firma de texto solo corrige HACIA Mercado Pago (la más clara); "Prex" en el texto solo se usa si no hay ni paquete ni m=
+  let method = byPkg || (forced && byText === 'ar_transfer' ? 'ar_transfer' : forced) || byText || null;
   const out = { app, title, text, method, amount: null, currency: method ? CUR_OF[method] : null, sender: null, op: null, incoming: false };
+  if (forced && method !== forced) out.reassigned = { from: forced, to: method, by: byPkg ? 'paquete' : 'texto' };
   out.incoming = INCOMING.test(all) && !(OUTGOING.test(all) && !INCOMING.test(all.replace(OUTGOING, '')));
   if (!out.incoming) return out;
   // v63: tomar el monto que aparece primero (prefijo "$"/"COP" o sufijo "COP"/"pesos"), no un saldo posterior
@@ -610,7 +630,8 @@ async function handler(req, res) {
         p_posted: posted ? new Date(posted).toISOString() : null, p_name_check: nameCheckOn() });
       if (r && r.status === 'matched' && r.already !== true && r.topup) { try { await notifyTopup(r.topup, p.sender); } catch (_) {} }
       if (r && (r.status === 'name_mismatch' || r.status === 'name_missing')) { try { await notifyNameReview(r, p); } catch (_) {} }
-      return send(res, 200, { ok: true, status: r.status || (r.duplicate ? 'duplicate' : 'ok'), id: r.id || null, sender: p.sender || null });
+      return send(res, 200, { ok: true, status: r.status || (r.duplicate ? 'duplicate' : 'ok'), id: r.id || null, sender: p.sender || null,
+                              method: p.incoming ? p.method : null, reassigned: p.reassigned || null });
     }
 
     // v72: ayuda para encontrar TG_CHAT_ID (solo con el secreto de admin; nunca devuelve el token del bot)
@@ -713,7 +734,13 @@ async function handler(req, res) {
       const list = await supaRpc('kiwi_pay_staff_list', { p_token: token, p_status: 'submitted', p_method: null, p_limit: 20 });
       const results = [];
       for (const t of (list.topups || []).slice(0, 8)) {
-        if (!METHODS[t.method] || METHODS[t.method].kind === 'notif') continue;
+        if (!METHODS[t.method]) continue;
+        if (METHODS[t.method].kind === 'notif') { // v82: transferencias "verificando": reintentar con las notificaciones guardadas
+          try { const r2 = await supaRpc('kiwi_pay_try_notifs', { p_id: Number(t.id), p_name_check: nameCheckOn() });
+                results.push({ id: t.id, status: r2 && r2.topup ? r2.topup.status : t.status }); if (r2 && r2.already === false && r2.topup) { try { await notifyTopup(r2.topup); } catch (_) {} } }
+          catch (e) { results.push({ id: t.id, error: clean(e.message, 160) }); }
+          continue;
+        }
         try { const o = await verifyTopup(t); results.push({ id: t.id, status: o && o.status, note: o && o.note }); }
         catch (e) { results.push({ id: t.id, error: clean(e.message, 160) }); }
       }
@@ -736,6 +763,12 @@ async function handler(req, res) {
       let t = await supaRpc('kiwi_pay_get', { p_token: token, p_id: Number(body.id) });
       const last = t.last_check_at ? Date.parse(t.last_check_at) : 0;
       if (t.status === 'submitted' && METHODS[t.method].kind !== 'notif' && Date.now() - last > 15000) t = await verifyTopup(t);
+      // v82: transferencias: mientras dice "Verificando…", volver a buscar la notificación (por si llegó antes, con otro método,
+      // o quedó trabada por el nombre). Solo acredita si el monto es exacto y el nombre coincide (regla v82).
+      if (t && ['pending', 'submitted', 'expired'].includes(t.status) && METHODS[t.method] && METHODS[t.method].kind === 'notif') {
+        try { const r2 = await supaRpc('kiwi_pay_try_notifs', { p_id: Number(t.id), p_name_check: nameCheckOn() });
+              if (r2 && r2.topup) { t = r2.topup; if (r2.already === false) { try { await notifyTopup(r2.topup); } catch (_) {} } } } catch (_) {}
+      }
       return send(res, 200, { ok: true, topup: t });
     }
     return send(res, 400, { error: 'Acción desconocida' });
@@ -747,5 +780,5 @@ async function handler(req, res) {
 
 module.exports = handler;
 module.exports.notifyOrders = notifyOrders;
-module.exports._t = { isSmsApp, crSmsSenderOk, extractSender, nameMatch, nameTokens, nameCheckOn, notifyNameReview, parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
+module.exports._t = { textMethod, matchTokens, isSmsApp, crSmsSenderOk, extractSender, nameMatch, nameTokens, nameCheckOn, notifyNameReview, parseNotification, parseAmountStr, binanceSign, quote, judge, notifHash, publicConfig, checkTronGrid,
   checkBinanceDeposit, checkBinancePay, verifyTopup, safeEq, getRate, notifyOrders, notifyTopup, orderTgText, robuxInfo, tgTime, methodMinutes, clearFx: () => { delete _fx.EUR; }, setFetch: f => { _fetch = f; } };
