@@ -14,9 +14,16 @@ const MARGINS = {
   249: 20, 250: 19, 251: 18, 252: 16.5, 253: 15.5, 254: 14.5, 255: 13.5, 256: 12, 257: 11, 258: 10,
   259: 20, 261: 18, 262: 17.5, 263: 16.5, 265: 14.5, 266: 13.5, 267: 12.5, 268: 12, 269: 11, 270: 10
 };
-const IDS = Object.keys(MARGINS).map(Number);   // claves de producto de Kiwii con entrega automática
-const NEEDS_ZONE = new Set(IDS.filter(id => id >= 249));
-const CATEGORY_OF = (pid) => pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : 'mlbb';
+// v85: productos por cantidad (se arman con varios paquetes del proveedor en un solo pedido). Sin margen de respaldo:
+// si la tabla no tiene su margen (sell_ratio) el producto queda no disponible.
+const BULK = {
+  901: { kind: 'frag', label: 'Fragmentos Universales', min: 40, step: 10, max: 10000 },
+  902: { kind: 'box', label: 'Cajas de Fragmentos', min: 7, step: 1, max: 1000 }
+};
+const isBulk = (id) => Object.prototype.hasOwnProperty.call(BULK, Number(id));
+const IDS = Object.keys(MARGINS).map(Number).concat(Object.keys(BULK).map(Number));   // claves de producto de Kiwii con entrega automática
+const NEEDS_ZONE = new Set(IDS.filter(id => id >= 249 && id <= 270));
+const CATEGORY_OF = (pid) => pid >= 900 ? 'freefire' : pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : 'mlbb';
 const TOLERANCE = 0.03;   // 3% de diferencia permitida entre el precio que vio el cliente y el actual
 const CACHE_MS = 15 * 60 * 1000;                 // el catálogo del proveedor se cachea ~15 min
 
@@ -28,11 +35,13 @@ function setRules(items) {
   const r = {};
   for (const [k, it] of Object.entries(items || {})) {
     const ratio = Number(it.ratio), cap = Number(it.cap);
-    r[k] = { ratio: ratio >= 1 && ratio <= 3 ? ratio : null, cap: cap > 0 ? cap : null };
+    const ucap = it.bulk && Number(it.bulk.unit_cap);
+    r[k] = { ratio: ratio >= 1 && ratio <= 3 ? ratio : null, cap: isBulk(k) ? (ucap > 0 ? ucap : null) : (cap > 0 ? cap : null) };
   }
   RULES = r;
 }
 const ceil2 = (x) => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
+const ceil6 = (x) => Math.ceil(Math.round(x * 1e8) / 100 - 1e-9) / 1e6;
 const marginOf = (id) => {
   const rr = RULES[id] && RULES[id].ratio; if (rr) return rr;
   const p = Number(MARGINS[id]); return p >= 0 && p <= 200 ? 1 + p / 100 : MARGIN;
@@ -50,6 +59,30 @@ const resellerSalePrice = (cost, id, level) => {
   const eff = cost > 0 ? salePrice(cost, id) / cost : (id != null ? marginOf(id) : MARGIN);   // margen real (con tope incluido)
   return Math.min(salePrice(cost, id), ceil2(cost * (1 + (eff - 1) * f)));
 };
+
+// v85: precio por unidad de los productos por cantidad (costo por unidad = el más caro entre los paquetes → nunca se pierde)
+function bulkUnit(unitCost, id, level) {
+  const ratio = RULES[id] && RULES[id].ratio; if (!(ratio && unitCost > 0)) return null;
+  let u = ceil6(unitCost * ratio);
+  const cap = RULES[id].cap; if (cap && u > cap) u = Math.max(cap, ceil6(unitCost * MIN_RATIO));
+  const f = RESELLER_FACTOR[level]; if (!f) return u;
+  return Math.min(u, ceil6(unitCost * (1 + (u / unitCost - 1) * f)));
+}
+const bulkPrice = (unitCost, id, qty, level) => { const u = bulkUnit(unitCost, id, level); return u ? ceil2(qty * u) : null; };
+function qtyError(id, qty) {
+  const b = BULK[id]; if (!b) return 'Producto inválido.';
+  if (!Number.isInteger(qty) || qty < b.min) return 'La cantidad mínima es ' + b.min + '.';
+  if (qty > b.max) return 'La cantidad máxima es ' + b.max + '.';
+  if (qty % b.step) return 'La cantidad tiene que ser múltiplo de ' + b.step + '.';
+  return null;
+}
+// Arma el pedido con los paquetes más grandes primero. Devuelve { lines: [{ref, n, size}], cost } o null si no se puede.
+function bulkPlan(packs, qty) {
+  const ps = (packs || []).filter(p => p.ref && p.size > 0 && p.cost > 0).sort((a, b) => b.size - a.size);
+  let left = qty, cost = 0; const lines = [];
+  for (const p of ps) { const n = Math.floor(left / p.size); if (n > 0) { lines.push({ ref: p.ref, n, size: p.size }); cost += n * p.cost; left -= n * p.size; } }
+  return left === 0 && lines.length ? { lines, cost: Math.round(cost * 1e4) / 1e4 } : null;
+}
 
 // ---------- HTTP ----------
 let _fetch = (...a) => fetch(...a);
@@ -103,7 +136,9 @@ async function loadItems() {
   const items = {};
   for (const it of (Array.isArray(r) ? r : [])) {
     const k = Number(it.kiwi_key);
-    if (IDS.includes(k) && it.product_ref) items[k] = { ref: String(it.product_ref), fields: Array.isArray(it.fields) ? it.fields : [], pin: !!it.pin, snapshot: Number(it.snapshot_cost) || null, ratio: Number(it.sell_ratio) || null, cap: Number(it.price_cap) || null };
+    if (IDS.includes(k) && it.product_ref) items[k] = { ref: String(it.product_ref), fields: Array.isArray(it.fields) ? it.fields : [], pin: !!it.pin, snapshot: Number(it.snapshot_cost) || null, ratio: Number(it.sell_ratio) || null, cap: Number(it.price_cap) || null,
+      bulk: it.bulk && typeof it.bulk === 'object' && Array.isArray(it.bulk.packs) ? it.bulk : null };
+    if (isBulk(k) && !(items[k].bulk && items[k].ratio)) delete items[k];   // por cantidad: sin paquetes o sin margen no se vende
   }
   if (Object.keys(items).length) setRules(items);
   return items;
@@ -116,15 +151,27 @@ async function loadLive() {
   const list = Array.isArray(r.json && r.json.items) ? r.json.items : null;
   if (!list || !list.length) throw new Error('catálogo vacío');
   const byRef = new Map(list.map(p => [String(p.product_id), p]));
-  const costs = {}, inactive = [], schemas = {};
+  const costs = {}, inactive = [], schemas = {}, packs = {};
   for (const id of IDS) {
+    if (isBulk(id)) {   // v85: todos los paquetes tienen que estar activos; costo por unidad = el más caro
+      const it = items[id]; const ps = [];
+      for (const k of (it ? it.bulk.packs : [])) {
+        const p = byRef.get(String(k.ref)), c = p ? Number(p.reseller_price) : NaN, size = Number(k.size);
+        if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || !(c > 0 && c < 10000) || !(size > 0)) { ps.length = 0; break; }
+        ps.push({ ref: String(k.ref), size, cost: c });
+        if (String(k.ref) === it.ref && Array.isArray(p.target_schema)) schemas[id] = p.target_schema;
+      }
+      if (!ps.length) { inactive.push(id); continue; }
+      packs[id] = ps; costs[id] = Math.max(...ps.map(p => p.cost / p.size));
+      continue;
+    }
     const it = items[id], p = it && byRef.get(it.ref);
     const c = p ? Number(p.reseller_price) : NaN;
     if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || !(c > 0 && c < 10000)) { inactive.push(id); continue; }
     costs[id] = Math.round(c * 1e4) / 1e4;
     if (Array.isArray(p.target_schema)) schemas[id] = p.target_schema;
   }
-  return { at: Date.now(), costs, inactive, schemas, items, live: true, source: 'live' };
+  return { at: Date.now(), costs, inactive, schemas, items, packs, live: true, source: 'live' };
 }
 async function persist(d) {
   const sig = JSON.stringify(d.costs);
@@ -138,14 +185,15 @@ async function loadPersisted() {
   const rows = Array.isArray(r) ? r : [];
   const db = {}; let at = 0;
   for (const row of rows) { const id = Number(row.ra_id), c = Number(row.cost); if (c > 0) { db[id] = c; at = Math.max(at, Date.parse(row.updated_at) || 0); } }
-  const costs = {}, inactive = [];
+  const costs = {}, inactive = [], packs = {};
   for (const id of IDS) {
     const it = items[id];
     const c = Math.max(Number(db[id]) || 0, (it && it.snapshot) || 0);   // conservador: el mayor entre lo guardado y la foto del SQL
     if (!it || !(c > 0)) { inactive.push(id); continue; }
     costs[id] = c;
+    if (isBulk(id)) packs[id] = it.bulk.packs.map(p => ({ ref: String(p.ref), size: Number(p.size), cost: Math.max(Number(p.cost) || 0, Number(p.size) * c) }));
   }
-  return Object.keys(costs).length ? { at: at || Date.now(), costs, inactive, schemas: {}, items } : null;
+  return Object.keys(costs).length ? { at: at || Date.now(), costs, inactive, schemas: {}, items, packs } : null;
 }
 async function getCosts(opts) {
   opts = opts || {};
@@ -156,7 +204,7 @@ async function getCosts(opts) {
   if (cache) return Object.assign({}, cache, { live: false, stale: true, source: 'cache' });
   const db = await loadPersisted().catch(() => null);
   if (db) return Object.assign(db, { live: false, stale: true, source: 'db' });
-  return { at: Date.now(), costs: {}, inactive: IDS.slice(), schemas: {}, items: {}, live: false, stale: true, source: 'fallback' };
+  return { at: Date.now(), costs: {}, inactive: IDS.slice(), schemas: {}, items: {}, packs: {}, live: false, stale: true, source: 'fallback' };
 }
 async function recentChanges(limit) {
   const r = await sbSoft('kiwi_ra_price_changes_recent', { p_limit: limit || 30 });
@@ -252,6 +300,16 @@ function failReason(order, item) {
 }
 async function applyOrder(rec, order) {
   const items = Array.isArray(order.items) ? order.items : [];
+  if (items.length > 1 || String(order.status || '').toLowerCase() === 'partially_completed') {   // v85: varios paquetes
+    const sts = items.map(i => String(i && i.status || '').toLowerCase());
+    const ok = sts.filter(x => x === 'completed').length, bad = sts.filter(x => FAIL_ITEM.test(x)).length;
+    if (items.length && ok === items.length) return deliver(rec, order);
+    if (items.length && bad === items.length) return refund(rec, failReason(order, items.find(i => i && i.failure) || items[0]));
+    if (items.length && ok + bad === items.length)
+      return toManual(rec, 'Entrega parcial: ' + ok + ' de ' + items.length + ' paquetes entregados. Devolvé la parte que falta desde el panel.', 'partial');
+    if (!items.length && String(order.status || '').toLowerCase() === 'partially_completed') return toManual(rec, 'Entrega parcial en el proveedor', 'partial');
+    return patch(rec, { status: 'processing', item_status: (ok + '/' + items.length + ' ok'), next_in_s: nextIn(rec), inc_checks: true });
+  }
   const item = items[0] || null;
   const st = String((item && item.status) || order.status || '').toLowerCase();
   const ost = String(order.status || '').toLowerCase();
@@ -263,7 +321,8 @@ async function applyOrder(rec, order) {
 // Enviar el pedido (idempotente: la misma Idempotency-Key devuelve el mismo pedido aunque se repita)
 async function submit(rec) {
   rec = await patch(rec, { inc_submits: true, submitted_at: true });
-  const body = { items: [{ catalog_item_id: rec.product_ref, quantity: 1, target_payload: rec.target || {} }], note: 'kiwi ' + String(rec.order_id).slice(0, 60) };
+  const lines = Array.isArray(rec.lines) && rec.lines.length ? rec.lines : [{ ref: rec.product_ref, n: 1 }];
+  const body = { items: lines.map(l => ({ catalog_item_id: String(l.ref), quantity: Math.max(1, Number(l.n) || 1), target_payload: rec.target || {} })), note: 'kiwi ' + String(rec.order_id).slice(0, 60) };
   const r = await prov('/orders', { method: 'POST', body, idem: rec.idem_key, ms: 25000 });
   const o = r.json && r.json.order;
   if (r.ok && o && o.id) {
@@ -337,5 +396,6 @@ function verifyWebhook(headers, raw, secret, nowMs) {
 }
 
 module.exports = { MARGIN, MARGINS, marginOf, TOLERANCE, IDS, NEEDS_ZONE, CATEGORY_OF, salePrice, resellerSalePrice, RESELLER_FACTOR,
+  BULK, isBulk, bulkUnit, bulkPrice, bulkPlan, qtyError,
   getCosts, recentChanges, _resetCache, _setFetch, setRules, provReady, prov, provBalance, buildTarget, sb, sbSoft, tg, tgEsc,
   processOrder, submit, refresh, applyOrder, sweep, publicStatus, verifyWebhook, nextIn };
