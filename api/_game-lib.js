@@ -1,4 +1,9 @@
-const RA_BASE = (process.env.INSTANT_API_BASE || process.env.RA_API_BASE || 'https://panel.recargasamerica.com/api/v1').replace(/\/+$/, '');
+// v83: entrega automática con el proveedor de recargas. Todo sale de variables de entorno (CO_API_BASE, CO_API_KEY, CO_WEBHOOK_SECRET)
+// y de Supabase (tabla kiwi_prov_items: qué producto del proveedor corresponde a cada producto de Kiwii).
+// Acá NO van nombres, URLs, códigos de producto ni costos del proveedor (el repo es público).
+const crypto = require('crypto');
+const env = k => String(process.env[k] || '').trim();
+
 const MARGIN = 1.10;      // margen por defecto (10%) solo si un producto no está en MARGINS
 const MARGINS = {
   5: 20, 6: 18, 7: 16, 8: 14, 9: 12, 10: 10,
@@ -7,115 +12,330 @@ const MARGINS = {
   30: 20, 31: 16.5, 32: 13.5, 33: 10,
   34: 20, 35: 18, 36: 16, 37: 14, 38: 12, 39: 10,
   249: 20, 250: 19, 251: 18, 252: 16.5, 253: 15.5, 254: 14.5, 255: 13.5, 256: 12, 257: 11, 258: 10,
-  259: 20, 260: 19, 261: 18, 262: 17.5, 263: 16.5, 264: 15.5, 265: 14.5, 266: 13.5, 267: 12.5, 268: 12, 269: 11, 270: 10
+  259: 20, 261: 18, 262: 17.5, 263: 16.5, 265: 14.5, 266: 13.5, 267: 12.5, 268: 12, 269: 11, 270: 10
 };
-const TOLERANCE = 0.03;   // 3% de margen de diferencia entre el precio que vio el cliente y el actual
-const CACHE_MS = 5 * 60 * 1000;
+const IDS = Object.keys(MARGINS).map(Number);   // claves de producto de Kiwii con entrega automática
+const NEEDS_ZONE = new Set(IDS.filter(id => id >= 249));
+const CATEGORY_OF = (pid) => pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : 'mlbb';
+const TOLERANCE = 0.03;   // 3% de diferencia permitida entre el precio que vio el cliente y el actual
+const CACHE_MS = 15 * 60 * 1000;                 // el catálogo del proveedor se cachea ~15 min
 
-const FALLBACK = {
-  5: 0.6494, 6: 1.9463, 7: 3.2918, 8: 6.1152, 9: 12.1364, 10: 30.8870, // Free Fire diamantes ilimitados (v39)
-  1: 0.3535, 2: 1.5150, 3: 7.0700, 4: 2.1210,
-  23: 0.7172, 25: 2.1515, 26: 3.5859, 27: 7.1693, 28: 14.3385, 29: 35.8488,
-  30: 0.4293, 31: 1.6875, 32: 3.3898, 33: 7.4249,
-  34: 0.8959, 35: 4.5090, 36: 9.0304, 37: 22.5873, 38: 45.1820, 39: 90.3764,
-  249: 1.1539, 250: 1.4592, 251: 2.3103, 252: 3.4494, 253: 7.6209, 254: 9.2364,
-  255: 27.7117, 256: 46.1870, 257: 69.2830, 258: 115.4725,
-  259: 0.8586, 260: 1.7173, 261: 1.7173, 262: 4.2931, 263: 8.5862, 264: 8.5862,
-  265: 17.1700, 266: 25.7562, 267: 42.9262, 268: 51.5100, 269: 68.6800, 270: 85.8500
-};
-const IDS = Object.keys(FALLBACK).map(Number);
-
-function raKey() {
-  return process.env.RA_API_KEY || process.env.RECARGAS_API_KEY || process.env.RECARGAS_AMERICA_API_KEY || process.env.RECARGAS_API_TOKEN || '';
+// v84: el margen de cada producto (y un tope opcional de precio) vienen de Supabase (kiwi_prov_items.sell_ratio / price_cap).
+// MARGINS queda solo como respaldo si la tabla todavía no tiene esos datos.
+const MIN_RATIO = 1.05;   // con tope: nunca menos de 5% de ganancia sobre el costo
+let RULES = {};           // { id: { ratio, cap } }
+function setRules(items) {
+  const r = {};
+  for (const [k, it] of Object.entries(items || {})) {
+    const ratio = Number(it.ratio), cap = Number(it.cap);
+    r[k] = { ratio: ratio >= 1 && ratio <= 3 ? ratio : null, cap: cap > 0 ? cap : null };
+  }
+  RULES = r;
 }
-const marginOf = (id) => { const p = Number(MARGINS[id]); return p >= 0 && p <= 200 ? 1 + p / 100 : MARGIN; };
-const salePrice = (cost, id) => Math.ceil(Math.round(cost * (id != null ? marginOf(id) : MARGIN) * 1e6) / 1e4 - 1e-9) / 100;
+const ceil2 = (x) => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
+const marginOf = (id) => {
+  const rr = RULES[id] && RULES[id].ratio; if (rr) return rr;
+  const p = Number(MARGINS[id]); return p >= 0 && p <= 200 ? 1 + p / 100 : MARGIN;
+};
+const salePrice = (cost, id) => {
+  let p = ceil2(cost * (id != null ? marginOf(id) : MARGIN));
+  const cap = id != null && RULES[id] && RULES[id].cap;
+  if (cap && p > cap) p = Math.max(cap, ceil2(cost * MIN_RATIO));   // no subir el precio por encima del tope (salvo para mantener el 5%)
+  return p;
+};
 const RESELLER_FACTOR = { 1: 0.5, 2: 0.25 };
 const resellerSalePrice = (cost, id, level) => {
   const f = RESELLER_FACTOR[level];
   if (!f) return salePrice(cost, id);
-  const m = 1 + ((id != null ? marginOf(id) : MARGIN) - 1) * f;
-  return Math.ceil(Math.round(cost * m * 1e6) / 1e4 - 1e-9) / 100;
+  const eff = cost > 0 ? salePrice(cost, id) / cost : (id != null ? marginOf(id) : MARGIN);   // margen real (con tope incluido)
+  return Math.min(salePrice(cost, id), ceil2(cost * (1 + (eff - 1) * f)));
 };
 
-function isInactive(p) {
-  if (!p) return true;
-  if (p.active === false || p.is_active === false || p.enabled === false || p.available === false) return true;
-  const st = String(p.status || p.state || '').toLowerCase();
-  return /inactiv|disabled|unavailable|agotado|out_of_stock|paused/.test(st);
-}
-
-let cache = null; // { at, costs, inactive, live }
-let inflight = null;
-
-async function loadLive(fetchImpl) {
-  const key = raKey();
-  if (!key) throw new Error('sin clave');
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 8000);
+// ---------- HTTP ----------
+let _fetch = (...a) => fetch(...a);
+function _setFetch(f) { _fetch = f || ((...a) => fetch(...a)); }
+async function fetchJson(url, opts, ms) {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), ms || 20000);
   try {
-    const r = await (fetchImpl || fetch)(RA_BASE + '/products/catalog', { method: 'GET', headers: { 'Authorization': 'Bearer ' + key, 'Accept': 'application/json' }, signal: ctrl.signal });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
-    const list = Array.isArray(j && j.data) ? j.data : (j && j.data && Array.isArray(j.data.products) ? j.data.products : null);
-    if (!list || !list.length) throw new Error('catálogo vacío');
-    const byId = new Map(list.map(p => [Number(p.id != null ? p.id : p.product_id), p]));
-    const costs = {}, inactive = [];
-    for (const id of IDS) {
-      const p = byId.get(id);
-      const c = p ? Number(p.price != null ? p.price : p.cost) : NaN;
-      if (!p || isInactive(p) || !(c > 0 && c < 10000)) { inactive.push(id); costs[id] = FALLBACK[id]; continue; }
-      costs[id] = Math.round(c * 1e4) / 1e4;
-    }
-    return { at: Date.now(), costs, inactive, live: true, source: 'live' };
+    const r = await _fetch(url, Object.assign({}, opts, { signal: ctrl.signal }));
+    const text = await r.text();
+    let json; try { json = text ? JSON.parse(text) : {}; } catch (_) { json = { raw: String(text).slice(0, 300) }; }
+    const ra = r.headers && typeof r.headers.get === 'function' ? Number(r.headers.get('retry-after')) : NaN;
+    return { ok: r.ok, status: r.status, json, retryAfter: Number.isFinite(ra) ? ra : null };
   } finally { clearTimeout(t); }
 }
 
-const SB_URL = () => (process.env.SUPABASE_URL || 'https://ykxyiamlvlppcyfzyvzr.supabase.co').replace(/\/$/, '');
-async function sbRpc(fn, args, fetchImpl) {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) return null;
-  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 4000);
+// ---------- Supabase (service role: solo servidor) ----------
+const SB_URL = () => (env('SUPABASE_URL') || 'https://ykxyiamlvlppcyfzyvzr.supabase.co').replace(/\/$/, '');
+async function sb(fn, args, ms) {
+  const key = env('SUPABASE_SERVICE_ROLE_KEY');
+  if (!key) throw new Error('Falta SUPABASE_SERVICE_ROLE_KEY');
+  const r = await fetchJson(SB_URL() + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }, ms || 10000);
+  if (!r.ok) throw new Error(String((r.json && (r.json.message || r.json.error)) || ('Supabase ' + r.status)).slice(0, 300));
+  return r.json;
+}
+const sbSoft = (fn, args, ms) => sb(fn, args, ms || 4000).catch(() => null);
+
+// ---------- Proveedor ----------
+const provBase = () => env('CO_API_BASE').replace(/\/+$/, '');
+const provKey = () => env('CO_API_KEY');
+const provReady = () => !!(provBase() && provKey());
+// Devuelve { ok, status, json, code, message, retryAfter }. Nunca tira excepción (los cortes de red vuelven como code 'network').
+async function prov(path, opts) {
+  opts = opts || {};
+  if (!provReady()) return { ok: false, status: 0, code: 'not_configured', message: 'Faltan CO_API_BASE / CO_API_KEY' };
+  const headers = { Authorization: 'Bearer ' + provKey(), Accept: 'application/json' };
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  if (opts.idem) headers['Idempotency-Key'] = opts.idem;
   try {
-    const r = await (fetchImpl || fetch)(SB_URL() + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: ctrl.signal });
-    if (!r.ok) return null;
-    return await r.json();
-  } catch (_) { return null; } finally { clearTimeout(t); }
-}
-let lastSynced = null;
-async function persist(d, fetchImpl) {
-  const sig = JSON.stringify(d.costs);
-  if (sig === lastSynced) return;
-  const costs = {}; for (const id of IDS) if (!(d.inactive || []).includes(id)) costs[id] = d.costs[id];
-  const r = await sbRpc('kiwi_ra_costs_sync', { p_costs: costs }, fetchImpl);
-  if (r !== null) lastSynced = sig;
-}
-async function loadPersisted(fetchImpl) {
-  const r = await sbRpc('kiwi_ra_costs_get', {}, fetchImpl);
-  const rows = Array.isArray(r) ? r : [];
-  const costs = {}; let at = 0;
-  for (const row of rows) { const id = Number(row.ra_id), c = Number(row.cost); if (IDS.includes(id) && c > 0) { costs[id] = c; at = Math.max(at, Date.parse(row.updated_at) || 0); } }
-  return Object.keys(costs).length ? { costs, at } : null;
-}
-async function recentChanges(limit, fetchImpl) {
-  const r = await sbRpc('kiwi_ra_price_changes_recent', { p_limit: limit || 30 }, fetchImpl);
-  return Array.isArray(r) ? r : [];
+    const r = await fetchJson(provBase() + path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined }, opts.ms || 20000);
+    const e = r.json && r.json.error && typeof r.json.error === 'object' ? r.json.error : null;
+    return Object.assign(r, { code: e ? String(e.code || '') : (r.ok ? null : 'http_' + r.status), message: e ? String(e.message || '').slice(0, 200) : null });
+  } catch (e) {
+    return { ok: false, status: 0, code: 'network', message: String(e && e.message || e).slice(0, 200) };
+  }
 }
 
+// ---------- Catálogo / costos (con caché, memoria en Supabase si el proveedor no responde) ----------
+let cache = null, inflight = null, lastSynced = null;
+async function loadItems() {
+  const r = await sb('kiwi_prov_items_get', {}, 6000);
+  const items = {};
+  for (const it of (Array.isArray(r) ? r : [])) {
+    const k = Number(it.kiwi_key);
+    if (IDS.includes(k) && it.product_ref) items[k] = { ref: String(it.product_ref), fields: Array.isArray(it.fields) ? it.fields : [], pin: !!it.pin, snapshot: Number(it.snapshot_cost) || null, ratio: Number(it.sell_ratio) || null, cap: Number(it.price_cap) || null };
+  }
+  if (Object.keys(items).length) setRules(items);
+  return items;
+}
+async function loadLive() {
+  const items = await loadItems();
+  if (!Object.keys(items).length) throw new Error('sin productos configurados (kiwii-v83.sql)');
+  const r = await prov('/catalog', { ms: 15000 });
+  if (!r.ok) throw new Error('catálogo ' + (r.code || r.status));
+  const list = Array.isArray(r.json && r.json.items) ? r.json.items : null;
+  if (!list || !list.length) throw new Error('catálogo vacío');
+  const byRef = new Map(list.map(p => [String(p.product_id), p]));
+  const costs = {}, inactive = [], schemas = {};
+  for (const id of IDS) {
+    const it = items[id], p = it && byRef.get(it.ref);
+    const c = p ? Number(p.reseller_price) : NaN;
+    if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || !(c > 0 && c < 10000)) { inactive.push(id); continue; }
+    costs[id] = Math.round(c * 1e4) / 1e4;
+    if (Array.isArray(p.target_schema)) schemas[id] = p.target_schema;
+  }
+  return { at: Date.now(), costs, inactive, schemas, items, live: true, source: 'live' };
+}
+async function persist(d) {
+  const sig = JSON.stringify(d.costs);
+  if (sig === lastSynced) return;
+  const r = await sbSoft('kiwi_ra_costs_sync', { p_costs: d.costs });
+  if (r !== null) lastSynced = sig;
+}
+async function loadPersisted() {
+  const items = await loadItems().catch(() => ({}));
+  const r = await sbSoft('kiwi_ra_costs_get', {});
+  const rows = Array.isArray(r) ? r : [];
+  const db = {}; let at = 0;
+  for (const row of rows) { const id = Number(row.ra_id), c = Number(row.cost); if (c > 0) { db[id] = c; at = Math.max(at, Date.parse(row.updated_at) || 0); } }
+  const costs = {}, inactive = [];
+  for (const id of IDS) {
+    const it = items[id];
+    const c = Math.max(Number(db[id]) || 0, (it && it.snapshot) || 0);   // conservador: el mayor entre lo guardado y la foto del SQL
+    if (!it || !(c > 0)) { inactive.push(id); continue; }
+    costs[id] = c;
+  }
+  return Object.keys(costs).length ? { at: at || Date.now(), costs, inactive, schemas: {}, items } : null;
+}
 async function getCosts(opts) {
   opts = opts || {};
   if (!opts.force && cache && Date.now() - cache.at < CACHE_MS) return cache;
-  if (!inflight) inflight = loadLive(opts.fetch).then(async d => { cache = d; try { await persist(d, opts.fetch); } catch (_) {} return d; }, () => null).finally(() => { inflight = null; });
+  if (!inflight) inflight = loadLive().then(async d => { cache = d; try { await persist(d); } catch (_) {} return d; }, () => null).finally(() => { inflight = null; });
   const d = await inflight;
   if (d) return d;
   if (cache) return Object.assign({}, cache, { live: false, stale: true, source: 'cache' });
-  const db = await loadPersisted(opts.fetch).catch(() => null);
-  if (db) {
-    const costs = {}; for (const id of IDS) costs[id] = Math.max(Number(db.costs[id]) || 0, FALLBACK[id]);
-    return { at: db.at || Date.now(), costs, inactive: [], live: false, stale: true, source: 'db' };
-  }
-  return { at: Date.now(), costs: Object.assign({}, FALLBACK), inactive: [], live: false, stale: true, source: 'fallback' };
+  const db = await loadPersisted().catch(() => null);
+  if (db) return Object.assign(db, { live: false, stale: true, source: 'db' });
+  return { at: Date.now(), costs: {}, inactive: IDS.slice(), schemas: {}, items: {}, live: false, stale: true, source: 'fallback' };
 }
-function _resetCache() { cache = null; inflight = null; lastSynced = null; }
+async function recentChanges(limit) {
+  const r = await sbSoft('kiwi_ra_price_changes_recent', { p_limit: limit || 30 });
+  return Array.isArray(r) ? r : [];
+}
+function _resetCache() { cache = null; inflight = null; lastSynced = null; _bal = null; RULES = {}; }
 
-module.exports = { RA_BASE, MARGIN, MARGINS, marginOf, TOLERANCE, FALLBACK, IDS, raKey, salePrice, resellerSalePrice, RESELLER_FACTOR, getCosts, recentChanges, _resetCache };
+// target_payload a partir del esquema del producto (los "select" usan el value de la opción)
+function buildTarget(fields, schema, player, zone) {
+  const sch = Array.isArray(schema) && schema.length ? schema : (fields || []).map(k => ({ key: k, type: 'text' }));
+  if (!sch.length) return { payload: {} };
+  const out = {};
+  for (const f of sch) {
+    const k = String(f && f.key || ''); if (!k) continue;
+    const isZone = /zone|server|servidor|region/i.test(k);
+    let v = String(isZone ? (zone || '') : (player || '')).trim();
+    if (!v) return { error: isZone ? 'Falta la Zona / Servidor.' : 'Falta el ID de jugador.' };
+    if (f.type === 'select' && Array.isArray(f.options) && f.options.length) {
+      const o = f.options.find(o => String(o.value) === v) || f.options.find(o => String(o.label || '').trim().toLowerCase() === v.toLowerCase());
+      if (!o) return { error: 'Zona / Servidor no válido para este producto.' };
+      v = String(o.value);
+    }
+    out[k] = v;
+  }
+  return { payload: out };
+}
+
+// ---------- Telegram (mismo bot de avisos: TG_BOT_TOKEN + TG_CHAT_ID) ----------
+async function tg(text) {
+  if (!env('TG_BOT_TOKEN') || !env('TG_CHAT_ID')) return false;
+  try {
+    const r = await fetchJson('https://api.telegram.org/bot' + env('TG_BOT_TOKEN') + '/sendMessage', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: env('TG_CHAT_ID'), text: String(text).slice(0, 3900), parse_mode: 'HTML', disable_web_page_preview: true }) }, 8000);
+    return !!r.ok;
+  } catch (_) { return false; }
+}
+const tgEsc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+// ---------- Saldo del proveedor (caché 30 s) ----------
+let _bal = null;
+async function provBalance(force) {
+  if (!force && _bal && Date.now() - _bal.at < 30000) return _bal.v;
+  const r = await prov('/balance', { ms: 8000 });
+  if (!r.ok || !r.json) return null;
+  const v = { available: Number(r.json.available_balance), held: Number(r.json.held_balance), total: Number(r.json.total_balance), currency: r.json.currency || 'USD' };
+  _bal = { at: Date.now(), v }; return v;
+}
+
+// ---------- Pedidos en el proveedor ----------
+const FAIL_ITEM = /^(failed|refunded|cancelled|canceled)$/i;
+const FAIL_ORDER = /^(failed|cancelled|canceled)$/i;
+const MAX_SUBMITS = 8;
+// Próxima revisión: cada 30 s los primeros 5 min desde el envío, después cada 5 min
+const nextIn = (rec) => { const t0 = Date.parse(rec && rec.submitted_at) || Date.now(); return Date.now() - t0 < 5 * 60 * 1000 ? 30 : 300; };
+
+async function patch(rec, p) { const r = await sb('kiwi_prov_order_patch', { p_order_id: rec.order_id, p_patch: p }); return r || rec; }
+async function alertOnce(rec, kind, text) {
+  if (rec.last_alert === kind) return rec;
+  await tg(text);
+  return patch(rec, { last_alert: kind });
+}
+const orderLine = rec => '#' + tgEsc(rec.order_id) + ' · ' + tgEsc(rec.title || ('producto ' + rec.kiwi_key)) + ' · ' + tgEsc(rec.username);
+
+async function toManual(rec, why, kind) {
+  rec = await patch(rec, { status: 'manual', last_error: why });
+  return alertOnce(rec, kind || 'manual', '⚠️ <b>Entrega automática pendiente (manual)</b>\n' + orderLine(rec) + '\nMotivo: ' + tgEsc(why) + '\nEl cliente YA pagó: cargalo a mano o cancelalo (devuelve el saldo) desde el panel.');
+}
+async function refund(rec, why) {
+  const r = await sb('kiwi_prov_refund', { p_order_id: rec.order_id, p_reason: why });
+  const fresh = (await sbSoft('kiwi_prov_order_get', { p_key: rec.order_id })) || rec;
+  if (r && r.skipped) await alertOnce(fresh, 'refund-skipped', '⚠️ <b>Falló en el proveedor</b> pero el pedido figura entregado: revisalo.\n' + orderLine(rec) + '\n' + tgEsc(why));
+  else if (r && r.ok && !r.already) await tg('↩️ <b>Recarga automática fallida → saldo devuelto</b>\n' + orderLine(rec) + '\nDevuelto: ' + Number(r.refunded || 0).toFixed(2) + ' USDT\nMotivo: ' + tgEsc(why));
+  return Object.assign(fresh, { _refund: r });
+}
+async function deliver(rec, order) {
+  let codes = null;
+  if (rec.pin || (order && order.items && order.items.some(i => i.product_type === 'gift_card' || i.has_codes))) {
+    const c = await prov('/orders/' + encodeURIComponent(rec.prov_order_id) + '/codes', { ms: 15000 });
+    if (!c.ok) return patch(rec, { last_error: 'códigos: ' + (c.code || c.status), next_in_s: 60, inc_checks: true });   // reintenta después
+    codes = [];
+    for (const it of (c.json && Array.isArray(c.json.items) ? c.json.items : [])) for (const x of (Array.isArray(it.codes) ? it.codes : [])) {
+      const s = typeof x === 'string' ? x : [x.code || x.pin, x.serial].filter(Boolean).join(' - ');
+      if (s) codes.push(String(s).slice(0, 300));
+    }
+    if (!codes.length) return patch(rec, { last_error: 'sin códigos todavía', next_in_s: 60, inc_checks: true });
+  }
+  await sb('kiwi_prov_deliver', { p_order_id: rec.order_id, p_codes: codes });
+  return Object.assign((await sbSoft('kiwi_prov_order_get', { p_key: rec.order_id })) || rec, { status: 'completed', codes });
+}
+function failReason(order, item) {
+  const f = (item && item.failure) || (order && order.failure) || {};
+  return String(f.message_es || f.message || f.code || (item && item.status) || (order && order.status) || 'falló').slice(0, 200);
+}
+async function applyOrder(rec, order) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const item = items[0] || null;
+  const st = String((item && item.status) || order.status || '').toLowerCase();
+  const ost = String(order.status || '').toLowerCase();
+  if (st === 'completed' || (ost === 'completed' && !item)) return deliver(rec, order);
+  if (FAIL_ITEM.test(st) || (!item && FAIL_ORDER.test(ost)) || (FAIL_ORDER.test(ost) && !/^completed$/.test(st))) return refund(rec, failReason(order, item));
+  return patch(rec, { status: 'processing', item_status: st || ost, next_in_s: nextIn(rec), inc_checks: true });
+}
+
+// Enviar el pedido (idempotente: la misma Idempotency-Key devuelve el mismo pedido aunque se repita)
+async function submit(rec) {
+  rec = await patch(rec, { inc_submits: true, submitted_at: true });
+  const body = { items: [{ catalog_item_id: rec.product_ref, quantity: 1, target_payload: rec.target || {} }], note: 'kiwi ' + String(rec.order_id).slice(0, 60) };
+  const r = await prov('/orders', { method: 'POST', body, idem: rec.idem_key, ms: 25000 });
+  const o = r.json && r.json.order;
+  if (r.ok && o && o.id) {
+    rec = await patch(rec, { status: 'submitted', prov_order_id: String(o.id), prov_ref: String(o.reference_code || ''), item_status: String(o.status || ''),
+                             cost: o.total_sale_amount != null ? String(o.total_sale_amount) : undefined, last_error: null, next_in_s: 0 });
+    if (/^(completed|failed|cancelled|canceled|partially_completed)$/i.test(String(o.status || '')) || Array.isArray(o.items)) return applyOrder(rec, o);
+    return patch(rec, { next_in_s: 30 });
+  }
+  const code = String(r.code || '');
+  if (code === 'insufficient_balance') return toManual(rec, 'Saldo insuficiente en el proveedor', 'balance');
+  if (code === 'insufficient_stock') return toManual(rec, 'Sin stock en el proveedor', 'stock');
+  if (code === 'invalid_request' || r.status === 404) return refund(rec, 'Datos rechazados por el proveedor' + (r.message ? ': ' + r.message : ''));   // no se creó: se devuelve
+  if (code === 'invalid_api_key' || code === 'insufficient_scope' || code === 'not_configured' || code === 'idempotency_key_reused' || r.status === 401 || r.status === 403 || r.status === 422)
+    return toManual(rec, 'Configuración del proveedor: ' + (code || r.status), 'config');
+  // rate_limited / maintenance_mode / service_unavailable / 5xx / red: reintentar con la MISMA clave
+  if ((rec.submits || 0) >= MAX_SUBMITS) return toManual(rec, 'No se pudo enviar (' + (code || r.status) + ') tras ' + rec.submits + ' intentos', 'retries');
+  const wait = Math.max(30, Math.min(1800, Number(r.retryAfter) || (code === 'maintenance_mode' ? 600 : 60)));
+  rec = await patch(rec, { status: 'retry', last_error: code || ('HTTP ' + r.status), next_in_s: wait });
+  if (code === 'maintenance_mode') await alertOnce(rec, 'maintenance', '🛠️ Proveedor en mantenimiento: el pedido ' + orderLine(rec) + ' se reintenta solo.');
+  return rec;
+}
+async function refresh(rec) {
+  if (!rec.prov_order_id) return submit(rec);
+  const r = await prov('/orders/' + encodeURIComponent(rec.prov_order_id), { ms: 15000 });
+  if (r.ok && r.json && (r.json.order || r.json.id)) return applyOrder(rec, r.json.order || r.json);
+  const wait = r.status === 429 ? Math.max(60, Number(r.retryAfter) || 60) : nextIn(rec);
+  return patch(rec, { last_error: 'consulta: ' + (r.code || r.status), next_in_s: wait, inc_checks: true });
+}
+// Procesa un pedido según su estado. force = ignorar el horario de la próxima revisión (webhook / staff)
+async function processOrder(rec, force) {
+  if (!rec) return rec;
+  const due = force || !rec.next_check_at || Date.parse(rec.next_check_at) <= Date.now() + 500;
+  if (!due) return rec;
+  if (rec.status === 'new' || rec.status === 'retry') {
+    if (['cancelled', 'delivered', 'accredited'].includes(String(rec.compra_status || ''))) return rec;   // el staff ya lo resolvió a mano
+    return submit(rec);
+  }
+  if (rec.status === 'submitted' || rec.status === 'processing') {
+    if (Date.now() - (Date.parse(rec.submitted_at) || Date.now()) > 48 * 3600 * 1000) return toManual(rec, 'Sin respuesta final del proveedor en 48 h', 'stale');
+    return refresh(rec);
+  }
+  return rec;
+}
+async function sweep(limit) {
+  const list = await sbSoft('kiwi_prov_due', { p_limit: limit || 5 }, 6000);
+  const out = [];
+  for (const rec of (Array.isArray(list) ? list : [])) { try { const x = await processOrder(rec); out.push({ id: rec.order_id, status: x && x.status }); } catch (e) { out.push({ id: rec.order_id, error: String(e.message || e).slice(0, 120) }); } }
+  return out;
+}
+// Estado neutral para el cliente
+function publicStatus(rec) {
+  if (!rec) return 'unknown';
+  if (rec.status === 'completed') return 'delivered';
+  if (rec.status === 'refunded') return 'refunded';
+  if (rec.status === 'manual') return 'manual';
+  return 'processing';
+}
+
+// Webhook: firma HMAC-SHA256(secreto, timestamp + "." + cuerpo crudo) en un encabezado x-…-signature ("sha256=hex")
+function headerLike(headers, rx) { for (const k of Object.keys(headers || {})) if (rx.test(k)) return String(headers[k] || ''); return ''; }
+function verifyWebhook(headers, raw, secret, nowMs) {
+  if (!secret || secret.length < 16) return { ok: false, why: 'sin secreto' };
+  const sig = headerLike(headers, /^x-[a-z0-9]+-signature$/i).replace(/^sha256=/i, '').trim().toLowerCase();
+  const ts = headerLike(headers, /^x-[a-z0-9]+-timestamp$/i).trim();
+  if (!sig || !ts) return { ok: false, why: 'faltan encabezados' };
+  let tms = Number(ts); if (!Number.isFinite(tms)) tms = Date.parse(ts); else if (tms < 1e12) tms *= 1000;
+  if (!Number.isFinite(tms) || Math.abs((nowMs || Date.now()) - tms) > 5 * 60 * 1000) return { ok: false, why: 'vencido' };
+  const exp = crypto.createHmac('sha256', secret).update(ts + '.' + raw).digest('hex');
+  if (!/^[0-9a-f]{64}$/.test(sig) || !crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(exp, 'hex'))) return { ok: false, why: 'firma' };
+  return { ok: true };
+}
+
+module.exports = { MARGIN, MARGINS, marginOf, TOLERANCE, IDS, NEEDS_ZONE, CATEGORY_OF, salePrice, resellerSalePrice, RESELLER_FACTOR,
+  getCosts, recentChanges, _resetCache, _setFetch, setRules, provReady, prov, provBalance, buildTarget, sb, sbSoft, tg, tgEsc,
+  processOrder, submit, refresh, applyOrder, sweep, publicStatus, verifyWebhook, nextIn };
