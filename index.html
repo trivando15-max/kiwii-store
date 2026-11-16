@@ -29,7 +29,7 @@
         window.kiwiRaIsRaProd = p => !!(p && (p.raId || p.raLegacyId || p.autoDelivery || (window.KIWI_RA_ITEMS || []).some(it => it.id === p.id)));
         // v68: "No Stock" desde el Panel Staff (pestaña STOCK, Owner/CEO). Se guarda en Supabase (kiwi_stock_flags).
         window.KIWI_STOCK_OFF = (function () { try { return new Set(JSON.parse(localStorage.getItem('kiwi_stock_off') || '[]')); } catch (_) { return new Set(); } })();
-        window.KIWI_STOCK_FRAG_IDS = [222, 223, 224, 225, 226]; window.KIWI_STOCK_BOX_IDS = [227, 228, 229];
+        window.KIWI_STOCK_FRAG_IDS = []; window.KIWI_STOCK_BOX_IDS = []; // v85: fragmentos/cajas sin productos sueltos (calculadora automática); el botón de stock sigue siendo ff:frag / ff:box
         window.kiwiStockKey = function (p) {
             if (!p) return null;
             const cat = String(p.category || ''), sub = String(p.sub || '');
@@ -250,7 +250,6 @@
 #ff-summary-body > .ktb, #ra-summary-body > .ktb{margin:10px 0 0}
 #product-grid > div > .ktb{margin:10px 0 0}
 .kby-opt{display:flex;flex-direction:column;background:#111318;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:10px}
-.kby-manual{border-color:rgba(245,158,11,.35)}
 .ff-ra-card img, .ra-card img{object-fit:contain}
 </style>
 <style>.kcat-ico{width:44px;height:44px;border-radius:12px;object-fit:cover;border:1px solid rgba(255,255,255,.2);box-shadow:0 4px 14px rgba(0,0,0,.4);flex-shrink:0}@media(max-width:640px){.kcat-ico{width:36px;height:36px;border-radius:10px}}</style>
@@ -887,7 +886,7 @@
                             <i class="fa-solid fa-chevron-down text-kiwi-red transition-transform flex-shrink-0"></i>
                         </button>
                         <div class="hidden px-5 pb-5">
-                            <p class="text-sm text-gray-300 font-rajdhani">El plazo de entrega de los productos es bastante variable, pero tenemos entrega automática en los siguientes productos: Diamantes ILIMITADOS de Free Fire, suscripciones a streaming/IA, seguidores/likes/vistas de redes sociales. Los demás productos se estima una entrega de 1 a 24 horas en general.</p>
+                            <p class="text-sm text-gray-300 font-rajdhani">El plazo de entrega de los productos es bastante variable, pero tenemos entrega automática en los siguientes productos: Diamantes ILIMITADOS, tarjetas, Pase Booyah, Fragmentos y Cajas de Fragmentos de Free Fire, recargas de Blood Strike, PUBG Mobile y Mobile Legends, suscripciones a streaming/IA, seguidores/likes/vistas de redes sociales. Los demás productos se estima una entrega de 1 a 24 horas en general.</p>
                         </div>
                     </div>
                 </div>
@@ -1116,12 +1115,12 @@
                         
                         <section id="ff-booyah-card" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Pase Booyah</h3>
-                            <p class="text-xs text-gray-400 mb-4">Elegí cómo querés recibirlo.</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <p class="text-xs text-gray-400 mb-4">Entrega automática a tu ID.</p>
+                            <div class="grid grid-cols-1 gap-4 max-w-sm">
                                 <div class="kby-opt kby-auto">
                                     <button type="button" id="ff-booyah-select" data-ff-id="221" onclick="window.ffSelectProduct(221)" class="ff-card group w-full bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
                                         <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-3">
-                                            <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                            <img src="/images/ff-booyah-pass.webp" alt="Pase Booyah" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                         </div>
                                         <div class="px-2 pb-3 pt-2 bg-[#20232b]">
                                             <p class="font-bold text-white text-sm">Pase Booyah · instantáneo</p>
@@ -1135,51 +1134,24 @@
                                     </ul>
                                     <button onclick="window.buyBooyahPass()" class="w-full min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-bolt mr-1"></i> Comprar Pase (instantáneo)</button>
                                 </div>
-                                <div class="kby-opt kby-manual">
-                                    <button type="button" id="ff-booyah-manual-select" data-ff-id="680" onclick="window.ffSelectProduct(680)" class="ff-card group w-full bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
-                                        <div class="h-28 flex items-center justify-center bg-gradient-to-b from-amber-500/15 to-transparent p-3">
-                                            <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah con carga manual" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
-                                        </div>
-                                        <div class="px-2 pb-3 pt-2 bg-[#20232b]">
-                                            <p class="font-bold text-white text-sm">Pase Booyah · carga manual</p>
-                                            <p id="booyah-manual-price-display" class="text-emerald-400 font-bold text-sm">$3.200 ARS</p>
-                                            <p class="text-[11px] text-gray-500">≈ $2.00 USD</p>
-                                        </div>
-                                    </button>
-                                    <ul class="text-xs text-gray-400 space-y-1 font-rajdhani my-3">
-                                        <li><i class="fa-solid fa-user-clock text-amber-400 mr-1"></i> Carga manual: un miembro del staff lo carga en tu ID.</li>
-                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se descuenta de tu saldo al confirmar.</li>
-                                    </ul>
-                                    <button onclick="window.buyBooyahManual()" class="w-full min-h-[44px] bg-amber-500 hover:bg-amber-400 text-black font-bold px-4 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-user-clock mr-1"></i> Comprar Pase (carga manual)</button>
-                                </div>
                             </div>
                         </section>
-                        <div class="kdel-head kdel-head-manual">🕒 Cargas manuales <span>Un miembro del staff la carga manualmente</span></div>
-                        <section id="ff-limited-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
-                            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
-                                <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes Limitados <span class="text-orange-400 text-sm">(1 x ID)</span></h3>
-                                <span class="text-[11px] text-gray-500 font-rajdhani">Más baratos · 1 compra por pack y por ID</span>
-                            </div>
-                            <p id="ff-limited-note" class="text-[11px] text-gray-500 font-rajdhani mb-4">Verificá tu ID para ver qué packs limitados tenés disponibles.</p>
-                            <div id="ff-limited-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
-                        </section>
-
                         <!-- CALCULADORA FRAGMENTOS UNIVERSALES -->
                         <section id="ff-fragments-calculator" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <div class="flex items-start gap-4 mb-4">
                                 <div class="w-16 h-16 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 p-2 flex items-center justify-center">
-                                    <img src="https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png" alt="Fragmentos Universales" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                    <img src="/images/ff-evo-fragmento.webp" alt="Fragmentos Universales" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                 </div>
                                 <div>
                                     <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Fragmentos Universales</h3>
-                                    <p class="text-xs text-gray-400 mt-1">Mínimo de compra: <strong class="text-white">35 fragmentos</strong>. Los precios de los paquetes son referenciales.</p>
+                                    <p class="text-xs text-gray-400 mt-1">Mínimo <strong class="text-white">40 fragmentos</strong> (de a 10). <span class="text-emerald-400"><i class="fa-solid fa-bolt"></i> Entrega automática a tu ID</span></p>
                                 </div>
                             </div>
                             <label for="frag-qty" class="text-xs text-gray-400">Cantidad de fragmentos</label>
                             <div class="flex flex-col sm:flex-row gap-2 mt-1">
-                                <input type="number" id="frag-qty" min="35" step="1" inputmode="numeric" value="35" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
+                                <input type="number" id="frag-qty" min="40" step="10" inputmode="numeric" value="40" class="flex-1 bg-[#1b1e25] border border-white/10 focus:border-white/30 focus:outline-none rounded-xl p-3 text-white text-sm">
                                 <div class="flex gap-2">
-                                    <button onclick="window.addFragQty(35)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+35</button>
+                                    <button onclick="window.addFragQty(10)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+10</button>
                                     <button onclick="window.addFragQty(50)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+50</button>
                                     <button onclick="window.addFragQty(100)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+100</button>
                                     <button onclick="window.addFragQty(500)" class="flex-1 sm:flex-none bg-[#1b1e25] border border-white/10 hover:border-white/30 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg">+500</button>
@@ -1188,7 +1160,7 @@
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
                                 <div>
                                     <p id="frag-price-result" class="text-base font-bold text-emerald-400">Precio: $0 ARS</p>
-                                    <p id="frag-min-error" class="hidden mt-1 text-red-400 text-sm font-bold">El monto mínimo es de 35 fragmentos</p>
+                                    <p id="frag-min-error" class="hidden mt-1 text-red-400 text-sm font-bold">Mínimo 40 fragmentos, de a 10 (40, 50, 60…)</p>
                                 </div>
                                 <button onclick="window.buyFragments()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar fragmentos</button>
                             </div>
@@ -1198,11 +1170,11 @@
                         <section id="ff-boxes-calculator" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <div class="flex items-start gap-4 mb-4">
                                 <div class="w-16 h-16 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 p-2 flex items-center justify-center">
-                                    <img src="https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png" alt="Cajas de Fragmentos" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                    <img src="/images/ff-evo-caja.webp" alt="Cajas de Fragmentos" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                 </div>
                                 <div>
                                     <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Cajas de Fragmentos</h3>
-                                    <p class="text-xs text-gray-400 mt-1">Mínimo de compra: <strong class="text-white">7 cajas</strong>. Los precios de los paquetes son referenciales.</p>
+                                    <p class="text-xs text-gray-400 mt-1">Mínimo <strong class="text-white">7 cajas</strong>. <span class="text-emerald-400"><i class="fa-solid fa-bolt"></i> Entrega automática a tu ID</span></p>
                                 </div>
                             </div>
                             <label for="box-qty" class="text-xs text-gray-400">Cantidad de cajas</label>
@@ -1223,6 +1195,16 @@
                                 <button onclick="window.buyBoxes()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-cart-shopping mr-1"></i> Comprar cajas</button>
                             </div>
                         </section>
+                        <div class="kdel-head kdel-head-manual">🕒 Cargas manuales <span>Un miembro del staff la carga manualmente</span></div>
+                        <section id="ff-limited-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
+                            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+                                <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes Limitados <span class="text-orange-400 text-sm">(1 x ID)</span></h3>
+                                <span class="text-[11px] text-gray-500 font-rajdhani">Más baratos · 1 compra por pack y por ID</span>
+                            </div>
+                            <p id="ff-limited-note" class="text-[11px] text-gray-500 font-rajdhani mb-4">Verificá tu ID para ver qué packs limitados tenés disponibles.</p>
+                            <div id="ff-limited-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+                        </section>
+
                         <div id="ff-grid-slot"></div>
                     </div>
 
@@ -3231,16 +3213,7 @@
             { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', usdtPrice: 29.63, emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
 
             // FREE FIRE - PASES Y FRAGMENTOS
-            { id: 680, category: 'freefire', sub: 'booyah_manual', title: 'Pase Booyah (carga manual)', price: '$3.200 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', usdtPrice: 2.0, manualDelivery: true },
-            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
-            { id: 222, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1', price: '$75 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 0.045 },
-            { id: 223, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x10', price: '$750 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 0.45 },
-            { id: 224, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x100', price: '$7.500 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: false, usdtPrice: 4.5 },
-            { id: 225, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x500', price: '$35.500 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', popular: true, usdtPrice: 21.2 },
-            { id: 226, category: 'freefire', sub: 'especiales', title: 'Fragmento Universal x1000', price: '$70.000 ARS', image: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', tag: 'Mejor Oferta', popular: true, usdtPrice: 42.5 },
-            { id: 227, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1', price: '$500 ARS', image: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', popular: false, usdtPrice: 0.30 },
-            { id: 228, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x10', price: '$5.000 ARS', image: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', popular: false, usdtPrice: 3.0 },
-            { id: 229, category: 'freefire', sub: 'especiales', title: 'Caja de Fragmentos x1000', price: '$47.500 ARS', image: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', tag: 'Pack', popular: true, usdtPrice: 29.0 },
+            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: '/images/ff-booyah-pass.webp', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
 
             // INSTAGRAM
             { id: 401, category: 'instagram', sub: 'seguidores', title: '100 Seguidores', price: '1 USDT - $1.600 ARS', emoji: '👥', popular: false, usdtPrice: 1 },
@@ -4368,9 +4341,10 @@
         // v49: tipo de entrega (fuente única)
         window.KIWI_DELIVERY = {
             manualCategories: ['roblox'],
-            // v52: el Pase Booyah de entrega automática (id 221) es instantáneo; el manual es el id 680. Diamantes Limitados = manual.
+            // v85: fragmentos y cajas Evo pasan a entrega automática y se quitó el Pase Booyah manual. Manuales en Free Fire: solo Diamantes Limitados.
+            // (los pedidos VIEJOS de fragmentos / cajas / "carga manual" siguen mostrándose como manuales)
             manualRegex: /fragmento|caja de fragmento|cajas? de evolutiv|evolutiv|carga manual|\blimitad[oa]s?\b/i,
-            manualIds: [210, 211, 212, 213, 214, 215, 222, 223, 224, 225, 226, 227, 228, 229, 680]
+            manualIds: [210, 211, 212, 213, 214, 215]
         };
         window.kiwiDeliveryType = function (p) {
             if (!p) return 'auto';
@@ -4378,6 +4352,7 @@
             const D = window.KIWI_DELIVERY;
             const cat = p.category || (window.kiwiPurchaseCat ? window.kiwiPurchaseCat(p) : '');
             if (D.manualCategories.includes(cat)) return 'manual';
+            if (p.kind === 'frag' || p.kind === 'box' || p.sub === 'evo' || /entrega autom/i.test(String(p.method || '') + ' ' + String(p.extra || ''))) return 'auto';   // v85
             if (p.id != null && D.manualIds.includes(Number(p.id)) && (cat === 'freefire' || !cat)) return 'manual';
             if (D.manualRegex.test(String(p.title || '') + ' ' + String(p.sub || ''))) return 'manual';
             if (/robux|roblox/i.test(String(p.title || ''))) return 'manual';
@@ -4843,7 +4818,7 @@
             const prod = window.products.find(p => p.id === id);
             if (!prod) return;
             window.ffSelection = { kind: 'product', id: prod.id, title: prod.title, price: (prod.id === 221 && document.getElementById('booyah-price-display')) ? document.getElementById('booyah-price-display').textContent : window.getConvertedPrice(prod), usd: window.ffUsdOf(prod), img: prod.image ? window.imgPath(prod.image) : null, icon: (prod.sub === 'ilimitado' || prod.sub === 'limitado') ? 'fa-gem' : 'fa-ticket' };
-            document.querySelectorAll('#ff-diamond-grid .ff-card, #ff-limited-grid .ff-card, #ff-booyah-select, #ff-booyah-manual-select').forEach(c => {
+            document.querySelectorAll('#ff-diamond-grid .ff-card, #ff-limited-grid .ff-card, #ff-booyah-select').forEach(c => {
                 const on = Number(c.dataset.ffId || (c.id === 'ff-booyah-select' ? 221 : 0)) === id;
                 c.classList.toggle('border-white/60', on); c.classList.toggle('bg-[#262a33]', on);
                 c.classList.toggle('border-white/5', !on);
@@ -4860,7 +4835,7 @@
             // Solo actualiza el resumen si el usuario está usando esa calculadora
             const active = document.activeElement && (document.activeElement.id === (kind === 'frag' ? 'frag-qty' : 'box-qty'));
             if (!active && !(cur && cur.kind === kind)) return;
-            window.ffSelection = { kind, id: null, title: kind === 'frag' ? `Fragmentos Universales x${qty}` : `Cajas de Fragmentos x${qty}`, price: window.formatArsAsCurrency(priceArs), usd: priceArs / 1600, img: kind === 'frag' ? 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png' : 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', icon: 'fa-box' };
+            window.ffSelection = { kind, id: null, title: kind === 'frag' ? `Fragmentos Universales x${qty}` : `Cajas de Fragmentos x${qty}`, price: window.formatArsAsCurrency(priceArs), usd: priceArs / 1600, img: kind === 'frag' ? '/images/ff-evo-fragmento.webp' : '/images/ff-evo-caja.webp', icon: 'fa-box' };
             window.renderFFSummary();
         };
         window.ffBuySelection = function() {
@@ -4869,7 +4844,6 @@
             if (s.kind === 'frag') return window.buyFragments();
             if (s.kind === 'box') return window.buyBoxes();
             if (s.id === 221) return window.buyBooyahPass();
-            if (s.id === 680) return window.buyBooyahManual();
             window.openCheckout(s.id);
         };
         window.renderFFSummary = function() {
@@ -6605,9 +6579,50 @@
         };
 
 
-        // Precios base en ARS (saldo interno siempre en ARS)
-        const FRAG_PRICE_PER_UNIT = 75;
-        const BOX_PRICE_PER_UNIT = 500;
+        // v85: Fragmentos y Cajas de Fragmentos con ENTREGA AUTOMÁTICA (cobro y envío en el servidor, /api/game).
+        // Precio por unidad: lo manda /api/game-prices (campo "bulk"); estos valores son solo el respaldo hasta que carga.
+        window.KIWI_EVO = {
+            frag: { key: 901, unit: 0.043882, res: [0.035983, 0.032034], min: 40, step: 10, max: 10000, title: 'Fragmentos Universales', img: '/images/ff-evo-fragmento.webp', off: false, input: 'frag-qty', err: 'frag-min-error' },
+            box:  { key: 902, unit: 0.292542, res: [0.216481, 0.178451], min: 7, step: 1, max: 1000, title: 'Cajas de Fragmentos', img: '/images/ff-evo-caja.webp', off: false, input: 'box-qty', err: 'box-min-error' }
+        };
+        window.kiwiEvoUnit = function (kind) {
+            const e = window.KIWI_EVO[kind], l = window.kiwiReseller ? window.kiwiReseller.activeLevel() : 0;
+            return (l && Number(e.res[l - 1]) > 0) ? Number(e.res[l - 1]) : e.unit;
+        };
+        window.kiwiEvoPrice = function (kind, qty) { const x = qty * window.kiwiEvoUnit(kind); return Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100; };   // igual que el servidor
+        window.kiwiEvoMsg = function (kind) { const e = window.KIWI_EVO[kind]; return e.step > 1 ? ('Mínimo ' + e.min + ' ' + (kind === 'frag' ? 'fragmentos' : 'cajas') + ', de a ' + e.step + ' (' + e.min + ', ' + (e.min + e.step) + ', ' + (e.min + 2 * e.step) + '…)') : ('El mínimo es de ' + e.min + ' ' + (kind === 'frag' ? 'fragmentos' : 'cajas')); };
+        window.kiwiEvoReadQty = function (kind) {
+            const e = window.KIWI_EVO[kind], el = document.getElementById(e.input), err = document.getElementById(e.err);
+            const raw = el ? String(el.value).trim() : '';
+            const n = /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
+            let msg = null;
+            if (!Number.isFinite(n) || n < e.min || n % e.step) msg = window.kiwiEvoMsg(kind);
+            else if (n > e.max) msg = 'Máximo ' + e.max.toLocaleString('es-AR') + ' por pedido';
+            if (err) { err.classList.toggle('hidden', !msg); if (msg) err.textContent = msg; }
+            return msg ? null : n;
+        };
+        window.kiwiEvoUpdate = function (kind) {
+            const e = window.KIWI_EVO[kind], qty = window.kiwiEvoReadQty(kind);
+            const result = document.getElementById(kind === 'frag' ? 'frag-price-result' : 'box-price-result');
+            if (e.off) { if (result) result.innerHTML = '<span class="text-red-400">Sin stock por ahora</span>'; window.ffSummaryFromCalc && window.ffSummaryFromCalc(kind, null); return; }
+            if (qty === null) { if (result) result.textContent = 'Precio: —'; window.ffSummaryFromCalc && window.ffSummaryFromCalc(kind, null); return; }
+            const priceArs = Math.round(window.kiwiEvoPrice(kind, qty) * 1600);
+            if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
+            window.ffSummaryFromCalc && window.ffSummaryFromCalc(kind, qty, priceArs);
+        };
+        window.kiwiEvoBuy = function (kind) {
+            const e = window.KIWI_EVO[kind];
+            const qty = window.kiwiEvoReadQty(kind);
+            if (qty === null) return alert(window.kiwiEvoMsg(kind));
+            if (typeof currentUser === 'undefined' || !currentUser) return alert('Iniciá sesión');
+            if (!window.ffRequireVerifiedId()) return;
+            if (e.off) return alert('Este producto está agotado / no disponible por el momento.\nNO se descontó saldo.');
+            const usdt = window.kiwiEvoPrice(kind, qty), title = e.title + ' x' + qty, ffId = String(window.lastFFId || '');
+            const priceStr = window.formatArsAsCurrency(Math.round(usdt * 1600));
+            if (!window.confirm(title + '\nPrecio: ' + priceStr + ' (' + usdt.toFixed(2) + ' USDT)\nID: ' + ffId + '\n\n⚡ Entrega automática a tu ID.\n¿Confirmás la compra?')) return;
+            return window.kiwiRaPurchase({ id: e.key, kind, raId: e.key, qty, usdtPrice: usdt, title, price: '$' + Math.round(usdt * 1600).toLocaleString('es-AR') + ' ARS', category: 'freefire', sub: 'evo', image: e.img },
+                                         { player_id: ffId, zone_id: '', name: window.lastFFName || '' });
+        };
         // v38: el saldo es en USDT. Los precios en ARS de esta sección se pasan a USDT con la tasa fija de la tienda (1 USDT = 1600 ARS)
         window.kiwiArsToUsdt = function(ars) { return Math.round((Number(ars) || 0) / 1600 * 100) / 100; };
         window.kiwiBooyahArs = function() { return Math.round((Number((window.products.find(p => p.id === 221) || {}).usdtPrice) || 2.7) * 1600); };
@@ -6639,148 +6654,29 @@
             return ok ? n : null;
         };
         window.setFragQty = function(q) {
-            document.getElementById('frag-qty').value = Math.max(35, q);
+            document.getElementById('frag-qty').value = Math.max(window.KIWI_EVO.frag.min, q);
             window.updateFragPrice();
         };
-        window.updateFragPrice = function() {
-            const el = document.getElementById('frag-qty');
-            if (!el) return;
-            const qty = window.kiwiReadQty(el, 35, 'frag-min-error');
-            const result = document.getElementById('frag-price-result');
-            if (qty === null) { if (result) result.textContent = 'Precio: —'; window.ffSummaryFromCalc && window.ffSummaryFromCalc('frag', null); return; }
-            const priceArs = qty * FRAG_PRICE_PER_UNIT;
-            if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
-            window.ffSummaryFromCalc && window.ffSummaryFromCalc('frag', qty, priceArs);
-        };
-        document.getElementById('frag-qty')?.addEventListener('input', window.updateFragPrice);
-
-        window.buyFragments = function() {
-            const qty = window.kiwiReadQty(document.getElementById('frag-qty'), 35, 'frag-min-error');
-            if (qty === null) return alert('El monto mínimo es de 35 fragmentos');
-            if (!currentUser) return alert('Iniciá sesión');
-            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            const bal = users[currentUser]?.balance || 0;
-            const priceArs = qty * FRAG_PRICE_PER_UNIT;
-            const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
-            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyFragments(), qty + ' Fragmentos');
-            const ffId = users[currentUser]?.ff_id;
-            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
-
-            users[currentUser].balance = bal - price;
-            localStorage.setItem('kiwi_users', JSON.stringify(users));
-                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
-            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-
-            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            purchases.push({
-                id: Date.now(),
-                user: currentUser,
-                title: 'Fragmentos Universales x' + qty,
-                price: '$' + priceArs.toLocaleString('es-AR') + ' ARS (' + price.toFixed(2) + ' USDT)',
-                usdtPrice: price,
-                targetUser: ffId,
-                date: new Date().toLocaleDateString('es-AR'),
-                status: 'confirmed',
-                category: 'freefire'
-            });
-            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-            alert('Pedido de ' + qty + ' fragmentos creado');
-            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-        };
+        window.updateFragPrice = function() { window.kiwiEvoUpdate('frag'); };
+        document.getElementById('frag-qty')?.addEventListener('input', () => window.updateFragPrice());
+        window.buyFragments = function() { return window.kiwiEvoBuy('frag'); };   // v85: automático
 
         // Calculadora Cajas de Fragmentos
         window.setBoxQty = function(q) {
-            document.getElementById('box-qty').value = Math.max(7, q);
+            document.getElementById('box-qty').value = Math.max(window.KIWI_EVO.box.min, q);
             window.updateBoxPrice();
         };
-        window.updateBoxPrice = function() {
-            const el = document.getElementById('box-qty');
-            if (!el) return;
-            const qty = window.kiwiReadQty(el, 7, 'box-min-error');
-            const result = document.getElementById('box-price-result');
-            if (qty === null) { if (result) result.textContent = 'Precio: —'; window.ffSummaryFromCalc && window.ffSummaryFromCalc('box', null); return; }
-            const priceArs = qty * BOX_PRICE_PER_UNIT;
-            if (result) result.textContent = 'Precio: ' + window.formatArsAsCurrency(priceArs);
-            window.ffSummaryFromCalc && window.ffSummaryFromCalc('box', qty, priceArs);
-        };
-        document.getElementById('box-qty')?.addEventListener('input', window.updateBoxPrice);
+        window.updateBoxPrice = function() { window.kiwiEvoUpdate('box'); };
+        document.getElementById('box-qty')?.addEventListener('input', () => window.updateBoxPrice());
 
         window.updateBooyahPrice = function() {
             const el = document.getElementById('booyah-price-display');
             if (el) el.textContent = window.formatArsAsCurrency(window.kiwiBooyahArs());
             const usd = document.getElementById('booyah-usd-display');
             if (usd) usd.textContent = '≈ $' + (window.kiwiBooyahArs() / 1600).toFixed(2) + ' USD';
-            const bm = document.getElementById('booyah-manual-price-display'), pm = window.products.find(p => p.id === 680);
-            if (bm && pm) bm.textContent = window.getConvertedPrice(pm);
         };
 
-        // v52: Pase Booyah con carga manual (2 USDT). NO pasa por /api/game: descuenta saldo y crea el pedido para el staff (igual que Fragmentos).
-        window.BOOYAH_MANUAL_ID = 680;
-        window.buyBooyahManual = function() {
-            if (!window.ffRequireVerifiedId()) return;
-            if (!currentUser) return alert('Iniciá sesión');
-            const prod = window.products.find(p => p.id === window.BOOYAH_MANUAL_ID);
-            if (!prod) return alert('Producto no disponible');
-            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            if (!users[currentUser]) return alert('Sesión inválida');
-            const bal = Number(users[currentUser].balance || 0);
-            const price = Number(prod.usdtPrice) || 2;
-            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyBooyahManual(), 'Pase Booyah');
-            const ffId = users[currentUser].ff_id;
-            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
-            const priceStr = window.getConvertedPrice(prod);
-            if (!window.confirm('Pase Booyah (carga manual)\nPrecio: ' + priceStr + ' (' + price.toFixed(2) + ' USDT)\nID: ' + ffId + '\n\n🕒 CARGA MANUAL: un miembro del staff lo carga manualmente.\n¿Confirmás la compra?')) return;
-            users[currentUser].balance = bal - price;
-            localStorage.setItem('kiwi_users', JSON.stringify(users));
-            if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
-            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-            const order = {
-                id: Date.now(), user: currentUser, title: 'Pase Booyah (carga manual)',
-                price: /USDT/.test(priceStr) ? priceStr : priceStr + ' (' + price.toFixed(2) + ' USDT)', usdtPrice: price, targetUser: ffId,
-                date: new Date().toLocaleString('es-AR'), status: 'confirmed', category: 'freefire', sub: 'booyah_manual',
-                productId: window.BOOYAH_MANUAL_ID, delivery: 'manual', method: 'Saldo (carga manual)', notes: ''
-            };
-            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            purchases.push(order);
-            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-            alert('Pedido de Pase Booyah (carga manual) creado.\nUn miembro del staff lo carga manualmente en tu ID.');
-            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-            return order;
-        };
-
-        window.buyBoxes = function() {
-            const qty = window.kiwiReadQty(document.getElementById('box-qty'), 7, 'box-min-error');
-            if (qty === null) return alert('El monto mínimo es de 7 cajas');
-            if (!currentUser) return alert('Iniciá sesión');
-            const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
-            const bal = users[currentUser]?.balance || 0;
-            const priceArs = qty * BOX_PRICE_PER_UNIT;
-            const price = window.kiwiArsToUsdt(priceArs); // v38: el saldo está en USDT
-            if (bal < price) return window.kiwiLowBal(bal, price, () => window.buyBoxes(), 'Caja de Fragmentos');
-            const ffId = users[currentUser]?.ff_id;
-            if (!ffId) return alert('Verificá tu ID de Free Fire primero');
-
-            users[currentUser].balance = bal - price;
-            localStorage.setItem('kiwi_users', JSON.stringify(users));
-                if (typeof window.syncBalanceToCloud === 'function') window.syncBalanceToCloud(currentUser, users[currentUser].balance);
-            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
-
-            const purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            purchases.push({
-                id: Date.now(),
-                user: currentUser,
-                title: 'Cajas de Fragmentos x' + qty,
-                price: '$' + priceArs.toLocaleString('es-AR') + ' ARS (' + price.toFixed(2) + ' USDT)',
-                usdtPrice: price,
-                targetUser: ffId,
-                date: new Date().toLocaleDateString('es-AR'),
-                status: 'confirmed',
-                category: 'freefire'
-            });
-            localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
-            alert('Pedido de ' + qty + ' cajas creado');
-            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
-        };
+        window.buyBoxes = function() { return window.kiwiEvoBuy('box'); };   // v85: automático (se quitó el Pase Booyah con carga manual)
 
         window.buyBooyahPass = function() {
             if (!currentUser) return alert('Iniciá sesión');
@@ -6890,15 +6786,15 @@
 
 
         window.addFragQty = function(q) {
-            const el = document.getElementById('frag-qty');
-            const current = parseInt(el.value) || 35;
-            el.value = Math.max(35, current + q);
+            const el = document.getElementById('frag-qty'), E = window.KIWI_EVO.frag;
+            const current = parseInt(el.value) || E.min;
+            el.value = Math.min(E.max, Math.max(E.min, Math.ceil((current + q) / E.step) * E.step));
             window.updateFragPrice();
         };
         window.addBoxQty = function(q) {
             const el = document.getElementById('box-qty');
-            const current = parseInt(el.value) || 7;
-            el.value = Math.max(7, current + q);
+            const current = parseInt(el.value) || window.KIWI_EVO.box.min;
+            el.value = Math.min(window.KIWI_EVO.box.max, Math.max(window.KIWI_EVO.box.min, current + q));
             window.updateBoxPrice();
         };
 
@@ -8193,7 +8089,7 @@ window.resetUser2FA = function(username) {
             const user = currentUser;
             const orderId = Date.now();
             const order = { id: orderId, user, title: prod.title, price: prod.price, method: 'Saldo (entrega automática)', date: new Date().toLocaleString('es-AR'), status: 'confirmed', targetUser: 'ID ' + data.player_id + (data.zone_id ? ' · Zona ' + data.zone_id : ''), extra: 'Entrega automática', category: prod.category, sub: prod.sub, usdtPrice: price, notes: '' };
-            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, reseller: (window.kiwiReseller && window.kiwiReseller.activeLevel()) ? 1 : 0, product_id: autoId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
+            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, reseller: (window.kiwiReseller && window.kiwiReseller.activeLevel()) ? 1 : 0, product_id: autoId, qty: prod.qty || undefined, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
             let j = null;
             try {
                 for (let i = 0; i < 3 && !j; i++) { // si se corta la conexión se reintenta con la MISMA solicitud: nunca cobra ni recarga dos veces
@@ -8320,8 +8216,8 @@ window.resetUser2FA = function(username) {
             const note = document.getElementById('kdel-filter-note');
             if (note) {
                 note.classList.toggle('hidden', f === 'all');
-                note.textContent = f === 'manual' ? 'Cargas manuales: todo Roblox, y en Free Fire los Diamantes Limitados, Fragmentos, Cajas de Fragmentos y el Pase Booyah con carga manual. Un miembro del staff las carga manualmente.'
-                    : 'Entrega instantánea: se acredita automáticamente. Free Fire tiene ambos tipos (diamantes y tarjetas son instantáneos).';
+                note.textContent = f === 'manual' ? 'Cargas manuales: todo Roblox, y en Free Fire los Diamantes Limitados. Un miembro del staff las carga manualmente.'
+                    : 'Entrega instantánea: se acredita automáticamente. Free Fire tiene ambos tipos (diamantes, tarjetas, Pase Booyah, fragmentos y cajas son instantáneos).';
             }
         };
         function syncModal() {
@@ -8373,9 +8269,9 @@ window.resetUser2FA = function(username) {
             });
             document.querySelectorAll('#bm-grid > *').forEach(c => put(c, 'manual'));
             document.querySelectorAll('.krx-buy').forEach(b => put(b.parentElement, 'manual', 'afterbegin'));
-            ['ff-fragments-calculator', 'ff-boxes-calculator'].forEach(id => { const s = document.getElementById(id); if (s) put(s, 'manual', 'afterbegin'); });
+            ['ff-fragments-calculator', 'ff-boxes-calculator'].forEach(id => { const s = document.getElementById(id); if (s) put(s, 'auto', 'afterbegin'); });   // v85: automáticos
             const fs = document.getElementById('ff-summary-body'), sel = window.ffSelection;
-            if (fs) put(fs, sel ? ((sel.kind === 'frag' || sel.kind === 'box') ? 'manual' : typeOfId(sel.id)) : null);
+            if (fs) put(fs, sel ? ((sel.kind === 'frag' || sel.kind === 'box') ? 'auto' : typeOfId(sel.id)) : null);
             const rs = document.getElementById('ra-summary-body');
             if (rs && window.raState && window.raState.sel) put(rs, typeOfId(window.raState.sel));
         }
@@ -9809,12 +9705,11 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             var s = document.getElementById('select-' + cid);
             if (s && W.kiwiStockBlock(variantProd(cid, s.value))) return; return o.apply(this, [].slice.call(arguments, 1));
         });
-        wrap('buyFragments', function (o) { if (W.kiwiStockBlock({ id: 222 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
-        wrap('buyBoxes', function (o) { if (W.kiwiStockBlock({ id: 227 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
-        wrap('buyBooyahManual', function (o) { if (W.kiwiStockBlock(prodById(680) || { id: 680 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyFragments', function (o) { if (W.kiwiStockBlock({ kind: 'frag' })) return; return o.apply(this, [].slice.call(arguments, 1)); });
+        wrap('buyBoxes', function (o) { if (W.kiwiStockBlock({ kind: 'box' })) return; return o.apply(this, [].slice.call(arguments, 1)); });
         wrap('buyBooyahPass', function (o) { if (W.kiwiStockBlock(prodById(221) || { id: 221 })) return; return o.apply(this, [].slice.call(arguments, 1)); });
         wrap('ffBuySelection', function (o) {
-            var s = W.ffSelection || {}; var p = s.kind === 'frag' ? { id: 222 } : s.kind === 'box' ? { id: 227 } : prodById(s.id);
+            var s = W.ffSelection || {}; var p = s.kind === 'frag' ? { kind: 'frag' } : s.kind === 'box' ? { kind: 'box' } : prodById(s.id);
             if (W.kiwiStockBlock(p)) return; return o.apply(this, [].slice.call(arguments, 1));
         });
         wrap('confirmFreeFirePurchase', function (o) { if (W.kiwiStockBlock(W.pendingFFProduct)) return; return o.apply(this, [].slice.call(arguments, 1)); });
@@ -9862,7 +9757,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     }
 
     // ---- Pasada DOM: botones / tarjetas ----
-    var SEL = '[onclick*="openCheckout("],[onclick*="buyInstagramFollowers("],[onclick*="buySocialLikesViews("],[onclick*="ffSelectProduct("],[onclick*="raSelect("],[onclick*="buyCustomRobuxBtn("],[onclick*="buyVariant("],[onclick*="buyFragments("],[onclick*="buyBoxes("],[onclick*="buyBooyahManual("],[onclick*="buyBooyahPass("]';
+    var SEL = '[onclick*="openCheckout("],[onclick*="buyInstagramFollowers("],[onclick*="buySocialLikesViews("],[onclick*="ffSelectProduct("],[onclick*="raSelect("],[onclick*="buyCustomRobuxBtn("],[onclick*="buyVariant("],[onclick*="buyFragments("],[onclick*="buyBoxes("],[onclick*="buyBooyahPass("]';
     function setBtn(el, isOff) {
         if (isOff) {
             if (el.dataset.kstOrig == null) { el.dataset.kstOrig = el.innerHTML; el.innerHTML = '<i class="fa-solid fa-ban"></i> No Stock'; }
@@ -9890,9 +9785,8 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             else if ((m = oc.match(/(ffSelectProduct|raSelect)\((\d+)/))) { p = prodById(m[2]); card = true; }
             else if ((m = oc.match(/buyCustomRobuxBtn\([^,]*,\s*'([a-z_]+)'/))) p = { category: 'roblox', sub: m[1], wholesale: mayor, offer: gpOffer };
             else if ((m = oc.match(/buyVariant\('([^']+)'/))) { var s = document.getElementById('select-' + m[1]); p = s ? variantProd(m[1], s.value) : null; }
-            else if (/buyFragments\(/.test(oc)) p = { id: 222 };
-            else if (/buyBoxes\(/.test(oc)) p = { id: 227 };
-            else if (/buyBooyahManual\(/.test(oc)) p = { id: 680 };
+            else if (/buyFragments\(/.test(oc)) p = { kind: 'frag' };
+            else if (/buyBoxes\(/.test(oc)) p = { kind: 'box' };
             else if (/buyBooyahPass\(/.test(oc)) p = prodById(221) || { id: 221 };
             if (!p) return;
             var isOff = !!W.kiwiStockOff(p);
@@ -9941,6 +9835,8 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         add('Roblox', 'robux:robux_gamepass', 'Robux por Gamepass');
         add('Roblox', 'robux:robux_gamepass:ofertas', 'Ofertas especiales Robux via gamepass', 'Apagalo cuando no haya más stock: la tienda muestra "Sin stock por ahora"');
         add('Roblox', 'robux:robux_plus', 'Roblox Premium / Plus');
+        add('Free Fire', 'ff:frag', 'Fragmentos Universales', 'automático · todas las cantidades');   // v85
+        add('Free Fire', 'ff:box', 'Caja de Fragmentos', 'automático · todas las cantidades');
         (W.products || []).forEach(function (p) {
             var k = W.kiwiStockKey(p); if (k === 'bloxfruits') return;
             if (k === 'ff:frag') return add('Free Fire', k, 'Fragmentos Universales', 'todas las cantidades');
@@ -10522,5 +10418,32 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         };
     })();
     </script>
+
+<script>
+// v85: precios por unidad de Fragmentos / Cajas (automáticos) desde /api/game-prices ("bulk") + "agotado" si el servidor los marca inactivos
+(function () {
+    function applyEvo(data) {
+        if (!data || !window.KIWI_EVO) return;
+        const bulk = data.bulk || null, inactive = new Set((data.inactive || []).map(Number));
+        ['frag', 'box'].forEach(function (k) {
+            const e = window.KIWI_EVO[k], b = bulk && bulk[e.key];
+            if (b && Number(b.unit) > 0) {
+                e.unit = Number(b.unit);
+                if (Array.isArray(b.reseller_units)) e.res = b.reseller_units.map(Number);
+                ['min', 'step', 'max'].forEach(function (f) { if (Number(b[f]) > 0) e[f] = Number(b[f]); });
+                e.off = false;
+            }
+            if (inactive.has(e.key) || (data.prices && bulk && !b)) e.off = true;
+            const inp = document.getElementById(e.input); if (inp) { inp.min = e.min; inp.step = e.step; inp.max = e.max; }
+        });
+        try { if (typeof window.updateFragPrice === 'function') window.updateFragPrice(); if (typeof window.updateBoxPrice === 'function') window.updateBoxPrice(); } catch (_) {}
+    }
+    const orig = window.kiwiRaApplyPrices;
+    if (typeof orig === 'function' && !orig._evo) {
+        const f = function (data) { const r = orig.apply(this, arguments); try { applyEvo(data); } catch (_) {} return r; };
+        f._evo = true; window.kiwiRaApplyPrices = f;
+    }
+})();
+</script>
 </body>
 </html>
