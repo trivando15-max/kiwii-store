@@ -3274,62 +3274,60 @@
 
         // ===== v37: PRODUCTOS DE ENTREGA AUTOMÁTICA (entrega automática) =====
         // v38: precio de venta = costo de entrega automática x 1,10 (10% de ganancia), redondeado hacia arriba al centavo.
-        // v39: false = los diamantes ilimitados se entregan por /api/game-legacy como siempre. true = pasan por /api/game (cobro en el servidor + validación de precio).
-        window.KIWI_FF_ILIMITADO_VIA_RA = false;
+        // v83: los diamantes ilimitados también pasan por /api/game (cobro y entrega en el servidor, con validación de precio). /api/game-legacy quedó desactivado.
+        window.KIWI_FF_ILIMITADO_VIA_RA = true;
         window.KIWI_RA_ITEMS = [
-            { id: 200, ra: 5, category: 'freefire', sub: 'ilimitado', title: '110 Diamantes', salePrices: [0.78, 0.72, 0.69], legacy: true },
-            { id: 201, ra: 6, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', salePrices: [2.3, 2.13, 2.04], legacy: true },
-            { id: 202, ra: 7, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', salePrices: [3.82, 3.56, 3.43], legacy: true },
-            { id: 203, ra: 8, category: 'freefire', sub: 'ilimitado', title: '1.166 Diamantes', salePrices: [6.98, 6.55, 6.33], legacy: true },
-            { id: 204, ra: 9, category: 'freefire', sub: 'ilimitado', title: '2.398 Diamantes', salePrices: [13.6, 12.87, 12.51], legacy: true },
-            { id: 205, ra: 10, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', salePrices: [33.98, 32.44, 31.66], legacy: true },
+            { id: 200, ra: 5, category: 'freefire', sub: 'ilimitado', title: '110 Diamantes', salePrices: [0.79, 0.73, 0.69], legacy: true },
+            { id: 201, ra: 6, category: 'freefire', sub: 'ilimitado', title: '341 Diamantes', salePrices: [2.33, 2.15, 2.06], legacy: true },
+            { id: 202, ra: 7, category: 'freefire', sub: 'ilimitado', title: '572 Diamantes', salePrices: [3.86, 3.59, 3.46], legacy: true },
+            { id: 203, ra: 8, category: 'freefire', sub: 'ilimitado', title: '1.166 Diamantes', salePrices: [7.05, 6.61, 6.39], legacy: true },
+            { id: 204, ra: 9, category: 'freefire', sub: 'ilimitado', title: '2.398 Diamantes', salePrices: [13.74, 12.99, 12.61], legacy: true },
+            { id: 205, ra: 10, category: 'freefire', sub: 'ilimitado', title: '6.160 Diamantes', salePrices: [34.34, 32.74, 31.94], legacy: true },
             // FREE FIRE (tarjetas y pase)
-            { id: 230, ra: 1, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal Básica', salePrices: [0.43, 0.39, 0.38], emoji: '🎟️' },
+            { id: 230, ra: 1, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal Básica', salePrices: [0.43, 0.4, 0.38], emoji: '🎟️' },
             { id: 231, ra: 2, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Semanal', salePrices: [1.77, 1.64, 1.58], emoji: '🎟️' },
-            { id: 232, ra: 3, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Mensual', salePrices: [7.78, 7.43, 7.25], emoji: '🎫', tag: 'Más Elegido', popular: true },
-            { id: 221, ra: 4, category: 'freefire', sub: 'especiales', title: 'Pase Booyah Premium', salePrices: [2.41, 2.27, 2.2], keep: true },
+            { id: 232, ra: 3, category: 'freefire', sub: 'ra_tarjetas', title: 'Tarjeta Mensual', salePrices: [6.11, 5.83, 5.69], emoji: '🎫', tag: 'Más Elegido', popular: true },
+            { id: 221, ra: 4, category: 'freefire', sub: 'especiales', title: 'Pase Booyah Premium', salePrices: [1.91, 1.8, 1.74], keep: true },
             // BLOOD STRIKE
-            { id: 600, ra: 23, category: 'bloodstrike', sub: 'gold', title: '100 + 5 Gold', salePrices: [0.87, 0.79, 0.76], emoji: '🪙' },
-            { id: 601, ra: 25, category: 'bloodstrike', sub: 'gold', title: '300 + 20 Gold', salePrices: [2.54, 2.35, 2.25], emoji: '🪙' },
-            { id: 602, ra: 26, category: 'bloodstrike', sub: 'gold', title: '500 + 40 Gold', salePrices: [4.16, 3.88, 3.73], emoji: '🪙' },
-            { id: 603, ra: 27, category: 'bloodstrike', sub: 'gold', title: '1.000 + 100 Gold', salePrices: [8.18, 7.68, 7.43], emoji: '💰', tag: 'Más Elegido', popular: true },
-            { id: 604, ra: 28, category: 'bloodstrike', sub: 'gold', title: '2.000 + 260 Gold', salePrices: [16.06, 15.2, 14.77], emoji: '💰' },
-            { id: 605, ra: 29, category: 'bloodstrike', sub: 'gold', title: '5.000 + 800 Gold', salePrices: [39.44, 37.65, 36.75], emoji: '💰', tag: 'Mejor Oferta', popular: true },
-            { id: 606, ra: 30, category: 'bloodstrike', sub: 'pases', title: 'Ultra Skin Lucky Chest', salePrices: [0.52, 0.48, 0.46], emoji: '🎁' },
-            { id: 607, ra: 31, category: 'bloodstrike', sub: 'pases', title: 'Level Up Pass', salePrices: [1.97, 1.83, 1.76], emoji: '🎖️' },
-            { id: 608, ra: 32, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Elite', salePrices: [3.85, 3.62, 3.51], emoji: '🎖️' },
-            { id: 609, ra: 33, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Premium', salePrices: [8.17, 7.8, 7.62], emoji: '🏆', tag: 'Premium', popular: true },
+            { id: 600, ra: 23, category: 'bloodstrike', sub: 'gold', title: '100 + 5 Gold', salePrices: [0.87, 0.79, 0.75], emoji: '🪙' },
+            { id: 601, ra: 25, category: 'bloodstrike', sub: 'gold', title: '300 + 20 Gold', salePrices: [2.56, 2.35, 2.24], emoji: '🪙' },
+            { id: 602, ra: 26, category: 'bloodstrike', sub: 'gold', title: '500 + 40 Gold', salePrices: [4.18, 3.87, 3.71], emoji: '🪙' },
+            { id: 603, ra: 27, category: 'bloodstrike', sub: 'gold', title: '1.000 + 100 Gold', salePrices: [8.21, 7.66, 7.38], emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 604, ra: 28, category: 'bloodstrike', sub: 'gold', title: '2.000 + 260 Gold', salePrices: [16.13, 15.16, 14.67], emoji: '💰' },
+            { id: 605, ra: 29, category: 'bloodstrike', sub: 'gold', title: '5.000 + 800 Gold', salePrices: [39.59, 37.53, 36.5], emoji: '💰', tag: 'Mejor Oferta', popular: true },
+            { id: 606, ra: 30, category: 'bloodstrike', sub: 'pases', title: 'Ultra Skin Lucky Chest', salePrices: [0.48, 0.44, 0.42], emoji: '🎁' },
+            { id: 607, ra: 31, category: 'bloodstrike', sub: 'pases', title: 'Level Up Pass', salePrices: [1.84, 1.71, 1.64], emoji: '🎖️' },
+            { id: 608, ra: 32, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Elite', salePrices: [3.54, 3.33, 3.23], emoji: '🎖️' },
+            { id: 609, ra: 33, category: 'bloodstrike', sub: 'pases', title: 'Strike Pass Premium', salePrices: [7.74, 7.39, 7.21], emoji: '🏆', tag: 'Premium', popular: true },
             // PUBG MOBILE
-            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC', salePrices: [1.08, 0.99, 0.95], emoji: '🪙' },
-            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC', salePrices: [5.33, 4.92, 4.72], emoji: '🪙' },
-            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC', salePrices: [10.48, 9.76, 9.4], emoji: '💰', tag: 'Más Elegido', popular: true },
-            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC', salePrices: [25.75, 24.17, 23.38], emoji: '💰' },
-            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC', salePrices: [50.61, 47.9, 46.54], emoji: '💰' },
-            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC', salePrices: [99.42, 94.9, 92.64], emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            { id: 620, ra: 34, category: 'pubg', sub: 'uc', title: '60 UC', salePrices: [1.13, 1.02, 0.96], emoji: '🪙' },
+            { id: 621, ra: 35, category: 'pubg', sub: 'uc', title: '325 UC', salePrices: [5.58, 5.09, 4.85], emoji: '🪙' },
+            { id: 622, ra: 36, category: 'pubg', sub: 'uc', title: '660 UC', salePrices: [10.98, 10, 9.51], emoji: '💰', tag: 'Más Elegido', popular: true },
+            { id: 623, ra: 37, category: 'pubg', sub: 'uc', title: '1.800 UC', salePrices: [27, 24.85, 23.77], emoji: '💰' },
+            { id: 624, ra: 38, category: 'pubg', sub: 'uc', title: '3.850 UC', salePrices: [53.05, 49.3, 47.43], emoji: '💰' },
+            { id: 625, ra: 39, category: 'pubg', sub: 'uc', title: '8.100 UC', salePrices: [102.7, 95.88, 92.47], emoji: '👑', tag: 'Mejor Oferta', popular: true },
             // MOBILE LEGENDS (global)
-            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes', salePrices: [1.39, 1.27, 1.22], emoji: '💎' },
-            { id: 641, ra: 250, category: 'mlbb', sub: 'global', title: 'Pase Semanal de Diamantes', salePrices: [1.74, 1.6, 1.53], emoji: '🎟️', tag: 'Popular', popular: true },
-            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes', salePrices: [2.73, 2.52, 2.42], emoji: '💎' },
-            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes', salePrices: [4.02, 3.74, 3.6], emoji: '💎' },
-            { id: 644, ra: 253, category: 'mlbb', sub: 'global', title: 'Twilight Pass', salePrices: [8.81, 8.22, 7.92], emoji: '🌙' },
-            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes', salePrices: [10.58, 9.91, 9.58], emoji: '💎', tag: 'Más Elegido', popular: true },
-            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes', salePrices: [31.46, 29.59, 28.65], emoji: '💎' },
-            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes', salePrices: [51.73, 48.96, 47.58], emoji: '💎' },
-            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes', salePrices: [76.91, 73.1, 71.19], emoji: '💎' },
-            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes', salePrices: [127.02, 121.25, 118.36], emoji: '👑', tag: 'Mejor Oferta', popular: true },
+            { id: 640, ra: 249, category: 'mlbb', sub: 'global', title: '86 Diamantes', salePrices: [1.3, 1.2, 1.15], emoji: '💎' },
+            { id: 641, ra: 250, category: 'mlbb', sub: 'global', title: 'Pase Semanal de Diamantes', salePrices: [1.57, 1.46, 1.4], emoji: '🎟️', tag: 'Popular', popular: true },
+            { id: 642, ra: 251, category: 'mlbb', sub: 'global', title: '172 Diamantes', salePrices: [2.51, 2.34, 2.26], emoji: '💎' },
+            { id: 643, ra: 252, category: 'mlbb', sub: 'global', title: '257 Diamantes', salePrices: [3.54, 3.33, 3.22], emoji: '💎' },
+            { id: 644, ra: 253, category: 'mlbb', sub: 'global', title: 'Twilight Pass', salePrices: [8.05, 7.6, 7.37], emoji: '🌙' },
+            { id: 645, ra: 254, category: 'mlbb', sub: 'global', title: '706 Diamantes', salePrices: [9.53, 9.03, 8.77], emoji: '💎', tag: 'Más Elegido', popular: true },
+            { id: 646, ra: 255, category: 'mlbb', sub: 'global', title: '2.195 Diamantes', salePrices: [28.55, 27.16, 26.46], emoji: '💎' },
+            { id: 647, ra: 256, category: 'mlbb', sub: 'global', title: '3.688 Diamantes', salePrices: [46.98, 44.98, 43.98], emoji: '💎' },
+            { id: 648, ra: 257, category: 'mlbb', sub: 'global', title: '5.532 Diamantes', salePrices: [70.28, 67.58, 66.23], emoji: '💎' },
+            { id: 649, ra: 258, category: 'mlbb', sub: 'global', title: '9.288 Diamantes', salePrices: [115.7, 111.75, 109.77], emoji: '👑', tag: 'Mejor Oferta', popular: true },
             // MOBILE LEGENDS (cuentas región US)
-            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes · US', salePrices: [1.04, 0.95, 0.91], emoji: '💎' },
-            { id: 661, ra: 260, category: 'mlbb', sub: 'us', title: '112 Diamantes · US', salePrices: [2.05, 1.89, 1.8], emoji: '💎' },
-            { id: 662, ra: 261, category: 'mlbb', sub: 'us', title: 'Pase Semanal de Diamantes · US', salePrices: [2.03, 1.88, 1.8], emoji: '🎟️' },
-            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes · US', salePrices: [5.05, 4.67, 4.49], emoji: '💎' },
-            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes · US', salePrices: [10.01, 9.3, 8.95], emoji: '💎' },
-            { id: 665, ra: 264, category: 'mlbb', sub: 'us', title: 'Twilight Pass · US', salePrices: [9.92, 9.26, 8.92], emoji: '🌙' },
-            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes · US', salePrices: [19.66, 18.42, 17.8], emoji: '💎' },
-            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes · US', salePrices: [29.24, 27.5, 26.63], emoji: '💎' },
-            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes · US', salePrices: [48.3, 45.61, 44.27], emoji: '💎' },
-            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes · US', salePrices: [57.7, 54.61, 53.06], emoji: '💎' },
-            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes · US', salePrices: [76.24, 72.46, 70.57], emoji: '💎' },
-            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes · US', salePrices: [94.44, 90.15, 88], emoji: '👑' }
+            { id: 660, ra: 259, category: 'mlbb', sub: 'us', title: '56 Diamantes · US', salePrices: [0.97, 0.88, 0.83], emoji: '💎' },
+            { id: 662, ra: 261, category: 'mlbb', sub: 'us', title: 'Pase Semanal de Diamantes · US', salePrices: [1.89, 1.73, 1.64], emoji: '🎟️' },
+            { id: 663, ra: 262, category: 'mlbb', sub: 'us', title: '278 Diamantes · US', salePrices: [5.17, 4.84, 4.67], emoji: '💎' },
+            { id: 664, ra: 263, category: 'mlbb', sub: 'us', title: '571 Diamantes · US', salePrices: [10.26, 9.57, 9.23], emoji: '💎' },
+            { id: 666, ra: 265, category: 'mlbb', sub: 'us', title: '1.192 Diamantes · US', salePrices: [20.15, 19.04, 18.49], emoji: '💎' },
+            { id: 667, ra: 266, category: 'mlbb', sub: 'us', title: '1.788 Diamantes · US', salePrices: [29.96, 28.21, 27.34], emoji: '💎' },
+            { id: 668, ra: 267, category: 'mlbb', sub: 'us', title: '3.005 Diamantes · US', salePrices: [49.5, 46.8, 45.45], emoji: '💎' },
+            { id: 669, ra: 268, category: 'mlbb', sub: 'us', title: '3.606 Diamantes · US', salePrices: [59.13, 56.03, 54.47], emoji: '💎' },
+            { id: 670, ra: 269, category: 'mlbb', sub: 'us', title: '4.810 Diamantes · US', salePrices: [78.13, 74.34, 72.45], emoji: '💎' },
+            { id: 671, ra: 270, category: 'mlbb', sub: 'us', title: '6.012 Diamantes · US', salePrices: [96.79, 93.22, 91.43], emoji: '👑' }
         ];
         window.kiwiRaSalePrice = function(it) {
             const rf = window.kiwiReseller ? window.kiwiReseller.marginFactor('ra') : 1;
@@ -6856,6 +6854,7 @@
             ];
 
             let lastError = 'sin respuesta';
+            if (payloads.length) return { success: false, error: 'Actualizá la página para comprar (entrega automática nueva).' }; // v83: /api/game-legacy desactivado
             for (const body of payloads) {
                 try {
                     
@@ -8133,6 +8132,7 @@ window.resetUser2FA = function(username) {
             try {
                 const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'validate', product_id: prod.raId, player_id: v.player, zone_id: v.zone }) });
                 const j = await r.json(); if (j && j.account_name) name = j.account_name;
+                if (j && j.status === 'invalid') { m.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-circle-xmark"></i> No encontramos ese ID' + (g.zone ? ' / Zona' : '') + '. Revisalo.</span>'; return; }
             } catch (_) {}
             st.verified[st.cat + ':' + v.player + ':' + v.zone] = { name };
             window.raShowVerified(); window.raRenderSummary();
@@ -8181,7 +8181,8 @@ window.resetUser2FA = function(username) {
             const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
             if (!users[currentUser]) return alert('Sesión inválida. Volvé a iniciar sesión.');
             const price = Number(prod.usdtPrice) || 0;
-            if (!price || !prod.raId) return alert('Producto no disponible.');
+            const autoId = prod.raId || (window.KIWI_FF_ILIMITADO_VIA_RA ? prod.raLegacyId : null); // v83: diamantes ilimitados
+            if (!price || !autoId) return alert('Producto no disponible.');
             if (window.kiwiRaSinStock(prod)) return alert('Sin Stock: este producto no está disponible por el momento.');
             if (prod.raUnavailable) return alert('Este producto está agotado / no disponible por el momento.');
             const bal = Number(users[currentUser].balance || 0);
@@ -8192,7 +8193,7 @@ window.resetUser2FA = function(username) {
             const user = currentUser;
             const orderId = Date.now();
             const order = { id: orderId, user, title: prod.title, price: prod.price, method: 'Saldo (entrega automática)', date: new Date().toLocaleString('es-AR'), status: 'confirmed', targetUser: 'ID ' + data.player_id + (data.zone_id ? ' · Zona ' + data.zone_id : ''), extra: 'Entrega automática', category: prod.category, sub: prod.sub, usdtPrice: price, notes: '' };
-            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, reseller: (window.kiwiReseller && window.kiwiReseller.activeLevel()) ? 1 : 0, product_id: prod.raId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
+            const payload = { action: 'buy', token: window.kiwiToken(), request_id: 'ra-' + orderId + '-' + Math.random().toString(36).slice(2, 8), amount: price, reseller: (window.kiwiReseller && window.kiwiReseller.activeLevel()) ? 1 : 0, product_id: autoId, player_id: data.player_id, zone_id: data.zone_id || '', order: { id: String(orderId), title: prod.title, price: prod.price, date_str: order.date, name: data.name || '' } };
             let j = null;
             try {
                 for (let i = 0; i < 3 && !j; i++) { // si se corta la conexión se reintenta con la MISMA solicitud: nunca cobra ni recarga dos veces
@@ -8217,6 +8218,7 @@ window.resetUser2FA = function(username) {
             const nb = Number(j.balance);
             if (Number.isFinite(nb)) { window._syncedBal[user] = nb; const us = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); if (us[user]) { us[user].balance = nb; localStorage.setItem('kiwi_users', JSON.stringify(us)); } }
             if (j.success && j.delivered !== false) { order.status = 'delivered'; order.notes = 'Entregado automáticamente'; }
+            if (j.refunded) { order.status = 'cancelled'; order.notes = 'La recarga no se pudo completar: se devolvió el saldo'; }
             order._synced = true;
             if (typeof window.kiwiNotifyOrders === 'function') window.kiwiNotifyOrders([order.id], 'saldo'); // v72: aviso Telegram al dueño
             const list = window.readPurchases(); list.push(order);
@@ -8224,7 +8226,10 @@ window.resetUser2FA = function(username) {
             if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
             if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
-            if (j.success) alert((j.delivered === false ? 'Recarga en camino (puede tardar unos minutos).' : '¡Recarga enviada!') + '\n' + prod.title + '\n' + order.targetUser + '\nNuevo saldo: ' + (Number.isFinite(nb) ? nb.toFixed(2) + ' USDT' : '—'));
+            if (j.success && j.delivered === false && typeof window.kiwiAutoPoll === 'function') window.kiwiAutoPoll(String(orderId)); // v83: seguimos la entrega
+            if (j.refunded) return alert('La recarga no se pudo completar y se te DEVOLVIÓ el saldo.\nMotivo: ' + (j.error || 'rechazada') + '\nNuevo saldo: ' + (Number.isFinite(nb) ? nb.toFixed(2) + ' USDT' : '—') + '\nRevisá el ID e intentá de nuevo.');
+            if (j.success && Array.isArray(j.codes) && j.codes.length) return alert('¡Listo!\n' + prod.title + '\nTu código:\n' + j.codes.join('\n') + '\n(También queda en Mis pedidos)');
+            if (j.success) alert((j.delivered === false ? 'Recarga en camino (suele tardar menos de 5 minutos). Te avisamos en Mis pedidos.' : '¡Recarga enviada!') + '\n' + prod.title + '\n' + order.targetUser + '\nNuevo saldo: ' + (Number.isFinite(nb) ? nb.toFixed(2) + ' USDT' : '—'));
             else alert('Tu pago quedó registrado y el pedido está EN PROCESO.\nLa entrega automática no se completó (' + (j.error || 'sin respuesta') + '), así que lo revisamos y lo cargamos a mano a la brevedad.\nPedido #' + orderId);
         };
 
@@ -10434,5 +10439,88 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         #why-us .grid > div > i{width:62px;height:62px;line-height:62px;font-size:26px!important}
     }
 </style>
+    <script>
+    // ===== v83: seguimiento de la entrega automática (Mis pedidos) + "Proveedor" en PAGOS (staff) =====
+    (function () {
+        const W = window;
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const timers = {};
+        async function refreshMine() {
+            try { const me = await W.kiwiRpc('kiwi_me', { p_token: W.kiwiToken() }); const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
+                  if (me && me.username) { users[me.username] = W.applyCloudUserToLocal(users[me.username] || {}, me); localStorage.setItem('kiwi_users', JSON.stringify(users)); if (typeof W.updateBalanceDisplay === 'function') W.updateBalanceDisplay(); } } catch (_) {}
+            try { const r = await W.kiwiFetchOrders(); if (r && Array.isArray(r.data) && typeof W.mergeCloudPurchases === 'function' && !W.kiwiIsOrderStaff()) W.mergeCloudPurchases(r.data); } catch (_) {}
+        }
+        function setLocal(id, patch) {
+            const list = W.readPurchases(); const o = list.find(x => String(x.id) === String(id)); if (!o) return;
+            Object.assign(o, patch); W._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(list)); W._purchaseSyncMuted = false;
+            if (typeof W.renderClientOrders === 'function') W.renderClientOrders();
+            if (typeof W.updateOrdersBadge === 'function') { try { W.updateOrdersBadge(); } catch (_) {} }
+        }
+        // Consulta el estado: cada 30 s los primeros 5 min, después cada 5 min (lo decide el servidor con next_in_s). Para solo al terminar.
+        W.kiwiAutoPoll = function (orderId, delayS) {
+            orderId = String(orderId || ''); if (!/^[A-Za-z0-9_-]{1,64}$/.test(orderId) || timers[orderId]) return;
+            const started = Date.now();
+            const tick = async () => {
+                delete timers[orderId];
+                if (!W.kiwiToken() || Date.now() - started > 6 * 3600 * 1000) return;
+                let j = null;
+                if (!document.hidden) { try { const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', token: W.kiwiToken(), order_id: orderId }) }); j = await r.json().catch(() => null); if (r.status === 404 || r.status === 401) return; } catch (_) {} }
+                if (j && j.status === 'delivered') {
+                    setLocal(orderId, { status: 'delivered', notes: j.codes && j.codes.length ? 'Código: ' + j.codes.join(' | ') : 'Entregado automáticamente' });
+                    refreshMine();
+                    if (j.codes && j.codes.length) alert('¡Tu pedido #' + orderId + ' está listo!\nCódigo:\n' + j.codes.join('\n'));
+                    return;
+                }
+                if (j && j.status === 'refunded') { setLocal(orderId, { status: 'cancelled', notes: 'La recarga no se pudo completar: se devolvió el saldo' }); refreshMine(); alert('La recarga del pedido #' + orderId + ' no se pudo completar.\nSe te DEVOLVIÓ el saldo.'); return; }
+                if (j && j.status === 'manual') return;   // la sigue el staff
+                const next = Math.max(30, Math.min(300, Number(j && j.next_in_s) || (Date.now() - started < 5 * 60 * 1000 ? 30 : 300)));
+                timers[orderId] = setTimeout(tick, next * 1000);
+            };
+            timers[orderId] = setTimeout(tick, Math.max(5, Number(delayS) || 30) * 1000);
+        };
+        // Al abrir la página: retomar las entregas automáticas recientes que siguen "en proceso"
+        function resume() {
+            try {
+                if (!W.kiwiToken() || typeof currentUser === 'undefined' || !currentUser) return;
+                W.readPurchases().filter(o => o && /entrega autom/i.test(String(o.method || '')) && ['confirmed', 'pending'].includes(String(o.status || '')) && W.sameUser(o.user, currentUser)
+                    && Number(o.id) > Date.now() - 3 * 24 * 3600 * 1000).slice(-5).forEach((o, i) => W.kiwiAutoPoll(String(o.id), 8 + i * 4));
+            } catch (_) {}
+        }
+        if (document.readyState === 'complete') setTimeout(resume, 4000); else W.addEventListener('load', () => setTimeout(resume, 4000));
+
+        // ---- Staff: saldo del proveedor y pedidos automáticos (en PAGOS, Owner / CEO) ----
+        const ST = { new: ['Enviando', 'text-sky-300'], retry: ['Reintentando', 'text-amber-300'], submitted: ['Enviado', 'text-sky-300'], processing: ['En proceso', 'text-sky-300'],
+                     completed: ['Entregado', 'text-green-300'], refunded: ['Devuelto', 'text-gray-300'], manual: ['⚠️ Manual', 'text-orange-300'] };
+        W.kiwiProvLoad = async function (sweep) {
+            const box = document.getElementById('kprov-box'); if (!box) return;
+            box.innerHTML = '<p class="text-gray-500 text-sm">Cargando proveedor…</p>';
+            let j = null;
+            try { const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'staff', token: W.kiwiToken(), sweep: !!sweep }) }); j = await r.json().catch(() => null); } catch (_) {}
+            if (!j || !j.success) { box.innerHTML = '<p class="text-red-400 text-sm">No se pudo leer el proveedor' + (j && j.error ? ': ' + esc(j.error) : '') + ' (¿corriste kiwii-v83.sql y cargaste CO_API_KEY / CO_API_BASE?)</p>'; return; }
+            const b = j.balance;
+            const rows = (j.orders || []).slice(0, 25).map(o => { const s = ST[o.status] || [o.status, 'text-gray-300'];
+                return `<div class="flex items-start justify-between gap-2 border-b border-white/5 py-1.5"><div class="min-w-0"><p class="text-white text-xs font-bold">#${esc(o.order_id)} · ${esc(o.username)} <span class="text-gray-400 font-normal">· ${esc(o.title || '')}</span></p>
+                    <p class="text-[11px] text-gray-500">Ref. proveedor: <span class="text-gray-300 select-all">${esc(o.prov_ref || '—')}</span> · ${new Date(o.created_at).toLocaleString('es-AR')}${o.last_error ? ' · <span class="text-orange-300">' + esc(o.last_error) + '</span>' : ''}</p></div>
+                    <div class="shrink-0 text-right"><span class="text-[11px] font-bold ${s[1]}">${esc(s[0])}</span>${o.status === 'manual' && W.canManageStaff() ? `<br><button onclick="window.kiwiProvResolve('${esc(o.order_id)}')" class="text-[10px] underline text-gray-400">Marcar resuelto</button>` : ''}</div></div>`; }).join('');
+            box.innerHTML = `<div class="bg-kiwi-dark border border-kiwi-border rounded-xl p-3 mb-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2"><h4 class="font-orbitron text-xs text-kiwi-gold uppercase">Proveedor · entrega automática</h4>
+                <button onclick="window.kiwiProvLoad(true)" class="border border-kiwi-border rounded-lg px-2 py-1 text-xs text-gray-200"><i class="fa-solid fa-rotate"></i> Revisar pendientes</button></div>
+                <p class="text-sm text-white">Saldo disponible: <b class="${b && b.available < 5 ? 'text-red-400' : 'text-green-300'}">${b ? Number(b.available).toFixed(2) + ' ' + esc(b.currency || 'USD') : '—'}</b>${b && b.held ? ' <span class="text-gray-400 text-xs">(retenido ' + Number(b.held).toFixed(2) + ')</span>' : ''}</p>
+                <p class="text-[11px] text-gray-400 mb-2">Abiertos: ${Number(j.open) || 0} · Manuales: <span class="${j.manual ? 'text-orange-300 font-bold' : ''}">${Number(j.manual) || 0}</span>. "Manual" = el cliente pagó pero no se pudo enviar: cargalo a mano o cancelá el pedido (devuelve el saldo) y tocá "Marcar resuelto".</p>
+                <div>${rows || '<p class="text-gray-500 text-xs">Sin pedidos automáticos todavía.</p>'}</div></div>`;
+        };
+        W.kiwiProvResolve = async function (id) {
+            if (!confirm('¿Marcar el pedido #' + id + ' como resuelto? (hacelo después de cargarlo a mano o de cancelarlo desde Pedidos)')) return;
+            try { await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'resolve', token: W.kiwiToken(), order_id: id }) }); } catch (_) {}
+            W.kiwiProvLoad(false);
+        };
+        const origPagos = W.loadAdminPagos;
+        if (typeof origPagos === 'function') W.loadAdminPagos = async function () {
+            const r = await origPagos.apply(this, arguments);
+            try { const box = document.getElementById('admin-pagos'); if (box && !document.getElementById('kprov-box') && W.canManageStaff()) { const d = document.createElement('div'); d.id = 'kprov-box'; box.prepend(d); W.kiwiProvLoad(false); } } catch (_) {}
+            return r;
+        };
+    })();
+    </script>
 </body>
 </html>
