@@ -1,7 +1,7 @@
 // v83: entrega automática (Free Fire, Blood Strike, PUBG Mobile, Mobile Legends) con el proveedor configurado por variables de entorno.
 // Acciones (POST JSON, salvo webhook/cron):
 //   validate  {product_id, player_id, zone_id}            -> nombre de la cuenta si el proveedor lo informa
-//   buy       {token, request_id, amount, product_id, player_id, zone_id, order, reseller}
+//   buy       {token, request_id, amount, product_id, player_id, zone_id, order, reseller, qty}   (qty: solo fragmentos / cajas, 901 / 902)
 //   status    {token, order_id}                           -> estado de un pedido propio (y lo avanza si toca revisar)
 //   staff     {token}                                     -> staff: saldo del proveedor + últimos pedidos automáticos (+ revisa pendientes)
 //   resolve   {token, order_id}                           -> staff (Owner/CEO): marcar como resuelto un pedido que quedó manual
@@ -57,7 +57,7 @@ const clean = (s, n) => String(s == null ? '' : s).replace(/[<>]/g, '').trim().s
 const errMsg = (j) => clean((j && (j.message || (j.error && j.error.message) || (typeof j.error === 'string' && j.error) || j.raw)) || 'Error', 300);
 const disabled = () => SIN_STOCK || /^(1|true|si|sí)$/i.test(String(process.env.AUTO_DISABLED || process.env.RA_DISABLED || '').trim());
 // "No Stock" del panel para los diamantes ilimitados: la clave vieja era la del producto del catálogo (p:200…p:205)
-const STOCK_ALIAS = { 5: 'p:200', 6: 'p:201', 7: 'p:202', 8: 'p:203', 9: 'p:204', 10: 'p:205' };
+const STOCK_ALIAS = { 5: 'p:200', 6: 'p:201', 7: 'p:202', 8: 'p:203', 9: 'p:204', 10: 'p:205', 901: 'ff:frag', 902: 'ff:box' };   // v85: fragmentos / cajas usan sus botones de siempre
 
 function checkPlayer(b, pid) {
   const player = String(b.player_id == null ? '' : b.player_id).replace(/\s+/g, '');
@@ -188,8 +188,21 @@ async function handler(req, res) {
   const { live, it, schema } = await itemFor(pid);
   if (live.source === 'fallback') return send(res, 503, { success: false, stage: 'checkout', code: 'PRICES_UNVERIFIED', error: 'No pudimos confirmar el precio. Probá en unos minutos. No se descontó saldo.' });
   if (!it || (live.inactive || []).includes(pid) || !(Number(live.costs[pid]) > 0)) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
-  const cost = Number(live.costs[pid]);
-  const publicPrice = lib.salePrice(cost, pid);
+  // v85: fragmentos / cajas por cantidad → varios paquetes en un solo pedido
+  const bulk = lib.isBulk(pid);
+  const qty = bulk ? Number(b.qty) : 1;
+  let plan = null;
+  if (bulk) {
+    const qe = lib.qtyError(pid, qty);
+    if (qe) return send(res, 400, { success: false, stage: 'checkout', error: qe + ' No se descontó saldo.' });
+    plan = lib.bulkPlan((live.packs || {})[pid], qty);
+    if (!plan) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
+  }
+  const unitCost = Number(live.costs[pid]);
+  const cost = bulk ? plan.cost : unitCost;
+  const priceFor = (lvl) => bulk ? lib.bulkPrice(unitCost, pid, qty, lvl) : (lvl ? lib.resellerSalePrice(cost, pid, lvl) : lib.salePrice(cost, pid));
+  const publicPrice = priceFor(0);
+  if (!(publicPrice > 0)) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
   const fits = (exp) => !(amount + 1e-9 < cost || amount < exp * (1 - lib.TOLERANCE) - 1e-9 || amount > exp * (1 + lib.TOLERANCE) + 0.01);
   let expected = publicPrice, resellerLevel = 0;
   if (b.reseller) {
@@ -197,7 +210,7 @@ async function handler(req, res) {
       const st = await supaRpc('kiwi_reseller_status', { p_token: token });
       const j = st.ok ? st.json : null;
       const lvl = j && j.ok && j.active ? Number(j.level) || 0 : 0;
-      if (lvl >= 1) { resellerLevel = Math.min(2, lvl); expected = lib.resellerSalePrice(cost, pid, resellerLevel); }
+      if (lvl >= 1) { resellerLevel = Math.min(2, lvl); expected = priceFor(resellerLevel); }
     } catch (_) {  }
   }
   if (!fits(expected)) {
@@ -222,7 +235,7 @@ async function handler(req, res) {
   const name = clean(order.name, 60) || (pv.name || '');
   const row = {
     id: orderId,
-    title: clean(order.title, 200),
+    title: bulk ? lib.BULK[pid].label + ' x' + qty : clean(order.title, 200),
     price: clean(order.price, 100),
     method: 'Saldo (entrega automática)',
     status: 'confirmed',
@@ -243,9 +256,9 @@ async function handler(req, res) {
 
   // Cobrado: registrar y enviar al proveedor (la misma Idempotency-Key en cualquier reintento → nunca dos recargas)
   let rec;
-  try { rec = await lib.sb('kiwi_prov_order_create', { p_order_id: orderId, p_kiwi_key: pid, p_product_ref: it.ref, p_target: tgt.payload, p_cost: cost, p_pin: !!it.pin }); }
+  try { rec = await lib.sb('kiwi_prov_order_create', Object.assign({ p_order_id: orderId, p_kiwi_key: pid, p_product_ref: it.ref, p_target: tgt.payload, p_cost: cost, p_pin: !!it.pin }, plan ? { p_lines: plan.lines } : {})); }
   catch (e) {
-    lib.tg('⚠️ <b>Entrega automática sin registrar</b> (falta kiwii-v83.sql?)\nPedido #' + lib.tgEsc(orderId) + ' · ' + lib.tgEsc(row.title) + '\n' + lib.tgEsc(e.message)).catch(() => {});
+    lib.tg('⚠️ <b>Entrega automática sin registrar</b> (falta kiwii-v85.sql?)\nPedido #' + lib.tgEsc(orderId) + ' · ' + lib.tgEsc(row.title) + '\n' + lib.tgEsc(e.message)).catch(() => {});
     return send(res, 200, { success: false, charged: true, balance, stage: 'delivery', error: 'La entrega sigue pendiente. La revisamos y la cargamos a mano.' });
   }
   try { rec = await lib.processOrder(rec, true); } catch (e) { rec = Object.assign({}, rec, { status: 'retry' }); }
