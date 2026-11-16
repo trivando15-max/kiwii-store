@@ -100,5 +100,11 @@
       "source": "/panel-de-revendedores",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/game?action=cron",
+      "schedule": "0 12 * * *"
+    }
   ]
 }
