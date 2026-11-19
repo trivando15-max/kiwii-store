@@ -4,6 +4,56 @@
       "source": "/r/:code",
       "destination": "/?ref=:code",
       "permanent": false
+    },
+    {
+      "source": "/RobloxGiftCards",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/robloxgiftcards",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/Steam",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/steam",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/PlayStation",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/playstation",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/Xbox",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/xbox",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/Minecraft",
+      "destination": "/catalogo",
+      "permanent": false
+    },
+    {
+      "source": "/minecraft",
+      "destination": "/catalogo",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -132,38 +182,6 @@
       "destination": "/index.html"
     },
     {
-      "source": "/RobloxGiftCards",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/robloxgiftcards",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/Steam",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/steam",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/PlayStation",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/playstation",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/Xbox",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/xbox",
-      "destination": "/index.html"
-    },
-    {
       "source": "/DiscordNitro",
       "destination": "/index.html"
     },
@@ -172,11 +190,11 @@
       "destination": "/index.html"
     },
     {
-      "source": "/Minecraft",
+      "source": "/panel-de-afiliados",
       "destination": "/index.html"
     },
     {
-      "source": "/minecraft",
+      "source": "/Panel-de-afiliados",
       "destination": "/index.html"
     }
   ],
