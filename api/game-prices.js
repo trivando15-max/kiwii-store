@@ -1,6 +1,6 @@
 const lib = require('./_game-lib');
 
-// v83: precios de la entrega automática (costo del proveedor × margen de cada producto). Público: solo precios de venta.
+// v83/v87: precios de la entrega automática (costo del proveedor × margen de cada producto). Público: solo precios de venta.
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.statusCode = 405; return res.end(JSON.stringify({ success: false, error: 'Método no permitido' })); }
@@ -10,17 +10,18 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', d.live ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=600' : 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
   const costs = {}, margins = {}, prices = {}, reseller_prices = {}, bulk = {};
   const inactive = new Set((d.inactive || []).map(Number));
-  for (const id of lib.IDS) {
+  for (const id of lib.allIds()) {
     const c = Number(d.costs[id]);
     if (!(c > 0)) { inactive.add(id); continue; }
     if (lib.isBulk(id)) {   // v85: por cantidad → precio por unidad (público y revendedor) + reglas de cantidad
       const u = lib.bulkUnit(c, id, 0); if (!u) { inactive.add(id); continue; }
-      const B = lib.BULK[id];
+      const B = lib.bulkRules(id, (d.packs || {})[id]);   // v87: mínimo = paquete más chico disponible; máximo según stock
+      if (!B || B.max < B.min) { inactive.add(id); continue; }
       bulk[id] = { unit: u, reseller_units: [lib.bulkUnit(c, id, 1), lib.bulkUnit(c, id, 2)], min: B.min, step: B.step, max: B.max };
       costs[id] = c; margins[id] = Math.round((u / c - 1) * 1000) / 10;
       continue;
     }
-    costs[id] = c; margins[id] = Math.round((lib.marginOf(id) - 1) * 1000) / 10; prices[id] = lib.salePrice(c, id);
+    costs[id] = c; prices[id] = lib.salePrice(c, id); margins[id] = Math.round((prices[id] / c - 1) * 1000) / 10;
     reseller_prices[id] = [lib.resellerSalePrice(c, id, 1), lib.resellerSalePrice(c, id, 2)];
   }
   const adminKey = process.env.PRICES_ADMIN_KEY || process.env.RA_ADMIN_KEY || '', h = req.headers || {};
@@ -33,7 +34,7 @@ module.exports = async function handler(req, res) {
   let changes = [];
   try {
     changes = (await lib.recentChanges(30)).map(c => {
-      const id = Number(c.ra_id), nc = Number(c.new_cost), price = lib.IDS.includes(id) && !lib.isBulk(id) ? lib.salePrice(nc, id) : null;
+      const id = Number(c.ra_id), nc = Number(c.new_cost), price = lib.knownId(id) && !lib.isBulk(id) ? lib.salePrice(nc, id) : null;
       return { id, old_cost: Number(c.old_cost), new_cost: nc, new_price: price, margin_pct: price ? Math.round((price - nc) / nc * 1000) / 10 : null, changed_at: c.changed_at };
     });
   } catch (_) { changes = []; }
