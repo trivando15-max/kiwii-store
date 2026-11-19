@@ -138,10 +138,15 @@ function methodMinutes(method, def) {
   if (method === 'eu_wise') { const m = Number(env('PAY_EU_MINUTES', '1440')); return m >= 10 ? Math.min(4320, m) : def; }
   return def;
 }
+// v86: monedas de recarga desactivadas (por defecto MXN). Para volver a activarlas: PAY_DISABLED_CURRENCIES=NONE en Vercel.
+// Solo afecta recargas NUEVAS: las recargas MXN ya abiertas o viejas se siguen pudiendo verificar y quedan en el historial.
+function disabledCurrencies() { return env('PAY_DISABLED_CURRENCIES', 'MXN').toUpperCase().split(/[\s,;]+/).filter(c => /^[A-Z]{3,4}$/.test(c) && c !== 'NONE'); }
+function methodDisabled(id) { const m = METHODS[id]; return !m || disabledCurrencies().includes(m.currency); }
 function publicConfig() {
   const comm = jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION);
   const methods = [];
   for (const [id, m] of Object.entries(METHODS)) {
+    if (methodDisabled(id)) continue;
     const acc = accountData(id);
     if (acc) methods.push({ id, label: m.label, currency: m.currency, commission_pct: Number(comm[m.currency]) || 0, account: acc, minutes: methodMinutes(id, Number(env('PAY_EXPIRY_MINUTES', '15')) || 15) });
   }
@@ -658,6 +663,7 @@ async function handler(req, res) {
 
     if (action === 'create') {
       const method = String(body.method || '');
+      if (METHODS[method] && methodDisabled(method)) return send(res, 400, { error: 'Las recargas en ' + METHODS[method].currency + ' no están disponibles. Elegí otro método (por ejemplo USDT o Binance Pay).' });
       const cfg = publicConfig();
       if (!cfg.methods.find(m => m.id === method)) return send(res, 400, { error: 'Método no disponible.' });
       const purpose = body.purpose === 'reseller' ? 'reseller' : 'normal';
