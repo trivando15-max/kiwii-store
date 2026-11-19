@@ -106,6 +106,78 @@
     {
       "source": "/panel-de-revendedores",
       "destination": "/index.html"
+    },
+    {
+      "source": "/GenshinImpact",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/genshinimpact",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/HonkaiStarRail",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honkaistarrail",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/HonorOfKings",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honorofkings",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/RobloxGiftCards",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/robloxgiftcards",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/Steam",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/steam",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/PlayStation",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/playstation",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/Xbox",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/xbox",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/DiscordNitro",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/discordnitro",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/Minecraft",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/minecraft",
+      "destination": "/index.html"
     }
   ],
   "crons": [
