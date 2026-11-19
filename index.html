@@ -703,6 +703,11 @@
                     <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Sorteos y eventos</span><span class="block text-[11px] text-gray-400">Participá y ganá</span></span><span class="text-[10px] font-orbitron font-bold bg-kiwi-red text-white px-2 py-0.5 rounded-full">NUEVO</span>
                     <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
                 </button>
+                <button id="kd-aff-btn" onclick="window.goToAffiliates();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-fuchsia-400/60 shadow-[0_0_18px_rgba(217,70,239,0.18)]">
+                    <span class="kd-ico kd-red" style="background:rgba(217,70,239,.15);color:#e879f9"><i class="fa-solid fa-people-arrows"></i></span>
+                    <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Afiliados</span><span class="block text-[11px] text-gray-400">Invitá amigos y ganá saldo</span></span><span class="text-[10px] font-orbitron font-bold bg-fuchsia-600 text-white px-2 py-0.5 rounded-full">NUEVO</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
+                </button>
                 <button onclick="window.goToResellerPanel();" class="kd-btn w-full flex items-center gap-3 rounded-2xl p-3 text-left border !border-kiwi-gold/60 shadow-[0_0_18px_rgba(255,183,3,0.18)]">
                     <span class="kd-ico kd-gold"><i class="fa-solid fa-crown"></i></span>
                     <span class="min-w-0 flex-1 leading-tight"><span class="block font-rajdhani font-bold text-base text-white">Panel de revendedores</span><span id="kd-reseller-sub" class="block text-[11px] text-gray-400">Precios especiales recargando 50+ USDT</span></span><span class="text-[10px] font-orbitron font-bold bg-kiwi-gold text-black px-2 py-0.5 rounded-full">NUEVO</span>
@@ -1041,47 +1046,12 @@
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">HONOR OF KINGS</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Tokens y tarjetas semanales</p>
             </button>
-            <button onclick="window.goToCategory('robloxcards')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background-image:linear-gradient(135deg,#0f1115,#3a3f47 60%,#9aa4b2)"></div>
-                <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><img src="/images/icon-roblox.webp" class="w-full h-full object-cover rounded-xl" alt="Roblox" loading="lazy"></div>
-                <p class="relative z-10 font-orbitron font-bold text-white text-base">ROBLOX GIFT CARDS</p>
-                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Tarjetas Global, USA y México · código</p>
-            </button>
-            <button onclick="window.goToCategory('steam')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background-image:linear-gradient(135deg,#171a21,#1b2838 55%,#2a475e)"></div>
-                <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-brands fa-steam text-sky-300 text-3xl"></i></div>
-                <p class="relative z-10 font-orbitron font-bold text-white text-base">STEAM</p>
-                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Saldo AR · MX · CL · CO · PE</p>
-            </button>
-            <button onclick="window.goToCategory('playstation')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background-image:linear-gradient(135deg,#00246b,#0070d1)"></div>
-                <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-brands fa-playstation text-blue-300 text-3xl"></i></div>
-                <p class="relative z-10 font-orbitron font-bold text-white text-base">PLAYSTATION</p>
-                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Tarjetas AR · BR · US</p>
-            </button>
-            <button onclick="window.goToCategory('xbox')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background-image:linear-gradient(135deg,#0b2e0b,#107c10)"></div>
-                <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-brands fa-xbox text-green-300 text-3xl"></i></div>
-                <p class="relative z-10 font-orbitron font-bold text-white text-base">XBOX Y GAME PASS</p>
-                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Tarjetas MX · CO · BR · US</p>
-            </button>
             <button onclick="window.goToCategory('discord')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
                 <div class="cat-bg" style="background-image:linear-gradient(135deg,#2b2f8f,#5865f2)"></div>
                 <div class="cat-bg-overlay"></div>
                 <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-brands fa-discord text-indigo-300 text-3xl"></i></div>
                 <p class="relative z-10 font-orbitron font-bold text-white text-base">DISCORD NITRO</p>
                 <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Nitro 1 y 12 meses · código</p>
-            </button>
-            <button onclick="window.goToCategory('minecraft')" class="group relative text-left bg-[#111217] border border-white/5 hover:border-kiwi-red/50 rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1">
-                <div class="cat-bg" style="background-image:linear-gradient(135deg,#3b2a14,#5d8c2a)"></div>
-                <div class="cat-bg-overlay"></div>
-                <div class="relative z-10 w-14 h-14 rounded-xl bg-black/70 border border-white/20 flex items-center justify-center mb-4"><i class="fa-solid fa-cube text-green-400 text-2xl"></i></div>
-                <p class="relative z-10 font-orbitron font-bold text-white text-base">MINECRAFT</p>
-                <p class="relative z-10 text-xs text-gray-200 font-rajdhani mt-1">Minecoins (Bedrock) · código</p>
             </button>
         </div>
     </div>
@@ -1197,32 +1167,31 @@
 
                         
                         <section id="ff-booyah-card" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
-                            <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Pase Booyah</h3>
-                            <p class="text-xs text-gray-400 mb-4">Entrega automática a tu ID.</p>
-                            <div class="grid grid-cols-1 gap-4 max-w-sm">
+                            <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Pases Booyah</h3>
+                            <p class="text-xs text-gray-400 mb-1"><i class="fa-solid fa-bolt text-emerald-400"></i> Entrega automática a tu ID. Son <b>3 productos distintos</b>: elegí el que corresponde a tu cuenta.</p>
+                            <p class="text-[11px] text-gray-500 mb-4">Norte y Sur dependen de la región de tu cuenta de Free Fire (no de dónde estés ahora). Si no sabés cuál es la tuya, consultanos antes de comprar.</p>
+                            <div id="ff-booyah-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div class="kby-opt kby-auto">
                                     <button type="button" id="ff-booyah-select" data-ff-id="221" onclick="window.ffSelectProduct(221)" class="ff-card group w-full bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
                                         <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-3">
                                             <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                         </div>
                                         <div class="px-2 pb-3 pt-2 bg-[#20232b]">
-                                            <p class="font-bold text-white text-sm">Pase Booyah · instantáneo</p>
+                                            <span class="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-fuchsia-600/80 text-white mb-1">Premium · LATAM</span>
+                                            <p class="font-bold text-white text-sm">Pase Booyah Premium</p>
                                             <p id="booyah-price-display" class="text-emerald-400 font-bold text-sm">$3.300 ARS</p>
                                             <p id="booyah-usd-display" class="text-[11px] text-gray-500">≈ $2.00 USD</p>
                                         </div>
                                     </button>
-                                    <ul class="text-xs text-gray-400 space-y-1 font-rajdhani my-3">
-                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se envía directo a tu ID de Free Fire.</li>
-                                        <li><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Se descuenta de tu saldo al confirmar.</li>
-                                    </ul>
-                                    <button onclick="window.buyBooyahPass()" class="w-full min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition"><i class="fa-solid fa-bolt mr-1"></i> Comprar Pase (instantáneo)</button>
+                                    <p class="text-[11px] text-gray-400 font-rajdhani mt-2 leading-snug">Versión <b>Premium</b> del pase para cuentas de Latinoamérica.</p>
                                 </div>
+                                <div id="ff-booyah-extra" class="contents"></div>
                             </div>
                         </section>
                         <section id="ff-ra2-panel" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
-                            <h3 class="font-orbitron font-bold text-white text-sm md:text-base mb-1"><i class="fa-solid fa-ticket text-orange-400 mr-1"></i> Pase Booyah LATAM y paquetes de nivel</h3>
+                            <h3 class="font-orbitron font-bold text-white text-sm md:text-base mb-1"><i class="fa-solid fa-arrow-up-wide-short text-orange-400 mr-1"></i> Paquetes de subida de nivel</h3>
                             <p class="text-[11px] text-emerald-400 font-rajdhani mb-1"><i class="fa-solid fa-bolt"></i> Entrega automática a tu ID</p>
-                            <p class="text-[11px] text-gray-400 font-rajdhani mb-4"><i class="fa-solid fa-circle-info"></i> Pase Booyah: elegí <b>Norte</b> o <b>Sur</b> según la región de tu cuenta de Free Fire. Si no sabés cuál es la tuya, consultanos antes de comprar. Los paquetes de nivel se reclaman en el juego al llegar a ese nivel.</p>
+                            <p class="text-[11px] text-gray-400 font-rajdhani mb-4"><i class="fa-solid fa-circle-info"></i> Los paquetes de nivel se reclaman en el juego al llegar a ese nivel.</p>
                             <div id="ff-ra2-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
                         </section>
                         <!-- CALCULADORA FRAGMENTOS UNIVERSALES -->
@@ -1290,7 +1259,7 @@
                                 <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Diamantes Limitados <span class="text-orange-400 text-sm">(1 x ID)</span></h3>
                                 <span class="text-[11px] text-gray-500 font-rajdhani">Más baratos · 1 compra por pack y por ID</span>
                             </div>
-                            <p id="ff-limited-note" class="text-[11px] text-gray-500 font-rajdhani mb-4">Cada pack limitado se puede comprar una sola vez por ID. Si tu ID ya usó esa oferta, el staff cancela el pedido y se te devuelve el saldo.</p>
+                            <p id="ff-limited-note" class="text-[11px] text-gray-500 font-rajdhani mb-4">Cada pack limitado se puede comprar <b>una sola vez por ID</b> (lo controlamos al comprar). Si tu ID ya usó esa oferta en el juego (por ejemplo, la compró en otro lado), el staff cancela el pedido y se te devuelve el saldo completo.</p>
                             <div id="ff-limited-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
                         </section>
 
@@ -3142,7 +3111,7 @@
             let sel = window.kiwiComprasCat || 'all';
             if (sel !== 'all' && !CATS.some(c => c[0] === sel)) sel = 'all';
             const chip = (k, label, n) => `<button onclick="window.kiwiSetComprasCat('${k}')" class="${n === 0 && sel !== k ? 'opacity-40 ' : ''}px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${sel === k ? 'bg-kiwi-gold text-black border-kiwi-gold' : 'bg-kiwi-dark text-gray-300 border-kiwi-border hover:border-kiwi-gold/60'}">${label} <span class="opacity-70">(${n})</span></button>`;
-            container.innerHTML = `<div class="flex flex-wrap gap-2 mb-3">${chip('all', 'Todas', purchases.length)}${CATS.map(c => chip(c[0], c[1], counts[c[0]] || 0)).join('')}</div>`;
+            container.innerHTML = `<div class="flex flex-wrap gap-2 mb-3">${chip('all', 'Todas', purchases.length)}${CATS.map(c => chip(c[0], c[1], counts[c[0]] || 0)).join('')}${(myRole === 'owner' || myRole === 'ceo' || myRole === 'mod') ? `<button onclick="window.kiwiLimitedPanel()" class="px-3 py-1.5 rounded-full text-[11px] font-bold border border-orange-500/50 text-orange-300 bg-orange-500/10"><i class="fa-solid fa-fire"></i> Ofertas limitadas (IDs)</button>` : ''}</div>`;
             if (sel !== 'all') purchases = purchases.filter(p => window.kiwiPurchaseCat(p) === sel);
             if (!purchases.length) container.innerHTML += `<p class="text-gray-500 text-xs text-center italic py-4">${sel === 'all' ? 'No hay compras registradas.' : 'Sin compras en esta categoría.'}</p>`;
 
@@ -3181,6 +3150,7 @@
                         <div class="flex gap-2 items-center mb-2">
                             ${(p.status !== 'delivered' && p.status !== 'accredited' && p.status !== 'cancelled') ? `<button onclick="window.kpedStaffSet(${p.id}, 'delivered')" class="text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded"><i class="fa-solid fa-check"></i> Completar</button>` : ''}
                             ${((myRole === 'owner' || myRole === 'ceo') && p.status !== 'cancelled') ? `<button onclick="window.kpedStaffSet(${p.id}, 'cancelled')" class="text-xs bg-red-700 hover:bg-red-600 text-white px-2 py-1 rounded"><i class="fa-solid fa-ban"></i> Cancelar${p.usdtPrice ? ' y devolver ' + Number(p.usdtPrice).toFixed(2) + ' USDT' : ''}</button>` : ''}
+                            ${((myRole === 'owner' || myRole === 'ceo') && p.status !== 'cancelled' && window.kiwiIsLimitedOrder && window.kiwiIsLimitedOrder(p)) ? `<button onclick="window.kiwiLimitedUsed(${p.id})" class="text-xs bg-orange-700 hover:bg-orange-600 text-white px-2 py-1 rounded" title="Cancela, devuelve el saldo y bloquea ese pack para ese ID"><i class="fa-solid fa-fire"></i> ID ya usó la oferta</button>` : ''}
                             ${(p.status === 'delivered' || p.status === 'accredited') ? `<button onclick="window.kiCopyReviewMsg(${p.id}, this)" class="text-xs bg-[#5865F2] text-white px-2 py-1 rounded" title="Copia un mensaje para pegarle al cliente por WhatsApp o Discord"><i class="fa-brands fa-discord"></i> Pedir reseña</button>` : ''}
                         </div>
                         <div class="flex justify-end items-center mt-1">${statusHtml}</div>
@@ -3429,132 +3399,9 @@
             {"id":21150,"ra":1150,"category":"hok","sub":"tokens","title":"8.360 Tokens","salePrices":[93.62,89.37,87.24],"emoji":"🪙","v87":1,"art":{"g":"hok","t":"8.360"}},
             {"id":21151,"ra":1151,"category":"hok","sub":"tarjetas","title":"Tarjeta Semanal","salePrices":[1.12,1.03,0.98],"emoji":"🎟️","v87":1,"art":{"g":"hok","t":"SEMANAL"},"tag":"Más Elegido","popular":true},
             {"id":21152,"ra":1152,"category":"hok","sub":"tarjetas","title":"Tarjeta Semanal Plus","salePrices":[3.27,3.02,2.89],"emoji":"🎟️","v87":1,"art":{"g":"hok","t":"SEMANAL+"}},
-            {"id":21201,"ra":1201,"category":"robloxcards","sub":"global","title":"800 Robux","salePrices":[9.96,9.51,9.28],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"800","r":""}},
-            {"id":21202,"ra":1202,"category":"robloxcards","sub":"global","title":"1.000 Robux","salePrices":[12.29,11.73,11.45],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"1.000","r":""}},
-            {"id":21203,"ra":1203,"category":"robloxcards","sub":"global","title":"2.000 Robux","salePrices":[24.35,23.25,22.69],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"2.000","r":""}},
-            {"id":21204,"ra":1204,"category":"robloxcards","sub":"global","title":"2.500 Robux","salePrices":[27.35,26.11,25.49],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"2.500","r":""}},
-            {"id":21205,"ra":1205,"category":"robloxcards","sub":"global","title":"3.000 Robux","salePrices":[38.14,36.41,35.54],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"3.000","r":""}},
-            {"id":21206,"ra":1206,"category":"robloxcards","sub":"global","title":"4.500 Robux","salePrices":[53.02,50.61,49.4],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"4.500","r":""}},
-            {"id":21207,"ra":1207,"category":"robloxcards","sub":"global","title":"10.000 Robux","salePrices":[108.52,103.59,101.12],"emoji":"🎁","v87":1,"code":1,"art":{"g":"roblox","t":"10.000","r":""}},
-            {"id":21211,"ra":1211,"category":"robloxcards","sub":"us","title":"Gift Card 10 USD","salePrices":[10.43,9.96,9.72],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"10 USD","r":"US"}},
-            {"id":21212,"ra":1212,"category":"robloxcards","sub":"us","title":"Gift Card 15 USD","salePrices":[15.46,14.76,14.41],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"15 USD","r":"US"}},
-            {"id":21213,"ra":1213,"category":"robloxcards","sub":"us","title":"Gift Card 20 USD","salePrices":[20.51,19.58,19.11],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"20 USD","r":"US"}},
-            {"id":21214,"ra":1214,"category":"robloxcards","sub":"us","title":"Gift Card 25 USD","salePrices":[25.78,24.61,24.02],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"25 USD","r":"US"}},
-            {"id":21215,"ra":1215,"category":"robloxcards","sub":"us","title":"Gift Card 30 USD","salePrices":[30.83,29.43,28.73],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"30 USD","r":"US"}},
-            {"id":21216,"ra":1216,"category":"robloxcards","sub":"us","title":"Gift Card 50 USD","salePrices":[51.8,49.45,48.27],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"50 USD","r":"US"}},
-            {"id":21217,"ra":1217,"category":"robloxcards","sub":"us","title":"Gift Card 75 USD","salePrices":[76.89,73.4,71.65],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"75 USD","r":"US"}},
-            {"id":21218,"ra":1218,"category":"robloxcards","sub":"us","title":"Gift Card 100 USD","salePrices":[102.22,97.58,95.25],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"100 USD","r":"US"}},
-            {"id":21219,"ra":1219,"category":"robloxcards","sub":"us","title":"Gift Card 200 USD","salePrices":[205.02,195.7,191.04],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"roblox","t":"200 USD","r":"US"}},
-            {"id":21231,"ra":1231,"category":"robloxcards","sub":"mx","title":"Gift Card 100 MXN","salePrices":[6.29,6.01,5.86],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"100 MXN","r":"MX"}},
-            {"id":21232,"ra":1232,"category":"robloxcards","sub":"mx","title":"Gift Card 200 MXN","salePrices":[11.63,11.1,10.84],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"200 MXN","r":"MX"}},
-            {"id":21233,"ra":1233,"category":"robloxcards","sub":"mx","title":"Gift Card 300 MXN","salePrices":[17.08,16.31,15.92],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"300 MXN","r":"MX"}},
-            {"id":21234,"ra":1234,"category":"robloxcards","sub":"mx","title":"Gift Card 400 MXN","salePrices":[23.26,22.2,21.67],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"400 MXN","r":"MX"}},
-            {"id":21235,"ra":1235,"category":"robloxcards","sub":"mx","title":"Gift Card 500 MXN","salePrices":[29.07,27.75,27.09],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"500 MXN","r":"MX"}},
-            {"id":21236,"ra":1236,"category":"robloxcards","sub":"mx","title":"Gift Card 600 MXN","salePrices":[34.87,33.29,32.49],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"600 MXN","r":"MX"}},
-            {"id":21237,"ra":1237,"category":"robloxcards","sub":"mx","title":"Gift Card 700 MXN","salePrices":[40.69,38.85,37.92],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"700 MXN","r":"MX"}},
-            {"id":21238,"ra":1238,"category":"robloxcards","sub":"mx","title":"Gift Card 800 MXN","salePrices":[46.51,44.4,43.34],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"800 MXN","r":"MX"}},
-            {"id":21239,"ra":1239,"category":"robloxcards","sub":"mx","title":"Gift Card 900 MXN","salePrices":[52.17,49.8,48.61],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"900 MXN","r":"MX"}},
-            {"id":21240,"ra":1240,"category":"robloxcards","sub":"mx","title":"Gift Card 1.000 MXN","salePrices":[57.96,55.33,54.01],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"1.000 MXN","r":"MX"}},
-            {"id":21241,"ra":1241,"category":"robloxcards","sub":"mx","title":"Gift Card 1.250 MXN","salePrices":[72.7,69.4,67.75],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"1.250 MXN","r":"MX"}},
-            {"id":21242,"ra":1242,"category":"robloxcards","sub":"mx","title":"Gift Card 1.500 MXN","salePrices":[85.65,81.76,79.81],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"1.500 MXN","r":"MX"}},
-            {"id":21243,"ra":1243,"category":"robloxcards","sub":"mx","title":"Gift Card 1.750 MXN","salePrices":[101.76,97.14,94.82],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"1.750 MXN","r":"MX"}},
-            {"id":21244,"ra":1244,"category":"robloxcards","sub":"mx","title":"Gift Card 2.000 MXN","salePrices":[116.27,110.99,108.34],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"2.000 MXN","r":"MX"}},
-            {"id":21245,"ra":1245,"category":"robloxcards","sub":"mx","title":"Gift Card 2.500 MXN","salePrices":[145.33,138.73,135.43],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"2.500 MXN","r":"MX"}},
-            {"id":21246,"ra":1246,"category":"robloxcards","sub":"mx","title":"Gift Card 3.000 MXN","salePrices":[174.4,166.48,162.51],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"roblox","t":"3.000 MXN","r":"MX"}},
-            {"id":21301,"ra":1301,"category":"steam","sub":"ar","title":"10 USD","salePrices":[12.31,11.56,11.18],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"steam","t":"10 USD","r":"AR"}},
-            {"id":21302,"ra":1302,"category":"steam","sub":"ar","title":"20 USD","salePrices":[23.06,21.83,21.21],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"steam","t":"20 USD","r":"AR"}},
-            {"id":21303,"ra":1303,"category":"steam","sub":"ar","title":"30 USD","salePrices":[34.59,32.74,31.81],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"steam","t":"30 USD","r":"AR"}},
-            {"id":21304,"ra":1304,"category":"steam","sub":"ar","title":"50 USD","salePrices":[55.77,53.24,51.97],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"steam","t":"50 USD","r":"AR"}},
-            {"id":21311,"ra":1311,"category":"steam","sub":"mx","title":"100 MXN","salePrices":[6.31,5.88,5.66],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"steam","t":"100 MXN","r":"MX"}},
-            {"id":21312,"ra":1312,"category":"steam","sub":"mx","title":"200 MXN","salePrices":[13.11,12.31,11.91],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"steam","t":"200 MXN","r":"MX"}},
-            {"id":21313,"ra":1313,"category":"steam","sub":"mx","title":"400 MXN","salePrices":[24.97,23.64,22.97],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"steam","t":"400 MXN","r":"MX"}},
-            {"id":21314,"ra":1314,"category":"steam","sub":"mx","title":"600 MXN","salePrices":[37.64,35.63,34.62],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"steam","t":"600 MXN","r":"MX"}},
-            {"id":21315,"ra":1315,"category":"steam","sub":"mx","title":"1.000 MXN","salePrices":[61.22,58.44,57.05],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"steam","t":"1.000 MXN","r":"MX"}},
-            {"id":21321,"ra":1321,"category":"steam","sub":"cl","title":"4.900 CLP","salePrices":[5.63,5.25,5.05],"emoji":"🎁","v87":1,"code":1,"region":"CL","art":{"g":"steam","t":"4.900 CLP","r":"CL"}},
-            {"id":21322,"ra":1322,"category":"steam","sub":"cl","title":"9.800 CLP","salePrices":[11.6,10.89,10.53],"emoji":"🎁","v87":1,"code":1,"region":"CL","art":{"g":"steam","t":"9.800 CLP","r":"CL"}},
-            {"id":21323,"ra":1323,"category":"steam","sub":"cl","title":"19.600 CLP","salePrices":[21.76,20.6,20.01],"emoji":"🎁","v87":1,"code":1,"region":"CL","art":{"g":"steam","t":"19.600 CLP","r":"CL"}},
-            {"id":21324,"ra":1324,"category":"steam","sub":"cl","title":"29.400 CLP","salePrices":[32.71,30.96,30.08],"emoji":"🎁","v87":1,"code":1,"region":"CL","art":{"g":"steam","t":"29.400 CLP","r":"CL"}},
-            {"id":21325,"ra":1325,"category":"steam","sub":"cl","title":"49.000 CLP","salePrices":[53.84,51.39,50.17],"emoji":"🎁","v87":1,"code":1,"region":"CL","art":{"g":"steam","t":"49.000 CLP","r":"CL"}},
-            {"id":21331,"ra":1331,"category":"steam","sub":"co","title":"20.500 COP","salePrices":[7.34,6.84,6.58],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"steam","t":"20.500 COP","r":"CO"}},
-            {"id":21332,"ra":1332,"category":"steam","sub":"co","title":"41.000 COP","salePrices":[14.42,13.54,13.09],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"steam","t":"41.000 COP","r":"CO"}},
-            {"id":21333,"ra":1333,"category":"steam","sub":"co","title":"82.000 COP","salePrices":[27.82,26.33,25.59],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"steam","t":"82.000 COP","r":"CO"}},
-            {"id":21334,"ra":1334,"category":"steam","sub":"co","title":"123.000 COP","salePrices":[41.89,39.99,39.03],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"steam","t":"123.000 COP","r":"CO"}},
-            {"id":21335,"ra":1335,"category":"steam","sub":"co","title":"205.000 COP","salePrices":[70.04,66.86,65.26],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"steam","t":"205.000 COP","r":"CO"}},
-            {"id":21341,"ra":1341,"category":"steam","sub":"pe","title":"20 PEN","salePrices":[6.85,6.38,6.14],"emoji":"🎁","v87":1,"code":1,"region":"PE","art":{"g":"steam","t":"20 PEN","r":"PE"}},
-            {"id":21342,"ra":1342,"category":"steam","sub":"pe","title":"40 PEN","salePrices":[13.54,12.71,12.3],"emoji":"🎁","v87":1,"code":1,"region":"PE","art":{"g":"steam","t":"40 PEN","r":"PE"}},
-            {"id":21343,"ra":1343,"category":"steam","sub":"pe","title":"80 PEN","salePrices":[26.58,25.16,24.45],"emoji":"🎁","v87":1,"code":1,"region":"PE","art":{"g":"steam","t":"80 PEN","r":"PE"}},
-            {"id":21344,"ra":1344,"category":"steam","sub":"pe","title":"120 PEN","salePrices":[39.16,37.38,36.49],"emoji":"🎁","v87":1,"code":1,"region":"PE","art":{"g":"steam","t":"120 PEN","r":"PE"}},
-            {"id":21401,"ra":1401,"category":"playstation","sub":"ar","title":"10 USD","salePrices":[12.96,12.17,11.77],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"psn","t":"10 USD","r":"AR"}},
-            {"id":21402,"ra":1402,"category":"playstation","sub":"ar","title":"25 USD","salePrices":[31.29,29.61,28.77],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"psn","t":"25 USD","r":"AR"}},
-            {"id":21403,"ra":1403,"category":"playstation","sub":"ar","title":"50 USD","salePrices":[59.02,56.34,55.0],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"psn","t":"50 USD","r":"AR"}},
-            {"id":21404,"ra":1404,"category":"playstation","sub":"ar","title":"100 USD","salePrices":[122.16,116.61,113.83],"emoji":"🎁","v87":1,"code":1,"region":"AR","art":{"g":"psn","t":"100 USD","r":"AR"}},
-            {"id":21411,"ra":1411,"category":"playstation","sub":"br","title":"35 BRL","salePrices":[6.73,6.27,6.03],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"35 BRL","r":"BR"}},
-            {"id":21412,"ra":1412,"category":"playstation","sub":"br","title":"60 BRL","salePrices":[11.36,10.66,10.31],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"60 BRL","r":"BR"}},
-            {"id":21413,"ra":1413,"category":"playstation","sub":"br","title":"100 BRL","salePrices":[18.6,17.61,17.11],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"100 BRL","r":"BR"}},
-            {"id":21414,"ra":1414,"category":"playstation","sub":"br","title":"150 BRL","salePrices":[27.89,26.4,25.65],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"150 BRL","r":"BR"}},
-            {"id":21415,"ra":1415,"category":"playstation","sub":"br","title":"250 BRL","salePrices":[45.04,43.0,41.97],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"250 BRL","r":"BR"}},
-            {"id":21416,"ra":1416,"category":"playstation","sub":"br","title":"300 BRL","salePrices":[54.78,52.29,51.05],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"300 BRL","r":"BR"}},
-            {"id":21417,"ra":1417,"category":"playstation","sub":"br","title":"360 BRL","salePrices":[65.74,62.76,61.26],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"360 BRL","r":"BR"}},
-            {"id":21418,"ra":1418,"category":"playstation","sub":"br","title":"400 BRL","salePrices":[74.43,71.05,69.36],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"psn","t":"400 BRL","r":"BR"}},
-            {"id":21431,"ra":1431,"category":"playstation","sub":"us","title":"2 USD","salePrices":[2.46,2.28,2.18],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"2 USD","r":"US"}},
-            {"id":21432,"ra":1432,"category":"playstation","sub":"us","title":"3 USD","salePrices":[3.76,3.5,3.37],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"3 USD","r":"US"}},
-            {"id":21433,"ra":1433,"category":"playstation","sub":"us","title":"4 USD","salePrices":[4.99,4.65,4.47],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"4 USD","r":"US"}},
-            {"id":21434,"ra":1434,"category":"playstation","sub":"us","title":"5 USD","salePrices":[6.53,6.08,5.86],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"5 USD","r":"US"}},
-            {"id":21435,"ra":1435,"category":"playstation","sub":"us","title":"10 USD","salePrices":[10.99,10.32,9.98],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"10 USD","r":"US"}},
-            {"id":21436,"ra":1436,"category":"playstation","sub":"us","title":"20 USD","salePrices":[26.53,25.11,24.4],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"20 USD","r":"US"}},
-            {"id":21437,"ra":1437,"category":"playstation","sub":"us","title":"25 USD","salePrices":[27.12,25.67,24.94],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"25 USD","r":"US"}},
-            {"id":21438,"ra":1438,"category":"playstation","sub":"us","title":"30 USD","salePrices":[33.79,31.98,31.07],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"30 USD","r":"US"}},
-            {"id":21439,"ra":1439,"category":"playstation","sub":"us","title":"50 USD","salePrices":[54.17,51.71,50.48],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"50 USD","r":"US"}},
-            {"id":21440,"ra":1440,"category":"playstation","sub":"us","title":"75 USD","salePrices":[80.22,76.57,74.75],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"75 USD","r":"US"}},
-            {"id":21441,"ra":1441,"category":"playstation","sub":"us","title":"100 USD","salePrices":[108.2,103.28,100.82],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"100 USD","r":"US"}},
-            {"id":21442,"ra":1442,"category":"playstation","sub":"us","title":"150 USD","salePrices":[159.7,152.45,148.82],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"150 USD","r":"US"}},
-            {"id":21443,"ra":1443,"category":"playstation","sub":"us","title":"200 USD","salePrices":[213.7,203.99,199.13],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"200 USD","r":"US"}},
-            {"id":21444,"ra":1444,"category":"playstation","sub":"us","title":"250 USD","salePrices":[254.74,243.16,237.37],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"psn","t":"250 USD","r":"US"}},
-            {"id":21501,"ra":1501,"category":"xbox","sub":"mx","title":"200 MXN","salePrices":[11.4,10.7,10.35],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"xbox","t":"200 MXN","r":"MX"}},
-            {"id":21502,"ra":1502,"category":"xbox","sub":"mx","title":"300 MXN","salePrices":[17.1,16.05,15.52],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"xbox","t":"300 MXN","r":"MX"}},
-            {"id":21503,"ra":1503,"category":"xbox","sub":"mx","title":"600 MXN","salePrices":[33.59,31.79,30.89],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"xbox","t":"600 MXN","r":"MX"}},
-            {"id":21504,"ra":1504,"category":"xbox","sub":"mx","title":"1.000 MXN","salePrices":[54.44,51.97,50.73],"emoji":"🎁","v87":1,"code":1,"region":"MX","art":{"g":"xbox","t":"1.000 MXN","r":"MX"}},
-            {"id":21511,"ra":1511,"category":"xbox","sub":"co","title":"30.000 COP","salePrices":[10.64,9.99,9.66],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"xbox","t":"30.000 COP","r":"CO"}},
-            {"id":21512,"ra":1512,"category":"xbox","sub":"co","title":"55.000 COP","salePrices":[19.15,18.13,17.61],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"xbox","t":"55.000 COP","r":"CO"}},
-            {"id":21513,"ra":1513,"category":"xbox","sub":"co","title":"100.000 COP","salePrices":[34.82,32.96,32.02],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"xbox","t":"100.000 COP","r":"CO"}},
-            {"id":21514,"ra":1514,"category":"xbox","sub":"co","title":"150.000 COP","salePrices":[51.29,48.96,47.8],"emoji":"🎁","v87":1,"code":1,"region":"CO","art":{"g":"xbox","t":"150.000 COP","r":"CO"}},
-            {"id":21521,"ra":1521,"category":"xbox","sub":"br","title":"5 BRL","salePrices":[1.01,0.93,0.89],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"5 BRL","r":"BR"}},
-            {"id":21522,"ra":1522,"category":"xbox","sub":"br","title":"10 BRL","salePrices":[1.96,1.81,1.74],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"10 BRL","r":"BR"}},
-            {"id":21523,"ra":1523,"category":"xbox","sub":"br","title":"15 BRL","salePrices":[3.03,2.8,2.68],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"15 BRL","r":"BR"}},
-            {"id":21524,"ra":1524,"category":"xbox","sub":"br","title":"20 BRL","salePrices":[3.84,3.58,3.44],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"20 BRL","r":"BR"}},
-            {"id":21525,"ra":1525,"category":"xbox","sub":"br","title":"25 BRL","salePrices":[4.75,4.43,4.26],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"25 BRL","r":"BR"}},
-            {"id":21526,"ra":1526,"category":"xbox","sub":"br","title":"40 BRL","salePrices":[7.71,7.18,6.92],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"40 BRL","r":"BR"}},
-            {"id":21527,"ra":1527,"category":"xbox","sub":"br","title":"50 BRL","salePrices":[9.46,8.88,8.59],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"50 BRL","r":"BR"}},
-            {"id":21528,"ra":1528,"category":"xbox","sub":"br","title":"60 BRL","salePrices":[11.44,10.74,10.39],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"60 BRL","r":"BR"}},
-            {"id":21529,"ra":1529,"category":"xbox","sub":"br","title":"70 BRL","salePrices":[13.64,12.8,12.38],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"70 BRL","r":"BR"}},
-            {"id":21530,"ra":1530,"category":"xbox","sub":"br","title":"100 BRL","salePrices":[19.14,18.12,17.6],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"100 BRL","r":"BR"}},
-            {"id":21531,"ra":1531,"category":"xbox","sub":"br","title":"200 BRL","salePrices":[37.59,35.58,34.57],"emoji":"🎁","v87":1,"code":1,"region":"BR","art":{"g":"xbox","t":"200 BRL","r":"BR"}},
-            {"id":21541,"ra":1541,"category":"xbox","sub":"us","title":"5 USD","salePrices":[5.41,5.04,4.85],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"5 USD","r":"US"}},
-            {"id":21542,"ra":1542,"category":"xbox","sub":"us","title":"10 USD","salePrices":[10.86,10.2,9.86],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"10 USD","r":"US"}},
-            {"id":21543,"ra":1543,"category":"xbox","sub":"us","title":"15 USD","salePrices":[15.93,14.95,14.46],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"15 USD","r":"US"}},
-            {"id":21544,"ra":1544,"category":"xbox","sub":"us","title":"20 USD","salePrices":[20.84,19.73,19.17],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"20 USD","r":"US"}},
-            {"id":21545,"ra":1545,"category":"xbox","sub":"us","title":"25 USD","salePrices":[26.2,24.8,24.1],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"25 USD","r":"US"}},
-            {"id":21546,"ra":1546,"category":"xbox","sub":"us","title":"50 USD","salePrices":[51.16,48.84,47.67],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"50 USD","r":"US"}},
-            {"id":21547,"ra":1547,"category":"xbox","sub":"us","title":"100 USD","salePrices":[99.18,94.67,92.42],"emoji":"🎁","v87":1,"code":1,"region":"US","art":{"g":"xbox","t":"100 USD","r":"US"}},
-            {"id":21561,"ra":1561,"category":"xbox","sub":"mx","title":"Game Pass Essential · 3 meses","salePrices":[23.58,22.32,21.68],"emoji":"🎮","v87":1,"code":1,"region":"MX","art":{"g":"gamepass","t":"3 MESES","r":"MX","s":"ESSENTIAL"}},
-            {"id":21562,"ra":1562,"category":"xbox","sub":"mx","title":"Game Pass Essential · 6 meses","salePrices":[46.25,44.15,43.1],"emoji":"🎮","v87":1,"code":1,"region":"MX","art":{"g":"gamepass","t":"6 MESES","r":"MX","s":"ESSENTIAL"}},
-            {"id":21571,"ra":1571,"category":"xbox","sub":"br","title":"Game Pass Ultimate · 1 mes","salePrices":[14.32,13.44,13.0],"emoji":"🎮","v87":1,"code":1,"region":"BR","art":{"g":"gamepass","t":"1 MES","r":"BR","s":"ULTIMATE"}},
-            {"id":21572,"ra":1572,"category":"xbox","sub":"br","title":"Game Pass Ultimate · 3 meses","salePrices":[41.31,39.43,38.49],"emoji":"🎮","v87":1,"code":1,"region":"BR","art":{"g":"gamepass","t":"3 MESES","r":"BR","s":"ULTIMATE"}},
-            {"id":21581,"ra":1581,"category":"xbox","sub":"us","title":"Game Pass Essential · 1 mes","salePrices":[10.32,9.69,9.37],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"1 MES","r":"US","s":"ESSENTIAL"}},
-            {"id":21582,"ra":1582,"category":"xbox","sub":"us","title":"Game Pass Premium · 1 mes","salePrices":[16.94,16.04,15.58],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"1 MES","r":"US","s":"PREMIUM"}},
-            {"id":21583,"ra":1583,"category":"xbox","sub":"us","title":"Game Pass Ultimate · 1 mes","salePrices":[22.7,21.49,20.88],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"1 MES","r":"US","s":"ULTIMATE"}},
-            {"id":21584,"ra":1584,"category":"xbox","sub":"us","title":"Game Pass Essential · 3 meses","salePrices":[25.14,23.8,23.12],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"3 MESES","r":"US","s":"ESSENTIAL"}},
-            {"id":21585,"ra":1585,"category":"xbox","sub":"us","title":"Game Pass Essential · 6 meses","salePrices":[39.51,37.72,36.82],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"6 MESES","r":"US","s":"ESSENTIAL"}},
-            {"id":21586,"ra":1586,"category":"xbox","sub":"us","title":"Game Pass Premium · 3 meses","salePrices":[42.18,40.27,39.31],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"3 MESES","r":"US","s":"PREMIUM"}},
-            {"id":21587,"ra":1587,"category":"xbox","sub":"us","title":"Game Pass Ultimate · 3 meses","salePrices":[66.86,63.82,62.3],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"3 MESES","r":"US","s":"ULTIMATE"}},
-            {"id":21588,"ra":1588,"category":"xbox","sub":"us","title":"Game Pass Essential · 12 meses","salePrices":[77.69,74.16,72.39],"emoji":"🎮","v87":1,"code":1,"region":"US","art":{"g":"gamepass","t":"12 MESES","r":"US","s":"ESSENTIAL"}},
             {"id":21601,"ra":1601,"category":"discord","sub":"nitro","title":"Nitro Basic · 1 mes","salePrices":[4.93,4.71,4.59],"emoji":"💜","v87":1,"code":1,"art":{"g":"discord","t":"1 MES","s":"BASIC"}},
             {"id":21602,"ra":1602,"category":"discord","sub":"nitro","title":"Nitro · 1 mes","salePrices":[9.64,9.2,8.98],"emoji":"💜","v87":1,"code":1,"art":{"g":"discord","t":"1 MES","s":"NITRO"},"tag":"Más Elegido","popular":true},
             {"id":21603,"ra":1603,"category":"discord","sub":"nitro","title":"Nitro · 12 meses","salePrices":[97.12,92.71,90.5],"emoji":"💜","v87":1,"code":1,"art":{"g":"discord","t":"12 MESES","s":"NITRO"}},
-            {"id":21611,"ra":1611,"category":"minecraft","sub":"minecoins","title":"330 Minecoins","salePrices":[4.58,4.37,4.27],"emoji":"🟩","v87":1,"code":1,"art":{"g":"minecraft","t":"330"}},
-            {"id":21612,"ra":1612,"category":"minecraft","sub":"minecoins","title":"1.720 Minecoins","salePrices":[7.01,6.69,6.53],"emoji":"🟩","v87":1,"code":1,"art":{"g":"minecraft","t":"1.720"}},
-            {"id":21613,"ra":1613,"category":"minecraft","sub":"minecoins","title":"3.500 Minecoins","salePrices":[17.89,17.08,16.67],"emoji":"🟩","v87":1,"code":1,"art":{"g":"minecraft","t":"3.500"}},
-            {"id":21614,"ra":1614,"category":"minecraft","sub":"minecoins","title":"8.800 Minecoins","salePrices":[52.87,50.47,49.26],"emoji":"🟩","v87":1,"code":1,"art":{"g":"minecraft","t":"8.800"}}
         ];
         window.kiwiRaSalePrice = function(it) {
             const rf = window.kiwiReseller ? window.kiwiReseller.marginFactor('ra') : 1;
@@ -3568,7 +3415,7 @@
         window.KIWI_RA_MAP = {}; // id del catálogo → id de entrega automática
         (function () {
             const GAME = { freefire: 'Free Fire', bloodstrike: 'Blood Strike', pubg: 'PUBG Mobile', mlbb: 'Mobile Legends', genshin: 'Genshin Impact', hsr: 'Honkai: Star Rail', hok: 'Honor of Kings',
-                           robloxcards: 'Roblox', steam: 'Steam', playstation: 'PlayStation', xbox: 'Xbox', discord: 'Discord', minecraft: 'Minecraft' };
+                           discord: 'Discord' };
             const REG = { AR: 'Argentina', MX: 'México', CL: 'Chile', CO: 'Colombia', PE: 'Perú', BR: 'Brasil', US: 'USA' };
             window.KIWI_RA_ITEMS.forEach(it => {
                 const usdt = window.kiwiRaSalePrice(it);
@@ -4608,6 +4455,7 @@
             if (typeof p === 'string') p = { category: p };
             const D = window.KIWI_DELIVERY;
             const cat = p.category || (window.kiwiPurchaseCat ? window.kiwiPurchaseCat(p) : '');
+            if (p.raId || p.autoDelivery || ['robloxcards', 'giftcards', 'juegos'].includes(cat) || /entrega autom/i.test(String(p.method || '') + ' ' + String(p.extra || ''))) return 'auto';   // v88: gift cards de Roblox y productos automáticos
             if (D.manualCategories.includes(cat)) return 'manual';
             if (p.kind === 'frag' || p.kind === 'box' || p.sub === 'evo' || /entrega autom/i.test(String(p.method || '') + ' ' + String(p.extra || ''))) return 'auto';   // v85
             if (p.id != null && D.manualIds.includes(Number(p.id)) && (cat === 'freefire' || !cat)) return 'manual';
@@ -6579,7 +6427,7 @@
                         <p><strong>ID:</strong> ${savedId || '<span class="text-red-400">No verificado</span>'}</p>
                         <p><strong>Nombre:</strong> ${savedName ? String(savedName).replace(/[<>&]/g, '') : '<span class="text-gray-400">No disponible (revisá bien el ID)</span>'}</p>
                     </div>
-                    <p class="mt-3 text-xs text-gray-400">Confirmá que el ID y el nombre sean correctos antes de comprar.</p>`;
+                    <p class="mt-3 text-xs text-gray-400">Confirmá que el ID y el nombre sean correctos antes de comprar.</p>${window.kiwiFFExtraNote ? window.kiwiFFExtraNote(prod) : ''}`;
                 document.getElementById('ff-confirm-modal').classList.remove('hidden');
                 return;
             }
@@ -6674,7 +6522,7 @@
                 if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
             } catch (e) {
                 console.warn('Cobro/pedido no guardado todavía, se reintenta:', e);
-                if (/Saldo insuficiente|Monto inválido|Solicitud inválida|Sesión inválida|suspendida/i.test(String((e && e.message) || e))) {
+                if (/Saldo insuficiente|Monto inválido|Solicitud inválida|Sesión inválida|suspendida|Oferta limitada/i.test(String((e && e.message) || e))) {
                     // rechazo definitivo del servidor: no reintentar el cobro
                     q.failed = null; q.tries = 0; localStorage.removeItem('kiwi_pending_checkout');
                     window._syncedBal[username] = Number(window._syncedBal[username]) + req.amount;
@@ -6739,7 +6587,16 @@
                     document.getElementById('ff-confirm-modal').classList.add('hidden');
                     return window.kiwiWarn('Ya tenés un pedido en proceso de este pack limitado para el ID ' + ffId + '.\nEsperá a que lo carguemos. Cada ID puede usar esta oferta una sola vez.');
                 }
-                // v87: sin consulta externa de ofertas: si tu ID ya usó este pack, el staff cancela el pedido y se devuelve el saldo.
+                // v88: registro de Kiwii: 1 compra por ID y pack (la base lo vuelve a controlar al cobrar)
+                try {
+                    const lc = await window.kiwiRpc('kiwi_limited_check', { p_token: window.kiwiToken(), p_title: prod.title, p_game_id: ffId });
+                    if (lc && lc.taken) {
+                        document.getElementById('ff-confirm-modal').classList.add('hidden');
+                        return window.kiwiWarn(lc.reason === 'used'
+                            ? 'El ID ' + ffId + ' ya usó la oferta "' + prod.title + '".\nCada pack limitado se puede comprar una sola vez por ID. No se te cobró nada.'
+                            : (lc.mine ? 'Ya tenés un pedido de "' + prod.title + '" para el ID ' + ffId + '.\nEsperá a que lo carguemos.' : 'El ID ' + ffId + ' ya tiene un pedido de "' + prod.title + '".\nCada pack limitado se puede comprar una sola vez por ID.'));
+                    }
+                } catch (_) { /* sin conexión o SQL v88 sin correr: sigue; la base controla igual al cobrar */ }
             }
 
             document.getElementById('ff-confirm-modal').classList.add('hidden');
@@ -7417,9 +7274,16 @@
                 if (rpcRes && typeof rpcRes === 'object' && 'refunded' in rpcRes) refund = Number(rpcRes.refunded) || 0;
                 else if (status === 'cancelled' && p.status !== 'cancelled') refund = estimate; // SQL anterior a v80
             } catch (e) {
-                alert('No se pudo cambiar el estado: ' + (e.message || e));
-                if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
-                return;
+                // v88: pedido automático en curso en el proveedor → solo Owner/CEO puede "cancelar igual"
+                if (status === 'cancelled' && /procesando en el proveedor/i.test(String((e && e.message) || e))
+                    && confirm(String(e.message || e) + '\n\n¿Cancelar IGUAL y devolver el saldo ahora?\nRiesgo: si el proveedor lo completa después, el cliente recibe la recarga Y el saldo (se pierde el costo). Hacelo solo si confirmaste con el proveedor que no se va a entregar.')) {
+                    try { rpcRes = await window.kiwiStaffRpc('kiwi_staff_force_cancel', { p_id: String(id) }); if (rpcRes && 'refunded' in rpcRes) refund = Number(rpcRes.refunded) || 0; }
+                    catch (e2) { alert('No se pudo cancelar: ' + (e2.message || e2)); if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole()); return; }
+                } else {
+                    alert('No se pudo cambiar el estado: ' + (e.message || e));
+                    if (typeof renderStaffCompras === 'function') renderStaffCompras(window.getMyStaffRole());
+                    return;
+                }
             }
             if (refund > 0) {
                 const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}');
@@ -8096,7 +7960,7 @@ window.resetUser2FA = function(username) {
     (function () {
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         // v53: íconos de categoría (mismos que las tarjetas del catálogo)
-        window.KIWI_CAT_ICONS = { roblox: '/images/icon-roblox.webp', robloxcards: '/images/icon-roblox.webp', freefire: '/images/icon-freefire.webp', bloodstrike: '/images/icon-bloodstrike.webp', pubg: '/images/icon-pubg.webp', mlbb: '/images/icon-mobilelegends.webp' };
+        window.KIWI_CAT_ICONS = { roblox: '/images/icon-roblox.webp', freefire: '/images/icon-freefire.webp', bloodstrike: '/images/icon-bloodstrike.webp', pubg: '/images/icon-pubg.webp', mlbb: '/images/icon-mobilelegends.webp' };
         window.kiwiCatIcon = function (cat, alt) { const u = window.KIWI_CAT_ICONS[cat]; return u ? `<img src="${u}" alt="${alt || ''}" class="kcat-ico" onerror="this.style.display='none'">` : ''; };
         window.KIWI_RA_GAMES = {
             bloodstrike: { name: 'Blood Strike', icon: 'fa-crosshairs', color: '#ef4444', grad: 'from-red-900/60 via-[#1a0d10] to-kiwi-dark', desc: 'Gold y pases directo a tu ID', tabs: [['gold', 'Gold'], ['pases', 'Pases']], zone: false, help: 'Tu ID está en el perfil del juego (tocá tu avatar).' },
@@ -8106,25 +7970,15 @@ window.resetUser2FA = function(username) {
             genshin: { name: 'Genshin Impact', icon: 'fa-star', color: '#fbbf24', grad: 'from-amber-900/50 via-[#18140c] to-kiwi-dark', desc: 'Cristales Génesis y Bendición Lunar directo a tu UID', tabs: [['cristales', 'Cristales Génesis'], ['pases', 'Bendición Lunar']], zone: 'select', idLabel: 'UID', zoneLabel: 'Servidor', zoneOptions: [['america', 'América'], ['europe', 'Europa'], ['asia', 'Asia'], ['tw_hk_mo', 'TW, HK, MO']], help: 'Tu UID son los 9 o 10 números que aparecen abajo a la derecha en el juego (también en Menú → Perfil). Si jugás desde Latinoamérica tu servidor casi siempre es América.' },
             hsr: { name: 'Honkai: Star Rail', icon: 'fa-train', color: '#a78bfa', grad: 'from-violet-900/50 via-[#140f22] to-kiwi-dark', desc: 'Fragmentos Oníricos y Pase de Suministro directo a tu UID', tabs: [['fragmentos', 'Fragmentos Oníricos'], ['pases', 'Pase de Suministro']], zone: 'select', idLabel: 'UID', zoneLabel: 'Servidor', zoneOptions: [['america', 'América'], ['europe', 'Europa'], ['asia', 'Asia'], ['tw_hk_mo', 'TW, HK, MO']], help: 'Tu UID está en Menú (Teléfono) → Perfil, debajo de tu nombre. Si jugás desde Latinoamérica tu servidor casi siempre es América.' },
             hok: { name: 'Honor of Kings', icon: 'fa-crown', color: '#eab308', grad: 'from-yellow-900/50 via-[#18150a] to-kiwi-dark', desc: 'Tokens y tarjetas semanales directo a tu ID', tabs: [['tokens', 'Tokens'], ['tarjetas', 'Tarjetas semanales']], zone: false, help: 'Tu ID está en tu perfil del juego (tocá tu avatar arriba a la izquierda).' },
-            // v87: gift cards (se entrega un CÓDIGO: lo ves al instante y queda en Mis pedidos)
-            robloxcards: { name: 'Roblox Gift Cards', icon: 'fa-cube', color: '#60a5fa', grad: 'from-slate-800/70 via-[#101218] to-kiwi-dark', desc: 'Tarjetas de regalo de Roblox con código', code: true, tabs: [['global', 'Global'], ['us', 'USA (USD)'], ['mx', 'México (MXN)']],
-                notice: 'Se entrega un código para canjear en roblox.com/redeem.', tabNotes: { global: 'Global: se canjea en cuentas de cualquier país y se acredita en Robux.', us: 'USA (USD): tarjeta de región Estados Unidos. Si tu cuenta es de otro país y no estás seguro, elegí Global.', mx: 'México (MXN): tarjeta de región México. Si tu cuenta es de otro país y no estás seguro, elegí Global.' }, regionLock: { us: 'Estados Unidos', mx: 'México' }, redeem: 'roblox.com/redeem' },
-            steam: { name: 'Steam', icon: 'fa-brands fa-steam', color: '#66c0f4', grad: 'from-slate-800/70 via-[#0e141c] to-kiwi-dark', desc: 'Saldo para tu billetera de Steam (código)', code: true, tabs: [['ar', 'Argentina'], ['mx', 'México'], ['cl', 'Chile'], ['co', 'Colombia'], ['pe', 'Perú']],
-                notice: 'IMPORTANTE: la tarjeta tiene que ser de la MISMA región que tu cuenta de Steam (la ves en Steam → Detalles de la cuenta → País). Una tarjeta de otra región no se puede canjear y los códigos entregados no tienen devolución.', regionLock: { ar: 'Argentina', mx: 'México', cl: 'Chile', co: 'Colombia', pe: 'Perú' }, account: 'Steam', redeem: 'store.steampowered.com/account/redeemwalletcode' },
-            playstation: { name: 'PlayStation', icon: 'fa-brands fa-playstation', color: '#3b82f6', grad: 'from-blue-900/60 via-[#0b1222] to-kiwi-dark', desc: 'Tarjetas PlayStation Store (código)', code: true, tabs: [['ar', 'Argentina'], ['br', 'Brasil'], ['us', 'Estados Unidos']],
-                notice: 'IMPORTANTE: la tarjeta tiene que ser de la MISMA región que tu cuenta de PlayStation Network. Una tarjeta de otra región no se puede canjear y los códigos entregados no tienen devolución.', regionLock: { ar: 'Argentina', br: 'Brasil', us: 'Estados Unidos' }, account: 'PlayStation Network', redeem: 'PlayStation Store → Canjear códigos' },
-            xbox: { name: 'Xbox', icon: 'fa-brands fa-xbox', color: '#22c55e', grad: 'from-green-900/60 via-[#0b1a0f] to-kiwi-dark', desc: 'Tarjetas Xbox y Game Pass (código)', code: true, tabs: [['mx', 'México'], ['co', 'Colombia'], ['br', 'Brasil'], ['us', 'Estados Unidos']],
-                notice: 'IMPORTANTE: la tarjeta / Game Pass tiene que ser de la MISMA región que tu cuenta Microsoft / Xbox. Una tarjeta de otra región no se puede canjear y los códigos entregados no tienen devolución.', regionLock: { mx: 'México', co: 'Colombia', br: 'Brasil', us: 'Estados Unidos' }, account: 'Microsoft / Xbox', redeem: 'redeem.microsoft.com' },
+            // v87: gift cards (se entrega un CÓDIGO: lo ves al instante y queda en Mis pedidos). v89: quedan solo Discord Nitro
             discord: { name: 'Discord Nitro', icon: 'fa-brands fa-discord', color: '#818cf8', grad: 'from-indigo-900/60 via-[#10112a] to-kiwi-dark', desc: 'Suscripciones de Discord Nitro (código)', code: true, tabs: [['nitro', 'Nitro']],
                 notice: 'Se entrega un código / enlace de regalo para activar Nitro en tu cuenta de Discord. Si tu cuenta ya tiene Nitro activo, puede que tengas que esperar a que termine.', redeem: 'discord.com/gifts' },
-            minecraft: { name: 'Minecraft', icon: 'fa-cube', color: '#4ade80', grad: 'from-emerald-900/60 via-[#0c1a10] to-kiwi-dark', desc: 'Minecoins para Minecraft Bedrock (código)', code: true, tabs: [['minecoins', 'Minecoins']],
-                notice: 'Se entrega un código de Minecoins para canjear en Minecraft Bedrock (Marketplace). No sirve para Minecraft Java.', redeem: 'minecraft.net/redeem' }
         };
         window.KIWI_ROUTES = { roblox: '/Roblox', freefire: '/FreeFire', streaming: '/Streaming', instagram: '/RedesSociales', mlbb: '/MobileLegends', pubg: '/PubgMobile', bloodstrike: '/BloodStrike',
-            genshin: '/GenshinImpact', hsr: '/HonkaiStarRail', hok: '/HonorOfKings', robloxcards: '/RobloxGiftCards', steam: '/Steam', playstation: '/PlayStation', xbox: '/Xbox', discord: '/DiscordNitro', minecraft: '/Minecraft' };
+            genshin: '/GenshinImpact', hsr: '/HonkaiStarRail', hok: '/HonorOfKings', discord: '/DiscordNitro' };
         const ALIASES = { '/catalogo/roblox': 'roblox', '/catalogo/free-fire': 'freefire', '/catalogo/suscripciones-ia': 'streaming', '/catalogo/redes-sociales': 'instagram', '/free-fire': 'freefire', '/mobile-legends': 'mlbb', '/mlbb': 'mlbb', '/pubg': 'pubg', '/pubg-mobile': 'pubg', '/blood-strike': 'bloodstrike', '/catalogo/mobile-legends': 'mlbb', '/catalogo/pubg-mobile': 'pubg', '/catalogo/blood-strike': 'bloodstrike' };
         const TITLES = { roblox: 'Roblox y Blox Fruits', freefire: 'Free Fire', streaming: 'Streaming e IA', instagram: 'Redes Sociales', mlbb: 'Mobile Legends', pubg: 'PUBG Mobile', bloodstrike: 'Blood Strike',
-            genshin: 'Genshin Impact', hsr: 'Honkai: Star Rail', hok: 'Honor of Kings', robloxcards: 'Roblox Gift Cards', steam: 'Steam Wallet', playstation: 'PlayStation Store', xbox: 'Xbox y Game Pass', discord: 'Discord Nitro', minecraft: 'Minecraft Minecoins' };
+            genshin: 'Genshin Impact', hsr: 'Honkai: Star Rail', hok: 'Honor of Kings', discord: 'Discord Nitro' };
         const DEFAULT_TITLE = document.title;
         window.kiwiCatFromPath = function (path) {
             const p = String(path || '').replace(/\/+$/, '').toLowerCase();
@@ -8197,6 +8051,7 @@ window.resetUser2FA = function(username) {
                     <div id="ra-tabs" class="flex flex-wrap gap-2 mb-4">${g.tabs.map(([k, l]) => `<button type="button" onclick="window.raSetTab('${k}')" class="ra-tab px-4 py-2 rounded-xl text-sm font-rajdhani font-bold border transition ${st.tab === k ? 'bg-white/10 border-white/40 text-white' : 'bg-kiwi-dark border-white/5 text-gray-400 hover:text-white'}">${l}</button>`).join('')}</div>
                     ${cat === 'mlbb' && st.tab === 'us' ? '<p class="text-[11px] text-amber-300 mb-3 font-rajdhani"><i class="fa-solid fa-circle-info"></i> Región US: solo para cuentas creadas en Estados Unidos. Si no sabés tu región, elegí Global.</p>' : ''}
                     ${g.notice ? `<div class="mb-3 rounded-xl border ${g.regionLock && g.regionLock[st.tab] ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-white/10 bg-white/5 text-gray-300'} p-3 text-xs font-rajdhani leading-snug"><i class="fa-solid ${g.regionLock && g.regionLock[st.tab] ? 'fa-triangle-exclamation' : 'fa-circle-info'} mr-1"></i> ${esc(g.notice)}${g.tabNotes && g.tabNotes[st.tab] ? '<br><span class="opacity-90">' + esc(g.tabNotes[st.tab]) + '</span>' : ''}${g.regionLock && g.regionLock[st.tab] && g.account ? '<br><b>Esta pestaña: tarjetas de ' + esc(g.regionLock[st.tab]) + '. Solo para cuentas de ' + esc(g.account) + ' de ' + esc(g.regionLock[st.tab]) + '.</b>' : ''}</div>` : ''}
+                    ${(g.tabWarn && g.tabWarn[st.tab]) || g.generalWarn ? `<details class="mb-3 rounded-xl border border-sky-500/30 bg-sky-500/5 p-3 text-xs font-rajdhani leading-snug text-gray-300" open><summary class="cursor-pointer font-bold text-sky-200"><i class="fa-solid fa-circle-exclamation mr-1"></i> Leé antes de comprar</summary>${g.tabWarn && g.tabWarn[st.tab] ? '<p class="mt-2 font-bold text-gray-100">Esta tarjeta:</p><ul class="list-disc pl-5 space-y-1">' + g.tabWarn[st.tab].map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : ''}${g.generalWarn ? '<p class="mt-2 font-bold text-gray-100">Para todas las tarjetas:</p><ul class="list-disc pl-5 space-y-1">' + g.generalWarn.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : ''}</details>` : ''}
                     <div id="ra-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
                 </div>
                 <aside class="order-1 lg:order-2 space-y-4 lg:sticky lg:top-24">
@@ -8298,7 +8153,7 @@ window.resetUser2FA = function(username) {
             if (p.raUnavailable) return alert('Este producto está agotado / no disponible por el momento.');
             if (g.code) {   // v87: gift card → no hace falta ID
                 if (typeof currentUser === 'undefined' || !currentUser) { if (typeof window.openAuthModal === 'function') window.openAuthModal(); else alert('Iniciá sesión para comprar'); return; }
-                return window.raConfirm(p, { player_id: '', zone_id: '', name: '', code: true, lock: (g.regionLock && g.regionLock[p.sub]) || '', account: g.account || g.name });
+                return window.raConfirm(p, { player_id: '', zone_id: '', name: '', code: true, lock: (g.regionLock && g.regionLock[p.sub]) || '', ack: (g.ack && g.ack[p.sub]) || '', account: g.account || g.name });
             }
             if (!/^\d{4,20}$/.test(v.player)) return window.kiwiWarn('Ingresá tu ' + (g.idLabel || 'ID') + ' de ' + g.name + ' (solo números) antes de comprar.', () => document.getElementById('ra-player-id')?.focus());
             if (!zoneOk(g, v.zone)) return window.kiwiWarn(g.zone === 'select' ? 'Elegí el servidor de tu cuenta de ' + g.name + '.' : 'Ingresá tu Zona / Servidor de Mobile Legends (el número entre paréntesis en tu perfil).', () => document.getElementById('ra-zone-id')?.focus());
@@ -8313,15 +8168,15 @@ window.resetUser2FA = function(username) {
             m.innerHTML = `<div class="bg-kiwi-card border border-emerald-500/50 w-full max-w-sm rounded-2xl p-6 text-center">
                 <h3 class="font-orbitron font-bold text-white mb-2">Confirmar compra</h3>
                 ${data.code ? `<div class="text-left space-y-1 text-sm text-gray-300 mb-4"><p><strong>Producto:</strong> ${esc(p.title)}</p><p><strong>Precio:</strong> <span class="text-kiwi-gold font-bold">${window.getConvertedPrice(p)}</span></p><p><strong>Entrega:</strong> código digital (al instante y en Mis pedidos)</p>
-                    ${data.lock ? `<label class="flex items-start gap-2 mt-3 p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-100 text-xs cursor-pointer"><input id="ra-region-ok" type="checkbox" class="mt-0.5" onchange="document.getElementById('ra-confirm-btn').disabled=!this.checked;document.getElementById('ra-confirm-btn').classList.toggle('opacity-40',!this.checked)"> <span>Confirmo que mi cuenta de <b>${esc(data.account)}</b> es de <b>${esc(data.lock)}</b>. Sé que una tarjeta de otra región no se puede canjear ni devolver.</span></label>` : ''}
+                    ${data.lock || data.ack ? `<label class="flex items-start gap-2 mt-3 p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-100 text-xs cursor-pointer"><input id="ra-region-ok" type="checkbox" class="mt-0.5" onchange="document.getElementById('ra-confirm-btn').disabled=!this.checked;document.getElementById('ra-confirm-btn').classList.toggle('opacity-40',!this.checked)"> <span>${data.ack ? esc(data.ack) : `Confirmo que mi cuenta de <b>${esc(data.account)}</b> es de <b>${esc(data.lock)}</b>. Sé que una tarjeta de otra región no se puede canjear ni devolver.`}</span></label>` : ''}
                     <p class="text-xs text-gray-400 pt-2">Se descuenta de tu saldo. Los códigos entregados no tienen devolución.</p></div>`
                   : `<div class="text-left space-y-1 text-sm text-gray-300 mb-4"><p><strong>Producto:</strong> ${esc(p.title)}</p><p><strong>Precio:</strong> <span class="text-kiwi-gold font-bold">${window.getConvertedPrice(p)}</span></p><p><strong>ID:</strong> ${esc(data.player_id)}${data.zone_id ? (data.zone_label ? ' · <strong>Servidor:</strong> ' + esc(data.zone_label) : ' · <strong>Zona:</strong> ' + esc(data.zone_id)) : ''}</p>${data.name ? `<p><strong>Nombre:</strong> ${esc(data.name)}</p>` : ''}<p class="text-xs text-gray-400 pt-2">Se descuenta de tu saldo y se envía automáticamente. Revisá que el ID sea correcto: una recarga enviada no se puede devolver.</p></div>`}
-                <div class="flex gap-3"><button onclick="document.getElementById('ra-confirm-modal').classList.add('hidden')" class="flex-1 bg-gray-700 text-white py-2 rounded-xl">Cancelar</button><button id="ra-confirm-btn" onclick="window.raConfirmGo()" ${data.code && data.lock ? 'disabled' : ''} class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-xl ${data.code && data.lock ? 'opacity-40' : ''}">Comprar</button></div></div>`;
+                <div class="flex gap-3"><button onclick="document.getElementById('ra-confirm-modal').classList.add('hidden')" class="flex-1 bg-gray-700 text-white py-2 rounded-xl">Cancelar</button><button id="ra-confirm-btn" onclick="window.raConfirmGo()" ${data.code && (data.lock || data.ack) ? 'disabled' : ''} class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-xl ${data.code && (data.lock || data.ack) ? 'opacity-40' : ''}">Comprar</button></div></div>`;
             m.classList.remove('hidden');
         };
         window.raConfirmGo = function () {
             const x = window._raPending;
-            if (x && x.data && x.data.code && x.data.lock && !document.getElementById('ra-region-ok')?.checked) return;   // v87: confirmar región
+            if (x && x.data && x.data.code && (x.data.lock || x.data.ack) && !document.getElementById('ra-region-ok')?.checked) return;   // v87: confirmar región
             document.getElementById('ra-confirm-modal')?.classList.add('hidden');
             if (x) window.kiwiRaPurchase(x.p, x.data);
         };
@@ -8400,7 +8255,11 @@ window.resetUser2FA = function(username) {
             // v87: Pase Booyah Norte / Sur y paquetes de nivel (se ocultan si no hay stock)
             const g2 = document.getElementById('ff-ra2-grid'), p2 = document.getElementById('ff-ra2-panel');
             if (g2 && p2) {
-                const xs = window.products.filter(p => p.category === 'freefire' && p.sub === 'ra_extra' && !p.raUnavailable && !window.kiwiRaSinStock(p));
+                const all = window.products.filter(p => p.category === 'freefire' && p.sub === 'ra_extra' && !p.raUnavailable && !window.kiwiRaSinStock(p));
+                const bx = document.getElementById('ff-booyah-extra');   // v88: Norte / Sur van junto al Premium
+                const isBy = p => p.raId === 1001 || p.raId === 1002;
+                if (bx) bx.innerHTML = all.filter(isBy).map(p => window.kiwiBooyahCard ? window.kiwiBooyahCard(p) : '').join('');
+                const xs = bx ? all.filter(p => !isBy(p)) : all;
                 g2.innerHTML = xs.map(p => `
                 <button type="button" data-ff-id="${p.id}" onclick="window.ffSelectProduct(${p.id})" class="ff-card ff-ra-card relative text-center rounded-xl overflow-hidden border transition ${window.ffSelection && window.ffSelection.id === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
                     <div class="aspect-[4/3] flex items-center justify-center text-4xl bg-gradient-to-b from-orange-500/10 to-transparent p-2">${window.kiwiRaThumb(p, 'max-h-full max-w-full object-contain drop-shadow-lg')}</div>
@@ -8414,7 +8273,7 @@ window.resetUser2FA = function(username) {
         const origSel = window.ffSelectProduct;
         window.ffSelectProduct = function (id) {
             const r = origSel.apply(this, arguments);
-            document.querySelectorAll('#ff-ra-grid .ff-card, #ff-ra2-grid .ff-card').forEach(c => { const on = window.ffSelection && Number(c.dataset.ffId) === window.ffSelection.id; c.classList.toggle('border-white/60', !!on); c.classList.toggle('bg-[#262a33]', !!on); c.classList.toggle('border-white/5', !on); });
+            document.querySelectorAll('#ff-ra-grid .ff-card, #ff-ra2-grid .ff-card, #ff-booyah-extra .ff-card').forEach(c => { const on = window.ffSelection && Number(c.dataset.ffId) === window.ffSelection.id; c.classList.toggle('border-white/60', !!on); c.classList.toggle('bg-[#262a33]', !!on); c.classList.toggle('border-white/5', !on); });
             return r;
         };
         const origHideFF = window.hideFreeFireSpecialsUI;
@@ -9534,6 +9393,27 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 </script>
 <!-- ===== v60: PANEL DE REVENDEDORES + motor de descuentos ===== -->
 <div id="reseller-view" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto"></div>
+<!-- v89: Panel de afiliados (ruta propia /panel-de-afiliados) -->
+<div id="aff-view" class="fixed inset-0 bg-kiwi-dark/95 backdrop-blur-md z-[80] hidden overflow-y-auto" role="region" aria-labelledby="aff-view-title">
+    <div class="max-w-3xl mx-auto px-4 py-6 font-rajdhani">
+        <div class="flex items-center justify-between mb-5 gap-3">
+            <div><p class="text-[11px] font-bold tracking-[0.2em] text-fuchsia-300 uppercase">Kiwii Store · Afiliados</p>
+            <h2 id="aff-view-title" class="font-orbitron text-xl font-black text-white leading-tight">PANEL DE <span class="text-kiwi-gold">AFILIADOS</span></h2></div>
+            <button type="button" onclick="window.closeAffiliates()" class="shrink-0 bg-kiwi-dark border border-kiwi-border hover:border-kiwi-gold text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> VOLVER</button>
+        </div>
+        <section class="aff-hero rounded-2xl border border-fuchsia-500/30 p-5 mb-4">
+            <h3 class="font-orbitron font-black text-white text-lg leading-tight">Invitá amigos y <span class="text-kiwi-gold">ganá saldo</span> con cada compra</h3>
+            <p class="text-sm text-gray-300 mt-2">Compartí tu link. Cada persona que se registre con él queda asociada a vos <b class="text-white">para siempre</b>, y cada vez que recibe un pedido ganás <b class="text-kiwi-gold"><span class="aff-pct-txt">un porcentaje</span> de la ganancia de la tienda</b>, directo en tu saldo (USDT).</p>
+            <ol class="grid sm:grid-cols-3 gap-2 mt-4 text-sm">
+                <li class="rounded-xl bg-black/30 border border-white/10 p-3"><span class="aff-step">1</span><b class="text-white">Compartí tu link</b><span class="block text-xs text-gray-400">o tu código, en redes, Discord o con amigos.</span></li>
+                <li class="rounded-xl bg-black/30 border border-white/10 p-3"><span class="aff-step">2</span><b class="text-white">Se registran</b><span class="block text-xs text-gray-400">quedan vinculados a tu cuenta para siempre.</span></li>
+                <li class="rounded-xl bg-black/30 border border-white/10 p-3"><span class="aff-step">3</span><b class="text-white">Ganás en cada compra</b><span class="block text-xs text-gray-400">la comisión se acredita sola en tu saldo.</span></li>
+            </ol>
+        </section>
+        <section class="pf-card" aria-label="Tu panel de afiliados"><div id="aff-page-body"><p class="text-sm text-gray-400">Cargando…</p></div></section>
+        <p class="text-[11px] text-gray-500 mt-3 mb-10">Si un pedido se cancela o se devuelve, su comisión se descuenta. No vale invitarte a vos mismo ni usar cuentas duplicadas: esas comisiones se anulan.</p>
+    </div>
+</div>
 <div id="reseller-chip" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] pointer-events-auto">
     <button onclick="window.goToResellerPanel()" class="flex items-center gap-2 rounded-full border border-kiwi-gold/70 bg-black/85 px-4 py-2 text-xs font-orbitron font-bold text-kiwi-gold shadow-[0_0_18px_rgba(255,183,3,0.35)]"><i class="fa-solid fa-crown"></i><span id="reseller-chip-text">Modo revendedor</span></button>
 </div>
@@ -10566,12 +10446,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     #kdel-cat-grid > button[onclick*="'genshin'"]{--c:217,181,106}
     #kdel-cat-grid > button[onclick*="'hsr'"]{--c:167,139,250}
     #kdel-cat-grid > button[onclick*="'hok'"]{--c:234,179,8}
-    #kdel-cat-grid > button[onclick*="'robloxcards'"]{--c:148,163,184}
-    #kdel-cat-grid > button[onclick*="'steam'"]{--c:102,192,244}
-    #kdel-cat-grid > button[onclick*="'playstation'"]{--c:59,130,246}
-    #kdel-cat-grid > button[onclick*="'xbox'"]{--c:34,197,94}
     #kdel-cat-grid > button[onclick*="'discord'"]{--c:129,140,248}
-    #kdel-cat-grid > button[onclick*="'minecraft'"]{--c:74,222,128}
     #kdel-cat-grid > button::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:3;background:linear-gradient(90deg,rgba(var(--c),1),rgba(var(--c),.15));opacity:.9}
     #kdel-cat-grid > button::after{content:"\f061";font:900 13px "Font Awesome 6 Free";position:absolute;right:16px;bottom:16px;z-index:3;width:32px;height:32px;line-height:32px;text-align:center;border-radius:10px;color:#fff;background:rgba(var(--c),.85);box-shadow:0 0 18px rgba(var(--c),.55);transition:transform .2s}
     #kdel-cat-grid > button:hover{transform:translateY(-4px);border-color:rgba(var(--c),.9)!important;box-shadow:0 14px 36px rgba(var(--c),.28),0 0 0 1px rgba(var(--c),.35)}
@@ -10726,6 +10601,90 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     }
 })();
 </script>
+<script id="kiwi-v88">
+// v88: Pases Booyah (Premium / Norte / Sur) con países, ofertas limitadas (registro por ID) y herramientas del staff
+(function () {
+    const W = window;
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const NORTE = [['MX', 'México'], ['CO', 'Colombia'], ['EC', 'Ecuador'], ['PA', 'Panamá'], ['CR', 'Costa Rica'], ['GT', 'Guatemala'], ['HN', 'Honduras'], ['SV', 'El Salvador'], ['NI', 'Nicaragua'], ['DO', 'República Dominicana']];
+    const SUR = [['AR', 'Argentina'], ['CL', 'Chile'], ['UY', 'Uruguay'], ['PY', 'Paraguay'], ['BO', 'Bolivia'], ['PE', 'Perú'], ['VE', 'Venezuela']];
+    W.KIWI_BOOYAH_REGIONS = { norte: NORTE, sur: SUR };
+    // País probable del visitante (zona horaria del dispositivo → idioma). Solo para sugerir, nunca elige por el cliente.
+    const TZ = { 'America/Mexico_City': 'MX', 'America/Cancun': 'MX', 'America/Merida': 'MX', 'America/Monterrey': 'MX', 'America/Matamoros': 'MX', 'America/Chihuahua': 'MX', 'America/Ciudad_Juarez': 'MX', 'America/Ojinaga': 'MX', 'America/Mazatlan': 'MX', 'America/Bahia_Banderas': 'MX', 'America/Hermosillo': 'MX', 'America/Tijuana': 'MX',
+        'America/Bogota': 'CO', 'America/Guayaquil': 'EC', 'Pacific/Galapagos': 'EC', 'America/Panama': 'PA', 'America/Costa_Rica': 'CR', 'America/Guatemala': 'GT', 'America/Tegucigalpa': 'HN', 'America/El_Salvador': 'SV', 'America/Managua': 'NI', 'America/Santo_Domingo': 'DO',
+        'America/Santiago': 'CL', 'America/Punta_Arenas': 'CL', 'Pacific/Easter': 'CL', 'America/Montevideo': 'UY', 'America/Asuncion': 'PY', 'America/La_Paz': 'BO', 'America/Lima': 'PE', 'America/Caracas': 'VE' };
+    W.kiwiGuessCountry = function () {
+        try { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; if (TZ[tz]) return TZ[tz]; if (/^America\/Argentina\//.test(tz) || tz === 'America/Buenos_Aires') return 'AR'; } catch (_) {}
+        try { for (const l of (navigator.languages || [navigator.language])) { const m = String(l || '').match(/-([A-Z]{2})$/i); if (m) return m[1].toUpperCase(); } } catch (_) {}
+        return '';
+    };
+    const regionOf = cc => NORTE.some(x => x[0] === cc) ? 'norte' : SUR.some(x => x[0] === cc) ? 'sur' : '';
+    const nameOf = cc => ((NORTE.concat(SUR)).find(x => x[0] === cc) || [])[1] || '';
+    const BOOYAH_IMG = 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png';
+    W.kiwiBooyahCard = function (p) {
+        const key = p.raId === 1001 ? 'norte' : 'sur', list = key === 'norte' ? NORTE : SUR, cc = W.kiwiGuessCountry(), mine = regionOf(cc) === key;
+        const sel = W.ffSelection && W.ffSelection.id === p.id;
+        return `<div class="kby-opt"><button type="button" data-ff-id="${p.id}" onclick="window.ffSelectProduct(${p.id})" class="ff-card group relative w-full rounded-xl overflow-hidden text-center border transition ${sel ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
+            ${mine ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-600 text-white"><i class="fa-solid fa-location-dot"></i> Tu región probable</span>` : ''}
+            <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-3"><img src="${BOOYAH_IMG}" alt="Pase Booyah" class="h-full w-auto object-contain" loading="lazy" onerror="this.onerror=null;this.src='images/placeholder.svg'"></div>
+            <div class="px-2 pb-3 pt-2 bg-[#20232b]"><span class="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${key === 'norte' ? 'bg-sky-600/80' : 'bg-orange-600/80'} text-white mb-1">LATAM ${key === 'norte' ? 'Norte' : 'Sur'}</span>
+                <p class="font-bold text-white text-sm">Pase Booyah · ${key === 'norte' ? 'Norte' : 'Sur'}</p><p class="text-emerald-400 font-bold text-sm">${W.getConvertedPrice(p)}</p><p class="text-[11px] text-gray-500">≈ $${Number(p.usdtPrice).toFixed(2)} USD</p></div></button>
+            <p class="text-[11px] text-gray-400 font-rajdhani mt-2 leading-snug"><b class="text-gray-200">Cuentas de:</b> ${list.map(x => x[0] === cc ? '<b class="text-emerald-300">' + esc(x[1]) + '</b>' : esc(x[1])).join(', ')}.</p></div>`;
+    };
+    // Nota extra en la confirmación de Free Fire
+    W.kiwiFFExtraNote = function (prod) {
+        if (!prod) return '';
+        if (prod.raId === 1001 || prod.raId === 1002) {
+            const key = prod.raId === 1001 ? 'norte' : 'sur', list = key === 'norte' ? NORTE : SUR, cc = W.kiwiGuessCountry(), r = regionOf(cc);
+            return `<div class="mt-3 p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-100 text-xs text-left"><b><i class="fa-solid fa-triangle-exclamation"></i> Pase Booyah LATAM ${key === 'norte' ? 'Norte' : 'Sur'}</b><br>Para cuentas de: ${list.map(x => esc(x[1])).join(', ')}.${r && r !== key ? '<br><b>Ojo:</b> tu dispositivo parece estar en ' + esc(nameOf(cc)) + ' (LATAM ' + (r === 'norte' ? 'Norte' : 'Sur') + '). Elegí el pase de la región de tu cuenta.' : ''}</div>`;
+        }
+        if (prod.id === 221) return '<div class="mt-3 p-3 rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-100 text-xs text-left"><b>Pase Booyah Premium (LATAM)</b> — es distinto de los pases Norte / Sur.</div>';
+        if (prod.sub === 'limitado') return '<div class="mt-3 p-3 rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-100 text-xs text-left"><b><i class="fa-solid fa-fire"></i> Oferta limitada: 1 compra por ID.</b><br>Si el ID ya tiene este pack en Kiwii, la compra se rechaza sin cobrar. Si tu ID ya lo usó en el juego por otro lado, el staff cancela el pedido y se te devuelve el saldo completo.</div>';
+        return '';
+    };
+    // ----- Staff: ofertas limitadas -----
+    W.kiwiIsLimitedOrder = p => !!p && /\blimitad[oa]s?\b/i.test(String(p.title || '')) && (String(p.category || '') === 'freefire' || /diamant/i.test(String(p.title || '')));
+    W.kiwiLimitedUsed = async function (id) {
+        const all = W.readPurchases ? W.readPurchases() : JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
+        const p = all.find(x => String(x.id) === String(id)); if (!p) return alert('Pedido no encontrado');
+        if (!confirm('¿El ID ' + (p.targetUser || '') + ' ya había usado esta oferta en el juego?\n\nSe cancela el pedido, se le devuelve el saldo completo (una sola vez) y ese pack queda bloqueado para ese ID en Kiwii.')) return;
+        let r;
+        try { r = await W.kiwiStaffRpc('kiwi_staff_limited_used', { p_id: String(id) }); }
+        catch (e) { return alert('No se pudo: ' + (e.message || e) + (/function|does not exist/i.test(String(e.message || e)) ? '\n(¿Corriste kiwii-v88.sql?)' : '')); }
+        const refund = Number(r && r.refunded) || 0;
+        const list = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]'); const q = list.find(x => String(x.id) === String(id));
+        if (q) { q.status = 'cancelled'; if (refund > 0) q.refundedUsdt = (Number(q.refundedUsdt) || 0) + refund; localStorage.setItem('kiwi_purchases', JSON.stringify(list)); }
+        if (refund > 0) { const users = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); if (users[p.user]) { users[p.user].balance = (Number(users[p.user].balance) || 0) + refund; localStorage.setItem('kiwi_users', JSON.stringify(users)); } }
+        try { renderStaffCompras(W.getMyStaffRole()); } catch (_) {}
+        alert('Pedido cancelado.\n' + (refund > 0 ? 'Se devolvieron ' + refund.toFixed(2) + ' USDT a ' + p.user + '.' : (r && r.already_refunded ? 'Ya tenía el saldo devuelto (no se devolvió otra vez).' : 'No se encontró monto para devolver.')) + '\nPack bloqueado para el ID ' + (r && r.blocked ? r.blocked.game_id : ''));
+    };
+    W.kiwiLimitedPanel = async function () {
+        let m = document.getElementById('kiwi-limited-modal');
+        if (!m) { m = document.createElement('div'); m.id = 'kiwi-limited-modal'; m.className = 'fixed inset-0 bg-black/80 z-[150] flex items-center justify-center p-4'; document.body.appendChild(m); }
+        m.classList.remove('hidden');
+        m.innerHTML = '<div class="bg-kiwi-card border border-orange-500/40 w-full max-w-2xl rounded-2xl p-5 text-sm text-gray-300">Cargando…</div>';
+        let rows = [];
+        try { rows = await W.kiwiStaffRpc('kiwi_staff_limited_list', { p_limit: 300 }) || []; }
+        catch (e) { m.innerHTML = '<div class="bg-kiwi-card border border-orange-500/40 w-full max-w-md rounded-2xl p-5 text-sm text-red-300">No se pudo leer: ' + esc(e.message || e) + '<br>(¿Corriste kiwii-v88.sql?)<br><button class="mt-3 bg-gray-700 text-white px-3 py-1 rounded" onclick="this.closest(\'#kiwi-limited-modal\').classList.add(\'hidden\')">Cerrar</button></div>'; return; }
+        const role = W.getMyStaffRole ? W.getMyStaffRole() : '', boss = role === 'owner' || role === 'ceo';
+        m.innerHTML = `<div class="bg-kiwi-card border border-orange-500/40 w-full max-w-2xl rounded-2xl p-5 max-h-[85vh] overflow-auto">
+            <div class="flex items-center justify-between mb-2"><h3 class="font-orbitron font-bold text-white"><i class="fa-solid fa-fire text-orange-400"></i> Ofertas limitadas · IDs registrados</h3><button class="text-gray-400 hover:text-white" onclick="document.getElementById('kiwi-limited-modal').classList.add('hidden')"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+            <p class="text-xs text-gray-400 mb-3">Cada pack limitado se vende 1 vez por ID. <b>Activo</b> = tiene un pedido en Kiwii. <b>Usado</b> = el staff confirmó que el ID ya lo usó en el juego. Cuando el juego renueva las ofertas, reiniciá el pack (los pedidos todavía en proceso no se tocan).</p>
+            ${boss ? `<div class="flex flex-wrap gap-2 mb-3"><input id="klim-offer" placeholder="Pack (ej. 110)" class="bg-kiwi-dark border border-kiwi-border rounded px-2 py-1 text-xs text-white w-28"><input id="klim-gid" placeholder="ID (opcional)" class="bg-kiwi-dark border border-kiwi-border rounded px-2 py-1 text-xs text-white w-36"><button onclick="window.kiwiLimitedReset()" class="bg-orange-700 hover:bg-orange-600 text-white text-xs px-3 py-1 rounded">Reiniciar</button><span class="text-[11px] text-gray-500 self-center">Vacío = reiniciar todo</span></div>` : ''}
+            <table class="w-full text-xs"><thead><tr class="text-gray-400 text-left"><th class="py-1">Pack</th><th>ID</th><th>Estado</th><th>Cliente</th><th>Pedido</th>${boss ? '<th></th>' : ''}</tr></thead><tbody>
+            ${rows.length ? rows.map(x => `<tr class="border-t border-white/5"><td class="py-1 text-white">${esc(x.offer)} 💎</td><td class="text-white">${esc(x.game_id)}</td><td>${x.status === 'used' ? '<span class="text-red-300">Usado</span>' : '<span class="text-emerald-300">Activo</span>'}</td><td>${esc(x.username || '')}</td><td>${esc(x.order_id || '')}${x.order_status ? ' · ' + esc(W.getStatusLabel ? W.getStatusLabel(x.order_status) : x.order_status) : ''}</td>${boss ? `<td><button class="text-sky-300 hover:underline" onclick="window.kiwiLimitedReset('${esc(x.offer)}','${esc(x.game_id)}')">Liberar</button></td>` : ''}</tr>`).join('') : '<tr><td colspan="6" class="py-3 text-center text-gray-500">Sin registros.</td></tr>'}
+            </tbody></table></div>`;
+    };
+    W.kiwiLimitedReset = async function (offer, gid) {
+        offer = offer != null ? offer : (document.getElementById('klim-offer')?.value || '').trim();
+        gid = gid != null ? gid : (document.getElementById('klim-gid')?.value || '').trim();
+        if (!confirm(offer || gid ? '¿Liberar ' + (offer ? 'el pack ' + offer : 'todos los packs') + (gid ? ' del ID ' + gid : ' para todos los IDs') + '?' : '¿Reiniciar TODAS las ofertas limitadas? (hacelo cuando el juego las renueva)')) return;
+        try { const r = await W.kiwiStaffRpc('kiwi_staff_limited_reset', { p_offer: offer || null, p_game_id: gid || null }); alert('Listo: ' + (r && r.deleted || 0) + ' registro(s) liberado(s).'); }
+        catch (e) { return alert('No se pudo: ' + (e.message || e)); }
+        W.kiwiLimitedPanel();
+    };
+})();
+</script>
 <style id="kiwi-v87-css">
 .kart{position:relative;width:100%;height:100%;min-height:78px;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px;color:#fff;text-align:left;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
 .kart .ka-top{display:flex;align-items:center;gap:6px;font:700 9px/1 Orbitron,sans-serif;letter-spacing:.08em;opacity:.92;text-transform:uppercase}
@@ -10750,13 +10709,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     const W = window;
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const ART = {
-        steam: { bg: 'linear-gradient(135deg,#171a21,#1b2838 55%,#2a475e)', ic: 'fa-brands fa-steam', label: 'Steam' },
-        psn: { bg: 'linear-gradient(135deg,#00246b,#0070d1)', ic: 'fa-brands fa-playstation', label: 'PlayStation' },
-        xbox: { bg: 'linear-gradient(135deg,#0b2e0b,#107c10)', ic: 'fa-brands fa-xbox', label: 'Xbox' },
-        gamepass: { bg: 'linear-gradient(135deg,#0b2e0b,#107c10 60%,#5fbf1a)', ic: 'fa-brands fa-xbox', label: 'Game Pass' },
         discord: { bg: 'linear-gradient(135deg,#2b2f8f,#5865f2)', ic: 'fa-brands fa-discord', label: 'Discord' },
-        minecraft: { bg: 'linear-gradient(135deg,#3b2a14,#5d8c2a)', ic: 'fa-solid fa-cube', label: 'Minecoins' },
-        roblox: { bg: 'linear-gradient(135deg,#0f1115,#3a3f47 60%,#6b7280)', img: '/images/icon-roblox.webp', label: 'Roblox' },
         genshin: { bg: 'linear-gradient(135deg,#1e2a4a,#3b5b9a 60%,#d9b56a)', ic: 'fa-solid fa-star', label: 'Genshin' },
         hsr: { bg: 'linear-gradient(135deg,#1a1033,#4b2a7a 60%,#c9a0ff)', ic: 'fa-solid fa-train', label: 'Star Rail' },
         hok: { bg: 'linear-gradient(135deg,#2a1a05,#7a4a0b 60%,#f2c14e)', ic: 'fa-solid fa-crown', label: 'Honor of Kings' },
@@ -10799,6 +10752,45 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
 <style id="aff-v86">
 @media(min-width:640px){#admin-page .kadm-tabs{grid-template-columns:repeat(7,minmax(0,1fr))}}
 #admin-afiliados table th,#admin-afiliados table td{vertical-align:middle}
+/* v89: página de afiliados */
+/* mismos estilos que Mi Perfil */
+#aff-view .pf-card{background:linear-gradient(180deg,#121419,#0e1014);border:1px solid #20242e;border-radius:22px;padding:18px}
+#aff-view .pf-hero{position:relative;overflow:hidden;border-radius:24px;padding:18px;border:1px solid rgba(255,183,3,.45);background:radial-gradient(120% 90% at 100% 0%,rgba(255,183,3,.18),transparent 55%),radial-gradient(70% 60% at 0% 100%,rgba(255,30,39,.10),transparent 60%),#0f1115;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+#aff-view .pf-ava{width:64px;height:64px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font:900 26px Orbitron,sans-serif;color:#111;background:linear-gradient(135deg,#ffd166,#ffb703 60%,#f59e0b);box-shadow:0 0 0 3px #0f1115,0 0 0 5px rgba(255,183,3,.55),0 10px 26px rgba(255,183,3,.25);overflow:hidden}
+#aff-view .pf-chip{display:inline-flex;align-items:center;gap:5px;font:700 11px Rajdhani,sans-serif;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}
+#aff-view .pf-c-gold{color:#ffcf5a;background:rgba(255,183,3,.10);border-color:rgba(255,183,3,.4)}
+#aff-view .pf-c-green{color:#86efac;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4)}
+#aff-view .pf-c-purple{color:#d8b4fe;background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.4)}
+#aff-view .pf-c-gray{color:#cbd5e1;background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.35)}
+#aff-view .pf-copy{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,183,3,.4);color:#ffcf5a;border-radius:10px;padding:4px 9px;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
+#aff-view .pf-copy:hover{background:rgba(255,183,3,.12)}
+#aff-view .pf-bal{margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;background:rgba(0,0,0,.35);border:1px solid #232834}
+#aff-view .pf-btn{background:linear-gradient(135deg,#ffd166,#ffb703 55%,#f59e0b);color:#111;font-weight:800;border-radius:14px;box-shadow:0 8px 22px rgba(255,183,3,.22);transition:filter .15s}
+#aff-view .pf-btn:hover{filter:brightness(1.07)}
+#aff-view .pf-ok{background:linear-gradient(135deg,#4ade80,#22c55e);color:#04130a;font-weight:800;border-radius:14px;box-shadow:0 8px 22px rgba(34,197,94,.22)}
+#aff-view .pf-ghost{border:1px solid #2a303c;color:#e5e7eb;border-radius:14px;background:#111318;transition:.15s}
+#aff-view .pf-ghost:hover{border-color:#ffb703}
+#aff-view .pf-out{border:1px solid rgba(248,113,113,.45);background:rgba(220,38,38,.07);color:#fecaca;font-weight:700;border-radius:14px;transition:.15s}
+#aff-view .pf-out:hover{background:rgba(220,38,38,.15)}
+#aff-view .pf-h{display:flex;align-items:center;gap:8px;font:700 12px Orbitron,sans-serif;color:#fff;letter-spacing:.08em;text-transform:uppercase}
+#aff-view .pf-h i{color:#ffb703}
+#aff-view .pf-lbl{display:block;font:600 12px Rajdhani,sans-serif;color:#9ca3af;margin-bottom:4px}
+#aff-view .pf-in{position:relative}
+#aff-view .pf-in>i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:13px;pointer-events:none}
+#aff-view .pf-in>input{width:100%;background:#0b0d11;border:1.5px solid #262b36;border-radius:14px;padding:11px 12px 11px 36px;color:#fff;font-size:14px;transition:border-color .15s,box-shadow .15s}
+#aff-view .pf-in>input:focus{outline:none;border-color:#ffb703;box-shadow:0 0 0 4px rgba(255,183,3,.13)}
+#aff-view .pf-o{display:block;width:100%;text-align:left;background:#111318;border:1px solid #20242e;border-radius:18px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s}
+#aff-view .pf-o:hover{border-color:rgba(255,183,3,.6);transform:translateY(-1px)}
+#aff-view .pf-oic{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#0b0d11;border:1px solid #262b36;color:#ffb703}
+#aff-view .pf-s{display:inline-flex;align-items:center;gap:5px;font:700 11px Rajdhani,sans-serif;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap}
+#aff-view .pf-s-pending{color:#fcd34d;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4)}
+#aff-view .pf-s-process{color:#7dd3fc;background:rgba(14,165,233,.12);border-color:rgba(14,165,233,.4)}
+#aff-view .pf-s-done{color:#86efac;background:rgba(34,197,94,.13);border-color:rgba(34,197,94,.45)}
+#aff-view .pf-s-cancel{color:#fca5a5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
+#aff-view .pf-s-problem{color:#fdba74;background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.4)}
+#aff-view .pf-s-other{color:#cbd5e1;background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.35)}
+#aff-view .aff-hero{background:radial-gradient(120% 140% at 0% 0%,rgba(217,70,239,.18),transparent 55%),radial-gradient(120% 140% at 100% 100%,rgba(255,183,3,.12),transparent 55%),#111217}
+#aff-view .aff-step{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:#d946ef;color:#fff;font:700 12px Orbitron,sans-serif;margin-right:8px}
 </style>
 <script id="kiwi-v86-afiliados">
 // ===================== v86: AFILIADOS + CÓDIGOS DE CREADOR =====================
@@ -10853,8 +10845,8 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     // ---- 3) Mi Perfil → Afiliados ----
     let meData = null, busy = false;
     W.kiwiAffLoad = async function () {
-        const box = document.getElementById('aff-card-body'); if (!box) return;
-        if (!tok()) { box.innerHTML = '<p class="text-sm text-gray-400">Iniciá sesión para ver tu panel de afiliados.</p>'; return; }
+        const box = pageBox() || document.getElementById('aff-card-body'); if (!box) return;
+        if (!tok()) { box.innerHTML = loggedOutHtml(); const c = document.getElementById('aff-card-body'); if (c && c !== box) c.innerHTML = loggedOutHtml(); return; }
         if (busy) return; busy = true;
         try { meData = await rpc('kiwi_aff_me', { p_token: tok() }); render(); }
         catch (e) { box.innerHTML = '<p class="text-sm text-yellow-300">No se pudo cargar el panel de afiliados' + (/function|does not exist|schema cache/i.test(e.message || '') ? ' (falta correr kiwii-v86.sql en Supabase).' : ': ' + esc(e.message)) + '</p>'; }
@@ -10865,7 +10857,13 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             <p class="font-orbitron font-black text-white text-lg mt-1 break-words">${value}</p>${sub ? `<p class="text-[11px] text-gray-500">${sub}</p>` : ''}</div>`;
     }
     function render() {
-        const box = document.getElementById('aff-card-body'); const d = meData; if (!box || !d) return;
+        const d = meData; if (!d) return;
+        const pcts = document.querySelectorAll('#aff-view .aff-pct-txt'); pcts.forEach(e => { e.textContent = 'el ' + num(d.pct) + '%'; });
+        const card = document.getElementById('aff-card-body');
+        if (card) card.innerHTML = `<div class="grid grid-cols-2 gap-2">${stat('Afiliados', num(d.referred), 'fa-solid fa-users', 'usuarios invitados')}${stat('Total ganado', usd(d.earned), 'fa-solid fa-sack-dollar', 'acreditado en tu saldo')}</div>
+            <p class="text-xs text-gray-400 mt-3">Tu código: <b class="text-kiwi-gold font-orbitron">${esc(d.code)}</b> · ganás el ${num(d.pct)}% de la ganancia de cada compra de tus invitados.</p>
+            <button type="button" onclick="window.goToAffiliates()" class="pf-btn w-full mt-3 py-2.5 text-sm"><i class="fa-solid fa-people-arrows mr-1"></i> Abrir panel de afiliados</button>`;
+        const box = pageBox(); if (!box) return;
         const inv = d.invited_by;
         const invTxt = inv ? esc(inv.username) + (inv.creator ? ' <span class="text-[10px] text-kiwi-gold">(creador)</span>' : '') : '—';
         const invSub = inv && inv.creator && Number(inv.discount_pct) > 0 ? num(inv.discount_pct) + '% de reintegro en tus compras' : (inv ? 'para siempre' : (d.can_bind ? 'podés cargar un código abajo' : ''));
@@ -10934,6 +10932,51 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             localStorage.removeItem('kiwi_aff_ref'); W.kiwiAffLoad();
         } catch (e) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = e.message; }
     };
+    // ---- v89: página propia /panel-de-afiliados ----
+    function pageBox() { const v = document.getElementById('aff-view'); return v && !v.classList.contains('hidden') ? document.getElementById('aff-page-body') : null; }
+    function loggedOutHtml() {
+        return `<div class="text-center py-4"><i class="fa-solid fa-lock text-2xl text-fuchsia-300"></i>
+            <p class="text-white font-bold mt-2">Iniciá sesión para ver tu panel de afiliados</p>
+            <p class="text-sm text-gray-400 mt-1">Con tu cuenta tenés tu código y link de invitación, tus estadísticas, la lista de tus invitados y lo que ganaste.</p>
+            <div class="flex flex-wrap justify-center gap-2 mt-4">
+                <button type="button" onclick="window.kiwiAffLogin('login')" class="pf-btn px-5 py-2.5 text-sm"><i class="fa-solid fa-right-to-bracket mr-1"></i> Iniciar sesión</button>
+                <button type="button" onclick="window.kiwiAffLogin('register')" class="pf-ghost px-5 py-2.5 text-sm">Crear cuenta</button></div></div>`;
+    }
+    const AFF_PATH = '/panel-de-afiliados';
+    const isAffPath = () => (location.pathname.replace(/\/+$/, '') || '/').toLowerCase() === AFF_PATH;
+    W.goToAffiliates = function () {
+        const v = document.getElementById('aff-view'); if (!v) return;
+        ['orders-panel', 'events-view', 'reseller-view'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hidden'); });
+        if (W.stopEventsRefresh) W.stopEventsRefresh();
+        const drawer = document.getElementById('user-drawer'); if (drawer) drawer.classList.add('translate-x-full');
+        if (!isAffPath()) history.pushState({}, '', AFF_PATH);
+        document.title = 'Panel de afiliados · Kiwii Store';
+        v.classList.remove('hidden'); v.scrollTop = 0;
+        const box = document.getElementById('aff-page-body');
+        if (!tok()) { if (box) box.innerHTML = loggedOutHtml(); return; }
+        if (meData) render();
+        whenReady(W.kiwiAffLoad);
+    };
+    W.closeAffiliates = function (noPush) {
+        const v = document.getElementById('aff-view'); if (!v || v.classList.contains('hidden')) return;
+        v.classList.add('hidden');
+        if (document.title.indexOf('Panel de afiliados') === 0) document.title = 'Kiwii Store';
+        if (!noPush) history.pushState({}, '', '/inicio');
+    };
+    // el modal de login está debajo de esta vista: se oculta la vista (la URL queda) y vuelve sola al iniciar sesión
+    W.kiwiAffLogin = function (tab) { W.closeAffiliates(true); if (W.openAuthModal) W.openAuthModal(tab || 'login'); };
+    W.addEventListener('popstate', () => { if (isAffPath()) W.goToAffiliates(); else W.closeAffiliates(true); });
+    function bootAffPage() {
+        ['goToEvents', 'goToProfile', 'filterCategory', 'goToAdminPanel', 'goToResellerPanel', 'goToCategory', 'kpedOpen'].forEach(n => {
+            const orig = W[n]; if (typeof orig !== 'function' || orig._affWrap) return;
+            const f = function () { W.closeAffiliates(true); return orig.apply(this, arguments); }; f._affWrap = 1; W[n] = f;
+        });
+        if (isAffPath()) setTimeout(W.goToAffiliates, 450);
+        // al iniciar / cerrar sesión con la página abierta
+        let lastTok = tok();
+        setInterval(() => { const t = tok(); if (t !== lastTok) { lastTok = t; meData = null; if (pageBox() || (t && isAffPath())) W.goToAffiliates(); } }, 2000);
+    }
+
     // se carga cuando se abre Mi Perfil
     function watchProfile() {
         const p = document.getElementById('orders-panel'); if (!p) return;
@@ -11112,7 +11155,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         if (ap) new MutationObserver(syncTabBtn).observe(ap, { attributes: true, attributeFilter: ['class'] });
         syncTabBtn();
     }
-    function boot() { watchProfile(); hookStaff(); setTimeout(syncTabBtn, 1500); }
+    function boot() { watchProfile(); hookStaff(); setTimeout(syncTabBtn, 1500); setTimeout(bootAffPage, 300); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })(window);
 </script>
