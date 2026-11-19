@@ -16,6 +16,18 @@
     <meta name="twitter:card" content="summary_large_image">
 
     
+    <script id="kiwi-v86-ref">
+        // v86: guardar el código de invitación ANTES de que la web cambie la URL (/r/CODIGO o ?ref=CODIGO)
+        (function () { try {
+            var m = location.pathname.match(/^\/r\/([A-Za-z0-9_-]{3,24})\/?$/), c = m ? m[1] : new URLSearchParams(location.search).get('ref');
+            if (c && /^[A-Za-z0-9_-]{3,24}$/.test(c.trim())) {
+                c = c.trim().toUpperCase(); window.KIWI_AFF_INCOMING = c;
+                localStorage.setItem('kiwi_aff_ref', JSON.stringify({ code: c, at: Date.now() }));
+                if (/^KWS-[A-Z0-9]{4,16}$/.test(c)) localStorage.setItem('kiwi_ref', c);
+                if (m) history.replaceState({}, '', '/?ref=' + encodeURIComponent(c));
+            }
+        } catch (e) {} })();
+    </script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -510,6 +522,12 @@
             <div id="client-orders-list" class="space-y-3"></div>
             </div>
             </div>
+            <!-- v86: Afiliados -->
+            <section id="aff-card" class="pf-card mt-5" aria-labelledby="aff-card-title">
+                <div class="flex items-center justify-between gap-2 mb-3"><h3 id="aff-card-title" class="pf-h"><i class="fa-solid fa-people-arrows"></i> Afiliados</h3>
+                <button type="button" onclick="window.kiwiAffLoad()" class="pf-ghost text-xs px-3 py-1.5" aria-label="Actualizar afiliados"><i class="fa-solid fa-rotate"></i></button></div>
+                <div id="aff-card-body"><p class="text-sm text-gray-400">Cargando…</p></div>
+            </section>
         </div>
     </div>
 
@@ -922,6 +940,7 @@
                 <button onclick="window.switchStaffTab('2fa')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-key"></i> 2FA</button>
                 <button onclick="window.switchStaffTab('pagos')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-money-bill-transfer"></i> PAGOS</button>
                 <button onclick="window.switchStaffTab('stock')" id="kadm-tab-stock" class="hidden flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-boxes-stacked"></i> STOCK</button>
+                <button onclick="window.switchStaffTab('afiliados')" id="kadm-tab-afiliados" class="hidden flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-people-arrows"></i> AFILIADOS</button>
             </div>
             <div id="admin-content">
                 <div id="admin-cuentas" class="admin-tab" data-title="Cuentas" data-sub="Usuarios registrados, rangos y baneos">
@@ -933,6 +952,7 @@
                 <div id="admin-2fa" class="admin-tab hidden" data-title="2FA" data-sub="Resetear el código 2FA de un usuario · Owner / CEO"></div>
                 <div id="admin-pagos" class="admin-tab hidden" data-title="Pagos" data-sub="Recargas de saldo y notificaciones de pago · Owner / CEO"></div>
                 <div id="admin-stock" class="admin-tab hidden" data-title="Stock" data-sub="Productos «No Stock» (bloquea) · grupos: solo etiqueta, no bloquea la compra · solo Owner / CEO"></div>
+                <div id="admin-afiliados" class="admin-tab hidden" data-title="Afiliados" data-sub="Afiliados y códigos de creador · solo Owner / CEO"></div>
             </div>
         </div>
     </div>
@@ -1120,7 +1140,7 @@
                                 <div class="kby-opt kby-auto">
                                     <button type="button" id="ff-booyah-select" data-ff-id="221" onclick="window.ffSelectProduct(221)" class="ff-card group w-full bg-[#1b1e25] border border-white/5 hover:border-white/20 rounded-xl overflow-hidden text-center transition">
                                         <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-3">
-                                            <img src="/images/ff-booyah-pass.webp" alt="Pase Booyah" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                            <img src="https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png" alt="Pase Booyah" class="h-full w-auto object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                         </div>
                                         <div class="px-2 pb-3 pt-2 bg-[#20232b]">
                                             <p class="font-bold text-white text-sm">Pase Booyah · instantáneo</p>
@@ -1140,7 +1160,7 @@
                         <section id="ff-fragments-calculator" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <div class="flex items-start gap-4 mb-4">
                                 <div class="w-16 h-16 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 p-2 flex items-center justify-center">
-                                    <img src="/images/ff-evo-fragmento.webp" alt="Fragmentos Universales" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                    <img src="https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png" alt="Fragmentos Universales" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                 </div>
                                 <div>
                                     <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Fragmentos Universales</h3>
@@ -1170,7 +1190,7 @@
                         <section id="ff-boxes-calculator" class="hidden bg-[#14161c] border border-white/5 rounded-2xl p-4 md:p-6">
                             <div class="flex items-start gap-4 mb-4">
                                 <div class="w-16 h-16 shrink-0 rounded-xl bg-[#1b1e25] border border-white/5 p-2 flex items-center justify-center">
-                                    <img src="/images/ff-evo-caja.webp" alt="Cajas de Fragmentos" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
+                                    <img src="https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png" alt="Cajas de Fragmentos" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                                 </div>
                                 <div>
                                     <h3 class="font-orbitron font-bold text-white text-base md:text-lg">Cajas de Fragmentos</h3>
@@ -1510,7 +1530,6 @@
                     <select id="payment-method-select" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
                         <option value="mp_ars">Mercado Pago / Transferencia (ARS)</option>
                         <option value="binance">Binance Pay (USDT)</option>
-                        <option value="transfer_mxn">Transferencia México (MXN)</option>
                         <option value="transfer_cop">Transferencia Colombia (COP)</option>
                         <option value="transfer_pen">Transferencia Perú (PEN)</option>
                     </select>
@@ -2383,7 +2402,7 @@
                 const paySelect = document.getElementById('payment-method-select');
                 if (paySelect) {
                     const curr = window.currentCurrency || 'ARS';
-                    const map = { ARS: 'mp_ars', USDT: 'binance', MXN: 'transfer_mxn', COP: 'transfer_cop', PEN: 'transfer_pen' };
+                    const map = { ARS: 'mp_ars', USDT: 'binance', MXN: 'binance', COP: 'transfer_cop', PEN: 'transfer_pen' }; // v86: sin recargas en MXN
                     paySelect.value = map[curr] || 'mp_ars';
                 }
                 const payHint = document.getElementById('checkout-payment-hint');
@@ -2707,6 +2726,7 @@
             try {
                 res = await window.kiwiRpc('kiwi_register', { p_username: user, p_email: email, p_password: pass, p_account_id: window.generateAccountId(), ...(window.getKiwiRef && window.getKiwiRef() ? { p_ref: window.getKiwiRef() } : {}) });
                 window.kiwiStoreSession(res);
+                try { if (window.kiwiAffAfterRegister) window.kiwiAffAfterRegister(); } catch (_) {}   // v86: afiliados / creadores
             } catch (err) {
                 console.error('Registro falló:', err);
                 alert('No se pudo crear la cuenta: ' + (err.message || 'Error de conexión'));
@@ -3213,7 +3233,7 @@
             { id: 215, category: 'freefire', sub: 'limitado', title: '6.160 Diamantes (Limitado)', price: '$47.400 ARS', usdtPrice: 29.63, emoji: '🔥', tag: 'Mejor Oferta', popular: true, isLimited: true },
 
             // FREE FIRE - PASES Y FRAGMENTOS
-            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: '/images/ff-booyah-pass.webp', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
+            { id: 221, category: 'freefire', sub: 'especiales', title: 'Pase Booyah', price: '$3.300 ARS', image: 'https://sixoff.com/assets/UI_BooyahPass_veteran-ilzbYCIM.png', tag: 'Nuevo', popular: true, usdtPrice: 2.0 },
 
             // INSTAGRAM
             { id: 401, category: 'instagram', sub: 'seguidores', title: '100 Seguidores', price: '1 USDT - $1.600 ARS', emoji: '👥', popular: false, usdtPrice: 1 },
@@ -4835,7 +4855,7 @@
             // Solo actualiza el resumen si el usuario está usando esa calculadora
             const active = document.activeElement && (document.activeElement.id === (kind === 'frag' ? 'frag-qty' : 'box-qty'));
             if (!active && !(cur && cur.kind === kind)) return;
-            window.ffSelection = { kind, id: null, title: kind === 'frag' ? `Fragmentos Universales x${qty}` : `Cajas de Fragmentos x${qty}`, price: window.formatArsAsCurrency(priceArs), usd: priceArs / 1600, img: kind === 'frag' ? '/images/ff-evo-fragmento.webp' : '/images/ff-evo-caja.webp', icon: 'fa-box' };
+            window.ffSelection = { kind, id: null, title: kind === 'frag' ? `Fragmentos Universales x${qty}` : `Cajas de Fragmentos x${qty}`, price: window.formatArsAsCurrency(priceArs), usd: priceArs / 1600, img: kind === 'frag' ? 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png' : 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', icon: 'fa-box' };
             window.renderFFSummary();
         };
         window.ffBuySelection = function() {
@@ -5195,8 +5215,8 @@
                 waLabel: 'ARS'
             },
             MXN: {
-                method: 'Hey Banco · SPEI (MXN)',
-                detail: 'La CLABE y el titular se muestran al elegir Hey Banco en Cargar Saldo.',
+                method: 'USDT / Binance Pay (recargas en MXN no disponibles)',
+                detail: 'Las recargas en pesos mexicanos ya no están disponibles. Podés ver los precios en MXN y recargar con USDT o Binance Pay en Cargar Saldo.',
                 waLabel: 'MXN'
             },
             COP: {
@@ -6582,8 +6602,8 @@
         // v85: Fragmentos y Cajas de Fragmentos con ENTREGA AUTOMÁTICA (cobro y envío en el servidor, /api/game).
         // Precio por unidad: lo manda /api/game-prices (campo "bulk"); estos valores son solo el respaldo hasta que carga.
         window.KIWI_EVO = {
-            frag: { key: 901, unit: 0.043882, res: [0.035983, 0.032034], min: 40, step: 10, max: 10000, title: 'Fragmentos Universales', img: '/images/ff-evo-fragmento.webp', off: false, input: 'frag-qty', err: 'frag-min-error' },
-            box:  { key: 902, unit: 0.292542, res: [0.216481, 0.178451], min: 7, step: 1, max: 1000, title: 'Cajas de Fragmentos', img: '/images/ff-evo-caja.webp', off: false, input: 'box-qty', err: 'box-min-error' }
+            frag: { key: 901, unit: 0.043882, res: [0.035983, 0.032034], min: 40, step: 10, max: 10000, title: 'Fragmentos Universales', img: 'https://sixoff.com/assets/Icon_WSM_Evogun_General-BuTcQERH.png', off: false, input: 'frag-qty', err: 'frag-min-error' },
+            box:  { key: 902, unit: 0.292542, res: [0.216481, 0.178451], min: 7, step: 1, max: 1000, title: 'Cajas de Fragmentos', img: 'https://sixoff.com/assets/Icon_box_Universal_Evo_43-B0ii0u-r.png', off: false, input: 'box-qty', err: 'box-min-error' }
         };
         window.kiwiEvoUnit = function (kind) {
             const e = window.KIWI_EVO[kind], l = window.kiwiReseller ? window.kiwiReseller.activeLevel() : 0;
@@ -8463,7 +8483,7 @@ window.resetUser2FA = function(username) {
         };
         function renderMethods() {
             stopTimers(); steps(0);
-            const ms = (K.cfg && K.cfg.methods) || [];
+            const ms = ((K.cfg && K.cfg.methods) || []).filter(m => String(m.currency || '').toUpperCase() !== 'MXN'); // v86: MXN desactivado
             body(`
                 ${K.purpose === 'direct' ? window.kiwiDirectBanner(K.directTitle, K.directUsdt) : ''}
                 ${K.purpose === 'reseller' ? '<div class="mb-3 rounded-xl border border-kiwi-gold/60 bg-kiwi-gold/10 p-3 text-xs text-kiwi-gold font-bold"><i class="fa-solid fa-crown mr-1"></i>Recarga de revendedor: mínimo 50 USDT. Suma a tu plan y se acredita como saldo normal.</div>' : ''}
@@ -10444,6 +10464,326 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         f._evo = true; window.kiwiRaApplyPrices = f;
     }
 })();
+</script>
+<style id="aff-v86">
+@media(min-width:640px){#admin-page .kadm-tabs{grid-template-columns:repeat(7,minmax(0,1fr))}}
+#admin-afiliados table th,#admin-afiliados table td{vertical-align:middle}
+</style>
+<script id="kiwi-v86-afiliados">
+// ===================== v86: AFILIADOS + CÓDIGOS DE CREADOR =====================
+// Todo el cálculo de comisiones lo hace la base (Supabase). Acá solo se muestra y se llama a las funciones con el token.
+(function (W) {
+    const CODE_RE = /^[A-Za-z0-9_-]{3,24}$/;
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const usd = n => (Number(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + ' USDT';
+    const num = n => (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    const day = d => { try { return new Date(d).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: '2-digit' }); } catch (_) { return ''; } };
+    const tok = () => (W.kiwiToken && W.kiwiToken()) || '';
+    const rpc = (fn, args) => W.kiwiRpc(fn, args || {});
+    const base = () => (/kiwistore\.lat$/i.test(location.hostname) ? location.origin : 'https://kiwistore.lat');
+    const link = code => base() + '/r/' + encodeURIComponent(code || '');
+    const ready = () => !!(W.kiwiRpc && typeof supabaseClient !== 'undefined' && supabaseClient && W.supabaseOnline);
+    function whenReady(fn, tries) { tries = tries || 0; if (ready()) return fn(); if (tries < 12) setTimeout(() => whenReady(fn, tries + 1), 1200); }
+    function visitor() { try { let v = localStorage.getItem('kiwi_vid'); if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('kiwi_vid', v); } return v; } catch (_) { return ''; } }
+
+    // ---- 1) Contar la visita del link (el código ya lo guardó el script del <head>) ----
+    try {
+        const code = W.KIWI_AFF_INCOMING;
+        if (code && CODE_RE.test(code)) {
+            const k = 'kiwi_aff_click_' + code;
+            if (!sessionStorage.getItem(k)) whenReady(() => rpc('kiwi_aff_click', { p_code: code, p_visitor: visitor() }).then(r => {
+                sessionStorage.setItem(k, '1');
+                if (r && r.valid && Number(r.discount_pct) > 0) toast('Código de creador ' + code + ': ' + num(r.discount_pct) + '% de reintegro en saldo en tus compras al registrarte.');
+            }).catch(() => {}));
+        }
+    } catch (_) {}
+    function pendingRef() {
+        try { const o = JSON.parse(localStorage.getItem('kiwi_aff_ref') || 'null'); if (o && CODE_RE.test(o.code) && Date.now() - o.at < 30 * 864e5) return o.code; } catch (_) {}
+        return null;
+    }
+    function toast(msg) {
+        try {
+            const d = document.createElement('div');
+            d.setAttribute('role', 'status');
+            d.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] max-w-sm w-[92%] bg-[#111318] border border-kiwi-gold/60 text-gray-100 text-sm rounded-xl px-4 py-3 shadow-xl font-rajdhani';
+            d.textContent = msg; document.body.appendChild(d); setTimeout(() => d.remove(), 7000);
+        } catch (_) {}
+    }
+
+    // ---- 2) Después de crear la cuenta: asociarla al afiliado / creador (una sola vez, la base valida todo) ----
+    W.kiwiAffAfterRegister = function () {
+        const code = pendingRef(); if (!code || !tok()) return;
+        rpc('kiwi_aff_bind', { p_token: tok(), p_code: code, p_source: 'register' }).then(r => {
+            if (r && (r.bound || r.already)) localStorage.removeItem('kiwi_aff_ref');
+            if (r && r.bound) toast(r.kind === 'creator' ? 'Cuenta vinculada al código de creador ' + code + '.' : 'Te registraste con la invitación de ' + (r.invited_by || code) + '.');
+        }).catch(() => {});
+    };
+
+    // ---- 3) Mi Perfil → Afiliados ----
+    let meData = null, busy = false;
+    W.kiwiAffLoad = async function () {
+        const box = document.getElementById('aff-card-body'); if (!box) return;
+        if (!tok()) { box.innerHTML = '<p class="text-sm text-gray-400">Iniciá sesión para ver tu panel de afiliados.</p>'; return; }
+        if (busy) return; busy = true;
+        try { meData = await rpc('kiwi_aff_me', { p_token: tok() }); render(); }
+        catch (e) { box.innerHTML = '<p class="text-sm text-yellow-300">No se pudo cargar el panel de afiliados' + (/function|does not exist|schema cache/i.test(e.message || '') ? ' (falta correr kiwii-v86.sql en Supabase).' : ': ' + esc(e.message)) + '</p>'; }
+        finally { busy = false; }
+    };
+    function stat(label, value, icon, sub) {
+        return `<div class="rounded-2xl border border-[#232834] bg-black/30 p-3 min-w-0"><p class="text-[11px] text-gray-400 uppercase tracking-widest font-orbitron flex items-center gap-1"><i class="${icon} text-kiwi-gold"></i>${label}</p>
+            <p class="font-orbitron font-black text-white text-lg mt-1 break-words">${value}</p>${sub ? `<p class="text-[11px] text-gray-500">${sub}</p>` : ''}</div>`;
+    }
+    function render() {
+        const box = document.getElementById('aff-card-body'); const d = meData; if (!box || !d) return;
+        const inv = d.invited_by;
+        const invTxt = inv ? esc(inv.username) + (inv.creator ? ' <span class="text-[10px] text-kiwi-gold">(creador)</span>' : '') : '—';
+        const invSub = inv && inv.creator && Number(inv.discount_pct) > 0 ? num(inv.discount_pct) + '% de reintegro en tus compras' : (inv ? 'para siempre' : (d.can_bind ? 'podés cargar un código abajo' : ''));
+        const L = link(d.code);
+        const rows = (d.referrals || []).map(r => `<tr class="border-t border-[#20242e]"><td class="py-2 pr-2 text-white font-bold truncate max-w-[9rem]">${esc(r.username)}</td><td class="py-2 pr-2 text-gray-400">${day(r.joined)}</td><td class="py-2 pr-2 text-gray-300 text-center">${num(r.orders)}</td><td class="py-2 text-right text-kiwi-gold font-bold">${usd(r.earned)}</td></tr>`).join('');
+        const cc = (d.creator_codes || []).map(c => `<div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-kiwi-gold/30 bg-kiwi-gold/5 p-3 text-xs"><span class="font-orbitron font-bold text-kiwi-gold">${esc(c.code)}</span>
+            <span class="text-gray-300">${num(c.creator_pct)}% para vos${Number(c.discount_pct) > 0 ? ' · ' + num(c.discount_pct) + '% reintegro al cliente' : ''}${c.active ? '' : ' · <b class="text-red-300">pausado</b>'}</span>
+            <span class="text-gray-400">${num(c.users)} usuarios · <b class="text-kiwi-gold">${usd(c.earned)}</b></span>
+            <button type="button" class="pf-copy" onclick="window.kiwiAffCopy('${esc(link(c.code))}', this)"><i class="fa-regular fa-copy"></i> Copiar link</button></div>`).join('');
+        box.innerHTML = `
+            ${d.enabled ? '' : '<p class="mb-3 text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">El programa de afiliados está pausado por el momento: no se están generando comisiones.</p>'}
+            ${d.blocked ? '<p class="mb-3 text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl p-3">Tu cuenta de afiliado está pausada. Escribinos a soporte si creés que es un error.</p>' : ''}
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                ${stat('Afiliados', num(d.referred), 'fa-solid fa-users', 'usuarios invitados')}
+                ${stat('Total ganado', usd(d.earned), 'fa-solid fa-sack-dollar', 'acreditado en tu saldo')}
+                ${stat('Tu porcentaje', num(d.pct) + '%', 'fa-solid fa-percent', 'de la ganancia de cada compra')}
+                ${stat('Invitado por', invTxt, 'fa-solid fa-user-plus', invSub)}
+            </div>
+            <div class="grid md:grid-cols-2 gap-3 mt-4">
+                <div><label for="aff-code-input" class="pf-lbl">Tu código de invitación</label>
+                    <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-hashtag"></i><input id="aff-code-input" maxlength="20" autocomplete="off" value="${esc(d.code)}" aria-describedby="aff-code-help"></div>
+                    <button type="button" onclick="window.kiwiAffSaveCode()" class="pf-btn px-4 text-sm shrink-0">Guardar</button></div>
+                    <p id="aff-code-help" class="text-[11px] text-gray-500 mt-1">3 a 20 letras, números o _. Se puede cambiar una vez por día; los links viejos siguen funcionando.</p>
+                    <p id="aff-code-msg" class="text-xs mt-1" role="status" aria-live="polite"></p></div>
+                <div><label class="pf-lbl" for="aff-link">Tu link de invitación</label>
+                    <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-link"></i><input id="aff-link" readonly value="${esc(L)}"></div>
+                    <button type="button" onclick="window.kiwiAffCopy(document.getElementById('aff-link').value, this)" class="pf-ghost px-3 text-sm shrink-0"><i class="fa-regular fa-copy"></i> Copiar</button>
+                    ${navigator.share ? `<button type="button" onclick="navigator.share({ title: 'Kiwii Store', text: 'Registrate en Kiwii Store con mi link', url: document.getElementById('aff-link').value }).catch(() => {})" class="pf-ghost px-3 text-sm shrink-0" aria-label="Compartir"><i class="fa-solid fa-share-nodes"></i></button>` : ''}</div>
+                    <p class="text-[11px] text-gray-500 mt-1">También funciona tu ID: ${esc(d.account_code || '')}</p></div>
+            </div>
+            <div class="mt-3 rounded-xl border border-[#232834] bg-black/25 p-3 text-xs text-gray-300 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-kiwi-gold mr-1"></i>Compartí tu link. Las personas que se registren con él quedan asociadas a vos <b>para siempre</b>.
+                Cada vez que una de ellas recibe un pedido, ganás el <b class="text-kiwi-gold">${num(d.pct)}% de la ganancia de la tienda</b> en esa compra, en tu saldo (USDT).
+                Si el pedido se cancela o se devuelve, esa comisión se descuenta. No vale invitarte a vos mismo ni usar cuentas duplicadas.
+            </div>
+            ${d.can_bind ? `<div class="mt-4"><label for="aff-bind-input" class="pf-lbl">¿Te invitó alguien? Ingresá su código (solo antes de tu primera compra)</label>
+                <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-user-plus"></i><input id="aff-bind-input" maxlength="24" autocomplete="off" placeholder="Código o KWS-…" value="${esc(pendingRef() || '')}"></div>
+                <button type="button" onclick="window.kiwiAffBind()" class="pf-ok px-4 text-sm shrink-0">Vincular</button></div><p id="aff-bind-msg" class="text-xs mt-1" role="status" aria-live="polite"></p></div>` : ''}
+            ${cc ? `<h4 class="pf-h mt-5 mb-2"><i class="fa-solid fa-star"></i> Tus códigos de creador</h4><div class="space-y-2">${cc}</div>` : ''}
+            <h4 class="pf-h mt-5 mb-2"><i class="fa-solid fa-user-group"></i> Tus afiliados</h4>
+            ${rows ? `<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-gray-500 text-left"><th class="pb-1 font-semibold">Usuario</th><th class="pb-1 font-semibold">Se unió</th><th class="pb-1 font-semibold text-center">Pedidos</th><th class="pb-1 font-semibold text-right">Ganado</th></tr></thead><tbody>${rows}</tbody></table></div>`
+                   : '<p class="text-xs text-gray-500">Todavía no invitaste a nadie. ¡Compartí tu link!</p>'}`;
+    }
+    W.kiwiAffCopy = function (text, btn) {
+        const done = () => { if (btn) { const h = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => { btn.innerHTML = h; }, 1500); } };
+        try { navigator.clipboard.writeText(text).then(done, () => { prompt('Copiá el link:', text); }); } catch (_) { prompt('Copiá el link:', text); }
+    };
+    W.kiwiAffSaveCode = async function () {
+        const inp = document.getElementById('aff-code-input'), msg = document.getElementById('aff-code-msg'); if (!inp) return;
+        const v = inp.value.trim();
+        if (!/^[A-Za-z0-9_]{3,20}$/.test(v)) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = 'El código debe tener de 3 a 20 letras, números o _.'; return; }
+        try {
+            const r = await rpc('kiwi_aff_set_code', { p_token: tok(), p_code: v });
+            if (!r || !r.ok) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = (r && r.error) || 'No se pudo guardar.'; return; }
+            meData.code = r.code; render();
+            const m2 = document.getElementById('aff-code-msg'); if (m2) { m2.className = 'text-xs mt-1 text-green-300'; m2.textContent = 'Código guardado: ' + r.code; }
+        } catch (e) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = e.message; }
+    };
+    W.kiwiAffBind = async function () {
+        const inp = document.getElementById('aff-bind-input'), msg = document.getElementById('aff-bind-msg'); if (!inp) return;
+        const v = inp.value.trim();
+        if (!CODE_RE.test(v)) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = 'Código inválido.'; return; }
+        try {
+            const r = await rpc('kiwi_aff_bind', { p_token: tok(), p_code: v, p_source: 'profile' });
+            if (!r || !r.ok) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = (r && r.error) || 'No se pudo vincular.'; return; }
+            localStorage.removeItem('kiwi_aff_ref'); W.kiwiAffLoad();
+        } catch (e) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = e.message; }
+    };
+    // se carga cuando se abre Mi Perfil
+    function watchProfile() {
+        const p = document.getElementById('orders-panel'); if (!p) return;
+        let was = !p.classList.contains('hidden');
+        new MutationObserver(() => { const vis = !p.classList.contains('hidden'); if (vis && !was) W.kiwiAffLoad(); was = vis; }).observe(p, { attributes: true, attributeFilter: ['class'] });
+        if (was) whenReady(W.kiwiAffLoad);
+    }
+
+    // ---- 4) Panel staff → AFILIADOS (solo Owner / CEO; la base vuelve a verificar el rango) ----
+    const A = W.KIWI_AFF_ADMIN = { data: null, from: null, to: null, editing: null };
+    const isMgr = () => !!(W.canManageStaff && W.canManageStaff());
+    function syncTabBtn() { const b = document.getElementById('kadm-tab-afiliados'); if (b) b.classList.toggle('hidden', !isMgr()); }
+    const ymd = d => { const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
+    W.kiwiAffAdminRange = function (days) {
+        const t = new Date(); const f = new Date(Date.now() - days * 864e5);
+        const fi = document.getElementById('aff-adm-from'), ti = document.getElementById('aff-adm-to');
+        if (fi) fi.value = ymd(f); if (ti) ti.value = ymd(t); W.kiwiAffAdminLoad();
+    };
+    W.kiwiAffAdminLoad = async function () {
+        const box = document.getElementById('admin-afiliados'); if (!box) return;
+        if (!isMgr()) { box.innerHTML = '<p class="text-sm text-gray-400">Solo Owner / CEO.</p>'; return; }
+        const fi = document.getElementById('aff-adm-from'), ti = document.getElementById('aff-adm-to');
+        A.from = fi && fi.value ? fi.value : (A.from || ymd(new Date(Date.now() - 30 * 864e5)));
+        A.to = ti && ti.value ? ti.value : (A.to || ymd(new Date()));
+        if (!A.data) box.innerHTML = '<p class="text-sm text-gray-400">Cargando…</p>';
+        try {
+            // fechas en hora de Argentina (UTC-3): desde las 00:00 del primer día hasta las 24:00 del último
+            A.data = await rpc('kiwi_aff_admin_get', { p_token: tok(), p_from: A.from + 'T00:00:00-03:00', p_to: new Date(new Date(A.to + 'T00:00:00-03:00').getTime() + 864e5).toISOString() });
+            renderAdmin();
+        } catch (e) { box.innerHTML = '<p class="text-sm text-yellow-300">No se pudo cargar: ' + esc(e.message) + (/function|does not exist|schema cache/i.test(e.message || '') ? ' (falta correr kiwii-v86.sql en Supabase)' : '') + '</p>'; }
+    };
+    const th = t => `<th class="py-1 pr-2 font-semibold whitespace-nowrap">${t}</th>`;
+    const td = (t, c) => `<td class="py-1.5 pr-2 whitespace-nowrap ${c || ''}">${t}</td>`;
+    const inputCls = 'bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white';
+    function renderAdmin() {
+        const box = document.getElementById('admin-afiliados'); const d = A.data; if (!box || !d) return;
+        const s = d.settings || {}, T = d.totals || {}, rates = d.profit_rates || {};
+        const cats = Array.from(new Set([].concat(d.categories || [], Object.keys(rates)))).filter(Boolean).sort();
+        const ed = A.editing ? (d.creators || []).find(c => c.id === A.editing) : null;
+        const card = (l, v) => `<div class="rounded-xl border border-white/10 bg-black/30 p-3"><p class="text-[10px] uppercase tracking-widest text-gray-400 font-orbitron">${l}</p><p class="font-orbitron font-bold text-white mt-1">${v}</p></div>`;
+        box.innerHTML = `
+        <p class="kadm-sub">Programa de afiliados y códigos de creador · comisión sobre la GANANCIA de cada pedido entregado · solo Owner / CEO</p>
+        <div class="flex flex-wrap items-end gap-2 mb-3">
+            <label class="text-xs text-gray-400">Desde<br><input type="date" id="aff-adm-from" value="${esc(A.from)}" class="${inputCls}"></label>
+            <label class="text-xs text-gray-400">Hasta<br><input type="date" id="aff-adm-to" value="${esc(A.to)}" class="${inputCls}"></label>
+            <button type="button" onclick="window.kiwiAffAdminLoad()" class="bg-kiwi-gold text-black font-bold rounded-lg px-3 py-2 text-sm">Ver</button>
+            <button type="button" onclick="window.kiwiAffAdminRange(7)" class="border border-white/15 rounded-lg px-3 py-2 text-xs text-gray-200">7 días</button>
+            <button type="button" onclick="window.kiwiAffAdminRange(30)" class="border border-white/15 rounded-lg px-3 py-2 text-xs text-gray-200">30 días</button>
+            <button type="button" onclick="window.kiwiAffAdminRange(90)" class="border border-white/15 rounded-lg px-3 py-2 text-xs text-gray-200">90 días</button>
+            <span class="text-[11px] text-gray-500">Fechas en hora de Argentina</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+            ${card('Visitas a links', num(T.clicks))}${card('Registros', num(T.signups))}${card('Compradores', num(T.buyers))}${card('Pedidos', num(T.orders))}
+            ${card('Ventas', usd(T.revenue))}${card('Ganancia', usd(T.profit))}${card('Comisiones pagadas', usd(T.commission))}${card('Reintegros a clientes', usd(T.cashback))}
+        </div>
+
+        <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Configuración</h4>
+        <div class="rounded-xl border border-white/10 bg-black/20 p-3 mb-5 space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-200"><input type="checkbox" id="aff-set-enabled" ${s.enabled ? 'checked' : ''}> Programa activo (si se apaga, no se generan comisiones nuevas)</label>
+            <div class="grid sm:grid-cols-3 gap-2">
+                <label class="text-xs text-gray-400">% para afiliados (de la ganancia)<input type="number" min="0" max="100" step="0.5" id="aff-set-pct" value="${esc(s.default_pct)}" class="${inputCls} w-full mt-1"></label>
+                <label class="text-xs text-gray-400">Ganancia estimada de productos manuales (% del precio)<input type="number" min="0" max="100" step="0.5" id="aff-set-manual" value="${esc(s.manual_profit_pct)}" class="${inputCls} w-full mt-1"></label>
+                <label class="text-xs text-gray-400">Días para cargar un código después de registrarse<input type="number" min="1" max="365" step="1" id="aff-set-days" value="${esc(s.bind_days)}" class="${inputCls} w-full mt-1"></label>
+            </div>
+            <p class="text-[11px] text-gray-500">Entrega automática: se usa la ganancia real (lo cobrado − el costo). Productos manuales: % de ganancia por categoría (vacío = el general de arriba).</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${cats.map(c => `<label class="text-xs text-gray-400">${esc(c)}<input type="number" min="0" max="100" step="0.5" data-aff-cat="${esc(c)}" value="${rates[c] != null ? esc(rates[c]) : ''}" placeholder="${esc(s.manual_profit_pct)}" class="${inputCls} w-full mt-1"></label>`).join('')}
+                <label class="text-xs text-gray-400">Otra categoría<input id="aff-set-newcat" placeholder="ej. streaming" class="${inputCls} w-full mt-1"></label>
+                <label class="text-xs text-gray-400">% de esa categoría<input id="aff-set-newpct" type="number" min="0" max="100" step="0.5" class="${inputCls} w-full mt-1"></label></div>
+            <button type="button" onclick="window.kiwiAffAdminSaveSettings()" class="bg-kiwi-gold text-black font-bold rounded-lg px-4 py-2 text-sm">Guardar configuración</button>
+            <span id="aff-set-msg" class="text-xs ml-2" role="status"></span>
+        </div>
+
+        <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Códigos de creador / sponsor</h4>
+        <div class="rounded-xl border border-white/10 bg-black/20 p-3 mb-3">
+            <p class="text-xs text-gray-300 mb-2">${ed ? 'Editando <b>' + esc(ed.code) + '</b>' : 'Nuevo código'} · el cliente lo usa con el link <span class="text-kiwi-gold">${esc(base())}/r/CODIGO</span> o lo ingresa en su perfil.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+                <input id="aff-cc-code" placeholder="CÓDIGO" maxlength="20" value="${ed ? esc(ed.code) : ''}" class="${inputCls}" aria-label="Código">
+                <input id="aff-cc-owner" placeholder="Usuario dueño" value="${ed ? esc(ed.owner) : ''}" class="${inputCls}" aria-label="Usuario dueño">
+                <input id="aff-cc-pct" type="number" min="0" max="100" step="0.5" placeholder="% creador" value="${ed ? esc(ed.creator_pct) : '20'}" class="${inputCls}" aria-label="% para el creador">
+                <input id="aff-cc-disc" type="number" min="0" max="50" step="0.5" placeholder="% reintegro cliente" value="${ed ? esc(ed.discount_pct) : '0'}" class="${inputCls}" aria-label="% de reintegro para el cliente">
+                <input id="aff-cc-note" placeholder="Nota (opcional)" value="${ed ? esc(ed.note || '') : ''}" class="${inputCls}" aria-label="Nota">
+                <label class="flex items-center gap-2 text-xs text-gray-300"><input type="checkbox" id="aff-cc-active" ${!ed || ed.active ? 'checked' : ''}> Activo</label>
+            </div>
+            <div class="mt-2 flex gap-2"><button type="button" onclick="window.kiwiAffAdminSaveCreator()" class="bg-kiwi-gold text-black font-bold rounded-lg px-4 py-2 text-sm">${ed ? 'Guardar cambios' : 'Crear código'}</button>
+            ${ed ? '<button type="button" onclick="window.KIWI_AFF_ADMIN.editing=null;window.kiwiAffAdminRender()" class="border border-white/15 rounded-lg px-3 py-2 text-xs text-gray-200">Cancelar</button>' : ''}
+            <span id="aff-cc-msg" class="text-xs self-center" role="status"></span></div>
+            <p class="text-[11px] text-gray-500 mt-2">% creador = parte de la ganancia para el dueño del código. % reintegro = saldo que recibe el cliente en cada compra entregada (sobre el precio). Nunca se paga más que la ganancia del pedido.</p>
+        </div>
+        <div class="overflow-x-auto mb-5"><table class="w-full text-xs text-gray-300"><thead><tr class="text-left text-gray-500">${th('Código')}${th('Dueño')}${th('% creador')}${th('% reintegro')}${th('Estado')}${th('Usuarios')}${th('Visitas')}${th('Registros')}${th('Compradores')}${th('Pedidos')}${th('Ventas')}${th('Ganancia')}${th('Comisión')}${th('Reintegros')}${th('')}</tr></thead><tbody>
+            ${(d.creators || []).map(c => `<tr class="border-t border-white/5">${td('<b class="text-kiwi-gold">' + esc(c.code) + '</b>')}${td(esc(c.owner))}${td(num(c.creator_pct) + '%')}${td(num(c.discount_pct) + '%')}${td(c.active ? '<span class="text-green-300">activo</span>' : '<span class="text-red-300">pausado</span>')}
+                ${td(num(c.users))}${td(num(c.clicks))}${td(num(c.signups))}${td(num(c.buyers))}${td(num(c.orders))}${td(usd(c.revenue))}${td(usd(c.profit))}${td(usd(c.commission))}${td(usd(c.cashback))}
+                ${td(`<button type="button" class="text-kiwi-gold underline mr-2" onclick="window.kiwiAffAdminEdit(${Number(c.id)})">Editar</button><button type="button" class="text-red-300 underline" onclick="window.kiwiAffAdminDeleteCreator(${Number(c.id)}, '${esc(c.code)}')">Borrar</button>`)}</tr>`).join('') || '<tr><td colspan="15" class="py-2 text-gray-500">Todavía no hay códigos de creador.</td></tr>'}
+        </tbody></table></div>
+
+        <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Estadísticas por link / código (en el período)</h4>
+        <div class="overflow-x-auto mb-5"><table class="w-full text-xs text-gray-300"><thead><tr class="text-left text-gray-500">${th('Código')}${th('Tipo')}${th('Dueño')}${th('Visitas')}${th('Registros')}${th('Compradores')}${th('Pedidos')}${th('Ventas')}${th('Ganancia')}${th('Comisión')}${th('Reintegros')}</tr></thead><tbody>
+            ${(d.codes || []).map(c => `<tr class="border-t border-white/5">${td('<b>' + esc(c.code) + '</b>')}${td(c.kind === 'creator' ? 'creador' : 'afiliado')}${td(esc(c.owner || '—'))}${td(num(c.clicks))}${td(num(c.signups))}${td(num(c.buyers))}${td(num(c.orders))}${td(usd(c.revenue))}${td(usd(c.profit))}${td(usd(c.commission))}${td(usd(c.cashback))}</tr>`).join('') || '<tr><td colspan="11" class="py-2 text-gray-500">Sin movimiento en estas fechas.</td></tr>'}
+        </tbody></table></div>
+
+        <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Afiliados</h4>
+        <div class="overflow-x-auto mb-5"><table class="w-full text-xs text-gray-300"><thead><tr class="text-left text-gray-500">${th('Usuario')}${th('Código')}${th('Invitados (total)')}${th('Registros (período)')}${th('Comisión (período)')}${th('Comisión (total)')}${th('% propio')}${th('')}</tr></thead><tbody>
+            ${(d.affiliates || []).map(a => `<tr class="border-t border-white/5">${td('<b>' + esc(a.username) + '</b>' + (a.blocked ? ' <span class="text-red-300">(bloqueado)</span>' : ''))}${td(esc(a.code || '—'))}${td(num(a.referred))}${td(num(a.signups))}${td(usd(a.commission))}${td(usd(a.commission_total))}
+                ${td(`<input type="number" min="0" max="100" step="0.5" value="${a.pct != null ? esc(a.pct) : ''}" placeholder="${esc(s.default_pct)}" data-aff-user="${esc(a.username)}" class="${inputCls} w-20" aria-label="% propio de ${esc(a.username)}">`)}
+                ${td(`<button type="button" class="text-kiwi-gold underline mr-2" onclick="window.kiwiAffAdminUser('${esc(a.username)}', false)">Guardar %</button><button type="button" class="${a.blocked ? 'text-green-300' : 'text-red-300'} underline" onclick="window.kiwiAffAdminUser('${esc(a.username)}', ${a.blocked ? 'null, false' : 'null, true'})">${a.blocked ? 'Desbloquear' : 'Bloquear'}</button>`)}</tr>`).join('') || '<tr><td colspan="8" class="py-2 text-gray-500">Todavía no hay afiliados con invitados.</td></tr>'}
+        </tbody></table></div>
+
+        <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Últimos movimientos</h4>
+        <div class="overflow-x-auto"><table class="w-full text-xs text-gray-300"><thead><tr class="text-left text-gray-500">${th('Pedido')}${th('Comprador')}${th('Para')}${th('Código')}${th('Venta')}${th('Ganancia')}${th('%')}${th('Comisión')}${th('Reintegro')}${th('Estado')}${th('Fecha')}</tr></thead><tbody>
+            ${(d.recent || []).map(o => `<tr class="border-t border-white/5">${td('#' + esc(o.order_id))}${td(esc(o.buyer))}${td(esc(o.beneficiary || '—'))}${td(esc(o.code || '—'))}${td(usd(o.sale_usdt))}${td(usd(o.profit_usdt) + ' <span class="text-gray-500">(' + esc(o.profit_source || '') + ')</span>')}${td(num(o.pct) + '%')}${td(usd(o.commission))}${td(usd(o.cashback))}${td(o.status === 'credited' ? '<span class="text-green-300">acreditado</span>' : '<span class="text-red-300">revertido</span>')}${td(day(o.reversed_at || o.credited_at))}</tr>`).join('') || '<tr><td colspan="11" class="py-2 text-gray-500">Sin movimientos todavía.</td></tr>'}
+        </tbody></table></div>`;
+    }
+    W.kiwiAffAdminRender = renderAdmin;
+    W.kiwiAffAdminEdit = function (id) { A.editing = id; renderAdmin(); const el = document.getElementById('aff-cc-code'); if (el) el.focus(); };
+    const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    W.kiwiAffAdminSaveSettings = async function () {
+        const msg = document.getElementById('aff-set-msg'); const rates = {};
+        document.querySelectorAll('[data-aff-cat]').forEach(i => { rates[i.dataset.affCat] = i.value.trim(); });
+        if (val('aff-set-newcat')) rates[val('aff-set-newcat').toLowerCase()] = val('aff-set-newpct');
+        const st = { enabled: !!(document.getElementById('aff-set-enabled') || {}).checked, profit_rates: rates };
+        if (val('aff-set-pct') !== '') st.default_pct = Number(val('aff-set-pct'));
+        if (val('aff-set-manual') !== '') st.manual_profit_pct = Number(val('aff-set-manual'));
+        if (val('aff-set-days') !== '') st.bind_days = Number(val('aff-set-days'));
+        try { await rpc('kiwi_aff_admin_settings', { p_token: tok(), p_settings: st }); await W.kiwiAffAdminLoad(); const m = document.getElementById('aff-set-msg'); if (m) { m.className = 'text-xs ml-2 text-green-300'; m.textContent = 'Guardado.'; } }
+        catch (e) { if (msg) { msg.className = 'text-xs ml-2 text-red-300'; msg.textContent = e.message; } }
+    };
+    W.kiwiAffAdminSaveCreator = async function () {
+        const msg = document.getElementById('aff-cc-msg');
+        const code = val('aff-cc-code');
+        if (!/^[A-Za-z0-9_]{3,20}$/.test(code)) { msg.className = 'text-xs self-center text-red-300'; msg.textContent = 'Código: 3 a 20 letras, números o _.'; return; }
+        try {
+            await rpc('kiwi_aff_admin_creator_save', { p_token: tok(), p_id: A.editing || null, p_code: code, p_owner: val('aff-cc-owner'),
+                p_creator_pct: Number(val('aff-cc-pct') || 0), p_discount_pct: Number(val('aff-cc-disc') || 0),
+                p_active: !!(document.getElementById('aff-cc-active') || {}).checked, p_note: val('aff-cc-note') || null });
+            A.editing = null; await W.kiwiAffAdminLoad();
+        } catch (e) { msg.className = 'text-xs self-center text-red-300'; msg.textContent = e.message; }
+    };
+    W.kiwiAffAdminDeleteCreator = async function (id, code) {
+        if (!confirm('¿Borrar el código ' + code + '? Si ya tiene usuarios o ventas, se desactiva y se oculta (las estadísticas se conservan).')) return;
+        try { await rpc('kiwi_aff_admin_creator_delete', { p_token: tok(), p_id: id }); if (A.editing === id) A.editing = null; await W.kiwiAffAdminLoad(); } catch (e) { alert(e.message); }
+    };
+    W.kiwiAffAdminUser = async function (username, _unused, blocked) {
+        const inp = Array.from(document.querySelectorAll('[data-aff-user]')).find(i => i.dataset.affUser === username);
+        const v = inp ? inp.value.trim() : '';
+        const args = { p_token: tok(), p_username: username, p_pct: v === '' ? null : Number(v), p_blocked: typeof blocked === 'boolean' ? blocked : null, p_clear_pct: v === '' && typeof blocked !== 'boolean' };
+        if (typeof blocked === 'boolean') { args.p_pct = null; args.p_clear_pct = false; if (!confirm((blocked ? '¿Bloquear' : '¿Desbloquear') + ' al afiliado ' + username + '?' + (blocked ? ' No va a generar comisiones nuevas.' : ''))) return; }
+        try { await rpc('kiwi_aff_admin_user', args); await W.kiwiAffAdminLoad(); } catch (e) { alert(e.message); }
+    };
+    // pestaña nueva dentro del controlador del panel staff (v74)
+    function hookStaff() {
+        const prev = W.switchStaffTab;
+        if (typeof prev === 'function' && !prev.__aff) {
+            W.switchStaffTab = function (tab) {
+                if (tab !== 'afiliados' || !isMgr()) { const r = prev.apply(this, [tab === 'afiliados' ? 'cuentas' : tab]); setTimeout(syncTabBtn, 0); return r; }
+                // el controlador v74 solo conoce sus pestañas: esta se muestra acá con el mismo estilo
+                const S = W.KIWI_STAFF_MANUAL;
+                if (S) { S.seq++; S.tab = 'afiliados'; S.busy = false; }
+                try { currentStaffTab = 'afiliados'; } catch (_) {}
+                document.querySelectorAll('#admin-content > .admin-tab').forEach(n => n.classList.toggle('hidden', n.id !== 'admin-afiliados'));
+                document.querySelectorAll('#admin-page .kadm-tabs > button').forEach(n => {
+                    const m = (n.getAttribute('onclick') || '').match(/switchStaffTab\('([^']+)'/), on = !!m && m[1] === 'afiliados';
+                    ['text-kiwi-gold', 'border-b-2', 'border-kiwi-gold'].forEach(c => n.classList.toggle(c, on)); n.classList.toggle('text-gray-500', !on);
+                });
+                const lb = document.getElementById('kiwi-staff-updated'); if (lb) lb.textContent = 'Afiliados';
+                const rb = document.getElementById('kiwi-staff-refresh'); if (rb) { rb.disabled = false; rb.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> Actualizar'; }
+                syncTabBtn();
+                return W.kiwiAffAdminLoad();
+            };
+            W.switchStaffTab.__aff = true;
+        }
+        const pr = W.kiwiStaffRefresh;
+        if (typeof pr === 'function' && !pr.__aff) {
+            W.kiwiStaffRefresh = function () { const st = W.KIWI_STAFF_MANUAL; if (st && st.tab === 'afiliados') return W.kiwiAffAdminLoad(); return pr.apply(this, arguments); };
+            W.kiwiStaffRefresh.__aff = true;
+        }
+        const ap = document.getElementById('admin-page');
+        if (ap) new MutationObserver(syncTabBtn).observe(ap, { attributes: true, attributeFilter: ['class'] });
+        syncTabBtn();
+    }
+    function boot() { watchProfile(); hookStaff(); setTimeout(syncTabBtn, 1500); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})(window);
 </script>
 </body>
 </html>
