@@ -16,14 +16,25 @@ const MARGINS = {
 };
 // v85: productos por cantidad (se arman con varios paquetes del proveedor en un solo pedido). Sin margen de respaldo:
 // si la tabla no tiene su margen (sell_ratio) el producto queda no disponible.
+// v87: mínimo / de a cuánto = el paquete más chico del proveedor que esté disponible (estos valores son solo el respaldo).
 const BULK = {
-  901: { kind: 'frag', label: 'Fragmentos Universales', min: 40, step: 10, max: 10000 },
-  902: { kind: 'box', label: 'Cajas de Fragmentos', min: 7, step: 1, max: 1000 }
+  901: { kind: 'frag', label: 'Fragmentos Universales', min: 10, step: 10, max: 10000 },
+  902: { kind: 'box', label: 'Cajas de Fragmentos', min: 1, step: 1, max: 1000 }
 };
 const isBulk = (id) => Object.prototype.hasOwnProperty.call(BULK, Number(id));
 const IDS = Object.keys(MARGINS).map(Number).concat(Object.keys(BULK).map(Number));   // claves de producto de Kiwii con entrega automática
 const NEEDS_ZONE = new Set(IDS.filter(id => id >= 249 && id <= 270));
-const CATEGORY_OF = (pid) => pid >= 900 ? 'freefire' : pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : 'mlbb';
+// v87: productos nuevos (claves 1001–1999). Se configuran SOLO en Supabase (kiwi_prov_items: producto, categoría, regla de precio).
+const DYN_MIN = 1001, DYN_MAX = 1999;
+const isDyn = (id) => Number.isInteger(Number(id)) && Number(id) >= DYN_MIN && Number(id) <= DYN_MAX;
+const knownId = (id) => IDS.includes(Number(id)) || isDyn(id);
+let DYN_IDS = [];                 // claves nuevas cargadas de la tabla
+let META = {};                    // { id: { category, title } }
+const allIds = () => IDS.concat(DYN_IDS.filter(k => !IDS.includes(k)));
+const CATEGORY_OF = (pid) => (META[pid] && META[pid].category) || (pid >= 900 && pid < 1000 ? 'freefire' : pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : pid <= 270 ? 'mlbb' : 'otros');
+// v87: regla de precio por tramo de costo (misma escala que Free Fire y los demás: 20% de ganancia en lo más barato → 10% en lo más caro)
+const TIERS = [[1, 1.20], [3, 1.18], [7, 1.16], [15, 1.14], [35, 1.12], [Infinity, 1.10]];
+const tierRatio = (cost) => { const c = Number(cost); for (const [lim, r] of TIERS) if (c < lim) return r; return 1.10; };
 const TOLERANCE = 0.03;   // 3% de diferencia permitida entre el precio que vio el cliente y el actual
 const CACHE_MS = 15 * 60 * 1000;                 // el catálogo del proveedor se cachea ~15 min
 
@@ -36,18 +47,19 @@ function setRules(items) {
   for (const [k, it] of Object.entries(items || {})) {
     const ratio = Number(it.ratio), cap = Number(it.cap);
     const ucap = it.bulk && Number(it.bulk.unit_cap);
-    r[k] = { ratio: ratio >= 1 && ratio <= 3 ? ratio : null, cap: isBulk(k) ? (ucap > 0 ? ucap : null) : (cap > 0 ? cap : null) };
+    r[k] = { ratio: ratio >= 1 && ratio <= 3 ? ratio : null, cap: isBulk(k) ? (ucap > 0 ? ucap : null) : (cap > 0 ? cap : null), tier: it.rule === 'tier' };
   }
   RULES = r;
 }
 const ceil2 = (x) => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
 const ceil6 = (x) => Math.ceil(Math.round(x * 1e8) / 100 - 1e-9) / 1e6;
-const marginOf = (id) => {
+const marginOf = (id, cost) => {
+  if (RULES[id] && RULES[id].tier && Number(cost) > 0) return tierRatio(cost);   // v87: por tramo de costo
   const rr = RULES[id] && RULES[id].ratio; if (rr) return rr;
   const p = Number(MARGINS[id]); return p >= 0 && p <= 200 ? 1 + p / 100 : MARGIN;
 };
 const salePrice = (cost, id) => {
-  let p = ceil2(cost * (id != null ? marginOf(id) : MARGIN));
+  let p = ceil2(cost * (id != null ? marginOf(id, cost) : MARGIN));
   const cap = id != null && RULES[id] && RULES[id].cap;
   if (cap && p > cap) p = Math.max(cap, ceil2(cost * MIN_RATIO));   // no subir el precio por encima del tope (salvo para mantener el 5%)
   return p;
@@ -56,7 +68,7 @@ const RESELLER_FACTOR = { 1: 0.5, 2: 0.25 };
 const resellerSalePrice = (cost, id, level) => {
   const f = RESELLER_FACTOR[level];
   if (!f) return salePrice(cost, id);
-  const eff = cost > 0 ? salePrice(cost, id) / cost : (id != null ? marginOf(id) : MARGIN);   // margen real (con tope incluido)
+  const eff = cost > 0 ? salePrice(cost, id) / cost : (id != null ? marginOf(id, cost) : MARGIN);   // margen real (con tope incluido)
   return Math.min(salePrice(cost, id), ceil2(cost * (1 + (eff - 1) * f)));
 };
 
@@ -69,8 +81,22 @@ function bulkUnit(unitCost, id, level) {
   return Math.min(u, ceil6(unitCost * (1 + (u / unitCost - 1) * f)));
 }
 const bulkPrice = (unitCost, id, qty, level) => { const u = bulkUnit(unitCost, id, level); return u ? ceil2(qty * u) : null; };
-function qtyError(id, qty) {
-  const b = BULK[id]; if (!b) return 'Producto inválido.';
+// v87: reglas de cantidad según los paquetes disponibles: mínimo = paquete más chico, de a = MCD de los tamaños, máximo = stock
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a; };
+function bulkRules(id, packs) {
+  const B = BULK[id]; if (!B) return null;
+  const ps = (packs || []).filter(p => p && p.size > 0 && p.cost > 0 && !(p.stock === 0));
+  if (!ps.length) return { min: B.min, step: B.step, max: B.max };
+  const min = Math.min(...ps.map(p => p.size));
+  const step = ps.map(p => p.size).reduce(gcd);
+  let max = B.max;
+  if (ps.every(p => Number.isFinite(p.stock))) max = Math.min(max, ps.reduce((t, p) => t + p.size * p.stock, 0));
+  max = Math.floor(max / step) * step;
+  return { min, step, max: Math.max(max, 0) };
+}
+function qtyError(id, qty, rules) {
+  const b = rules || BULK[id]; if (!b || !BULK[id]) return 'Producto inválido.';
+  if (b.max < b.min) return 'Sin stock suficiente por ahora.';
   if (!Number.isInteger(qty) || qty < b.min) return 'La cantidad mínima es ' + b.min + '.';
   if (qty > b.max) return 'La cantidad máxima es ' + b.max + '.';
   if (qty % b.step) return 'La cantidad tiene que ser múltiplo de ' + b.step + '.';
@@ -78,9 +104,9 @@ function qtyError(id, qty) {
 }
 // Arma el pedido con los paquetes más grandes primero. Devuelve { lines: [{ref, n, size}], cost } o null si no se puede.
 function bulkPlan(packs, qty) {
-  const ps = (packs || []).filter(p => p.ref && p.size > 0 && p.cost > 0).sort((a, b) => b.size - a.size);
+  const ps = (packs || []).filter(p => p.ref && p.size > 0 && p.cost > 0 && !(p.stock === 0)).sort((a, b) => b.size - a.size);
   let left = qty, cost = 0; const lines = [];
-  for (const p of ps) { const n = Math.floor(left / p.size); if (n > 0) { lines.push({ ref: p.ref, n, size: p.size }); cost += n * p.cost; left -= n * p.size; } }
+  for (const p of ps) { const n = Math.min(Math.floor(left / p.size), Number.isFinite(p.stock) ? p.stock : Infinity); if (n > 0) { lines.push({ ref: p.ref, n, size: p.size }); cost += n * p.cost; left -= n * p.size; } }
   return left === 0 && lines.length ? { lines, cost: Math.round(cost * 1e4) / 1e4 } : null;
 }
 
@@ -133,14 +159,16 @@ async function prov(path, opts) {
 let cache = null, inflight = null, lastSynced = null;
 async function loadItems() {
   const r = await sb('kiwi_prov_items_get', {}, 6000);
-  const items = {};
+  const items = {}, meta = {};
   for (const it of (Array.isArray(r) ? r : [])) {
     const k = Number(it.kiwi_key);
-    if (IDS.includes(k) && it.product_ref) items[k] = { ref: String(it.product_ref), fields: Array.isArray(it.fields) ? it.fields : [], pin: !!it.pin, snapshot: Number(it.snapshot_cost) || null, ratio: Number(it.sell_ratio) || null, cap: Number(it.price_cap) || null,
-      bulk: it.bulk && typeof it.bulk === 'object' && Array.isArray(it.bulk.packs) ? it.bulk : null };
+    if (knownId(k) && it.product_ref) items[k] = { ref: String(it.product_ref), fields: Array.isArray(it.fields) ? it.fields : [], pin: !!it.pin, snapshot: Number(it.snapshot_cost) || null, ratio: Number(it.sell_ratio) || null, cap: Number(it.price_cap) || null,
+      bulk: it.bulk && typeof it.bulk === 'object' && Array.isArray(it.bulk.packs) ? it.bulk : null, rule: it.price_rule === 'tier' ? 'tier' : null };
     if (isBulk(k) && !(items[k].bulk && items[k].ratio)) delete items[k];   // por cantidad: sin paquetes o sin margen no se vende
+    if (items[k] && isDyn(k) && !(items[k].ratio || items[k].rule)) delete items[k];   // v87: nuevo sin regla de precio → no se vende
+    if (items[k] && (it.category || it.title)) meta[k] = { category: it.category ? String(it.category).slice(0, 30) : null, title: it.title ? String(it.title).slice(0, 120) : null };
   }
-  if (Object.keys(items).length) setRules(items);
+  if (Object.keys(items).length) { setRules(items); DYN_IDS = Object.keys(items).map(Number).filter(isDyn).sort((a, b) => a - b); META = meta; }
   return items;
 }
 async function loadLive() {
@@ -152,14 +180,16 @@ async function loadLive() {
   if (!list || !list.length) throw new Error('catálogo vacío');
   const byRef = new Map(list.map(p => [String(p.product_id), p]));
   const costs = {}, inactive = [], schemas = {}, packs = {};
-  for (const id of IDS) {
-    if (isBulk(id)) {   // v85: todos los paquetes tienen que estar activos; costo por unidad = el más caro
+  const stockOf = (p) => (p.available_stock == null || p.available_stock === '' || !Number.isFinite(Number(p.available_stock))) ? null : Math.max(0, Math.floor(Number(p.available_stock)));
+  for (const id of allIds()) {
+    if (isBulk(id)) {   // v87: se usan los paquetes disponibles (con su stock); costo por unidad = el más caro entre ellos
       const it = items[id]; const ps = [];
       for (const k of (it ? it.bulk.packs : [])) {
         const p = byRef.get(String(k.ref)), c = p ? Number(p.reseller_price) : NaN, size = Number(k.size);
-        if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || !(c > 0 && c < 10000) || !(size > 0)) { ps.length = 0; break; }
-        ps.push({ ref: String(k.ref), size, cost: c });
-        if (String(k.ref) === it.ref && Array.isArray(p.target_schema)) schemas[id] = p.target_schema;
+        if (p && String(k.ref) === it.ref && Array.isArray(p.target_schema) && p.target_schema.length) schemas[id] = p.target_schema;
+        if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || stockOf(p) === 0 || !(c > 0 && c < 10000) || !(size > 0)) continue;
+        ps.push({ ref: String(k.ref), size, cost: c, stock: stockOf(p) });
+        if (!schemas[id] && Array.isArray(p.target_schema) && p.target_schema.length) schemas[id] = p.target_schema;
       }
       if (!ps.length) { inactive.push(id); continue; }
       packs[id] = ps; costs[id] = Math.max(...ps.map(p => p.cost / p.size));
@@ -167,7 +197,7 @@ async function loadLive() {
     }
     const it = items[id], p = it && byRef.get(it.ref);
     const c = p ? Number(p.reseller_price) : NaN;
-    if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || !(c > 0 && c < 10000)) { inactive.push(id); continue; }
+    if (!p || String(p.status || 'active') !== 'active' || p.in_stock === false || stockOf(p) === 0 || !(c > 0 && c < 10000)) { inactive.push(id); continue; }
     costs[id] = Math.round(c * 1e4) / 1e4;
     if (Array.isArray(p.target_schema)) schemas[id] = p.target_schema;
   }
@@ -186,7 +216,7 @@ async function loadPersisted() {
   const db = {}; let at = 0;
   for (const row of rows) { const id = Number(row.ra_id), c = Number(row.cost); if (c > 0) { db[id] = c; at = Math.max(at, Date.parse(row.updated_at) || 0); } }
   const costs = {}, inactive = [], packs = {};
-  for (const id of IDS) {
+  for (const id of allIds()) {
     const it = items[id];
     const c = Math.max(Number(db[id]) || 0, (it && it.snapshot) || 0);   // conservador: el mayor entre lo guardado y la foto del SQL
     if (!it || !(c > 0)) { inactive.push(id); continue; }
@@ -204,13 +234,13 @@ async function getCosts(opts) {
   if (cache) return Object.assign({}, cache, { live: false, stale: true, source: 'cache' });
   const db = await loadPersisted().catch(() => null);
   if (db) return Object.assign(db, { live: false, stale: true, source: 'db' });
-  return { at: Date.now(), costs: {}, inactive: IDS.slice(), schemas: {}, items: {}, packs: {}, live: false, stale: true, source: 'fallback' };
+  return { at: Date.now(), costs: {}, inactive: allIds(), schemas: {}, items: {}, packs: {}, live: false, stale: true, source: 'fallback' };
 }
 async function recentChanges(limit) {
   const r = await sbSoft('kiwi_ra_price_changes_recent', { p_limit: limit || 30 });
   return Array.isArray(r) ? r : [];
 }
-function _resetCache() { cache = null; inflight = null; lastSynced = null; _bal = null; RULES = {}; }
+function _resetCache() { cache = null; inflight = null; lastSynced = null; _bal = null; RULES = {}; DYN_IDS = []; META = {}; pvMem.clear(); pvUnsupported.clear(); pvCalls.length = 0; pvCool = 0; }
 
 // target_payload a partir del esquema del producto (los "select" usan el value de la opción)
 function buildTarget(fields, schema, player, zone) {
@@ -291,7 +321,11 @@ async function deliver(rec, order) {
     }
     if (!codes.length) return patch(rec, { last_error: 'sin códigos todavía', next_in_s: 60, inc_checks: true });
   }
-  await sb('kiwi_prov_deliver', { p_order_id: rec.order_id, p_codes: codes });
+  const dv = await sb('kiwi_prov_deliver', { p_order_id: rec.order_id, p_codes: codes });
+  if (codes && codes.length && !(dv && dv.already)) {   // v87: aviso al staff de que se entregó un código (enmascarado)
+    const mask = c => { const t = String(c).replace(/\s+/g, ''); return t.length <= 6 ? '•••' + t.slice(-2) : t.slice(0, 3) + '•••' + t.slice(-3); };
+    await tg('🎁 <b>Código entregado automáticamente</b>\n' + orderLine(rec) + '\n' + codes.map(c => tgEsc(mask(c))).join('\n') + '\nEl cliente lo ve en Mis pedidos.');
+  }
   return Object.assign((await sbSoft('kiwi_prov_order_get', { p_key: rec.order_id })) || rec, { status: 'completed', codes });
 }
 function failReason(order, item) {
@@ -372,6 +406,54 @@ async function sweep(limit) {
   for (const rec of (Array.isArray(list) ? list : [])) { try { const x = await processOrder(rec); out.push({ id: rec.order_id, status: x && x.status }); } catch (e) { out.push({ id: rec.order_id, error: String(e.message || e).slice(0, 120) }); } }
   return out;
 }
+// ---------- v87: verificación de ID de jugador (caché + límites; el proveedor permite pocas consultas por minuto) ----------
+const PV_TTL = { valid: 6 * 3600e3, invalid: 10 * 60e3, unverified: 10 * 60e3 };
+const PV_LIMITS = { ipMin: 6, ipHour: 40, globalMin: 25 };      // por IP: 6/min y 40/h · total: 25/min (el proveedor permite 30/min)
+const pvMem = new Map(), pvUnsupported = new Map(), pvCalls = [];
+let pvCool = 0;                                               // si el proveedor responde 429, se espera lo que pida
+const pvKey = (ref, payload) => crypto.createHash('sha256').update(String(ref) + '|' + JSON.stringify(Object.keys(payload || {}).sort().map(k => [k, String(payload[k])]))).digest('hex').slice(0, 40);
+const ipHash = (ip) => ip ? crypto.createHash('sha256').update('kiwi-pv|' + ip).digest('hex').slice(0, 32) : 'sin-ip';
+function clientIp(headers) { const h = headers || {}; return String(h['x-real-ip'] || h['x-forwarded-for'] || '').split(',')[0].trim().slice(0, 64); }
+function memGate(iph) {
+  const now = Date.now(); while (pvCalls.length && now - pvCalls[0].t > 3600e3) pvCalls.shift();
+  const mine = pvCalls.filter(c => c.ip === iph);
+  if (mine.filter(c => now - c.t < 60e3).length >= PV_LIMITS.ipMin || mine.length >= PV_LIMITS.ipHour) return { allow: false, reason: 'ip' };
+  if (pvCalls.filter(c => now - c.t < 60e3).length >= PV_LIMITS.globalMin) return { allow: false, reason: 'global' };
+  pvCalls.push({ ip: iph, t: now }); return { allow: true };
+}
+function pvRemember(k, ref, st, name, unsupported) {
+  const now = Date.now();
+  if (unsupported) pvUnsupported.set(String(ref), now + 12 * 3600e3);
+  pvMem.set(k, { status: st, name, exp: now + (PV_TTL[st] || PV_TTL.unverified) });
+  if (pvMem.size > 3000) pvMem.delete(pvMem.keys().next().value);
+}
+// Devuelve { status: 'valid' | 'invalid' | 'unverified', name, unsupported?, throttled?, cached? }. Nunca tira excepción.
+async function verifyPlayer(ref, payload, ip) {
+  const now = Date.now(), k = pvKey(ref, payload), iph = ipHash(ip);
+  const u = pvUnsupported.get(String(ref)); if (u && u > now) return { status: 'unverified', name: null, unsupported: true, cached: true };
+  const m = pvMem.get(k); if (m && m.exp > now) return { status: m.status, name: m.name, cached: true };
+  if (pvCool > now) return { status: 'unverified', name: null, throttled: 'global' };
+  let gate = await sbSoft('kiwi_pv_take', { p_key: k, p_ref: String(ref), p_ip: iph, p_ip_min: PV_LIMITS.ipMin, p_ip_hour: PV_LIMITS.ipHour, p_global_min: PV_LIMITS.globalMin });
+  if (gate && gate.hit && gate.hit.status) {
+    const st = String(gate.hit.status), name = gate.hit.name ? String(gate.hit.name).slice(0, 80) : null;
+    pvRemember(k, ref, st, name, !!gate.hit.unsupported);
+    return { status: st, name, unsupported: !!gate.hit.unsupported, cached: true };
+  }
+  if (!gate || typeof gate !== 'object' || gate.allow == null) gate = memGate(iph);   // sin SQL v87: límites en memoria
+  if (!gate.allow) return { status: 'unverified', name: null, throttled: gate.reason || 'ip' };
+  const r = await prov('/player/validate', { method: 'POST', body: { product_id: ref, target_payload: payload }, ms: 10000 });
+  if (!r.ok || !r.json) {
+    if (r.status === 429) pvCool = Date.now() + Math.max(10, Math.min(120, Number(r.retryAfter) || 60)) * 1000;
+    return { status: 'unverified', name: null, error: true };
+  }
+  let st = String(r.json.status || 'unverified').toLowerCase(); if (!['valid', 'invalid', 'unverified'].includes(st)) st = 'unverified';
+  const unsupported = st === 'unverified' && /not_supported|unsupported/i.test(String(r.json.reason || ''));
+  const name = st === 'valid' && r.json.player && r.json.player.name ? String(r.json.player.name).replace(/[<>]/g, '').trim().slice(0, 80) || null : null;
+  pvRemember(k, ref, st, name, unsupported);
+  await sbSoft('kiwi_pv_put', { p_key: k, p_ref: String(ref), p_status: st, p_name: name, p_unsupported: unsupported });
+  return { status: st, name, unsupported };
+}
+
 // Estado neutral para el cliente
 function publicStatus(rec) {
   if (!rec) return 'unknown';
@@ -396,6 +478,7 @@ function verifyWebhook(headers, raw, secret, nowMs) {
 }
 
 module.exports = { MARGIN, MARGINS, marginOf, TOLERANCE, IDS, NEEDS_ZONE, CATEGORY_OF, salePrice, resellerSalePrice, RESELLER_FACTOR,
-  BULK, isBulk, bulkUnit, bulkPrice, bulkPlan, qtyError,
+  BULK, isBulk, bulkUnit, bulkPrice, bulkPlan, bulkRules, qtyError, isDyn, knownId, allIds, tierRatio, TIERS, meta: (id) => META[id] || null,
+  verifyPlayer, clientIp, ipHash, PV_LIMITS,
   getCosts, recentChanges, _resetCache, _setFetch, setRules, provReady, prov, provBalance, buildTarget, sb, sbSoft, tg, tgEsc,
   processOrder, submit, refresh, applyOrder, sweep, publicStatus, verifyWebhook, nextIn };
