@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/r/:code",
+      "destination": "/?ref=:code",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/inicio",
