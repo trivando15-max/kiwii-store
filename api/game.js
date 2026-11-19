@@ -1,4 +1,5 @@
 // v83: entrega automática (Free Fire, Blood Strike, PUBG Mobile, Mobile Legends) con el proveedor configurado por variables de entorno.
+// v87: + productos nuevos (claves 1001–1999: juegos y gift cards con código) y verificación de ID con caché y límites por IP.
 // Acciones (POST JSON, salvo webhook/cron):
 //   validate  {product_id, player_id, zone_id}            -> nombre de la cuenta si el proveedor lo informa
 //   buy       {token, request_id, amount, product_id, player_id, zone_id, order, reseller, qty}   (qty: solo fragmentos / cajas, 901 / 902)
@@ -59,19 +60,32 @@ const disabled = () => SIN_STOCK || /^(1|true|si|sí)$/i.test(String(process.env
 // "No Stock" del panel para los diamantes ilimitados: la clave vieja era la del producto del catálogo (p:200…p:205)
 const STOCK_ALIAS = { 5: 'p:200', 6: 'p:201', 7: 'p:202', 8: 'p:203', 9: 'p:204', 10: 'p:205', 901: 'ff:frag', 902: 'ff:box' };   // v85: fragmentos / cajas usan sus botones de siempre
 
-function checkPlayer(b, pid) {
+// v87: qué datos pide cada producto (según su esquema): ID, Zona numérica, Servidor de una lista, o nada (gift card con código)
+const ZONE_KEY = /zone|server|servidor|region/i;
+function targetSpec(pid, it, schema) {
+  const sch = Array.isArray(schema) && schema.length ? schema : ((it && it.fields) || []).map(k => ({ key: k, type: lib.isDyn(pid) && /^server$/i.test(k) ? 'select' : 'text' }));
+  if (!sch.length) return it ? { player: false, zone: null } : { player: true, zone: lib.NEEDS_ZONE.has(pid) ? 'numeric' : null };
+  const z = sch.find(f => f && ZONE_KEY.test(String(f.key || '')));
+  return { player: sch.some(f => f && !ZONE_KEY.test(String(f.key || ''))), zone: z ? (z.type === 'select' ? 'select' : 'numeric') : (lib.NEEDS_ZONE.has(pid) ? 'numeric' : null) };
+}
+function checkPlayer(b, pid, spec) {
+  spec = spec || { player: true, zone: lib.NEEDS_ZONE.has(pid) ? 'numeric' : null };
+  if (!spec.player && !spec.zone) return { player: '', zone: '', none: true };
   const player = String(b.player_id == null ? '' : b.player_id).replace(/\s+/g, '');
-  if (!/^\d{4,20}$/.test(player)) return { error: 'ID de jugador inválido (solo números).' };
-  let zone = String(b.zone_id == null ? '' : b.zone_id).replace(/\s+/g, '');
-  if (lib.NEEDS_ZONE.has(pid)) { if (!/^\d{1,8}$/.test(zone)) return { error: 'Falta la Zona / Servidor (solo números).' }; }
+  if (spec.player && !/^\d{4,20}$/.test(player)) return { error: 'ID de jugador inválido (solo números).' };
+  let zone = String(b.zone_id == null ? '' : b.zone_id).trim();
+  if (spec.zone === 'numeric') { zone = zone.replace(/\s+/g, ''); if (!/^\d{1,8}$/.test(zone)) return { error: 'Falta la Zona / Servidor (solo números).' }; }
+  else if (spec.zone === 'select') { if (!/^[A-Za-z0-9 _,\/-]{1,40}$/.test(zone)) return { error: 'Elegí tu Servidor.' }; }
   else zone = '';
   return { player, zone };
 }
-async function validatePlayer(ref, payload) {
-  const r = await lib.prov('/player/validate', { method: 'POST', body: { product_id: ref, target_payload: payload }, ms: 10000 });
-  if (!r.ok || !r.json) return { status: 'unverified', name: null };
-  const st = String(r.json.status || 'unverified').toLowerCase();
-  return { status: st, name: r.json.player && r.json.player.name ? clean(r.json.player.name, 80) : null };
+// v87: tope de pedidos de verificación por IP (además de los límites hacia el proveedor en _game-lib)
+const ipHits = new Map();
+function ipOk(ip) {
+  const k = lib.ipHash(ip), now = Date.now(), a = (ipHits.get(k) || []).filter(t => now - t < 60000);
+  if (a.length >= 20) { ipHits.set(k, a); return false; }
+  a.push(now); ipHits.set(k, a); if (ipHits.size > 5000) ipHits.delete(ipHits.keys().next().value);
+  return true;
 }
 async function itemFor(pid) {
   const live = await lib.getCosts();
@@ -152,19 +166,23 @@ async function handler(req, res) {
   }
 
   const pid = Number(b.product_id);
-  if (!lib.IDS.includes(pid)) return send(res, 400, { success: false, error: 'Producto no permitido' });
-  const pl = checkPlayer(b, pid);
-  if (pl.error) return send(res, 400, { success: false, error: pl.error });
+  if (!lib.knownId(pid)) return send(res, 400, { success: false, error: 'Producto no permitido' });
+  const ip = lib.clientIp(req.headers);
 
   if (action === 'validate') {
     try {
+      if (!ipOk(ip)) return send(res, 429, { success: false, status: 'unverified', throttled: true, account_name: null, error: 'Demasiadas verificaciones seguidas. Esperá un minuto.' });
       const { it, schema } = await itemFor(pid);
       if (!it) return send(res, 200, { success: false, supported: false, account_name: null });
+      const spec = targetSpec(pid, it, schema);
+      const pl = checkPlayer(b, pid, spec);
+      if (pl.error) return send(res, 400, { success: false, error: pl.error });
+      if (pl.none) return send(res, 200, { success: true, supported: false, status: 'unverified', account_name: null, no_target: true });
       const t = lib.buildTarget(it.fields, schema, pl.player, pl.zone);
       if (t.error) return send(res, 200, { success: false, supported: true, status: 'invalid', account_name: null, error: t.error });
-      const v = await validatePlayer(it.ref, t.payload);
-      return send(res, 200, { success: true, supported: v.status !== 'unverified', status: v.status, account_name: v.name });
-    } catch (e) { return send(res, 200, { success: false, supported: false, account_name: null }); }
+      const v = await lib.verifyPlayer(it.ref, t.payload, ip);
+      return send(res, 200, { success: true, supported: !(v.unsupported || v.throttled || (v.status === 'unverified')), status: v.status, account_name: v.name || null, throttled: !!v.throttled });
+    } catch (e) { return send(res, 200, { success: false, supported: false, status: 'unverified', account_name: null }); }
   }
 
   if (action !== 'buy') return send(res, 400, { success: false, error: 'Acción inválida' });
@@ -186,6 +204,9 @@ async function handler(req, res) {
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(orderId)) return send(res, 400, { success: false, stage: 'checkout', error: 'Pedido inválido.' });
   if (!Number.isFinite(amount) || amount > 10000) return send(res, 400, { success: false, stage: 'checkout', error: 'Monto inválido.' });
   const { live, it, schema } = await itemFor(pid);
+  const spec = targetSpec(pid, it, schema);
+  const pl = checkPlayer(b, pid, spec);
+  if (pl.error) return send(res, 400, { success: false, error: pl.error });
   if (live.source === 'fallback') return send(res, 503, { success: false, stage: 'checkout', code: 'PRICES_UNVERIFIED', error: 'No pudimos confirmar el precio. Probá en unos minutos. No se descontó saldo.' });
   if (!it || (live.inactive || []).includes(pid) || !(Number(live.costs[pid]) > 0)) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
   // v85: fragmentos / cajas por cantidad → varios paquetes en un solo pedido
@@ -193,7 +214,7 @@ async function handler(req, res) {
   const qty = bulk ? Number(b.qty) : 1;
   let plan = null;
   if (bulk) {
-    const qe = lib.qtyError(pid, qty);
+    const qe = lib.qtyError(pid, qty, lib.bulkRules(pid, (live.packs || {})[pid]));
     if (qe) return send(res, 400, { success: false, stage: 'checkout', error: qe + ' No se descontó saldo.' });
     plan = lib.bulkPlan((live.packs || {})[pid], qty);
     if (!plan) return send(res, 409, { success: false, stage: 'checkout', code: 'PRODUCT_INACTIVE', error: 'Producto agotado / no disponible.' });
@@ -217,7 +238,7 @@ async function handler(req, res) {
     if (resellerLevel && fits(publicPrice)) { expected = publicPrice; resellerLevel = 0; }
     else return send(res, 409, { success: false, stage: 'checkout', code: 'PRICE_CHANGED', price: expected, reseller_level: resellerLevel, error: 'El precio cambió. Actualizá la página (nuevo precio: ' + expected.toFixed(2) + ' USDT).' });
   }
-  const tgt = lib.buildTarget(it.fields, schema, pl.player, pl.zone);
+  const tgt = pl.none ? { payload: {} } : lib.buildTarget(it.fields, schema, pl.player, pl.zone);
   if (tgt.error) return send(res, 400, { success: false, stage: 'checkout', error: tgt.error + ' No se descontó saldo.' });
 
   // Antes de cobrar: saldo del proveedor (si no alcanza, no se vende) y verificación del ID (solo bloquea si es inválido)
@@ -228,19 +249,20 @@ async function handler(req, res) {
       return send(res, 503, { success: false, stage: 'checkout', code: 'NO_STOCK', error: 'Sin stock temporal de este producto. No se descontó saldo.' });
     }
   }
-  const pv = await validatePlayer(it.ref, tgt.payload).catch(() => ({ status: 'unverified' }));
-  if (pv.status === 'invalid') return send(res, 400, { success: false, stage: 'checkout', code: 'INVALID_PLAYER', error: 'Ese ID de jugador no existe' + (lib.NEEDS_ZONE.has(pid) ? ' (o la Zona no corresponde)' : '') + '. Revisalo. No se descontó saldo.' });
+  const pv = pl.none ? { status: 'unverified', name: null } : await lib.verifyPlayer(it.ref, tgt.payload, ip).catch(() => ({ status: 'unverified' }));
+  if (pv.status === 'invalid') return send(res, 400, { success: false, stage: 'checkout', code: 'INVALID_PLAYER', error: 'Ese ID de jugador no existe' + (spec.zone ? ' (o la Zona / Servidor no corresponde)' : '') + '. Revisalo. No se descontó saldo.' });
 
-  const target = 'ID ' + pl.player + (pl.zone ? ' · Zona ' + pl.zone : '');
-  const name = clean(order.name, 60) || (pv.name || '');
+  const target = pl.none ? 'Código digital' : 'ID ' + pl.player + (pl.zone ? (spec.zone === 'select' ? ' · Servidor ' : ' · Zona ') + pl.zone : '');
+  const name = pl.none ? '' : (clean(order.name, 60) || (pv.name || ''));
+  const m = lib.meta(pid);
   const row = {
     id: orderId,
-    title: bulk ? lib.BULK[pid].label + ' x' + qty : clean(order.title, 200),
+    title: bulk ? lib.BULK[pid].label + ' x' + qty : ((m && m.title) || clean(order.title, 200)),
     price: clean(order.price, 100),
     method: 'Saldo (entrega automática)',
     status: 'confirmed',
     target_user: target,
-    extra: 'Entrega automática · ' + target + (name ? ' · Nombre: ' + name : ''),
+    extra: (pl.none ? 'Entrega automática · código en Mis pedidos' : 'Entrega automática · ' + target) + (name ? ' · Nombre: ' + name : ''),
     category: lib.CATEGORY_OF(pid),
     date_str: clean(order.date_str, 60)
   };
