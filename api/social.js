@@ -160,3 +160,16 @@ module.exports = async function handler(req, res) {
     });
   }
 };
+
+// v94: consulta de estado para la sincronización automática del servidor (api/_auto-sync.js). No expone nada al público.
+module.exports.statusOf = async function statusOf(order) {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const body = new URLSearchParams({ key: getApiKey(), action: 'status', order: String(order) });
+    const r = await fetch(SOCIAL_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': 'KiwiiStore-Proxy/1.0' }, body: body.toString(), signal: ctrl.signal });
+    const text = await r.text(); let d; try { d = JSON.parse(text); } catch (_) { d = null; }
+    if (!r.ok || !d || typeof d !== 'object') return { ok: false, http: r.status };
+    if (d.error) return { ok: false, http: r.status, error: String(d.error).slice(0, 120), notFound: /incorrect|not found|invalid/i.test(String(d.error)) };
+    return { ok: true, status: String(d.status || ''), remains: d.remains, start_count: d.start_count };
+  } catch (e) { return { ok: false, http: 0, error: 'red' }; } finally { clearTimeout(t); }
+};
