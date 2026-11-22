@@ -3569,10 +3569,11 @@
                 { name: "Super GiftLink 12 months", price: "$9.600 ARS / 6 USDT", includes: ["Super GiftLink 12 meses", "GiftLink de Super Duolingo", "Activación rápida y segura", "Garantía completa de 12 meses"] }
             ]},
             { id: 'steam', title: "Steam", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/500px-Steam_icon_logo.svg.png', category: 'tools', variants: [
-                { name: "Cuenta con juegos, Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Cuenta de Steam con biblioteca de juegos lista para jugar (los juegos varían según la cuenta)", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
-            ]},
-            { id: 'fivem', title: "FiveM", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/FiveM-Logo.png/500px-FiveM-Logo.png', category: 'tools', variants: [
-                { name: "Cuenta lista, Full Access", price: "$3.200 ARS / 2 USDT", includes: ["Cuenta FiveM lista y preconfigurada, con duración permanente", "IMPORTANTE: no incluye GTA V", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
+                { name: "20 cuentas", units: 20, price: "$3.200 ARS / 2 USDT", includes: ["IMPORTANTE: las cuentas pueden venir SIN ningún juego pago o directamente VACÍAS (sin nada). No se garantiza ningún juego", "Cuentas de Steam de acceso permanente (Lifetime), con los juegos que tenga cada una (si tiene)", "Compra mínima: 20 cuentas", "Precio por cuenta: el total se calcula según la cantidad", "Datos de acceso de TODAS las cuentas en el pedido (Mis pedidos)", "Comprobadas al entregar · soporte si alguna no entra"] },
+                { name: "30 cuentas", units: 30, price: "$4.800 ARS / 3 USDT", includes: ["IMPORTANTE: las cuentas pueden venir SIN ningún juego pago o directamente VACÍAS (sin nada). No se garantiza ningún juego", "Cuentas de Steam de acceso permanente (Lifetime), con los juegos que tenga cada una (si tiene)", "Compra mínima: 20 cuentas", "Precio por cuenta: el total se calcula según la cantidad", "Datos de acceso de TODAS las cuentas en el pedido (Mis pedidos)", "Comprobadas al entregar · soporte si alguna no entra"] },
+                { name: "40 cuentas", units: 40, price: "$6.400 ARS / 4 USDT", includes: ["IMPORTANTE: las cuentas pueden venir SIN ningún juego pago o directamente VACÍAS (sin nada). No se garantiza ningún juego", "Cuentas de Steam de acceso permanente (Lifetime), con los juegos que tenga cada una (si tiene)", "Compra mínima: 20 cuentas", "Precio por cuenta: el total se calcula según la cantidad", "Datos de acceso de TODAS las cuentas en el pedido (Mis pedidos)", "Comprobadas al entregar · soporte si alguna no entra"] },
+                { name: "50 cuentas", units: 50, price: "$8.000 ARS / 5 USDT", includes: ["IMPORTANTE: las cuentas pueden venir SIN ningún juego pago o directamente VACÍAS (sin nada). No se garantiza ningún juego", "Cuentas de Steam de acceso permanente (Lifetime), con los juegos que tenga cada una (si tiene)", "Compra mínima: 20 cuentas", "Precio por cuenta: el total se calcula según la cantidad", "Datos de acceso de TODAS las cuentas en el pedido (Mis pedidos)", "Comprobadas al entregar · soporte si alguna no entra"] },
+                { name: "100 cuentas", units: 100, price: "$16.000 ARS / 10 USDT", includes: ["IMPORTANTE: las cuentas pueden venir SIN ningún juego pago o directamente VACÍAS (sin nada). No se garantiza ningún juego", "Cuentas de Steam de acceso permanente (Lifetime), con los juegos que tenga cada una (si tiene)", "Compra mínima: 20 cuentas", "Precio por cuenta: el total se calcula según la cantidad", "Datos de acceso de TODAS las cuentas en el pedido (Mis pedidos)", "Comprobadas al entregar · soporte si alguna no entra"] }
             ]}
         ];
         window.renderVariantCatalog = function() {
@@ -3587,7 +3588,7 @@
                 card.className = `reveal active bg-kiwi-card border border-kiwi-border rounded-2xl overflow-hidden flex flex-col transition duration-300 relative`;
                 card.style.transitionDelay = `${(index % 3) * 0.1}s`;
 
-                let variantsOptions = `<option value="" disabled selected>Selecciona una variante...</option>`;
+                let variantsOptions = `<option value="" disabled selected>${item.variants[0] && item.variants[0].units ? 'Elegí cuántas cuentas...' : 'Selecciona una variante...'}</option>`;
                 item.variants.forEach((v, i) => {
                     let displayPrice = window.getConvertedVariantPrice(v.price) + window.x2Label(v);
                     const stock = (typeof window.getDigitalStock === 'function')
@@ -3598,7 +3599,7 @@
                     else if (stock === Infinity || stock === -1) stockLabel = ' · Stock: ∞';
                     else if (stock <= 0) stockLabel = ' · Sin stock';
                     else stockLabel = ' · Stock: ' + stock;
-                    const disabled = (stock !== null && stock !== undefined && stock !== Infinity && stock !== -1 && stock <= 0) ? ' disabled' : '';
+                    const disabled = window.digitalOptionOff(v, stock) ? ' disabled' : '';
                     variantsOptions += `<option value="${i}"${disabled}>${v.name} - ${displayPrice}${stockLabel}</option>`;
                 });
 
@@ -3616,7 +3617,7 @@
                     
                     <div id="details-${item.id}" class="details-panel bg-[#0c1220] border-t border-kiwi-border/0 px-5">
                         <div class="py-5">
-                            <label class="block text-xs font-bold text-gray-300 uppercase mb-2 font-orbitron">Elige tu plan</label>
+                            <label class="block text-xs font-bold text-gray-300 uppercase mb-2 font-orbitron">${item.variants[0] && item.variants[0].units ? 'Cantidad de cuentas (compra mínima ' + item.variants[0].units + ')' : 'Elige tu plan'}</label>
                             <select id="select-${item.id}" onchange="window.updateVariantDetails('${item.id}')" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition mb-4">
                                 ${variantsOptions}
                             </select>
@@ -3675,7 +3676,10 @@
             const stockLine = document.getElementById('stock-line-' + id);
             const buyBtn = document.getElementById('buy-btn-' + id);
             
-            listEl.innerHTML = variant.includes.map(inc => `<li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-500 mt-1 text-[10px]"></i> <span>${inc}</span></li>`).join('');
+            listEl.innerHTML = (variant.units ? `<li id="qty-total-${id}" class="rounded-lg border border-kiwi-gold/40 bg-kiwi-gold/10 px-3 py-2 mb-2 text-sm text-white"><i class="fa-solid fa-calculator text-kiwi-gold mr-1"></i> <b>${variant.units} cuentas</b>${variant.perUnit ? ' × ' + variant.perUnit + ' USDT' : ''} = <b class="text-kiwi-gold">${window.getConvertedVariantPrice(variant.price)}</b></li>` : '')
+                + variant.includes.map(inc => /^IMPORTANTE/.test(inc)
+                    ? `<li class="flex items-start gap-2 text-yellow-300 font-bold"><i class="fa-solid fa-triangle-exclamation mt-1 text-[11px]"></i> <span>${inc}</span></li>`
+                    : `<li class="flex items-start gap-2"><i class="fa-solid fa-check text-green-500 mt-1 text-[10px]"></i> <span>${inc}</span></li>`).join('');
             infoDiv.classList.remove('hidden');
 
             const stock = (typeof window.getDigitalStock === 'function')
@@ -3697,7 +3701,7 @@
                 }
             }
             if (buyBtn) {
-                if (stock !== null && stock !== undefined && stock !== Infinity && stock <= 0) {
+                if (window.digitalOptionOff(variant, stock)) {
                     buyBtn.disabled = true;
                     buyBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     buyBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Sin stock';
@@ -3720,8 +3724,8 @@
             const stock = (typeof window.getDigitalStock === 'function')
                 ? window.getDigitalStock(item.id, variant.name)
                 : null;
-            if (stock !== null && stock !== undefined && stock !== Infinity && stock <= 0) {
-                return alert('Esta variante no tiene stock disponible en este momento.');
+            if (window.digitalOptionOff(variant, stock)) {
+                return alert(variant.units ? 'No hay stock para ' + variant.units + ' cuentas en este momento.' : 'Esta variante no tiene stock disponible en este momento.');
             }
 
             // Precio ARS desde el string original del catálogo (ej: "$3.200 ARS / 2 USDT")
@@ -3802,8 +3806,11 @@
             "cyberghost::Lifetime": { product_id: 'cmryzjpqx002xl86neho0cv4q', variant_id: 'cmryzjpqx002yl86nt5hjbz7m' },
             "duolingo::Lifetime": { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'cmq8g2y7x00211465fw9qzh71' },
             "duolingo::Super GiftLink 12 months": { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'var_sduo12m_on_duolingo_0001' },
-            "steam::Cuenta con juegos, Lifetime": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r' },
-            "fivem::Cuenta lista, Full Access": { product_id: 'cmryy8d2v000dgjim9gsina83', variant_id: null }
+            "steam::20 cuentas": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r', qty: 20 },
+            "steam::30 cuentas": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r', qty: 30 },
+            "steam::40 cuentas": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r', qty: 40 },
+            "steam::50 cuentas": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r', qty: 50 },
+            "steam::100 cuentas": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r', qty: 100 }
         };
 
         // v95: el precio de venta y la cantidad de cuentas (x2) los calcula el SERVIDOR (/api/digital) a partir del costo.
@@ -3820,6 +3827,10 @@
         window.digitalTier = function(catalogId, variantName) {
             const t = window.digitalSaleOf(catalogId, variantName);
             if (!t || !(t.price > 0)) return { cost: null, qty: 1, tier: 0, priceUsdt: null };
+            const map = window.DIGITAL_MAP[(catalogId || '') + '::' + (variantName || '')];
+            if (map && map.qty > 0) {   // v96: por cantidad (Steam): total = cantidad × precio por cuenta (lo calcula y lo cobra el servidor)
+                return { cost: null, qty: map.qty, tier: 3, perUnit: t.price, priceUsdt: Math.round(t.price * map.qty * 100) / 100 };
+            }
             const qty = t.qty === 2 ? 2 : 1;
             return { cost: null, qty, tier: qty === 2 ? 1 : 3, priceUsdt: t.price };
         };
@@ -3833,12 +3844,18 @@
                 (item.variants || []).forEach(v => {
                     if (v.basePrice === undefined) v.basePrice = v.price;
                     const t = window.digitalTier(item.id, v.name);
-                    v.x2 = t.qty === 2;
+                    v.x2 = t.qty === 2 && !t.perUnit;
+                    v.perUnit = t.perUnit || null;
                     v.price = t.priceUsdt ? window.formatVariantPriceString(t.priceUsdt) : v.basePrice;
                 });
             });
         };
-        window.x2Label = function(v) { return (v && v.x2) ? ' · x2 cuentas' : ''; };
+        window.x2Label = function(v) { return (v && v.perUnit) ? ' (' + v.perUnit + ' USDT c/u)' : (v && v.x2) ? ' · x2 cuentas' : ''; };
+        // v96: opción no disponible si no hay stock (o no alcanza para la cantidad de cuentas)
+        window.digitalOptionOff = function(v, stock) {
+            if (stock === null || stock === undefined || stock === Infinity || stock === -1) return false;
+            return stock <= 0 || (v && v.units > 0 && stock < v.units);
+        };
 
         window.resolveDigitalIds = function(prod) {
             if (!prod) return null;
@@ -3911,7 +3928,7 @@
                 if (!select) return;
                 const current = select.value;
                 // Reconstruir options con stock
-                let html = `<option value="" disabled selected>Selecciona una variante...</option>`;
+                let html = `<option value="" disabled selected>${item.variants[0] && item.variants[0].units ? 'Elegí cuántas cuentas...' : 'Selecciona una variante...'}</option>`;
                 item.variants.forEach((v, i) => {
                     const displayPrice = window.getConvertedVariantPrice(v.price) + window.x2Label(v);
                     const stock = window.getDigitalStock(item.id, v.name);
@@ -3920,7 +3937,7 @@
                     else if (stock === Infinity || stock === -1) stockLabel = ' · Stock: ∞';
                     else if (stock <= 0) stockLabel = ' · Sin stock';
                     else stockLabel = ' · Stock: ' + stock;
-                    const disabled = (stock !== null && stock !== undefined && stock !== Infinity && stock > -1 && stock <= 0) ? ' disabled' : '';
+                    const disabled = window.digitalOptionOff(v, stock) ? ' disabled' : '';
                     const sel = (String(current) === String(i)) ? ' selected' : '';
                     html += `<option value="${i}"${disabled}${sel}>${v.name} - ${displayPrice}${stockLabel}</option>`;
                 });
@@ -3934,6 +3951,63 @@
         window.refreshDigitalStockUI = async function(force) {
             await window.fetchDigitalStock(!!force);
             window.applyDigitalStockToUI();
+        };
+
+        // v96: compra POR CANTIDAD (Steam 20/30/40/50/100). El servidor valida la cantidad y el precio, cobra el saldo,
+        //  pide las cuentas al servicio y guarda el pedido con TODOS los datos de acceso. La web no descuenta nada por su cuenta.
+        window._dqBusy = false;
+        window.kiwiDigitalQtyBuy = async function(prod, ids, ev) {
+            if (window._dqBusy) return alert('Ya hay una compra en curso. Esperá unos segundos.');
+            if (typeof currentUser === 'undefined' || !currentUser) return alert('Iniciá sesión para comprar');
+            if (!window.kiwiToken()) return alert('Tu sesión venció. Volvé a iniciar sesión.');
+            if (!Object.keys(window.digitalSaleById || {}).length) await window.fetchDigitalStock(true);
+            const t = window.digitalTier(prod.catalogId, prod.variantName);
+            if (!t.priceUsdt) return alert('Producto no disponible por el momento.');
+            if (Math.abs(Number(prod.usdtPrice) - t.priceUsdt) > 0.001) { window.applyDigitalStockToUI(); return alert('El precio se actualizó: ' + t.qty + ' cuentas = ' + t.priceUsdt + ' USDT. Volvé a elegir la cantidad.'); }
+            const bal = window.getUserBalance();
+            if (bal < t.priceUsdt) return window.kiwiLowBal(bal, t.priceUsdt, 'checkout', prod.title);
+            if (typeof window.spendPending === 'function' && window.spendPending()) { if (window.flushSpend) window.flushSpend(); return alert('Estamos guardando una compra anterior. Probá de nuevo en unos segundos.'); }
+            const btn = ev && ev.target && ev.target.querySelector ? ev.target.querySelector('button[type="submit"]') : null;
+            const btnHtml = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entregando ' + t.qty + ' cuentas...'; }
+            const user = currentUser;
+            const payload = { action: 'buy_qty', token: window.kiwiToken(), request_id: 'dq-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+                variant_id: ids.variant_id, quantity: t.qty, amount: t.priceUsdt, date_str: new Date().toLocaleString('es-AR') };
+            window._dqBusy = true; let j = null;
+            try {
+                const r = await fetch('/api/digital', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                j = await r.json().catch(() => null);
+            } catch (_) { j = null; }
+            finally { window._dqBusy = false; if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; } }
+            if (!j) return alert('No pudimos confirmar la compra por un problema de conexión.\nRevisá "Mis pedidos" en unos minutos: si aparece, ya está en proceso; si no aparece, no se te cobró nada.');
+            if (!j.charged) {
+                if (j.code === 'PRICE_CHANGED' || j.code === 'NO_STOCK') { try { await window.refreshDigitalStockUI(true); } catch (_) {} }
+                return alert('No se completó la compra y NO se descontó saldo.\nMotivo: ' + (j.error || 'error desconocido'));
+            }
+            const nb = Number(j.balance);
+            if (Number.isFinite(nb)) { window._syncedBal[user] = nb; const us = JSON.parse(localStorage.getItem('kiwi_users') || '{}'); if (us[user]) { us[user].balance = nb; localStorage.setItem('kiwi_users', JSON.stringify(us)); } }
+            const keys = Array.isArray(j.keys) ? j.keys.map(k => typeof k === 'string' ? k : JSON.stringify(k)) : [];
+            const keysText = keys.map((k, i) => 'Cuenta ' + (i + 1) + ':\n' + k).join('\n\n');
+            const order = { id: Number(j.order_id) || j.order_id, user, title: j.title || prod.title, price: prod.price, method: 'Saldo Página', date: new Date().toLocaleString('es-AR'),
+                status: j.refunded ? 'cancelled' : j.delivered ? 'delivered' : (j.partial || j.problem) ? 'problem' : 'confirmed', targetUser: 'N/A', extra: keysText || '',
+                category: prod.category, sub: prod.sub || '', usdtPrice: j.price, deliveryKeys: keysText || (j.pending ? 'Tu pedido se está procesando. Los datos de acceso aparecen acá apenas el servicio lo confirme.' : ''),
+                catalogId: prod.catalogId, variantName: prod.variantName, notes: j.refunded ? 'No se pudo completar: se devolvió el saldo' : '', _synced: true };
+            const list = window.readPurchases(); list.push(order);
+            window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(list)); window._purchaseSyncMuted = false;
+            if (typeof window.kiwiNotifyOrders === 'function') window.kiwiNotifyOrders([String(j.order_id)], 'saldo');
+            window.closeCheckoutModal();
+            if (typeof window.updateBalanceDisplay === 'function') window.updateBalanceDisplay();
+            if (typeof updateAuthUI === 'function') updateAuthUI();
+            if (typeof window.renderClientOrders === 'function') window.renderClientOrders();
+            if (typeof window.updateOrdersBadge === 'function') window.updateOrdersBadge();
+            setTimeout(() => { try { window.refreshDigitalStockUI(true); } catch (_) {} }, 1500);
+            const saldo = '\nSaldo restante: ' + window.formatUserBalance();
+            if (j.refunded) return alert('El servicio no pudo entregar las cuentas y se te DEVOLVIÓ el saldo.' + saldo);
+            if (j.pending) { [45000, 120000, 300000].forEach(ms => setTimeout(() => { try { window.syncBulkOrderStatuses && window.syncBulkOrderStatuses(); } catch (_) {} }, ms));
+                return alert('¡Pedido recibido! (' + t.qty + ' cuentas)\nPedido #' + j.order_id + '\nSe está procesando: los datos aparecen en Mis pedidos apenas el servicio los entregue.' + saldo); }
+            if (!j.success) return alert('Tu pago quedó registrado y el pedido está EN REVISIÓN.\n' + (j.error || '') + '\nPedido #' + j.order_id + saldo);
+            const head = j.partial ? 'Llegaron ' + keys.length + ' de ' + t.qty + ' cuentas. El staff te entrega las que faltan o te devuelve esa parte.\n\n' : '¡' + keys.length + ' cuentas entregadas!\n\n';
+            alert(head + 'Pedido #' + j.order_id + '\nTodos los datos de acceso están en Mis pedidos.\n\n' + (keysText.length > 1500 ? keysText.slice(0, 1500) + '\n…' : keysText) + saldo);
         };
 
         window.sendDigitalOrder = async function(productId, variantId, quantity) {
@@ -5884,6 +5958,7 @@
                 if (!resellIds || !resellIds.product_id) {
                     return alert('Este producto no está mapeado para entrega automática. Contactá al staff.');
                 }
+                if (resellIds.qty > 0) return window.kiwiDigitalQtyBuy(prod, resellIds, e);   // v96: Steam por cantidad (cobro en el servidor)
 
                 const submitBtnR = e.target.querySelector('button[type="submit"]');
                 if (submitBtnR) {
@@ -11486,9 +11561,10 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         const drow = (p, v) => {
             const it = v || p, sale = it.sale || {}, key = 'dg:' + it.id, ov = byKey[key];
             const costUsd = Number(it.cost) * eur * (sale.qty || 1);
-            return `<tr class="border-t border-white/5">${td(esc(p.name) + (v ? ' · ' + esc(v.name) : ''), 'max-w-[18rem] truncate')}${td(ids.has(it.id) ? '<span class="text-green-300">sí</span>' : '<span class="text-gray-500">no</span>')}${td(n2(it.cost) + ' ' + esc(dg.currency || 'EUR'))}${td((sale.qty || 1) + '')}${td(n2(costUsd))}${td(it.stock == null ? '∞' : esc(it.stock))}
-              ${td(sale.price ? n2(sale.price) : '—')}${td(profitCell(sale.price, costUsd))}
-              ${td(`<input type="number" step="0.5" min="0" max="300" id="kc-d-${esc(it.id)}" value="${ov && ov.pct != null ? esc(ov.pct) : ''}" placeholder="${esc(S.digital_pct)}" class="${inputCls} w-16"> <button type="button" class="text-kiwi-gold underline" onclick="window.kiwiCostsSaveDigital('${esc(it.id)}', '${esc((p.name + (v ? ' · ' + v.name : '')).replace(/'/g, ''))}')">Guardar</button>`)}</tr>`;
+            const pu = !!sale.per_unit;   // v96: por cantidad (Steam): precio POR CUENTA = costo × (1 + %), x2 = 100%, compra 20/30/40/50/100
+            return `<tr class="border-t border-white/5">${td(esc(p.name) + (v ? ' · ' + esc(v.name) : '') + (pu ? '<br><span class="text-kiwi-gold">x2 del costo (' + esc(sale.pct) + '%) · por cuenta · compra ' + esc((sale.qtys || []).join('/')) + '</span>' : ''), 'max-w-[18rem] truncate')}${td(ids.has(it.id) ? '<span class="text-green-300">sí</span>' : '<span class="text-gray-500">no</span>')}${td(n2(it.cost) + ' ' + esc(dg.currency || 'EUR'))}${td(pu ? 'c/u' : (sale.qty || 1) + '')}${td(n2(costUsd))}${td(it.stock == null ? '∞' : esc(it.stock))}
+              ${td(sale.price ? n2(sale.price) + (pu ? ' c/u' : '') : '—')}${td(profitCell(sale.price, costUsd))}
+              ${td(`<input type="number" step="0.5" min="0" max="300" id="kc-d-${esc(it.id)}" value="${ov && ov.pct != null ? esc(ov.pct) : ''}" placeholder="${pu ? '100' : esc(S.digital_pct)}" class="${inputCls} w-16"> <button type="button" class="text-kiwi-gold underline" onclick="window.kiwiCostsSaveDigital('${esc(it.id)}', '${esc((p.name + (v ? ' · ' + v.name : '')).replace(/'/g, ''))}')">Guardar</button>`)}</tr>`;
         };
         const drows = (dg.products || []).map(p => (p.variants && p.variants.length) ? p.variants.map(v => drow(p, v)).join('') : drow(p, null)).join('');
         // redes
