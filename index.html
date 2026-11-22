@@ -56,7 +56,12 @@
         };
         window.kiwiStockOffKey = k => !!k && window.KIWI_STOCK_OFF.has(k);
         // v80: en los nombres solo se muestra el total: "86 Diamantes (78 + 8)" → "86 Diamantes" (todos los productos, también pedidos viejos)
-        window.kiwiCleanTitle = t => t == null ? t : window.kiwiRobuxTitle(String(t).replace(/\s*\(\s*\d[\d.,]*\s*\+\s*\d[\d.,]*\s*\)/g, ''));
+        // v92: "300 + 30" → "330", "6.480 + 1.600" → "8.080" (cantidad total, con punto de miles). Solo nombres/etiquetas; el producto se identifica por su id.
+        window.kiwiSumAmounts = t => t == null ? t : String(t).replace(/(^|[^\d.,])(\d{1,3}(?:\.\d{3})+|\d+)\s*\+\s*(\d{1,3}(?:\.\d{3})+|\d+)(?![\d.,]*\d)(?!\s*%)/g, (m0, pre, a, b) => {
+            const n = Number(a.replace(/\./g, '')) + Number(b.replace(/\./g, ''));
+            return Number.isFinite(n) ? pre + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : m0;
+        });
+        window.kiwiCleanTitle = t => t == null ? t : window.kiwiRobuxTitle(window.kiwiSumAmounts(String(t).replace(/\s*\(\s*\d[\d.,]*\s*\+\s*\d[\d.,]*\s*\)/g, '')));
         // v80: modalidad de Robux bien clara en pedidos ("1000 Robux via Gamepass (AL POR MENOR)"). Los títulos viejos se muestran con el formato nuevo.
         window.KRX_MENOR_LABEL = 'Robux via Grupo (AL POR MENOR)';
         window.KGP_MENOR_LABEL = 'Robux via Gamepass (AL POR MENOR)';
@@ -1474,6 +1479,15 @@
                             <input type="password" id="reg-pass2" required class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 text-white focus:border-kiwi-red focus:outline-none text-sm transition">
                         </div>
                     </div>
+                    <!-- v93: código de referido / creador (opcional) -->
+                    <div>
+                        <label for="reg-ref" class="block text-xs font-bold text-gray-300 uppercase mb-1 font-orbitron">Código de referido <span class="text-[10px] text-gray-500 normal-case">(opcional)</span></label>
+                        <div class="relative">
+                            <input type="text" id="reg-ref" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej: BETO o KWS-XXXX" aria-describedby="reg-ref-msg" oninput="window.kiwiRegRefInput && window.kiwiRegRefInput()" class="w-full bg-kiwi-dark border border-kiwi-border rounded-xl p-3 pr-10 text-white uppercase placeholder:normal-case focus:border-kiwi-red focus:outline-none text-sm transition">
+                            <button type="button" id="reg-ref-clear" onclick="window.kiwiRegRefClear && window.kiwiRegRefClear()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg text-gray-400 hover:text-white hover:bg-white/10" aria-label="Borrar código"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <p id="reg-ref-msg" class="text-[11px] text-gray-500 mt-1" role="status" aria-live="polite">Si alguien te invitó, poné su código o ID de cuenta (KWS-…). Si entraste con su link, ya aparece cargado.</p>
+                    </div>
                     <button type="submit" class="w-full bg-kiwi-red hover:bg-red-700 text-white font-orbitron font-bold py-3 rounded-xl transition shadow-lg mt-4">CREAR CUENTA</button>
                 </form>
             </div>
@@ -2634,6 +2648,7 @@
                 if (tabLogin) tabLogin.classList.replace('text-gray-500', 'text-kiwi-red');
             } else if (tab === 'register' && registerForm) {
                 registerForm.classList.remove('hidden');
+                try { window.kiwiRegRefPrefill && window.kiwiRegRefPrefill(); } catch (_) {}
                 if (tabRegister) tabRegister.classList.replace('text-gray-500', 'text-kiwi-red');
             } else if (tab === 'forgot' && forgotForm) {
                 forgotForm.classList.remove('hidden');
@@ -2753,6 +2768,8 @@
             if (pass !== pass2) { alert("Las contraseñas no coinciden."); return; }
             if (!window.isStrongPassword(pass)) { alert("La contraseña debe tener al menos 8 caracteres y 1 número."); return; }
             if (user.length < 3) { alert("El usuario debe tener al menos 3 letras."); return; }
+            // v93: código de referido opcional — si se escribió uno inválido no se crea la cuenta (se puede borrar y seguir)
+            if (window.kiwiRegRefValidate && !(await window.kiwiRegRefValidate(user))) return;
             if (!supabaseClient || !window.supabaseOnline) {
                 try { window.supabaseOnline = await probeSupabase(); if (window.supabaseOnline && !supabaseClient) createSupabaseClient(); } catch (_) {}
             }
@@ -3442,7 +3459,8 @@
         })();
         // v80: limpieza genérica de nombres "(base + bono)" en todo el catálogo (por si se agrega un producto nuevo con ese formato)
         (window.products || []).forEach(p => { if (p.title) p.title = window.kiwiCleanTitle(p.title); if (p.shortTitle) p.shortTitle = window.kiwiCleanTitle(p.shortTitle); });
-        (window.KIWI_RA_ITEMS || []).forEach(it => { if (it.title) it.title = window.kiwiCleanTitle(it.title); });
+        (window.KIWI_RA_ITEMS || []).forEach(it => { if (it.title) it.title = window.kiwiCleanTitle(it.title); if (it.art && it.art.t) it.art.t = window.kiwiSumAmounts(it.art.t); });   // v92: etiqueta de la tarjeta también
+        (window.products || []).forEach(p => { if (p.art && p.art.t) p.art.t = window.kiwiSumAmounts(p.art.t); });
 
         // --- CATALOGO CON VARIANTES ---
         window.catalogVariant = [
@@ -3891,6 +3909,7 @@
                         orderId: json.order_id,
                         keys: Array.isArray(json.keys) ? json.keys : [],
                         status: json.status,
+                        ref: typeof json.ref === 'string' ? json.ref : null,   // v94: referencia firmada para seguir el estado
                     };
                 }
                 return {
@@ -3963,57 +3982,30 @@
          * No muestra el nombre del servicio al cliente.
          */
         window.syncBulkOrderStatuses = async function() {
-            let purchases = JSON.parse(localStorage.getItem('kiwi_purchases') || '[]');
-            const pending = purchases.filter(p =>
-                p.bulkOrderId &&
-                p.status !== 'delivered' &&
-                p.status !== 'accredited' &&
-                p.status !== 'cancelled'
-            );
+            // v94: el servidor consulta al servicio (redes, streaming y recargas) y marca "Completado" en la base.
+            // Antes lo hacía este navegador y solo si el comprador tenía la página abierta.
+            if (typeof currentUser === 'undefined' || !currentUser || !window.kiwiToken || !window.kiwiToken()) return { updated: 0 };
+            let purchases = window.readPurchases();
+            const pending = purchases.filter(p => p.bulkOrderId && window.sameUser(p.user, currentUser) && ['confirmed', 'claimed'].includes(String(p.status || '')));
             if (pending.length === 0) return { updated: 0 };
-
-            let updated = 0;
-            for (const order of pending) {
-                try {
-                    const data = await window.getSocialStatus(order.bulkOrderId);
-                    if (!data || data.error) continue;
-
-                    // Respuesta típica SMM: { status: "Completed" | "In progress" | "Pending" | "Partial" | "Canceled", remains: "0", ... }
-                    const remoteStatus = String(data.status || data.order_status || '').toLowerCase().trim();
-                    const remains = Number(data.remains ?? data.remain ?? NaN);
-
-                    let newStatus = null;
-                    if (remoteStatus === 'completed' || remoteStatus === 'complete') {
-                        newStatus = 'delivered';
-                    } else if (remoteStatus === 'partial' && Number.isFinite(remains) && remains === 0) {
-                        newStatus = 'delivered';
-                    } else if (remoteStatus === 'canceled' || remoteStatus === 'cancelled') {
-                        newStatus = 'cancelled';
-                    }
-
-                    if (newStatus && order.status !== newStatus) {
-                        order.status = newStatus;
-                        order.deliveryStatus = remoteStatus;
-                        order.lastStatusCheck = new Date().toISOString();
-                        updated++;
-
-                        try {
-                            if (supabaseClient) {
-                                window.kiwiStaffRpc('kiwi_order_provider_status', { p_id: String(order.id), p_status: newStatus })
-                                    .catch(error => console.warn('No se pudo actualizar estado en nube:', error));
-                            }
-                        } catch (_) {}
-                    } else if (remoteStatus) {
-                        order.deliveryStatus = remoteStatus;
-                        order.lastStatusCheck = new Date().toISOString();
-                    }
-                } catch (e) {
-                    console.warn('Status check failed for order', order.id, e);
-                }
+            let j = null;
+            try {
+                const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'autosync', token: window.kiwiToken() }) });
+                j = await r.json().catch(() => null);
+            } catch (_) { return { updated: 0 }; }
+            if (!j || !j.success || !Array.isArray(j.orders)) return { updated: 0 };
+            let updated = 0; const done = [];
+            purchases = window.readPurchases();
+            for (const o of j.orders) {
+                const p = purchases.find(x => String(x.id) === String(o.id)); if (!p) continue;
+                const ns = o.status === 'delivered' ? 'delivered' : o.status === 'problem' ? 'problem' : o.status === 'cancelled' ? 'cancelled' : null;
+                if (ns && p.status !== ns) { p.status = ns; updated++; if (ns === 'delivered') done.push(p); }
             }
-
-            if (updated > 0 || pending.length > 0) {
-                localStorage.setItem('kiwi_purchases', JSON.stringify(purchases));
+            if (updated) {
+                window._purchaseSyncMuted = true; localStorage.setItem('kiwi_purchases', JSON.stringify(purchases)); window._purchaseSyncMuted = false;
+                try { const r = await window.kiwiFetchOrders(); if (r && Array.isArray(r.data) && !window.kiwiIsOrderStaff()) window.mergeCloudPurchases(r.data); } catch (_) {}
+                try { if (window.kpedPoll) window.kpedPoll(); } catch (_) {}
+                if (done.length && window.kiReviewShow) window.kiReviewShow(done[done.length - 1]);
             }
             return { updated };
         };
@@ -5411,8 +5403,8 @@
                 'receipt_review': 'Comprobante de pago en revisión',
                 'confirmed': 'Comprobante confirmado, en proceso de entregar el producto',
                 'claimed': 'Comprobante confirmado, en proceso de entregar el producto',
-                'delivered': 'Producto Entregado',
-                'accredited': 'Producto Entregado',
+                'delivered': 'Completado · producto entregado',
+                'accredited': 'Completado · producto entregado',
                 'cancelled': 'Producto Cancelado',
                 'problem': 'Pedido con problema (revisá la nota del staff)'
             };
@@ -5890,6 +5882,11 @@
                 if (rmQty > 1 && rmKeys.length && rmKeys.length < rmQty) keysText += '\n\n(Pedido x' + rmQty + ': llegaron ' + rmKeys.length + ' de ' + rmQty + ' cuentas, el resto aparecerá en el pedido o contactá soporte)';
 
                 const orderIdR = Date.now();
+                // v94: si el servicio todavía no entregó los datos, queda "En proceso" y se completa solo cuando el servicio lo confirma
+                const rmRef = rmResult.ref || null;
+                const rmWait = !rmKeys.length && !!rmRef && !/^(completed?|delivered|fulfilled|success|done)$/i.test(String(rmResult.status || ''));
+                if (rmWait) keysText = 'Tu pedido se está procesando. Los datos de acceso aparecen acá apenas el servicio lo confirme.';
+                const rmStatus = rmWait ? 'confirmed' : 'delivered';
                 const orderR = {
                     id: orderIdR,
                     user: currentUser,
@@ -5897,7 +5894,8 @@
                     price: prod.price,
                     method: 'Saldo Página',
                     date: new Date().toLocaleString('es-AR'),
-                    status: 'delivered',
+                    status: rmStatus,
+                    bulkOrderId: rmRef,
                     claimedBy: null,
                     targetUser: targetUser || 'N/A',
                     extra: extra || '',
@@ -5921,15 +5919,19 @@
                             title: prod.title + (rmQty > 1 ? ' (x2 cuentas)' : ''),
                             price: prod.price,
                             method: 'Saldo Página',
-                            status: 'delivered',
+                            status: rmStatus,
                             target_user: targetUser || '',
-                            extra: keysText
+                            extra: keysText,
+                            ...(rmRef ? { bulk_order_id: rmRef } : {})
                         }]).then(({ error }) => { if (error) console.warn('Compra no guardada en nube (se reintenta):', error); });
                     }
                 } catch (err) { console.warn('Supabase sync failed', err); }
 
                 window.closeCheckoutModal();
-                alert(
+                if (rmWait) {
+                    alert('¡Pedido recibido!\n\nID pedido: ' + orderIdR + '\n\nSe está procesando: apenas el servicio lo confirme queda "Completado" y los datos de acceso aparecen en Mis Pedidos.\nSaldo restante: ' + window.formatUserBalance());
+                    [45000, 120000, 300000].forEach(ms => setTimeout(() => { try { window.syncBulkOrderStatuses && window.syncBulkOrderStatuses(); } catch (_) {} }, ms));
+                } else alert(
                     '¡Producto entregado!\n\n' +
                     'ID pedido: ' + orderIdR + '\n\n' +
                     'DATOS DE ACCESO:\n' + keysText + '\n\n' +
@@ -6066,7 +6068,7 @@
                 let sk = 'other', si = 'fa-circle-info', sh = statusText;
                 if (p.status === 'receipt_review' || p.status === 'pending') { sk = 'pending'; si = 'fa-hourglass-half'; sh = 'En revisión'; }
                 else if (p.status === 'confirmed' || p.status === 'claimed') { sk = 'process'; si = 'fa-gears'; sh = 'En proceso'; }
-                else if (p.status === 'delivered' || p.status === 'accredited') { sk = 'done'; si = 'fa-circle-check'; sh = 'Entregado'; }
+                else if (p.status === 'delivered' || p.status === 'accredited') { sk = 'done'; si = 'fa-circle-check'; sh = 'Completado'; }
                 else if (p.status === 'cancelled') { sk = 'cancel'; si = 'fa-ban'; sh = 'Cancelado'; }
                 else if (p.status === 'problem') { sk = 'problem'; si = 'fa-triangle-exclamation'; sh = 'Con problema'; }
                 const cat = String(p.category || p.title || '').toLowerCase();
@@ -6318,7 +6320,7 @@
             const currentStep = steps.indexOf(status);
             const timeline = steps.map((s, i) => {
                 const active = i <= currentStep;
-                const label = s === 'receipt_review' ? 'En revisión' : s === 'confirmed' ? 'En proceso' : 'Entregado';
+                const label = s === 'receipt_review' ? 'En revisión' : s === 'confirmed' ? 'En proceso' : 'Completado';
                 return `<div class="flex items-center gap-2 ${active ? 'text-kiwi-gold' : 'text-gray-600'}">
                     <div class="w-3 h-3 rounded-full ${active ? 'bg-kiwi-gold' : 'bg-gray-600'}"></div>
                     <span class="text-xs">${label}</span>
@@ -8264,7 +8266,9 @@ window.resetUser2FA = function(username) {
                 const all = window.products.filter(p => p.category === 'freefire' && p.sub === 'ra_extra' && !p.raUnavailable && !window.kiwiRaSinStock(p));
                 const bx = document.getElementById('ff-booyah-extra');   // v88: Norte / Sur van junto al Premium
                 const isBy = p => p.raId === 1001 || p.raId === 1002;
-                if (bx) bx.innerHTML = all.filter(isBy).map(p => window.kiwiBooyahCard ? window.kiwiBooyahCard(p) : '').join('');
+                // v93: Norte y Sur se muestran SIEMPRE; sin stock quedan como "Agotado momentáneamente" (antes desaparecían)
+                const byAll = window.products.filter(p => p.category === 'freefire' && p.sub === 'ra_extra' && isBy(p)).sort((a, b) => a.raId - b.raId);
+                if (bx) bx.innerHTML = byAll.map(p => window.kiwiBooyahCard ? window.kiwiBooyahCard(p) : '').join('');
                 const xs = bx ? all.filter(p => !isBy(p)) : all;
                 g2.innerHTML = xs.map(p => `
                 <button type="button" data-ff-id="${p.id}" onclick="window.ffSelectProduct(${p.id})" class="ff-card ff-ra-card relative text-center rounded-xl overflow-hidden border transition ${window.ffSelection && window.ffSelection.id === p.id ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
@@ -9383,6 +9387,16 @@ window.resetUser2FA = function(username) {
         if (current && silent !== true) { const d = done(); if (!d[current.id]) d[current.id] = 'later'; save(d); }
         current = null;
     };
+    // v94: mostrar la invitación de un pedido puntual (llega del servidor al confirmarse "Completado")
+    window.kiReviewShow = function (p) {
+        const t = document.getElementById('ki-review-toast'); if (!t || !p || p.id == null) return false;
+        if (done()[p.id]) return false;
+        if (!t.classList.contains('hidden') && current && String(current.id) !== String(p.id)) return false;
+        current = p;
+        document.getElementById('ki-review-toast-text').textContent = '«' + String((window.kiwiCleanTitle ? window.kiwiCleanTitle(p.title) : p.title) || 'Tu compra').slice(0, 50) + '» ya está completado. Contanos qué tal te fue dejando tu reseña en nuestro Discord.';
+        t.classList.remove('hidden');
+        return true;
+    };
     function check() {
         const t = document.getElementById('ki-review-toast');
         if (!t || !t.classList.contains('hidden')) return;
@@ -10214,7 +10228,12 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         box.appendChild(d);
         setTimeout(() => d.remove(), 9000);
     };
+    // v94: la invitación automática a reseña (la crea la base al completarse un pedido automático)
+    const isReview = e => !!e && e.kind === 'note' && !e.author && /discord\.gg\//i.test(String(e.body || '')) && /rese[ñn]a/i.test(String(e.body || ''));
+    W.kpedIsReview = isReview;
     function eventMsg(e, title) {
+        if (isReview(e)) return null;   // se muestra con la tarjeta de Discord
+        if (e.kind === 'note' && !e.author) return ['Aviso de tu pedido · ' + title, e.body || '', 'proceso'];
         if (e.kind === 'note') return ['Nota del staff · ' + title, e.body || '', 'proceso'];
         const b = W.kpedBucket(e.status);
         if (b === 'completado') return ['¡Pedido completado!', title, 'completado'];
@@ -10229,7 +10248,13 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             if (S.events.some(x => x.id === e.id)) continue;
             S.events.push(e); S.last = Math.max(S.last, Number(e.id) || 0);
             const p = byId[String(e.order_id)];
-            if (all) { const q = all.find(x => String(x.id) === String(e.order_id)); if (q) { if (e.kind === 'status' && e.status) q.status = e.status; if (e.kind === 'note') q.notes = e.body; changed = true; } }
+            if (all) { const q = all.find(x => String(x.id) === String(e.order_id)); if (q) { if (e.kind === 'status' && e.status) q.status = e.status; if (e.kind === 'note' && !isReview(e)) q.notes = e.body; changed = true; } }
+            if (toast && e.id > S.seen && !S.toasted[e.id] && isReview(e)) {
+                S.toasted[e.id] = 1;
+                const rp = (all && all.find(x => String(x.id) === String(e.order_id))) || p || { id: e.order_id, title: 'Tu pedido' };
+                setTimeout(() => { try { W.kiReviewShow && W.kiReviewShow(rp); } catch (_) {} }, 1500);
+                continue;
+            }
             if (toast && e.id > S.seen && !S.toasted[e.id]) {
                 const m = eventMsg(e, (p && p.title) || ('Pedido ' + e.order_id));
                 if (m) { S.toasted[e.id] = 1; W.kpedToast(m[0], m[1], m[2], () => W.kpedOpen(e.order_id)); }
@@ -10274,7 +10299,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             + (orders.length ? '<button onclick="window.kpedFilter(\'all\')" class="mt-4 text-xs font-bold text-kiwi-gold border border-kiwi-gold/50 rounded-xl px-4 py-2">Ver todos</button>' : '<button onclick="window.kpedClose(); window.goToCatalog && window.goToCatalog()" class="mt-4 text-sm font-bold text-black bg-kiwi-gold rounded-xl px-5 py-2.5">Ver catálogo</button>') + '</div>'; return; }
         list.innerHTML = shown.map(p => {
             const evs = S.events.filter(e => String(e.order_id) === String(p.id));
-            const notes = evs.filter(e => e.kind === 'note');
+            const notes = evs.filter(e => e.kind === 'note' && !isReview(e));
             const thread = notes.length ? notes : (p.notes ? [{ body: p.notes, created_at: null, legacy: 1 }] : []);
             const isNew = evs.some(e => e.id > S.seen);
             return `<div id="kped-o-${esc(p.id)}" class="kq-o ${isNew ? 'is-new' : ''}">
@@ -10296,7 +10321,8 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
                         </div>
                     </div>
                 </div>
-                ${thread.length ? `<div class="mt-2 space-y-1.5 border-t border-kiwi-border/60 pt-2">${thread.map(n => `<div class="rounded-lg bg-kiwi-card border border-yellow-500/20 px-2.5 py-1.5"><p class="text-[10px] text-yellow-400 font-bold"><i class="fa-solid fa-headset"></i> Staff${n.created_at ? ' · ' + esc(fmt(n.created_at)) : ''}</p><p class="text-xs text-gray-200 whitespace-pre-wrap break-words">${esc(n.body)}</p></div>`).join('')}</div>` : ''}
+                ${thread.length ? `<div class="mt-2 space-y-1.5 border-t border-kiwi-border/60 pt-2">${thread.map(n => `<div class="rounded-lg bg-kiwi-card border border-yellow-500/20 px-2.5 py-1.5"><p class="text-[10px] text-yellow-400 font-bold"><i class="fa-solid ${n.created_at && !n.author ? 'fa-robot' : 'fa-headset'}"></i> ${n.created_at && !n.author ? 'Aviso automático' : 'Staff'}${n.created_at ? ' · ' + esc(fmt(n.created_at)) : ''}</p><p class="text-xs text-gray-200 whitespace-pre-wrap break-words">${esc(n.body)}</p></div>`).join('')}</div>` : ''}
+                ${W.kiReviewBtn && ['delivered', 'accredited'].includes(String(p.status)) ? W.kiReviewBtn(p) : ''}
             </div>`;
         }).join('');
     };
@@ -10553,6 +10579,19 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             } catch (_) {}
         }
         if (document.readyState === 'complete') setTimeout(resume, 4000); else W.addEventListener('load', () => setTimeout(resume, 4000));
+        // v94: redes y streaming en proceso → el servidor consulta al servicio y los marca "Completado"
+        setTimeout(() => { try { if (W.syncBulkOrderStatuses) W.syncBulkOrderStatuses().then(r => { if (r && r.updated && typeof W.renderClientOrders === 'function') W.renderClientOrders(); }); } catch (_) {} }, 7000);
+        // v94: "latido": cada visita ayuda a avanzar los pedidos automáticos pendientes de todos (el servidor lo limita a 1 vez por minuto)
+        function beat() {
+            try {
+                if (document.hidden) return;
+                const last = Number(localStorage.getItem('kiwi_tick_at') || 0);
+                if (Date.now() - last < 150000) return;
+                localStorage.setItem('kiwi_tick_at', String(Date.now()));
+                fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'tick' }), keepalive: true }).catch(() => {});
+            } catch (_) {}
+        }
+        setTimeout(beat, 15000); setInterval(beat, 180000);
 
         // ---- Staff: saldo del proveedor y pedidos automáticos (en PAGOS, Owner / CEO) ----
         const ST = { new: ['Enviando', 'text-sky-300'], retry: ['Reintentando', 'text-amber-300'], submitted: ['Enviado', 'text-sky-300'], processing: ['En proceso', 'text-sky-300'],
@@ -10641,6 +10680,13 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     W.kiwiBooyahCard = function (p) {
         const key = p.raId === 1001 ? 'norte' : 'sur', list = key === 'norte' ? NORTE : SUR, cc = W.kiwiGuessCountry(), mine = regionOf(cc) === key;
         const sel = W.ffSelection && W.ffSelection.id === p.id;
+        const off = !!(p.raUnavailable || (W.kiwiRaSinStock && W.kiwiRaSinStock(p))), loading = off && !W.kiwiRaPricesLoaded;   // v93
+        if (off) return `<div class="kby-opt kby-off"><div aria-disabled="true" class="relative w-full rounded-xl overflow-hidden text-center border border-white/5 bg-[#1b1e25] opacity-80 cursor-not-allowed">
+            <span class="absolute top-2 right-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${loading ? 'bg-gray-600' : 'bg-red-600'} text-white">${loading ? 'Cargando…' : 'Agotado momentáneamente'}</span>
+            <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/10 to-transparent p-3"><img src="${BOOYAH_IMG}" alt="Pase Booyah" class="h-full w-auto object-contain grayscale" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="px-2 pb-3 pt-2 bg-[#20232b]"><span class="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${key === 'norte' ? 'bg-sky-600/60' : 'bg-orange-600/60'} text-white mb-1">LATAM ${key === 'norte' ? 'Norte' : 'Sur'}</span>
+                <p class="font-bold text-white text-sm">Pase Booyah · ${key === 'norte' ? 'Norte' : 'Sur'}</p><p class="${loading ? 'text-gray-400' : 'text-red-300'} font-bold text-sm">${loading ? 'Cargando precio…' : 'Agotado momentáneamente'}</p><p class="text-[11px] text-gray-500">${loading ? '&nbsp;' : 'Vuelve apenas haya stock'}</p></div></div>
+            <p class="text-[11px] text-gray-400 font-rajdhani mt-2 leading-snug"><b class="text-gray-200">Cuentas de:</b> ${list.map(x => x[0] === cc ? '<b class="text-emerald-300">' + esc(x[1]) + '</b>' : esc(x[1])).join(', ')}.</p></div>`;
         return `<div class="kby-opt"><button type="button" data-ff-id="${p.id}" onclick="window.ffSelectProduct(${p.id})" class="ff-card group relative w-full rounded-xl overflow-hidden text-center border transition ${sel ? 'border-white/60 bg-[#262a33]' : 'border-white/5 bg-[#1b1e25] hover:border-white/20'}">
             ${mine ? `<span class="absolute top-2 left-2 z-10 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-600 text-white"><i class="fa-solid fa-location-dot"></i> Tu región probable</span>` : ''}
             <div class="h-28 flex items-center justify-center bg-gradient-to-b from-orange-500/15 to-transparent p-3"><img src="${BOOYAH_IMG}" alt="Pase Booyah" class="h-full w-auto object-contain" loading="lazy" onerror="this.onerror=null;this.src='images/placeholder.svg'"></div>
@@ -10878,8 +10924,45 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         rpc('kiwi_aff_bind', { p_token: tok(), p_code: code, p_source: 'register' }).then(r => {
             if (r && (r.bound || r.already)) localStorage.removeItem('kiwi_aff_ref');
             if (r && r.bound) toast(r.kind === 'creator' ? 'Cuenta vinculada al código de creador ' + code + '.' : 'Te registraste con la invitación de ' + (r.invited_by || code) + '.');
+            else if (r && !r.ok && r.error) toast('Código de referido: ' + r.error + ' Podés cargar otro desde Mi perfil → Afiliados.');   // v93
         }).catch(() => {});
     };
+    // ---- v93: campo "Código de referido (opcional)" en el registro ----
+    const regEl = () => document.getElementById('reg-ref');
+    const regMsg = (txt, cls) => { const m = document.getElementById('reg-ref-msg'); if (m) { m.className = 'text-[11px] mt-1 ' + (cls || 'text-gray-500'); m.textContent = txt; } };
+    const REG_HELP = 'Si alguien te invitó, poné su código o ID de cuenta (KWS-…). Si entraste con su link, ya aparece cargado.';
+    function regSync() { const i = regEl(), b = document.getElementById('reg-ref-clear'); if (i) i.classList.remove('!border-red-500'); if (b && i) b.classList.toggle('hidden', !i.value.trim()); }
+    W.kiwiAffPendingRef = pendingRef;
+    W.kiwiRegRefPrefill = function () {
+        const i = regEl(); if (!i) return;
+        if (i.value.trim() || i.dataset.cleared === '1') return regSync();
+        const c = pendingRef(); if (c) { i.value = c; regMsg('Código de tu link de invitación: ' + c + '. Si no corresponde, borralo.', 'text-emerald-300'); }
+        regSync();
+    };
+    W.kiwiRegRefInput = function () { const i = regEl(); if (!i) return; i.dataset.cleared = i.value.trim() ? '' : '1'; regMsg(REG_HELP); regSync(); };
+    W.kiwiRegRefClear = function () { const i = regEl(); if (!i) return; i.value = ''; i.dataset.cleared = '1'; regMsg(REG_HELP); regSync(); i.focus(); };
+    async function codeCheck(c) {   // { valid, kind } sin datos del dueño; null = no se pudo verificar
+        try { const r = await rpc('kiwi_aff_check', { p_code: c }); if (r && typeof r.valid === 'boolean') return r; } catch (e) {
+            if (!/function|does not exist|schema cache|PGRST202|404/i.test(e.message || '')) return null; }
+        try { const r = await rpc('kiwi_aff_click', { p_code: c, p_visitor: visitor() }); if (r && typeof r.valid === 'boolean') return r; } catch (_) {}   // si todavía no se corrió kiwii-v93.sql
+        return null;
+    }
+    W.kiwiRegRefValidate = async function (user) {
+        const i = regEl(); if (!i) return true;
+        const c = i.value.trim().toUpperCase();
+        if (!c) { if (i.dataset.cleared === '1') { try { localStorage.removeItem('kiwi_aff_ref'); localStorage.removeItem('kiwi_ref'); } catch (_) {} } return true; }
+        const bad = msg => { regMsg(msg, 'text-red-300'); i.classList.add('!border-red-500'); try { i.focus(); } catch (_) {} return false; };
+        if (!CODE_RE.test(c)) return bad('Código no válido. Revisalo o borralo para crear la cuenta sin código.');
+        if (user && c === String(user).trim().toUpperCase()) return bad('No podés usar tu propio código.');
+        regMsg('Verificando código…');
+        const r = await codeCheck(c);
+        if (r && !r.valid) return bad('Código no válido. Revisalo o borralo para crear la cuenta sin código.');
+        // válido (o no se pudo verificar por conexión: la base lo vuelve a validar al vincular)
+        try { localStorage.setItem('kiwi_aff_ref', JSON.stringify({ code: c, at: Date.now() })); } catch (_) {}
+        regMsg(r && r.kind === 'creator' ? 'Código de creador ' + c + ' ✓' + (Number(r.discount_pct) > 0 ? ' (' + num(r.discount_pct) + '% de reintegro en tus compras)' : '') : 'Código ' + c + ' ✓', 'text-emerald-300');
+        return true;
+    };
+    document.addEventListener('DOMContentLoaded', () => { try { W.kiwiRegRefPrefill(); } catch (_) {} });
 
     // ---- 3) Mi Perfil → Afiliados ----
     let meData = null, busy = false;
@@ -10901,11 +10984,12 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         const card = document.getElementById('aff-card-body');
         if (card) card.innerHTML = `<div class="grid grid-cols-2 gap-2">${stat('Afiliados', num(d.referred), 'fa-solid fa-users', 'usuarios invitados')}${stat('Total ganado', usd(d.earned), 'fa-solid fa-sack-dollar', 'acreditado en tu saldo')}</div>
             <p class="text-xs text-gray-400 mt-3">Tu código: <b class="text-kiwi-gold font-orbitron">${esc(d.code)}</b> · ganás el ${num(d.pct)}% de la ganancia de cada compra de tus invitados.</p>
+            ${bindBox('2')}
             <button type="button" onclick="window.goToAffiliates()" class="pf-btn w-full mt-3 py-2.5 text-sm"><i class="fa-solid fa-people-arrows mr-1"></i> Abrir panel de afiliados</button>`;
         const box = pageBox(); if (!box) return;
         const inv = d.invited_by;
         const invTxt = inv ? esc(inv.username) + (inv.creator ? ' <span class="text-[10px] text-kiwi-gold">(creador)</span>' : '') : '—';
-        const invSub = inv && inv.creator && Number(inv.discount_pct) > 0 ? num(inv.discount_pct) + '% de reintegro en tus compras' : (inv ? 'para siempre' : (d.can_bind ? 'podés cargar un código abajo' : ''));
+        const invSub = inv && inv.creator && Number(inv.discount_pct) > 0 ? num(inv.discount_pct) + '% de reintegro en tus compras' : (inv ? 'para siempre' : (d.can_bind ? 'podés cargar un código arriba' : ''));
         const L = link(d.code);
         const rows = (d.referrals || []).map(r => `<tr class="border-t border-[#20242e]"><td class="py-2 pr-2 text-white font-bold truncate max-w-[9rem]">${esc(r.username)}</td><td class="py-2 pr-2 text-gray-400">${day(r.joined)}</td><td class="py-2 pr-2 text-gray-300 text-center">${num(r.orders)}</td><td class="py-2 text-right text-kiwi-gold font-bold">${usd(r.earned)}</td></tr>`).join('');
         const cc = (d.creator_codes || []).map(c => `<div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-kiwi-gold/30 bg-kiwi-gold/5 p-3 text-xs"><span class="font-orbitron font-bold text-kiwi-gold">${esc(c.code)}</span>
@@ -10914,6 +10998,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             <button type="button" class="pf-copy" onclick="window.kiwiAffCopy('${esc(link(c.code))}', this)"><i class="fa-regular fa-copy"></i> Copiar link</button></div>`).join('');
         box.innerHTML = `
             ${d.enabled ? '' : '<p class="mb-3 text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">El programa de afiliados está pausado por el momento: no se están generando comisiones.</p>'}
+            ${bindBox('')}
             ${d.blocked ? '<p class="mb-3 text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl p-3">Tu cuenta de afiliado está pausada. Escribinos a soporte si creés que es un error.</p>' : ''}
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
                 ${stat('Afiliados', num(d.referred), 'fa-solid fa-users', 'usuarios invitados')}
@@ -10938,9 +11023,6 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
                 Cada vez que una de ellas recibe un pedido, ganás el <b class="text-kiwi-gold">${num(d.pct)}% de la ganancia de la tienda</b> en esa compra, en tu saldo (USDT).
                 Si el pedido se cancela o se devuelve, esa comisión se descuenta. No vale invitarte a vos mismo ni usar cuentas duplicadas.
             </div>
-            ${d.can_bind ? `<div class="mt-4"><label for="aff-bind-input" class="pf-lbl">¿Te invitó alguien? Ingresá su código (solo antes de tu primera compra)</label>
-                <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-user-plus"></i><input id="aff-bind-input" maxlength="24" autocomplete="off" placeholder="Código o KWS-…" value="${esc(pendingRef() || '')}"></div>
-                <button type="button" onclick="window.kiwiAffBind()" class="pf-ok px-4 text-sm shrink-0">Vincular</button></div><p id="aff-bind-msg" class="text-xs mt-1" role="status" aria-live="polite"></p></div>` : ''}
             ${cc ? `<h4 class="pf-h mt-5 mb-2"><i class="fa-solid fa-star"></i> Tus códigos de creador</h4><div class="space-y-2">${cc}</div>` : ''}
             <h4 class="pf-h mt-5 mb-2"><i class="fa-solid fa-user-group"></i> Tus afiliados</h4>
             ${rows ? `<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-gray-500 text-left"><th class="pb-1 font-semibold">Usuario</th><th class="pb-1 font-semibold">Se unió</th><th class="pb-1 font-semibold text-center">Pedidos</th><th class="pb-1 font-semibold text-right">Ganado</th></tr></thead><tbody>${rows}</tbody></table></div>`
@@ -10961,8 +11043,19 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             const m2 = document.getElementById('aff-code-msg'); if (m2) { m2.className = 'text-xs mt-1 text-green-300'; m2.textContent = 'Código guardado: ' + r.code; }
         } catch (e) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = e.message; }
     };
-    W.kiwiAffBind = async function () {
-        const inp = document.getElementById('aff-bind-input'), msg = document.getElementById('aff-bind-msg'); if (!inp) return;
+    // v93: recuadro "Cargar código de referido" (arriba en el panel y en Mi perfil) mientras la cuenta pueda hacerlo
+    function bindBox(sfx) {
+        const d = meData; if (!d || !d.can_bind) return '';
+        const days = Number(d.bind_days) || 7;
+        return `<div class="aff-bind mt-3 mb-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3">
+            <label for="aff-bind-input${sfx}" class="pf-lbl !text-emerald-200"><i class="fa-solid fa-user-plus mr-1"></i>Cargar código de referido</label>
+            <p class="text-[11px] text-gray-300 mb-2">¿Te invitó alguien? Poné su código o su ID (KWS-…). Se puede una sola vez, antes de tu primera compra y dentro de los primeros ${days} días desde que te registraste.</p>
+            <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-hashtag"></i><input id="aff-bind-input${sfx}" maxlength="24" autocomplete="off" placeholder="Código o KWS-…" value="${esc(pendingRef() || '')}"></div>
+            <button type="button" onclick="window.kiwiAffBind('${sfx}')" class="pf-ok px-4 text-sm shrink-0">Vincular</button></div><p id="aff-bind-msg${sfx}" class="text-xs mt-1" role="status" aria-live="polite"></p></div>`;
+    }
+    W.kiwiAffBind = async function (sfx) {
+        sfx = sfx ? String(sfx) : '';
+        const inp = document.getElementById('aff-bind-input' + sfx), msg = document.getElementById('aff-bind-msg' + sfx); if (!inp) return;
         const v = inp.value.trim();
         if (!CODE_RE.test(v)) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = 'Código inválido.'; return; }
         try {
