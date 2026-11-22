@@ -140,7 +140,9 @@ function methodMinutes(method, def) {
 }
 // v86: monedas de recarga desactivadas (por defecto MXN). Para volver a activarlas: PAY_DISABLED_CURRENCIES=NONE en Vercel.
 // Solo afecta recargas NUEVAS: las recargas MXN ya abiertas o viejas se siguen pudiendo verificar y quedan en el historial.
-function disabledCurrencies() { return env('PAY_DISABLED_CURRENCIES', 'MXN').toUpperCase().split(/[\s,;]+/).filter(c => /^[A-Z]{3,4}$/.test(c) && c !== 'NONE'); }
+// v95: MXN apagado SIEMPRE (la tienda ya no recibe pesos mexicanos): no depende de la variable de entorno.
+const ALWAYS_OFF = ['MXN'];
+function disabledCurrencies() { return Array.from(new Set(ALWAYS_OFF.concat(env('PAY_DISABLED_CURRENCIES', 'MXN').toUpperCase().split(/[\s,;]+/).filter(c => /^[A-Z]{3,4}$/.test(c) && c !== 'NONE')))); }
 function methodDisabled(id) { const m = METHODS[id]; return !m || disabledCurrencies().includes(m.currency); }
 function publicConfig() {
   const comm = jsonEnv('PAY_COMMISSION_JSON', DEFAULT_COMMISSION);
@@ -663,6 +665,7 @@ async function handler(req, res) {
 
     if (action === 'create') {
       const method = String(body.method || '');
+      if (/^mx_/i.test(method) || String(body.currency || '').toUpperCase() === 'MXN') return send(res, 400, { error: 'Los pagos en MXN no están disponibles. Elegí otro método (por ejemplo USDT o Binance Pay).' });   // v95
       if (METHODS[method] && methodDisabled(method)) return send(res, 400, { error: 'Las recargas en ' + METHODS[method].currency + ' no están disponibles. Elegí otro método (por ejemplo USDT o Binance Pay).' });
       const cfg = publicConfig();
       if (!cfg.methods.find(m => m.id === method)) return send(res, 400, { error: 'Método no disponible.' });
