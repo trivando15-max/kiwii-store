@@ -136,6 +136,36 @@ async function handler(req, res) {
   if (!b || typeof b !== 'object') return send(res, 400, { success: false, error: 'JSON inválido' });
   const action = String(b.action || '');
 
+  // ---- v95: panel "Costos y márgenes" (SOLO Owner: la base verifica el rango con el token). Costos en vivo de los 3 proveedores. ----
+  if (action === 'owner_costs') {
+    const token = clean(b.token, 200);
+    let cfg = null;
+    try { cfg = await lib.sb('kiwi_cost_get', { p_token: token }, 8000); } catch (_) { cfg = null; }
+    if (!cfg || !cfg.ok) return send(res, 403, { ok: false, error: 'Solo el Owner.' });
+    const out = { ok: true, settings: cfg.settings, items: cfg.items, games: [], digital: null, social: null };
+    try {
+      const d = await lib.getCosts({ force: !!b.fresh });
+      const inactive = new Set((d.inactive || []).map(Number));
+      for (const id of lib.allIds()) {
+        const c = Number(d.costs && d.costs[id]); const m = lib.meta(id);
+        const bulk = lib.isBulk(id);
+        const price = c > 0 ? (bulk ? lib.bulkUnit(c, id, 0) : lib.salePrice(c, id)) : null;
+        out.games.push({ id, title: m && m.title || null, category: lib.CATEGORY_OF(id), cost: c > 0 ? c : null, price, bulk,
+          pct: c > 0 && price ? Math.round((price / c - 1) * 10000) / 100 : null, rule: lib.ruleOf ? lib.ruleOf(id) : null, inactive: inactive.has(id) || !(c > 0) });
+      }
+      out.games_live = !!d.live; out.games_source = d.source || null;
+    } catch (_) {}
+    const dg = (() => { try { return require('./digital'); } catch (_) { return null; } })();
+    const so = (() => { try { return require('./social'); } catch (_) { return null; } })();
+    const [dr, sr] = await Promise.all([
+      dg && dg.ownerCatalog ? dg.ownerCatalog().catch(() => null) : null,
+      so && so.ownerRates ? so.ownerRates(Array.isArray(b.social_ids) ? b.social_ids.slice(0, 20) : []).catch(() => null) : null
+    ]);
+    out.digital = dr && dr.ok ? dr : { ok: false };
+    out.social = sr && sr.ok ? sr : { ok: false };
+    return send(res, 200, out);
+  }
+
   // ---- v94: el cliente abre la web / Mis pedidos: revisar SUS pedidos automáticos pendientes ----
   if (action === 'autosync') {
     const token = String(b.token || '');
