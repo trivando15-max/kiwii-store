@@ -34,7 +34,19 @@ const allIds = () => IDS.concat(DYN_IDS.filter(k => !IDS.includes(k)));
 const CATEGORY_OF = (pid) => (META[pid] && META[pid].category) || (pid >= 900 && pid < 1000 ? 'freefire' : pid <= 10 ? 'freefire' : pid <= 33 ? 'bloodstrike' : pid <= 39 ? 'pubg' : pid <= 270 ? 'mlbb' : 'otros');
 // v87: regla de precio por tramo de costo (misma escala que Free Fire y los demás: 20% de ganancia en lo más barato → 10% en lo más caro)
 const TIERS = [[1, 1.20], [3, 1.18], [7, 1.16], [15, 1.14], [35, 1.12], [Infinity, 1.10]];
-const tierRatio = (cost) => { const c = Number(cost); for (const [lim, r] of TIERS) if (c < lim) return r; return 1.10; };
+const tierRatio = (cost) => { const c = Number(cost); for (const [lim, r] of TIERS) if (c < lim) return r; return TIERS.length ? TIERS[TIERS.length - 1][1] : 1.10; };
+// v95: el Owner puede cambiar los tramos en "Costos y márgenes" (kiwi_cost_settings.tiers: [{lt, pct}]). Si no son válidos, quedan los de arriba.
+function setTiers(list) {
+  if (!Array.isArray(list) || !list.length || list.length > 12) return false;
+  const t = [];
+  for (const e of list) {
+    const lt = e && (e.lt === null || e.lt === undefined || e.lt === '') ? Infinity : Number(e && e.lt), pct = Number(e && e.pct);
+    if (!(lt > 0) || !(pct >= 0 && pct <= 300)) return false;
+    t.push([lt, Math.round((1 + pct / 100) * 1e6) / 1e6]);
+  }
+  t.sort((a, b) => a[0] - b[0]); if (t[t.length - 1][0] !== Infinity) t.push([Infinity, t[t.length - 1][1]]);
+  TIERS.splice(0, TIERS.length, ...t); return true;
+}
 const TOLERANCE = 0.03;   // 3% de diferencia permitida entre el precio que vio el cliente y el actual
 const CACHE_MS = 15 * 60 * 1000;                 // el catálogo del proveedor se cachea ~15 min
 
@@ -51,6 +63,8 @@ function setRules(items) {
   }
   RULES = r;
 }
+// v95: regla de precio de un producto (para el panel del Owner)
+const ruleOf = (id) => { const r = RULES[id]; if (!r) return null; return r.tier ? 'tier' : (r.ratio ? 'pct' : null); };
 const ceil2 = (x) => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
 const ceil6 = (x) => Math.ceil(Math.round(x * 1e8) / 100 - 1e-9) / 1e6;
 const marginOf = (id, cost) => {
@@ -168,6 +182,7 @@ async function loadItems() {
     if (items[k] && isDyn(k) && !(items[k].ratio || items[k].rule)) delete items[k];   // v87: nuevo sin regla de precio → no se vende
     if (items[k] && (it.category || it.title)) meta[k] = { category: it.category ? String(it.category).slice(0, 30) : null, title: it.title ? String(it.title).slice(0, 120) : null };
   }
+  try { const cr = await sbSoft('kiwi_cost_server_rules', {}, 3000); if (cr && cr.settings) setTiers(cr.settings.tiers); } catch (_) {}   // v95
   if (Object.keys(items).length) { setRules(items); DYN_IDS = Object.keys(items).map(Number).filter(isDyn).sort((a, b) => a - b); META = meta; }
   return items;
 }
@@ -478,7 +493,7 @@ function verifyWebhook(headers, raw, secret, nowMs) {
 }
 
 module.exports = { MARGIN, MARGINS, marginOf, TOLERANCE, IDS, NEEDS_ZONE, CATEGORY_OF, salePrice, resellerSalePrice, RESELLER_FACTOR,
-  BULK, isBulk, bulkUnit, bulkPrice, bulkPlan, bulkRules, qtyError, isDyn, knownId, allIds, tierRatio, TIERS, meta: (id) => META[id] || null,
+  BULK, isBulk, bulkUnit, bulkPrice, bulkPlan, bulkRules, qtyError, isDyn, knownId, allIds, tierRatio, TIERS, setTiers, ruleOf, meta: (id) => META[id] || null,
   verifyPlayer, clientIp, ipHash, PV_LIMITS,
   getCosts, recentChanges, _resetCache, _setFetch, setRules, provReady, prov, provBalance, buildTarget, sb, sbSoft, tg, tgEsc,
   processOrder, submit, refresh, applyOrder, sweep, publicStatus, verifyWebhook, nextIn };
