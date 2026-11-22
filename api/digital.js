@@ -28,6 +28,38 @@ async function api(path, options = {}) {
   return { ok: res.ok && !data?.error && !data?.raw && data?.success !== false, status: res.status, data };
 }
 
+// v94: referencia firmada del pedido (la guarda la web en el pedido; el servidor solo consulta referencias que firmó él)
+const crypto = require('crypto');
+function refKey() { const s = String(process.env.KIWI_REF_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim(); return s.length >= 16 ? crypto.createHash('sha256').update('kiwi-ref|' + s).digest() : null; }
+function signRef(id) {
+  const k = refKey(), v = String(id == null ? '' : id);
+  if (!k || !/^[A-Za-z0-9_-]{1,44}$/.test(v)) return null;
+  return 'D:' + v + '.' + crypto.createHmac('sha256', k).update(v).digest('hex').slice(0, 16);
+}
+function verifyRef(ref) {
+  const m = /^D:([A-Za-z0-9_-]{1,44})\.([0-9a-f]{16})$/.exec(String(ref || '')); if (!m) return null;
+  const good = signRef(m[1]); if (!good) return null;
+  const a = Buffer.from(good), b = Buffer.from(String(ref));
+  return a.length === b.length && crypto.timingSafeEqual(a, b) ? m[1] : null;
+}
+
+// Keys / datos de acceso que vienen en la respuesta de un pedido
+function keysOf(data) {
+  const keys = [];
+  if (!data || typeof data !== 'object') return keys;
+  if (Array.isArray(data.items)) {
+    for (const it of data.items) {
+      if (!it) continue;
+      if (Array.isArray(it.keys)) keys.push(...it.keys);
+      else if (it.keys) keys.push(String(it.keys));
+      if (it.account) keys.push(String(it.account));
+    }
+  }
+  if (Array.isArray(data.keys)) keys.push(...data.keys);
+  if (data.account) keys.push(String(data.account));
+  return keys;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -78,21 +110,14 @@ module.exports = async function handler(req, res) {
         return res.status(status === 402 || status === 409 ? 200 : 502).json({success:false, error:status === 409 ? 'Sin stock disponible.' : 'No pudimos completar la entrega. Consultá a soporte.'});
       }
 
-      const keys = [];
-      if (Array.isArray(data?.items)) {
-        for (const it of data.items) {
-          if (Array.isArray(it.keys)) keys.push(...it.keys);
-          else if (it.keys) keys.push(String(it.keys));
-        }
-      }
-      if (Array.isArray(data?.keys)) keys.push(...data.keys);
-      if (data?.account) keys.push(String(data.account));
+      const keys = keysOf(data);
 
       return res.status(200).json({
         success: true,
         order_id: data.order_id || data.id || null,
         status: data.status || 'completed',
         keys,
+        ref: signRef(data.order_id || data.id) || undefined,
 
       });
     }
@@ -135,4 +160,18 @@ module.exports = async function handler(req, res) {
       error: 'Servicio temporalmente no disponible.'
     });
   }
+};
+
+// v94: consulta de estado para la sincronización automática del servidor (api/_auto-sync.js). No expone nada al público.
+module.exports.verifyRef = verifyRef;
+module.exports.signRef = signRef;
+module.exports.statusOf = async function statusOf(orderId) {
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+    let r; try { r = await api('/orders/' + encodeURIComponent(orderId), { signal: ctrl.signal }); } finally { clearTimeout(t); }
+    const o = r.data && typeof r.data.order === 'object' ? r.data.order : r.data;
+    if (!r.ok || !o) return { ok: false, http: r.status, notFound: r.status === 404 };
+    const keys = keysOf(o).map(k => typeof k === 'string' ? k : JSON.stringify(k));
+    return { ok: true, status: String(o.status || ''), keys };
+  } catch (e) { return { ok: false, http: 0, error: 'red' }; }
 };
