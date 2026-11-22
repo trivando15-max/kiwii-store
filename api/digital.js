@@ -43,6 +43,37 @@ function verifyRef(ref) {
   return a.length === b.length && crypto.timingSafeEqual(a, b) ? m[1] : null;
 }
 
+
+// ---------- v95: precio de venta calculado en el servidor (regla de siempre: % sobre el costo + 2 cuentas si es barato) ----------
+//  costo < 0,75          → se entregan 2 cuentas, precio = el de 1 cuenta
+//  0,75 <= costo < 1     → se entregan 2 cuentas a digital_x2 (2,5 USDT)
+//  costo >= 1            → 1 cuenta
+//  precio = costo(EUR) × EUR→USD × (1 + %/100), redondeado hacia arriba (USDT entero) y nunca menos que digital_min
+const X2_EXCLUDED = ['cmsro5py90002zknc3e4v4e9a'];   // ChatGPT 1 día: siempre 1 cuenta
+const DEF = { digital_pct: 30, eur_usd: 1.15, digital_min: 2, digital_x2: 2.5, digital_step: 1 };
+let rulesMem = { at: 0, v: null };
+async function rules() {
+  if (rulesMem.v && Date.now() - rulesMem.at < 5 * 60 * 1000) return rulesMem.v;
+  let r = null;
+  try { const lib = require('./_game-lib'); r = await lib.sbSoft('kiwi_cost_server_rules', {}, 4000); } catch (_) { r = null; }
+  const s = Object.assign({}, DEF), st = (r && r.settings) || {};
+  for (const k of Object.keys(DEF)) { const n = Number(st[k]); if (Number.isFinite(n) && n >= 0) s[k] = n; }
+  const v = { s, over: (r && r.digital && typeof r.digital === 'object') ? r.digital : {} };
+  if (r) rulesMem = { at: Date.now(), v };
+  return v;
+}
+function priceOf(id, cost, R) {
+  const c = Number(cost); if (!(c > 0)) return null;
+  const s = (R && R.s) || DEF, o = R && R.over && R.over[id];
+  const pct = Number.isFinite(Number(o)) && o !== null ? Number(o) : s.digital_pct;
+  const step = s.digital_step > 0 ? s.digital_step : 1;
+  const up = x => Math.ceil(Math.round(x / step * 1e6) / 1e6 - 1e-9) * step;
+  const one = Math.max(s.digital_min, Math.round(up(c * s.eur_usd * (1 + pct / 100)) * 100) / 100);
+  if (X2_EXCLUDED.includes(String(id)) || c >= 1) return { qty: 1, price: one, pct };
+  if (c < 0.75) return { qty: 2, price: one, pct };
+  return { qty: 2, price: Math.max(s.digital_x2, o != null ? one : 0), pct };
+}
+
 // Keys / datos de acceso que vienen en la respuesta de un pedido
 function keysOf(data) {
   const keys = [];
@@ -127,7 +158,13 @@ module.exports = async function handler(req, res) {
       if (!ok) {
         return res.status(502).json({ success: false, error: 'Catálogo temporalmente no disponible.' });
       }
-      return res.status(200).json({success:true, currency:/^(EUR|USD|USDT)$/.test(data.currency) ? data.currency : 'EUR', products:(Array.isArray(data.products)?data.products:[]).map(p=>({id:p.id,price:p.price,stock:p.stock,variants:(Array.isArray(p.variants)?p.variants:[]).map(v=>({id:v.id,price:v.price,stock:v.stock}))}))});
+      // v95: público = SOLO precio de venta (USDT), stock y cantidad de cuentas por compra. Nunca el costo.
+      const R = await rules();
+      const sale = (id, cost, stock) => { const t = priceOf(id, cost, R); return { id, stock, qty: t ? t.qty : 1, price: t ? t.price : null }; };
+      return res.status(200).json({ success: true, products: (Array.isArray(data.products) ? data.products : []).map(p => {
+        const vars = Array.isArray(p.variants) ? p.variants : [];
+        return Object.assign(sale(p.id, vars.length ? null : p.price, p.stock), { variants: vars.map(v => sale(v.id, v.price, v.stock)) });
+      }) });
     }
 
     if (action === 'balance') {
@@ -175,3 +212,16 @@ module.exports.statusOf = async function statusOf(orderId) {
     return { ok: true, status: String(o.status || ''), keys };
   } catch (e) { return { ok: false, http: 0, error: 'red' }; }
 };
+
+// v95: catálogo completo con nombres y costos SOLO para el panel del Owner (lo llama /api/game action=owner_costs, que ya verificó el rango)
+module.exports.ownerCatalog = async function ownerCatalog() {
+  const { ok, data } = await api('/products');
+  if (!ok) return { ok: false };
+  const R = await rules();
+  return { ok: true, currency: /^(EUR|USD|USDT)$/.test(data.currency) ? data.currency : 'EUR', settings: R.s,
+    products: (Array.isArray(data.products) ? data.products : []).map(p => ({ id: p.id, name: String(p.name || '').slice(0, 120), cost: p.price, stock: p.stock,
+      sale: (p.variants || []).length ? null : priceOf(p.id, p.price, R),
+      variants: (Array.isArray(p.variants) ? p.variants : []).map(v => ({ id: v.id, name: String(v.name || '').slice(0, 120), cost: v.price, stock: v.stock, sale: priceOf(v.id, v.price, R) })) })) };
+};
+module.exports.priceOf = priceOf;
+module.exports._resetRules = () => { rulesMem = { at: 0, v: null }; };
