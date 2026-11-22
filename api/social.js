@@ -173,3 +173,18 @@ module.exports.statusOf = async function statusOf(order) {
     return { ok: true, status: String(d.status || ''), remains: d.remains, start_count: d.start_count };
   } catch (e) { return { ok: false, http: 0, error: 'red' }; } finally { clearTimeout(t); }
 };
+
+// v95: costo por 1000 de los servicios que usa la tienda, SOLO para el panel del Owner (lo llama /api/game action=owner_costs, que ya verificó el rango)
+module.exports.ownerRates = async function ownerRates(ids) {
+  const want = new Set((ids || []).map(Number).filter(Boolean));
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const body = new URLSearchParams({ key: getApiKey(), action: 'services' });
+    const r = await fetch(SOCIAL_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': 'KiwiiStore-Proxy/1.0' }, body: body.toString(), signal: ctrl.signal });
+    const d = await r.json().catch(() => null);
+    if (!Array.isArray(d)) return { ok: false };
+    const out = {};
+    for (const s of d) if (want.has(Number(s.service))) out[Number(s.service)] = { rate: Number(s.rate), min: Number(s.min), max: Number(s.max) };
+    return { ok: true, rates: out };
+  } catch (e) { return { ok: false }; } finally { clearTimeout(t); }
+};
