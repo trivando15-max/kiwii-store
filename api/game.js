@@ -8,7 +8,11 @@
 //   resolve   {token, order_id}                           -> staff (Owner/CEO): marcar como resuelto un pedido que quedó manual
 //   ?action=webhook  (firma HMAC, CO_WEBHOOK_SECRET)      -> aviso del proveedor: se vuelve a consultar el pedido
 //   GET ?action=cron (Authorization: Bearer CRON_SECRET)  -> revisión diaria de pendientes
+//   v94: autosync {token}  -> revisa los pedidos automáticos del cliente (recargas, redes, streaming) y los marca "Completado"
+//   v94: tick {}           -> cualquier visita: como mucho 1 vez por minuto (lo controla la base) avanza pendientes de todos
 const lib = require('./_game-lib');
+const auto = require('./_auto-sync');
+const tickMem = { at: 0 }, syncMem = new Map();   // frenos por instancia (además del freno en la base)
 let lowAlertAt = 0;   // aviso de saldo bajo: máximo uno cada 30 min por instancia
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ykxyiamlvlppcyfzyvzr.supabase.co';
 const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || 'sb_publishable_HxcnPrmcb9xu-6QwEJqLvA_vuXbCw5z'; // clave pública (la misma que usa la web)
@@ -121,14 +125,49 @@ async function handler(req, res) {
   if (qAction === 'cron') {
     const sec = String(process.env.CRON_SECRET || '');
     if (!sec || String((req.headers || {}).authorization || '') !== 'Bearer ' + sec) return send(res, 401, { ok: false });
-    const out = await lib.sweep(20);
-    return send(res, 200, { ok: true, checked: out.length });
+    const out = lib.provReady() ? await lib.sweep(20).catch(() => []) : [];
+    const more = await auto.syncDue({ limit: 25, budgetMs: 7000 }).catch(() => []);   // v94: redes y streaming
+    await auto.postReviewInvites(10).catch(() => 0);
+    return send(res, 200, { ok: true, checked: out.length + more.length });
   }
 
   if (req.method !== 'POST') return send(res, 405, { success: false, error: 'Método no permitido' });
   const b = await readBody(req);
   if (!b || typeof b !== 'object') return send(res, 400, { success: false, error: 'JSON inválido' });
   const action = String(b.action || '');
+
+  // ---- v94: el cliente abre la web / Mis pedidos: revisar SUS pedidos automáticos pendientes ----
+  if (action === 'autosync') {
+    const token = String(b.token || '');
+    if (!token || token.length > 200) return send(res, 400, { success: false, error: 'Solicitud inválida.' });
+    const k = require('crypto').createHash('sha256').update(token).digest('hex').slice(0, 24);
+    if (Date.now() - (syncMem.get(k) || 0) < 15000) return send(res, 200, { success: true, orders: [], throttled: true });
+    syncMem.set(k, Date.now()); if (syncMem.size > 2000) syncMem.clear();
+    let orders = [];
+    try { orders = await auto.syncDue({ token, limit: 6, budgetMs: 5000 }); }
+    catch (e) {
+      if (/sesi[oó]n|token/i.test(e.message)) return send(res, 401, { success: false, error: 'Sesión inválida.' });
+      if (/does not exist|PGRST202|Could not find/i.test(e.message)) return send(res, 200, { success: false, code: 'SQL_MISSING', orders: [] });
+      return send(res, 200, { success: false, orders: [] });
+    }
+    if (lib.provReady()) { try { await lib.sweep(2); } catch (_) {} }
+    auto.postReviewInvites(3).catch(() => 0);
+    return send(res, 200, { success: true, orders });
+  }
+  // ---- v94: "latido" de cualquier visita: avanza los pendientes de todos aunque el comprador cerró la página ----
+  if (action === 'tick') {
+    if (Date.now() - tickMem.at < 20000) return send(res, 200, { ok: true, ran: false });
+    tickMem.at = Date.now();
+    let go = false;
+    try { go = await lib.sb('kiwi_auto_tick_claim', { p_seconds: 60 }, 4000) === true; } catch (_) { go = false; }
+    if (!go) return send(res, 200, { ok: true, ran: false });
+    let n = 0;
+    if (lib.provReady()) { try { n += (await lib.sweep(4)).length; } catch (_) {} }
+    try { n += (await auto.syncDue({ limit: 6, budgetMs: 5000 })).length; } catch (_) {}
+    try { await auto.postReviewInvites(5); } catch (_) {}
+    return send(res, 200, { ok: true, ran: true, checked: n });
+  }
+
   if (!lib.provReady()) return send(res, 500, { success: false, error: 'Servicio temporalmente no disponible.' });
 
   if (action === 'order') return send(res, 403, { success: false, error: 'Consultá el estado en Mis pedidos.' });
