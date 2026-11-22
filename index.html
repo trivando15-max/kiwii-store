@@ -586,7 +586,6 @@
                     <select id="credit-currency" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-2 text-sm text-white mb-2">
                         <option value="USDT">USDT</option>
                         <option value="ARS">ARS</option>
-                        <option value="MXN">MXN</option>
                         <option value="COP">COP</option>
                         <option value="PEN">PEN</option>
                     </select>
@@ -951,6 +950,7 @@
                 <button onclick="window.switchStaffTab('pagos')" class="flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-money-bill-transfer"></i> PAGOS</button>
                 <button onclick="window.switchStaffTab('stock')" id="kadm-tab-stock" class="hidden flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-boxes-stacked"></i> STOCK</button>
                 <button onclick="window.switchStaffTab('afiliados')" id="kadm-tab-afiliados" class="hidden flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-people-arrows"></i> AFILIADOS</button>
+                <button onclick="window.switchStaffTab('costos')" id="kadm-tab-costos" class="hidden flex-1 py-3 text-xs font-orbitron font-bold text-gray-500 hover:text-gray-300"><i class="fa-solid fa-calculator"></i> COSTOS</button>
             </div>
             <div id="admin-content">
                 <div id="admin-cuentas" class="admin-tab" data-title="Cuentas" data-sub="Usuarios registrados, rangos y baneos">
@@ -963,6 +963,7 @@
                 <div id="admin-pagos" class="admin-tab hidden" data-title="Pagos" data-sub="Recargas de saldo y notificaciones de pago · Owner / CEO"></div>
                 <div id="admin-stock" class="admin-tab hidden" data-title="Stock" data-sub="Productos «No Stock» (bloquea) · grupos: solo etiqueta, no bloquea la compra · solo Owner / CEO"></div>
                 <div id="admin-afiliados" class="admin-tab hidden" data-title="Afiliados" data-sub="Afiliados y códigos de creador · solo Owner / CEO"></div>
+                <div id="admin-costos" class="admin-tab hidden" data-title="Costos y márgenes" data-sub="Costo, % y precio de cada producto · solo Owner"></div>
             </div>
         </div>
     </div>
@@ -3463,77 +3464,117 @@
         (window.products || []).forEach(p => { if (p.art && p.art.t) p.art.t = window.kiwiSumAmounts(p.art.t); });
 
         // --- CATALOGO CON VARIANTES ---
+        // v95: catálogo de streaming / IA / herramientas actualizado con el proveedor (22/11/2026). Precios = respaldo: el precio real lo manda /api/digital.
         window.catalogVariant = [
-            { id: 'netflix', title: 'Netflix', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/960px-Netflix_2015_logo.svg.png', category: 'streaming', variants: [
-                { name: "España Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Estas cuentas están registradas y suscritas en España"] },
-                { name: "España No Ads", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Versión sin anuncios", "Registradas en España"] },
-                { name: "Lifetime Links", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Formato Links"] }
+            { id: 'netflix', title: "Netflix", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/960px-Netflix_2015_logo.svg.png', category: 'streaming', variants: [
+                { name: "España Lifetime", price: "$4.000 ARS / 2.5 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Estas cuentas están registradas y suscritas en España"] },
+                { name: "España No Ads", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Versión sin anuncios", "Registradas en España"] },
+                { name: "Lifetime Links", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Formato Links (código de acceso)"] },
+                { name: "4K Private Slot", price: "$9.600 ARS / 6 USDT", includes: ["Perfil privado en una cuenta 4K (Ultra HD)", "Duración y garantía completa de 25 días", "Cuentas completamente checkeadas", "Información de la cuenta", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'disney', title: 'Disney+', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Disney%2B_logo.svg/960px-Disney%2B_logo.svg.png', category: 'streaming', variants: [
-                { name: "Only Disney+", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Soporte y cambio si hay errores", "Puede ser necesario utilizar VPN en Estados Unidos para iniciar sesión"] },
-                { name: "Disney+ & Hulu", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Soporte y cambio si hay errores", "Incluye Hulu", "Posible VPN EE.UU."] },
-                { name: "Disney+ & Hulu & ESPN+", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Soporte y cambio si hay errores", "Incluye Hulu + ESPN+", "Posible VPN EE.UU."] }
+            { id: 'disney', title: "Disney+", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Disney%2B_logo.svg/960px-Disney%2B_logo.svg.png', category: 'streaming', variants: [
+                { name: "Only Disney+", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Soporte y cambio si hay errores", "Puede ser necesario utilizar VPN en Estados Unidos para iniciar sesión"] },
+                { name: "Disney+ & Hulu", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Soporte y cambio si hay errores", "Incluye Hulu", "Posible VPN EE.UU."] },
+                { name: "Disney+ & Hulu & ESPN+", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Soporte y cambio si hay errores", "Incluye Hulu + ESPN+", "Posible VPN EE.UU."] },
+                { name: "Disney+ Premium", price: "$17.600 ARS / 11 USDT", includes: ["Plan Disney+ Premium", "Garantía completa de 25 días", "Cuentas completamente checkeadas", "Información de la cuenta", "Soporte y cambio si hay errores", "Posible VPN EE.UU."] }
             ]},
-            { id: 'max', title: 'Max', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/HBO_Max_2025.svg/960px-HBO_Max_2025.svg.png', category: 'streaming', variants: [
-                { name: "Full Access Lifetime", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Full Access (cuenta 100% privada)", "Correo/contraseña no modificables", "Usable en teléfono o PC", "Garantía 1 mes", "Soporte y cambio si hay errores"] }
+            { id: 'max', title: "Max", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/HBO_Max_2025.svg/960px-HBO_Max_2025.svg.png', category: 'streaming', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Full Access Lifetime", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Full Access (cuenta 100% privada)", "Correo/contraseña no modificables", "Usable en teléfono o PC", "Garantía completa de 30 días", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'prime', title: 'Prime Video', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Prime_Video_logo_%282024%29.svg/960px-Prime_Video_logo_%282024%29.svg.png', category: 'streaming', variants: [
+            { id: 'prime', title: "Prime Video", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Prime_Video_logo_%282024%29.svg/960px-Prime_Video_logo_%282024%29.svg.png', category: 'streaming', variants: [
                 { name: "1 Month", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración 1 Mes", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa 1 mes", "Soporte y cambio si hay errores", "Las cuentas son Full Access"] },
                 { name: "6 Months", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Soporte y cambio si hay errores", "Duración y garantía de 6 meses", "Full Access"] }
             ]},
-            { id: 'crunchyroll', title: 'Crunchyroll', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Crunchyroll_logo_2024.png/960px-Crunchyroll_logo_2024.png', category: 'streaming', variants: [
-                { name: "Fan Member", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Importante, usar VPN si la cuenta no coincide con tu país"] },
-                { name: "Mega Fan Member", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Nivel Mega Fan", "VPN si país no coincide"] },
-                { name: "Mega Fan Member, Full Access", price: "$11.200 ARS / 7 USDT", includes: ["Full Access Mega Fan", "Cuenta privada", "Garantía y soporte incluido"] }
+            { id: 'crunchyroll', title: "Crunchyroll", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Crunchyroll_logo_2024.png/960px-Crunchyroll_logo_2024.png', category: 'streaming', variants: [
+                { name: "Mega Fan, Private Slot", price: "$3.200 ARS / 2 USDT", includes: ["Perfil privado en una cuenta Mega Fan", "Garantía completa de 27 días", "Cuentas completamente checkeadas", "Información de la cuenta", "Soporte y cambio si hay errores", "Usar VPN si la cuenta no coincide con tu país"] },
+                { name: "Mega Fan Member, Full Access", price: "$11.200 ARS / 7 USDT", includes: ["Full Access Mega Fan", "Cuenta privada", "Garantía completa de 27 días", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'paramount', title: 'Paramount+', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Paramount_Plus.svg/960px-Paramount_Plus.svg.png', category: 'streaming', variants: [
-                { name: "USA", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Si no estás en EE. UU. necesitarás una VPN"] },
-                { name: "LATAM + EU", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Región LATAM + EU"] },
+            { id: 'paramount', title: "Paramount+", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Paramount_Plus.svg/960px-Paramount_Plus.svg.png', category: 'streaming', variants: [
+                { name: "USA", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Si no estás en EE. UU. necesitarás una VPN"] },
+                { name: "LATAM + EU", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Región LATAM + EU"] },
                 { name: "México + UFC [FA]", price: "$4.800 ARS / 3 USDT", includes: ["Full Access México + UFC", "Cuenta privada modificable", "Garantía y soporte incluido"] }
             ]},
-            { id: 'youtube', title: 'YouTube Premium', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/YouTube_Premium_logo_2024.svg/960px-YouTube_Premium_logo_2024.svg.png', category: 'streaming', variants: [
-                { name: "Full Access Lifetime", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa 27 días", "Soporte y cambio si hay errores", "Full Access = la cuenta es tuya por completo: puedes cambiar el correo, la contraseña y el nombre de usuario. Nadie más la usa"] }
+            { id: 'dazn', title: "DAZN", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/DAZN_5_logo.png/500px-DAZN_5_logo.png', category: 'streaming', variants: [
+                { name: "Random", price: "$3.200 ARS / 2 USDT", includes: ["Plan de DAZN al azar (el que haya en stock: región y paquete varían)", "Deportes en vivo en HD", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Fútbol ES", price: "$4.000 ARS / 2.5 USDT", includes: ["Fútbol en España: LaLiga Hypermotion, Copa del Rey y competiciones internacionales", "Puede requerir VPN de España", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Motor ES", price: "$3.200 ARS / 2 USDT", includes: ["Motor en España: MotoGP, Fórmula 1 y más campeonatos", "Puede requerir VPN de España", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Total ES", price: "$8.000 ARS / 5 USDT", includes: ["Todo el deporte de DAZN en España: fútbol, motor, boxeo y más", "Puede requerir VPN de España", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Premium ES", price: "$6.400 ARS / 4 USDT", includes: ["TODOS los deportes de DAZN (Premium) para España", "Puede requerir VPN de España", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'spotify', title: 'Spotify Premium', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Spotify_logo_with_text.svg/960px-Spotify_logo_with_text.svg.png', category: 'streaming', variants: [
-                { name: "Autopay, Full Access", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Garantía Completa 30 días", "Cuentas AutoPay, FA", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Soporte y cambio si hay errores", "A diferencia de las cuentas autopay normales, en estas podrás cambiar el correo y la contraseña", "Full Access = cuenta completamente tuya"] }
+            { id: 'ufc', title: "UFC Fight Pass", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/500px-UFC_Logo.svg.png', category: 'streaming', variants: [
+                { name: "Lifetime", price: "$4.000 ARS / 2.5 USDT", includes: ["UFC Fight Pass con duración permanente", "Eventos en vivo, toda la biblioteca de peleas y contenido original", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'chatgpt', title: 'ChatGPT', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png', category: 'ai', variants: [
-                { name: "1 día", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa durante la vigencia de la cuenta", "Soporte y cambio si hay errores", "Recreación sobre la API oficial en https://secretgpt.es (código)"] },
-                { name: "1 semana", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 1 semana — secretgpt.es"] },
-                { name: "2 semanas", price: "$9.600 ARS / 6 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 2 semanas — secretgpt.es"] },
-                { name: "1 mes", price: "$16.000 ARS / 10 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código 1 mes — secretgpt.es"] },
+            { id: 'nba', title: "NBA League Pass", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/National_Basketball_Association_logo_2017-present.svg/500px-National_Basketball_Association_logo_2017-present.svg.png', category: 'streaming', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Partidos de la NBA en vivo y a demanda en HD, toda la temporada", "Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'claude', title: 'Claude', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Claude_AI_symbol.svg/960px-Claude_AI_symbol.svg.png', category: 'ai', variants: [
-                { name: "1 day", price: "$6.400 ARS / 4 USDT", includes: ["Acceso por tiempo limitado", "Checkeado", "Garantía del periodo", "Soporte"] },
+            { id: 'movistar', title: "Movistar+ LaLiga", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Movistar_Plus%2B_2022_logo.svg/500px-Movistar_Plus%2B_2022_logo.svg.png', category: 'streaming', variants: [
+                { name: "España, Lifetime", price: "$4.800 ARS / 3 USDT", includes: ["Movistar Plus+ (España) con LaLiga: partidos en vivo, series y películas", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas con autorenovación", "Garantía de 48 horas (así lo da este producto)", "Soporte y cambio si hay errores", "Puede requerir VPN de España"] }
+            ]},
+            { id: 'amc', title: "AMC+", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/AMC%2B_logo.png/500px-AMC%2B_logo.png', category: 'streaming', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Todo el catálogo de AMC+ sin anuncios: series originales y estrenos", "Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'atresplayer', title: "Atresplayer Premium", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Atresplayer_-_Logo_2018.svg/500px-Atresplayer_-_Logo_2018.svg.png', category: 'streaming', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Atresplayer Premium sin anuncios: series, programas y canales en vivo de España", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'appletv', title: "Apple TV", image: 'https://thumb.wikimedia.org/wikipedia/en/thumb/a/ae/Apple_TV_%28logo%29.svg/500px-Apple_TV_%28logo%29.svg.png', category: 'streaming', variants: [
+                { name: "Full Access, 1 month", price: "$6.400 ARS / 4 USDT", includes: ["Cuenta Apple TV Full Access por 1 mes", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "Garantía completa de 30 días", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'spotify', title: "Spotify Premium", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Spotify_logo_with_text.svg/960px-Spotify_logo_with_text.svg.png', category: 'streaming', variants: [
+                { name: "Autopay, Full Access", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Garantía Completa 30 días", "Cuentas AutoPay, FA", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Soporte y cambio si hay errores", "A diferencia de las cuentas autopay normales, en estas podrás cambiar el correo y la contraseña", "Full Access = cuenta completamente tuya"] },
+                { name: "Key Premium (tu propia cuenta)", price: "$14.400 ARS / 9 USDT", includes: ["Código (key) que pasa TU cuenta de Spotify a Premium", "Conservás tus playlists, biblioteca y seguidores", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'chatgpt', title: "ChatGPT", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png', category: 'ai', variants: [
+                { name: "1 día", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa durante la vigencia de la cuenta", "Soporte y cambio si hay errores", "Recreación sobre la API oficial (se entrega un código)"] },
+                { name: "1 semana", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código por 1 semana"] },
+                { name: "1 mes", price: "$16.000 ARS / 10 USDT", includes: ["Suscripción garantizada", "Cuentas sin límites", "Cuentas completamente checkeadas", "Información de la cuenta incluida", "Cuentas de calidad y fáciles de revender", "Garantía completa", "Soporte y cambio si hay errores", "Código por 1 mes"] },
+                { name: "Plus 1 mes (cuenta real)", price: "$22.400 ARS / 14 USDT", includes: ["Cuenta ChatGPT Plus oficial por 1 mes", "Datos de acceso incluidos", "Garantía completa durante el mes", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'claude', title: "Claude", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Claude_AI_symbol.svg/960px-Claude_AI_symbol.svg.png', category: 'ai', variants: [
+                { name: "1 day", price: "$6.400 ARS / 4 USDT", includes: ["Acceso por 1 día", "Checkeado", "Garantía del periodo", "Soporte"] },
                 { name: "7 days", price: "$22.400 ARS / 14 USDT", includes: ["Acceso por 7 días", "Checkeado", "Garantía del periodo", "Soporte"] },
                 { name: "14 days", price: "$28.800 ARS / 18 USDT", includes: ["Acceso por 14 días", "Checkeado", "Garantía del periodo", "Soporte"] },
-                { name: "30 days", price: "$48.000 ARS / 30 USDT", includes: ["Acceso por 30 días", "Checkeado", "Garantía del periodo", "Soporte"] }
+                { name: "30 days", price: "$48.000 ARS / 30 USDT", includes: ["Acceso por 30 días", "Checkeado", "Garantía del periodo", "Soporte"] },
+                { name: "Fable - Astra, 1 day", price: "$12.800 ARS / 8 USDT", includes: ["Acceso Claude (Fable · Astra) por 1 día", "Checkeado", "Garantía del periodo", "Soporte"] },
+                { name: "Fable - Astra, 7 days", price: "$36.800 ARS / 23 USDT", includes: ["Acceso Claude (Fable · Astra) por 7 días", "Checkeado", "Garantía del periodo", "Soporte"] }
             ]},
-            { id: 'gemini', title: 'Gemini Pro+', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Google_Gemini_logo_2025.svg/960px-Google_Gemini_logo_2025.svg.png', category: 'ai', variants: [
-                { name: "Link, 18 months", price: "$11.200 ARS / 7 USDT", includes: ["Link de activación Gemini Pro+ por 18 meses", "Activación en tu propia cuenta mediante link", "Soporte técnico ante problemas de enlace"] }
+            { id: 'gemini', title: "Gemini (Google AI Plus)", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Google_Gemini_logo_2025.svg/960px-Google_Gemini_logo_2025.svg.png', category: 'ai', variants: [
+                { name: "Link, 12 months", price: "$11.200 ARS / 7 USDT", includes: ["Link de activación de Google Gemini Plus por 12 meses", "Modelos de IA de Google + 2 TB de almacenamiento", "Se activa en tu propia cuenta de Google", "Garantía de 12 meses", "Grabá la pantalla desde la compra hasta que lo actives (para la garantía)", "Soporte ante problemas del link"] },
+                { name: "Link, 6 months (sin tarjeta)", price: "$9.600 ARS / 6 USDT", includes: ["Link de activación de Google Gemini Plus por 6 meses", "No pide tarjeta de crédito", "Modelos de IA de Google + 2 TB de almacenamiento", "Se activa en tu propia cuenta de Google", "Garantía de 6 meses", "Grabá la pantalla desde la compra hasta que lo actives (para la garantía)"] }
             ]},
-            { id: 'capcut', title: 'CapCut', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1c/Capcut-icon.svg/960px-Capcut-icon.svg.png', category: 'tools', variants: [
-                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
-                { name: "Full Access Lifetime", price: "$6.400 ARS / 4 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Full Access", "Correo/contraseña totalmente modificables", "Usable en teléfono o PC", "Garantía 1 mes"] }
+            { id: 'lovable', title: "Lovable", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/be/Lovable_Logo_%2B_Wordmark_Black.png/500px-Lovable_Logo_%2B_Wordmark_Black.png', category: 'ai', variants: [
+                { name: "Lite Full Access, 12 months", price: "$19.200 ARS / 12 USDT", includes: ["Creá sitios y apps web con IA (plan Lovable Lite)", "Cuenta Full Access por 12 meses", "3 Meses de garantía completa", "Datos de acceso incluidos", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'filmora', title: 'Filmora', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/Filmora-logo-icon.svg/960px-Filmora-logo-icon.svg.png', category: 'tools', variants: [
-                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Comprobada y funcionando en el momento de la entrega", "Entrega automática al instante", "Datos de acceso e instrucciones incluidos", "Garantía y reemplazo gratuito si hay cualquier problema"] }
+            { id: 'elevenlabs', title: "ElevenLabs", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/ElevenLabs_Logo_03.svg/500px-ElevenLabs_Logo_03.svg.png', category: 'ai', variants: [
+                { name: "Premium Full Access, 3 months", price: "$14.400 ARS / 9 USDT", includes: ["Voces con IA y clonación de voz, más créditos y uso comercial", "Cuenta Full Access por 3 meses", "Garantía completa durante los 3 meses", "Datos de acceso incluidos", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'nordvpn', title: 'NordVPN', image: 'https://upload.wikimedia.org/wikipedia/commons/9/90/NordVPN_logo_%282025%29.png', category: 'tools', variants: [
-                { name: "Lifetime", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
+            { id: 'canva', title: "Canva Pro", image: 'https://thumb.wikimedia.org/wikipedia/en/thumb/b/bb/Canva_Logo.svg/500px-Canva_Logo.svg.png', category: 'tools', variants: [
+                { name: "3 años", price: "$8.000 ARS / 5 USDT", includes: ["Canva Pro por 3 años: plantillas premium, quitar fondo, Magic Resize, Brand Kit y exportaciones ilimitadas", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "Garantía completa de 25 días", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'expressvpn', title: 'ExpressVPN', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/ExpressVPN_wordmark.svg/960px-ExpressVPN_wordmark.svg.png', category: 'tools', variants: [
-                { name: "Phone, Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Este producto solo funciona en MÓVIL"] }
+            { id: 'capcut', title: "CapCut", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1c/Capcut-icon.svg/960px-Capcut-icon.svg.png', category: 'tools', variants: [
+                { name: "Lifetime", price: "$4.000 ARS / 2.5 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Full Access Lifetime", price: "$8.000 ARS / 5 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Full Access", "Correo/contraseña totalmente modificables", "Usable en teléfono o PC", "Garantía completa de 30 días"] }
             ]},
-            { id: 'cyberghost', title: 'CyberGhost', image: 'https://upload.wikimedia.org/wikipedia/commons/0/03/CyberGhostVPN_Logo.png', category: 'tools', variants: [
-                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción VPN garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
+            { id: 'nordvpn', title: "NordVPN", image: 'https://upload.wikimedia.org/wikipedia/commons/9/90/NordVPN_logo_%282025%29.png', category: 'tools', variants: [
+                { name: "Lifetime", price: "$4.800 ARS / 3 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
             ]},
-            { id: 'duolingo', title: 'Duolingo', image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Duolingo_logo_%282019%29.svg/960px-Duolingo_logo_%282019%29.svg.png', category: 'tools', variants: [
-                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "Garantía completa de por vida", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
-                { name: "Super GiftLink 12 months", price: "$9.600 ARS / 6 USDT", includes: ["Super GiftLink 12 meses", "GiftLink de Super Duolingo", "Activación rápida y segura"] }
+            { id: 'expressvpn', title: "ExpressVPN", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/ExpressVPN_wordmark.svg/960px-ExpressVPN_wordmark.svg.png', category: 'tools', variants: [
+                { name: "Phone, Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores", "Este producto solo funciona en MÓVIL"] }
+            ]},
+            { id: 'cyberghost', title: "CyberGhost", image: 'https://upload.wikimedia.org/wikipedia/commons/0/03/CyberGhostVPN_Logo.png', category: 'tools', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción VPN garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'duolingo', title: "Duolingo", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Duolingo_logo_%282019%29.svg/960px-Duolingo_logo_%282019%29.svg.png', category: 'tools', variants: [
+                { name: "Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Suscripción garantizada", "Cuentas con duración permanente", "Cuentas completamente checkeadas", "Información de la cuenta", "Cuentas de calidad y fáciles de revender", "3 Meses de garantía completa", "Cuentas con autorenovación", "Soporte y cambio si hay errores"] },
+                { name: "Super GiftLink 12 months", price: "$9.600 ARS / 6 USDT", includes: ["Super GiftLink 12 meses", "GiftLink de Super Duolingo", "Activación rápida y segura", "Garantía completa de 12 meses"] }
+            ]},
+            { id: 'steam', title: "Steam", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/500px-Steam_icon_logo.svg.png', category: 'tools', variants: [
+                { name: "Cuenta con juegos, Lifetime", price: "$3.200 ARS / 2 USDT", includes: ["Cuenta de Steam con biblioteca de juegos lista para jugar (los juegos varían según la cuenta)", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
+            ]},
+            { id: 'fivem', title: "FiveM", image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/FiveM-Logo.png/500px-FiveM-Logo.png', category: 'tools', variants: [
+                { name: "Cuenta lista, Full Access", price: "$3.200 ARS / 2 USDT", includes: ["Cuenta FiveM lista y preconfigurada, con duración permanente", "IMPORTANTE: no incluye GTA V", "Comprobada y funcionando al entregar", "Datos de acceso e instrucciones incluidos", "3 Meses de garantía completa", "Soporte y cambio si hay errores"] }
             ]}
         ];
-
         window.renderVariantCatalog = function() {
             const streamingGrid = document.getElementById('streaming-grid');
             const aiGrid = document.getElementById('ai-grid');
@@ -3709,77 +3750,84 @@
         // === DIGITAL (Streaming / IA / Tools — vía proxy /api/digital) ===
         window.DIGITAL_MAP = {
             // key = catalogId + '::' + variantName (exacto como en el select)
-            'netflix::España Lifetime': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs0000je2uoh1a9uqus' },
-            'netflix::España No Ads': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs9000le2uoi3r875v9' },
-            'netflix::Lifetime Links': { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqsi000ne2uo7tvimdex' },
-            'disney::Only Disney+': { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000n8f3ij02uo9aj' },
-            'disney::Disney+ & Hulu': { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000o8f3ii060vqbo' },
-            'disney::Disney+ & Hulu & ESPN+': { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000p8f3ig6zc2kgf' },
-            'max::Full Access Lifetime': { product_id: 'cmq8imqye0019e2uo3m45setk', variant_id: 'cmq8imqyv001de2uo4ygzdfz6' },
-            'max::Lifetime': { product_id: 'cmq8imqye0019e2uo3m45setk', variant_id: 'cmq8imqyo001be2uor41kz887' },
-            'prime::1 Month': { product_id: 'cmq8imr0r001le2uoy2sxj4bv', variant_id: 'cmq8imr10001ne2uotshr7wg5' },
-            'prime::6 Months': { product_id: 'cmq8imr0r001le2uoy2sxj4bv', variant_id: 'cmq8imr18001pe2uovi02i30t' },
-            'crunchyroll::Fan Member': { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'cmq8imqwy0013e2uooot307zx' },
-            'crunchyroll::Mega Fan Member': { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'cmq8imqx50015e2uo9c3c4ddc' },
-            'crunchyroll::Mega Fan Member, Full Access': { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'c3a0c25fad5b5610a3578c0c5' },
-            'paramount::USA': { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmq8imqzv001he2uovr26gy3q' },
-            'paramount::LATAM + EU': { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmq8imr01001je2uo5l9p9pfp' },
-            'paramount::México + UFC [FA]': { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmt8u7y1800029ij2kbkxdof6' },
-            'youtube::Full Access Lifetime': { product_id: 'cmq8g2yjg004f1465ym66i5zl', variant_id: 'cmq8g2yjs004h1465u30o77qk' },
-            'spotify::Autopay, Full Access': { product_id: 'cmq8g2ydj003r1465p4itbv7c', variant_id: 'cmq8g2ydq003t1465dq12sp6x' },
-            'chatgpt::1 día': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90002zknc3e4v4e9a' },
-            'chatgpt::1 semana': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90003zknc7phw3vx2' },
-            'chatgpt::2 semanas': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90004zknc0ap2yss4' },
-            'chatgpt::1 mes': { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90005zknc0p4z9s81' },
-            'claude::1 day': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0k0jxxpcj6prcou6zr' },
-            'claude::7 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jxzpcj6lul4ovci' },
-            'claude::14 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy1pcj6p5lfhklo' },
-            'claude::30 days': { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy3pcj6v40qbdz6' },
-            'gemini::Link, 18 months': { product_id: 'cmq8g2y8d00271465kwesaagh', variant_id: 'cmq8g2y8j002914651j6ff839' },
-            'capcut::Lifetime': { product_id: 'cmq8g2y1k0009146562hnagmo', variant_id: 'cmq8g2y1q000b146544j0436k' },
-            'capcut::Full Access Lifetime': { product_id: 'cmq8g2y1k0009146562hnagmo', variant_id: 'cmrndfbgn0003wltnixz50hz2' },
-            'filmora::Lifetime': { product_id: 'cmrpirsci000ae9oytj8xjvuy', variant_id: 'cmrpirsci000be9oyk0vsy4ir' },
-            'nordvpn::Lifetime': { product_id: 'cmq8g2ybn00371465iknhka57', variant_id: 'cmq8g2ybt00391465p0w9j6t3' },
-            'expressvpn::Phone, Lifetime': { product_id: 'cmq8g2y8300231465m01lxyum', variant_id: 'cmq8g2y8800251465j1ulrxgz' },
-            'cyberghost::Lifetime': { product_id: 'cmryzjpqx002xl86neho0cv4q', variant_id: 'cmryzjpqx002yl86nt5hjbz7m' },
-            'duolingo::Lifetime': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'cmq8g2y7x00211465fw9qzh71' },
-            'duolingo::Super GiftLink 12 months': { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'var_sduo12m_on_duolingo_0001' }
+            "netflix::España Lifetime": { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs0000je2uoh1a9uqus' },
+            "netflix::España No Ads": { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqs9000le2uoi3r875v9' },
+            "netflix::Lifetime Links": { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'cmq8imqsi000ne2uo7tvimdex' },
+            "netflix::4K Private Slot": { product_id: 'cmq8imqrk000he2uo4ttrbt9s', variant_id: 'pv_aeccff8225e0a3c4a113' },
+            "disney::Only Disney+": { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000n8f3ij02uo9aj' },
+            "disney::Disney+ & Hulu": { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000o8f3ii060vqbo' },
+            "disney::Disney+ & Hulu & ESPN+": { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmq8rarqr000p8f3ig6zc2kgf' },
+            "disney::Disney+ Premium": { product_id: 'cmq846g4h00093ubmjvldbcr2', variant_id: 'cmu8yf6790004gthy615a9aip' },
+            "max::Lifetime": { product_id: 'cmq8imqye0019e2uo3m45setk', variant_id: 'cmq8imqyo001be2uor41kz887' },
+            "max::Full Access Lifetime": { product_id: 'cmq8imqye0019e2uo3m45setk', variant_id: 'cmq8imqyv001de2uo4ygzdfz6' },
+            "prime::1 Month": { product_id: 'cmq8imr0r001le2uoy2sxj4bv', variant_id: 'cmq8imr10001ne2uotshr7wg5' },
+            "prime::6 Months": { product_id: 'cmq8imr0r001le2uoy2sxj4bv', variant_id: 'cmq8imr18001pe2uovi02i30t' },
+            "crunchyroll::Mega Fan, Private Slot": { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'cmwfklwra0002bxi5o2vkfhez' },
+            "crunchyroll::Mega Fan Member, Full Access": { product_id: 'cmq8imqwn0011e2uox0l2qoo0', variant_id: 'c3a0c25fad5b5610a3578c0c5' },
+            "paramount::USA": { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmq8imqzv001he2uovr26gy3q' },
+            "paramount::LATAM + EU": { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmq8imr01001je2uo5l9p9pfp' },
+            "paramount::México + UFC [FA]": { product_id: 'cmq8imqzo001fe2uo14rz01u3', variant_id: 'cmt8u7y1800029ij2kbkxdof6' },
+            "dazn::Random": { product_id: 'cmq8imqov0007e2uoiccsl8qh', variant_id: 'cmq8imqp80009e2uo4uc19a05' },
+            "dazn::Fútbol ES": { product_id: 'cmq8imqov0007e2uoiccsl8qh', variant_id: 'cmq8imqph000be2uoslbz0jwu' },
+            "dazn::Motor ES": { product_id: 'cmq8imqov0007e2uoiccsl8qh', variant_id: 'cmq8imqpp000de2uo3kumf49m' },
+            "dazn::Total ES": { product_id: 'cmq8imqov0007e2uoiccsl8qh', variant_id: 'cmq8imqpy000fe2uohdj5pm4a' },
+            "dazn::Premium ES": { product_id: 'cmq8imqov0007e2uoiccsl8qh', variant_id: 'cmrndfbg10001wltn8ppky9tb' },
+            "ufc::Lifetime": { product_id: 'cmrr4cu9x0001njmvze8dbjtu', variant_id: null },
+            "nba::Lifetime": { product_id: 'cmq8g2y9s002n1465w9i90cbt', variant_id: 'cmq8g2y9y002p1465vbglk23p' },
+            "movistar::España, Lifetime": { product_id: 'cmq8g2y9f002j1465b058s8e1', variant_id: 'cmq8g2y9m002l1465ukhzqkke' },
+            "amc::Lifetime": { product_id: 'cmq8g2y1400051465y36exj8a', variant_id: 'cmq8g2y1e00071465m8kdq7x4' },
+            "atresplayer::Lifetime": { product_id: 'cmrpirsaf0001e9oytgq39azq', variant_id: 'cmrpirsaf0002e9oyspf7fpa3' },
+            "appletv::Full Access, 1 month": { product_id: 'cmtcxjw7x0hecgun6bjpzdygw', variant_id: null },
+            "spotify::Autopay, Full Access": { product_id: 'cmq8g2ydj003r1465p4itbv7c', variant_id: 'cmq8g2ydq003t1465dq12sp6x' },
+            "spotify::Key Premium (tu propia cuenta)": { product_id: 'cmq8g2ydj003r1465p4itbv7c', variant_id: 'cmwb17vzv0002bfdtv70v2lrr' },
+            "chatgpt::1 día": { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90002zknc3e4v4e9a' },
+            "chatgpt::1 semana": { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90003zknc7phw3vx2' },
+            "chatgpt::1 mes": { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'cmsro5py90005zknc0p4z9s81' },
+            "chatgpt::Plus 1 mes (cuenta real)": { product_id: 'cmsro5py90001zknc59l33lye', variant_id: 'c9f5995deb600a9f03cb02610' },
+            "claude::1 day": { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0k0jxxpcj6prcou6zr' },
+            "claude::7 days": { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jxzpcj6lul4ovci' },
+            "claude::14 days": { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy1pcj6p5lfhklo' },
+            "claude::30 days": { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cms201f0l0jy3pcj6v40qbdz6' },
+            "claude::Fable - Astra, 1 day": { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cmw511c3q00029ajgrcquwys1' },
+            "claude::Fable - Astra, 7 days": { product_id: 'cms1suj870gatpcj64mpqscgd', variant_id: 'cmw511c3r00049ajg24gt3cjh' },
+            "gemini::Link, 12 months": { product_id: 'cmvwdksu700021n8naf6zo52d', variant_id: 'cmvwdksu700031n8n8pk06bad' },
+            "gemini::Link, 6 months (sin tarjeta)": { product_id: 'cmvwdksu700021n8naf6zo52d', variant_id: 'cmw51flax0002igthdnx1c18s' },
+            "lovable::Lite Full Access, 12 months": { product_id: 'cmwfcup2i0c7wibfs3z7fukxh', variant_id: null },
+            "elevenlabs::Premium Full Access, 3 months": { product_id: 'cmwfe5h7j0e07ibfsivv11nwr', variant_id: 'cmwfe5h7j0e08ibfs3zb0kgzd' },
+            "canva::3 años": { product_id: 'cmv4mgxsv0001w61uinvupq54', variant_id: null },
+            "capcut::Lifetime": { product_id: 'cmq8g2y1k0009146562hnagmo', variant_id: 'cmq8g2y1q000b146544j0436k' },
+            "capcut::Full Access Lifetime": { product_id: 'cmq8g2y1k0009146562hnagmo', variant_id: 'cmrndfbgn0003wltnixz50hz2' },
+            "nordvpn::Lifetime": { product_id: 'cmq8g2ybn00371465iknhka57', variant_id: 'cmq8g2ybt00391465p0w9j6t3' },
+            "expressvpn::Phone, Lifetime": { product_id: 'cmq8g2y8300231465m01lxyum', variant_id: 'cmq8g2y8800251465j1ulrxgz' },
+            "cyberghost::Lifetime": { product_id: 'cmryzjpqx002xl86neho0cv4q', variant_id: 'cmryzjpqx002yl86nt5hjbz7m' },
+            "duolingo::Lifetime": { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'cmq8g2y7x00211465fw9qzh71' },
+            "duolingo::Super GiftLink 12 months": { product_id: 'cmq8g2y7r001z1465n3imufxj', variant_id: 'var_sduo12m_on_duolingo_0001' },
+            "steam::Cuenta con juegos, Lifetime": { product_id: 'cmq8g2ydv003v14654mm8qldx', variant_id: 'cmq8m0zpp0001se7mx6lgvo4r' },
+            "fivem::Cuenta lista, Full Access": { product_id: 'cmryy8d2v000dgjim9gsina83', variant_id: null }
         };
 
-        // v22: regla x2 según NUESTRO COSTO en Digital (precio servicio, moneda que reporta la API: EUR)
-        //  costo < 0.75        → se piden 2 cuentas, precio de venta igual
-        //  0.75 <= costo < 1   → se piden 2 cuentas, precio de venta 2.5 USDT
-        //  costo >= 1          → 1 cuenta, precio igual
-        window.digitalCostByVariantId = {}; // variant_id|product_id → costo servicio
-        window.digitalCostCurrency = 'EUR';
-        window.X2_PRICE_USDT = 2.5;
-        window.getDigitalCost = function(catalogId, variantName) {
+        // v95: el precio de venta y la cantidad de cuentas (x2) los calcula el SERVIDOR (/api/digital) a partir del costo.
+        //  La web ya no recibe costos: solo { precio USDT, stock, qty }. Regla (en el servidor, editable por el Owner en "Costos y márgenes"):
+        //  costo < 0.75 → 2 cuentas, mismo precio · 0.75–1 → 2 cuentas a 2,5 USDT · ≥ 1 → 1 cuenta · precio = costo × (1 + %) redondeado a USDT entero.
+        window.digitalSaleById = {}; // variant_id|product_id → { price, qty }
+        window.digitalCostByVariantId = window.digitalSaleById; // compatibilidad (ya no contiene costos)
+        window.getDigitalCost = function() { return null; };
+        window.digitalSaleOf = function(catalogId, variantName) {
             const map = window.DIGITAL_MAP[(catalogId || '') + '::' + (variantName || '')];
             if (!map) return null;
-            const key = map.variant_id || map.product_id;
-            const c = window.digitalCostByVariantId[key];
-            return (typeof c === 'number' && isFinite(c)) ? c : null;
-        };
-        // Excluidos de la regla x2 (cantidad 1, precio original). Clave: 'catalogId::variante' o variant_id de Digital.
-        window.X2_EXCLUDED = ['chatgpt::1 día'];
-        window.isX2Excluded = function(catalogId, variantName) {
-            const key = (catalogId || '') + '::' + (variantName || '');
-            const map = window.DIGITAL_MAP[key];
-            return window.X2_EXCLUDED.includes(key) || !!(map && (window.X2_EXCLUDED.includes(map.variant_id) || window.X2_EXCLUDED.includes(map.product_id)));
+            return window.digitalSaleById[map.variant_id || map.product_id] || null;
         };
         window.digitalTier = function(catalogId, variantName) {
-            if (window.isX2Excluded(catalogId, variantName)) return { cost: window.getDigitalCost(catalogId, variantName), qty: 1, tier: 0, priceUsdt: null };
-            const cost = window.getDigitalCost(catalogId, variantName);
-            if (cost === null || cost <= 0) return { cost, qty: 1, tier: 0, priceUsdt: null };
-            if (cost < 0.75) return { cost, qty: 2, tier: 1, priceUsdt: null };
-            if (cost < 1) return { cost, qty: 2, tier: 2, priceUsdt: window.X2_PRICE_USDT };
-            return { cost, qty: 1, tier: 3, priceUsdt: null };
+            const t = window.digitalSaleOf(catalogId, variantName);
+            if (!t || !(t.price > 0)) return { cost: null, qty: 1, tier: 0, priceUsdt: null };
+            const qty = t.qty === 2 ? 2 : 1;
+            return { cost: null, qty, tier: qty === 2 ? 1 : 3, priceUsdt: t.price };
         };
         window.formatVariantPriceString = function(usdt) {
             const ars = Math.round(usdt * 1600);
             return '$' + ars.toLocaleString('es-AR') + ' ARS / ' + usdt + ' USDT';
         };
-        /** Aplica x2 y precio 2.5 USDT a las variantes según el costo cacheado */
+        /** Aplica precio y x2 del servidor a las variantes */
         window.applyDigitalCostTiers = function() {
             (window.catalogVariant || []).forEach(item => {
                 (item.variants || []).forEach(v => {
@@ -3828,11 +3876,10 @@
                 if (!data || !Array.isArray(data.products)) return window.digitalStockByVariantId;
 
                 const cache = {};
-                const costs = {};
-                if (data.currency) window.digitalCostCurrency = data.currency;
+                const sale = {};
                 for (const p of data.products) {
-                    if (typeof p.price === 'number') costs[p.id] = p.price;
-                    for (const v of (p.variants || [])) if (typeof v.price === 'number') costs[v.id] = v.price;
+                    if (typeof p.price === 'number') sale[p.id] = { price: p.price, qty: p.qty === 2 ? 2 : 1 };
+                    for (const v of (p.variants || [])) if (typeof v.price === 'number') sale[v.id] = { price: v.price, qty: v.qty === 2 ? 2 : 1 };
                     const vars = p.variants || [];
                     if (vars.length === 0) {
                         // producto sin variantes: stock a nivel producto
@@ -3846,7 +3893,7 @@
                     }
                 }
                 window.digitalStockByVariantId = cache;
-                window.digitalCostByVariantId = costs;
+                window.digitalSaleById = sale; window.digitalCostByVariantId = sale;
                 window.applyDigitalCostTiers();
                 window.digitalStockLoadedAt = now;
                 return cache;
@@ -4477,6 +4524,8 @@
         // v80: Robux vía Gamepass: precio normal 0,08 USDT c/10 y "Ofertas especiales Robux via gamepass" 0,075 USDT c/10 (mín. 1.000)
         window.KGP_USDT_PER_10 = 0.08;
         window.KGP_OFFER_USDT_PER_10 = 0.075;
+        window.KRX_GRUPO_USDT_PER_10 = 0.075;   // v95: antes fijo en el código (12 en la escala ARS/1600); lo puede cambiar "Costos y márgenes"
+        window.KPLUS_USDT_PER_10 = 0.09;        // v95: antes fijo (14,4)
         window.KGP_OFFER_MIN = 1000;
         window.KGP_OFFER_LABEL = 'Robux via Gamepass (AL POR MAYOR · Oferta especial)'; // v80: antes 'Oferta especial · Gamepass'
         window.KGP_OFFER_TITLE = 'Ofertas especiales Robux via gamepass';
@@ -4539,7 +4588,7 @@
             document.getElementById('category-info-container').classList.add('hidden');
 
             if (type === 'robux_grupo') {
-                title = "Robux via Grupo"; multiplier = 12; methodText = window.KRX_MENOR_LABEL;
+                title = "Robux via Grupo"; multiplier = window.KRX_GRUPO_USDT_PER_10 * 160; methodText = window.KRX_MENOR_LABEL;
                 if (window.krxGrupo === 'mayor') {
                     multiplier = window.KRX_MAYOR_MULT; methodText = window.KRX_MAYOR_LABEL;
                     infoHtml = window.krxMayorHtml();
@@ -4589,7 +4638,7 @@
                     </div>
                 `;
             } else if (type === 'robux_plus') {
-                title = "Robux via Plus"; multiplier = 14.4; methodText = window.KPLUS_LABEL;
+                title = "Robux via Plus"; multiplier = window.KPLUS_USDT_PER_10 * 160; methodText = window.KPLUS_LABEL;
                 infoHtml = `
                     <div class="bg-[#0c1220] border border-yellow-500/30 rounded-xl p-5 relative z-10 mb-6 bg-gradient-to-br from-yellow-950/20 to-transparent">
                          <h4 class="font-orbitron font-bold text-base text-yellow-400 mb-3"><i class="fa-solid fa-circle-info"></i> Información Importante</h4>
@@ -4741,7 +4790,7 @@
             if (isMayor) methodText = window.KRX_MAYOR_LABEL;
             if (isGpOffer) methodText = window.KGP_OFFER_LABEL;
             // USDT cada 10 Robux: grupo 0,075 · plus 0,09 · gamepass 0,08 (v80) · oferta gamepass 0,075 (v80)
-            const multiplier = subType === 'robux_gamepass' ? (isGpOffer ? window.KGP_OFFER_USDT_PER_10 : window.KGP_USDT_PER_10) : (subType === 'robux_plus' ? 0.09 : 0.075);
+            const multiplier = subType === 'robux_gamepass' ? (isGpOffer ? window.KGP_OFFER_USDT_PER_10 : window.KGP_USDT_PER_10) : (subType === 'robux_plus' ? window.KPLUS_USDT_PER_10 : window.KRX_GRUPO_USDT_PER_10);
             const usdtPublic = isMayor ? window.krxMayorUsdt(amount) : (amount / 10) * multiplier;
             const usdtPrice = window.kiwiReseller ? window.kiwiReseller.robuxPrice(usdtPublic, subType) : usdtPublic;
             const rate = window.exchangeRates[window.currentCurrency] || 1;
@@ -5842,11 +5891,11 @@
                     submitBtnR.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entregando producto...';
                 }
 
-                if (!Object.keys(window.digitalCostByVariantId).length) await window.fetchDigitalStock(true);
+                if (!Object.keys(window.digitalSaleById || {}).length) await window.fetchDigitalStock(true);
                 const rmTier = window.digitalTier(prod.catalogId, prod.variantName);
                 if (rmTier.priceUsdt && Math.abs(Number(prod.usdtPrice) - rmTier.priceUsdt) > 0.001) {
                     window.applyDigitalStockToUI();
-                    return alert('El precio de este producto se actualizó (' + rmTier.priceUsdt + ' USDT, x2 cuentas). Volvé a seleccionarlo para comprar.');
+                    return alert('El precio de este producto se actualizó (' + rmTier.priceUsdt + ' USDT' + (rmTier.qty === 2 ? ', x2 cuentas' : '') + '). Volvé a seleccionarlo para comprar.');
                 }
                 const rmQty = rmTier.qty;
                 const rmResult = await window.sendDigitalOrder(resellIds.product_id, resellIds.variant_id, rmQty);
@@ -6982,7 +7031,6 @@
                     <select id="admin-credit-currency" class="w-full bg-kiwi-dark border border-kiwi-border rounded-lg p-3 text-sm text-white">
                         <option value="USDT">USDT</option>
                         <option value="ARS">ARS</option>
-                        <option value="MXN">MXN</option>
                         <option value="COP">COP</option>
                         <option value="PEN">PEN</option>
                     </select>
@@ -8712,6 +8760,7 @@ window.resetUser2FA = function(username) {
             btn.disabled = false;
         };
         window.kpayPick = function (id) {
+            if (/^mx_/i.test(String(id)) || String(((K.cfg.methods.find(m => m.id === id) || {}).currency) || '').toUpperCase() === 'MXN') return renderMethods();   // v95: MXN apagado
             K.method = K.cfg.methods.find(m => m.id === id); K.lastMethod = id; steps(1); stopRate();
             if (K.purpose === 'direct') return directPick();
             const m = K.method, min = kMin(), res = K.purpose === 'reseller', ars = kIsArs();
@@ -8807,8 +8856,6 @@ window.resetUser2FA = function(username) {
                 usdt: 'Mandá <b>solo USDT</b> por la red indicada. Si tu exchange cobra comisión de retiro, sumala: tiene que <b>llegar</b> el monto exacto.',
                 binance_pay: 'En Binance: <b>Pagar → Enviar → Pay ID</b>. Moneda <b>USDT</b> y el monto exacto.',
                 ar_transfer: 'Transferí desde tu banco o Mercado Pago al alias. <b>Respetá los últimos dígitos</b>: así reconocemos tu pago.',
-                mx_hey: 'Transferencia SPEI a la CLABE de Hey Banco. Escribí el monto con los <b>centavos exactos</b>.',
-                mx_nu: 'Transferencia SPEI a la CLABE de Nu. Escribí el monto con los <b>centavos exactos</b>.',
                 co_bancolombia: 'Transferí a la cuenta Bancolombia de arriba (desde Bancolombia o desde cualquier otro banco). <b>Respetá los últimos pesos</b> del monto.',
                 pe_yape: 'Yapeá al número indicado el monto con los <b>céntimos exactos</b>.',
                 us_takenos: '🇺🇸 Transferencia <b>ACH</b> en dólares a la cuenta de arriba. Mandá el <b>monto exacto con los centavos</b>: así reconocemos tu pago. ACH puede tardar <b>hasta 48 h hábiles</b> en llegar. El nombre y la dirección del banco se muestran tal como los da la cuenta.',
@@ -10091,7 +10138,7 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
     };
 
     // ---- Saldo / 2FA en tarjetas (mismos ids y funciones) ----
-    var CUR = ['USDT', 'ARS', 'MXN', 'COP', 'PEN'];
+    var CUR = ['USDT', 'ARS', 'COP', 'PEN'];   // v95: sin MXN
     var _saldo = W.loadAdminSaldo;
     W.loadAdminSaldo = function () {
         var box = document.getElementById('admin-saldo'); if (!box) return _saldo && _saldo.apply(this, arguments);
@@ -11007,11 +11054,11 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
                 ${stat('Invitado por', invTxt, 'fa-solid fa-user-plus', invSub)}
             </div>
             <div class="grid md:grid-cols-2 gap-3 mt-4">
-                <div><label for="aff-code-input" class="pf-lbl">Tu código de invitación</label>
-                    <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-hashtag"></i><input id="aff-code-input" maxlength="20" autocomplete="off" value="${esc(d.code)}" aria-describedby="aff-code-help"></div>
-                    <button type="button" onclick="window.kiwiAffSaveCode()" class="pf-btn px-4 text-sm shrink-0">Guardar</button></div>
-                    <p id="aff-code-help" class="text-[11px] text-gray-500 mt-1">3 a 20 letras, números o _. Se puede cambiar una vez por día; los links viejos siguen funcionando.</p>
-                    <p id="aff-code-msg" class="text-xs mt-1" role="status" aria-live="polite"></p></div>
+                <div><p class="pf-lbl" id="aff-code-lbl">Tu código de invitación</p>
+                    <div class="flex gap-2 items-stretch"><div class="pf-in flex-1" aria-labelledby="aff-code-lbl"><i class="fa-solid fa-hashtag"></i><span id="aff-code-view" class="py-2 font-orbitron font-bold text-kiwi-gold truncate">${esc(d.code)}</span></div>
+                    <button type="button" onclick="window.kiwiAffCopy('${esc(d.code)}', this)" class="pf-ghost px-3 text-sm shrink-0" aria-label="Copiar código"><i class="fa-regular fa-copy"></i></button></div>
+                    <button type="button" id="aff-req-btn" onclick="window.kiwiAffRequestCode()" class="w-full mt-2 py-2.5 rounded-xl text-sm font-bold bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Solicitar código personalizado</button>
+                    <p id="aff-code-help" class="text-[11px] text-gray-500 mt-1">¿Querés un código con tu nombre (ej. TUNOMBRE)? Pedilo por WhatsApp: lo asigna el staff. Tu link de abajo funciona siempre.</p></div>
                 <div><label class="pf-lbl" for="aff-link">Tu link de invitación</label>
                     <div class="flex gap-2"><div class="pf-in flex-1"><i class="fa-solid fa-link"></i><input id="aff-link" readonly value="${esc(L)}"></div>
                     <button type="button" onclick="window.kiwiAffCopy(document.getElementById('aff-link').value, this)" class="pf-ghost px-3 text-sm shrink-0"><i class="fa-regular fa-copy"></i> Copiar</button>
@@ -11032,16 +11079,16 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         const done = () => { if (btn) { const h = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => { btn.innerHTML = h; }, 1500); } };
         try { navigator.clipboard.writeText(text).then(done, () => { prompt('Copiá el link:', text); }); } catch (_) { prompt('Copiá el link:', text); }
     };
-    W.kiwiAffSaveCode = async function () {
-        const inp = document.getElementById('aff-code-input'), msg = document.getElementById('aff-code-msg'); if (!inp) return;
-        const v = inp.value.trim();
-        if (!/^[A-Za-z0-9_]{3,20}$/.test(v)) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = 'El código debe tener de 3 a 20 letras, números o _.'; return; }
-        try {
-            const r = await rpc('kiwi_aff_set_code', { p_token: tok(), p_code: v });
-            if (!r || !r.ok) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = (r && r.error) || 'No se pudo guardar.'; return; }
-            meData.code = r.code; render();
-            const m2 = document.getElementById('aff-code-msg'); if (m2) { m2.className = 'text-xs mt-1 text-green-300'; m2.textContent = 'Código guardado: ' + r.code; }
-        } catch (e) { msg.className = 'text-xs mt-1 text-red-300'; msg.textContent = e.message; }
+    // v95: el código personalizado ya no lo edita el usuario: se pide por WhatsApp a la tienda (lo asigna el staff)
+    W.KIWI_STORE_WA = W.KIWI_STORE_WA || '5491139172595';
+    W.kiwiAffRequestCode = function () {
+        const d = meData || {};
+        const msg = 'Hola Kiwii Store! Quiero solicitar un código de afiliado personalizado.\n'
+            + 'Mi ID de cuenta: ' + (d.account_code || '-') + '\n'
+            + 'Mi código actual: ' + (d.code || '-') + '\n'
+            + 'Código que quiero: ';
+        const url = 'https://wa.me/' + W.KIWI_STORE_WA + '?text=' + encodeURIComponent(msg);
+        W.open(url, '_blank');
     };
     // v93: recuadro "Cargar código de referido" (arriba en el panel y en Mi perfil) mientras la cuenta pueda hacerlo
     function bindBox(sfx) {
@@ -11181,6 +11228,17 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             <span id="aff-set-msg" class="text-xs ml-2" role="status"></span>
         </div>
 
+        <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Código personalizado de un afiliado</h4>
+        <div class="rounded-xl border border-white/10 bg-black/20 p-3 mb-5">
+            <p class="text-xs text-gray-300 mb-2">Los usuarios lo piden por WhatsApp (el mensaje trae su ID KWS-…). El código viejo sigue funcionando para los links ya compartidos.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input id="aff-uc-user" placeholder="Usuario o ID KWS-…" maxlength="40" class="${inputCls}" aria-label="Usuario o ID de cuenta">
+                <input id="aff-uc-code" placeholder="CÓDIGO NUEVO" maxlength="20" class="${inputCls}" aria-label="Código nuevo">
+                <button type="button" onclick="window.kiwiAffAdminSetUserCode()" class="bg-kiwi-gold text-black font-bold rounded-lg px-3 py-2 text-sm">Asignar código</button>
+            </div>
+            <p id="aff-uc-msg" class="text-xs mt-2" role="status" aria-live="polite"></p>
+        </div>
+
         <h4 class="font-orbitron text-sm text-kiwi-gold font-bold mb-2">Códigos de creador / sponsor</h4>
         <div class="rounded-xl border border-white/10 bg-black/20 p-3 mb-3">
             <p class="text-xs text-gray-300 mb-2">${ed ? 'Editando <b>' + esc(ed.code) + '</b>' : 'Nuevo código'} · el cliente lo usa con el link <span class="text-kiwi-gold">${esc(base())}/r/CODIGO</span> o lo ingresa en su perfil.</p>
@@ -11245,6 +11303,14 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
             A.editing = null; await W.kiwiAffAdminLoad();
         } catch (e) { msg.className = 'text-xs self-center text-red-300'; msg.textContent = e.message; }
     };
+    W.kiwiAffAdminSetUserCode = async function () {
+        const u = (document.getElementById('aff-uc-user') || {}).value || '', c = ((document.getElementById('aff-uc-code') || {}).value || '').trim().toUpperCase();
+        const m = document.getElementById('aff-uc-msg'); const say = (t, ok) => { if (m) { m.className = 'text-xs mt-2 ' + (ok ? 'text-green-300' : 'text-red-300'); m.textContent = t; } };
+        if (!u.trim()) return say('Poné el usuario o su ID KWS-….');
+        if (!/^[A-Z0-9_]{3,20}$/.test(c) || /^KWS/.test(c)) return say('El código debe tener de 3 a 20 letras, números o _ (y no empezar con KWS).');
+        try { const r = await rpc('kiwi_aff_admin_set_code', { p_token: tok(), p_user: u.trim(), p_code: c }); say('Listo: ' + r.username + ' ahora tiene el código ' + r.code + '.', true); meData = null; }
+        catch (e) { say(e.message || 'No se pudo asignar.' + (/function|does not exist|schema cache/i.test(e.message || '') ? ' (falta correr kiwii-v95.sql)' : '')); }
+    };
     W.kiwiAffAdminDeleteCreator = async function (id, code) {
         if (!confirm('¿Borrar el código ' + code + '? Si ya tiene usuarios o ventas, se desactiva y se oculta (las estadísticas se conservan).')) return;
         try { await rpc('kiwi_aff_admin_creator_delete', { p_token: tok(), p_id: id }); if (A.editing === id) A.editing = null; await W.kiwiAffAdminLoad(); } catch (e) { alert(e.message); }
@@ -11288,6 +11354,258 @@ new MutationObserver(sync).observe(h,{childList:true,characterData:true,subtree:
         syncTabBtn();
     }
     function boot() { watchProfile(); hookStaff(); setTimeout(syncTabBtn, 1500); setTimeout(bootAffPage, 300); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})(window);
+</script>
+<script id="kiwi-v95-costos">
+// ===================== v95: PRECIOS POR PORCENTAJE + "COSTOS Y MÁRGENES" (solo Owner) =====================
+// Público: solo precios de venta que el Owner marcó "Aplicar" (kiwi_price_overrides). Los costos los ve únicamente el Owner
+// (la base verifica el rango con el token en cada llamada; /api/game action=owner_costs también).
+(function (W) {
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const tok = () => (W.kiwiToken && W.kiwiToken()) || '';
+    const n2 = x => (Number(x) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    const ceil2 = x => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
+    const ready = () => !!(W.kiwiRpc && typeof supabaseClient !== 'undefined' && supabaseClient && W.supabaseOnline);
+    const SOCIAL_SVC = { ig_seg_baja: 'ig_followers_baja', ig_seg_media: 'ig_followers_media', ig_seg_premium: 'ig_followers_premium', ig_likes: 'ig_likes', ig_vistas: 'ig_views', tt_likes: 'tt_likes', tt_vistas: 'tt_views' };
+    const SOCIAL_LABEL = { ig_seg_baja: 'Instagram · Seguidores (baja)', ig_seg_media: 'Instagram · Seguidores (media)', ig_seg_premium: 'Instagram · Seguidores (premium)', ig_likes: 'Instagram · Likes', ig_vistas: 'Instagram · Vistas', tt_likes: 'TikTok · Likes', tt_vistas: 'TikTok · Vistas' };
+    const SOCIAL_FLOOR = 0.3;   // ningún paquete de redes por debajo de 0,30 USDT
+
+    // ---------- 1) Precios públicos calculados (lo que el Owner marcó "Aplicar") ----------
+    const fmtArs = u => '$' + Math.round(u * 1600).toLocaleString('es-AR') + ' ARS';
+    function setProdPrice(p, usdt) {
+        if (!p || !(usdt > 0)) return;
+        p.usdtPrice = usdt;
+        if (/\$[\d.]+\s*ARS/.test(String(p.price || ''))) p.price = String(p.price).replace(/\$[\d.]+(\s*ARS)/, fmtArs(usdt).replace(' ARS', '') + '$1');
+        else p.price = fmtArs(usdt);
+        if (p.purchasePriceARS) p.purchasePriceARS = Math.round(usdt * 1600);
+        delete p._pub;   // el ajuste de revendedor vuelve a tomar este precio como base
+    }
+    W.kiwiApplyPriceOverrides = function (o) {
+        if (!o || !o.ok) return 0;
+        const P = o.prices || {}; let n = 0;
+        const per10 = k => (P[k] > 0 ? Math.round(P[k] / 10 * 1e6) / 1e6 : null);   // precio por 100 Robux → por 10
+        if (per10('rbx_grupo')) { W.KRX_GRUPO_USDT_PER_10 = per10('rbx_grupo'); n++; }
+        if (P.rbx_mayor > 0) { W.KRX_MAYOR_USDT_PER_100 = P.rbx_mayor; W.KRX_MAYOR_MULT = P.rbx_mayor / 100 * 1600; n++; }
+        if (per10('rbx_gamepass')) { W.KGP_USDT_PER_10 = per10('rbx_gamepass'); n++; }
+        if (per10('rbx_gp_oferta')) { W.KGP_OFFER_USDT_PER_10 = per10('rbx_gp_oferta'); n++; }
+        if (per10('rbx_plus')) { W.KPLUS_USDT_PER_10 = per10('rbx_plus'); n++; }
+        if (P.bloxfruits > 0) {   // precio por 1.000 Robux → cada fruta / pase según sus Robux
+            (W.products || []).filter(p => p.category === 'roblox' && (p.sub === 'fruits' || p.sub === 'gamepasses')).forEach(p => {
+                if (!p._rbx) { const m = String(p.price || '').match(/^([\d.]+)\s*Robux/i); p._rbx = m ? parseInt(m[1].replace(/\./g, ''), 10) : 0; }
+                if (!p._rbx) return;
+                const u = ceil2(p._rbx / 1000 * P.bloxfruits);
+                p.usdtPrice = u; p.price = p._rbx.toLocaleString('es-AR') + ' Robux - ' + fmtArs(u); delete p._pub; n++;
+            });
+        }
+        Object.keys(P).forEach(k => { const m = /^p:(\d+)$/.exec(k); if (!m) return; const p = (W.products || []).find(x => String(x.id) === m[1]); if (p) { setProdPrice(p, Number(P[k])); n++; } });
+        const T = o.tables || {}, SP = W.KIWI_SOCIAL_PRICING;
+        if (SP && SP.tablas) Object.keys(T).forEach(k => { if (SP.tablas[k] && T[k] && T[k]['1']) { SP.tablas[k] = T[k]; n++; } });
+        if (n) {
+            try { W.kiwiSocialApplyPrices && W.kiwiSocialApplyPrices(); } catch (_) {}
+            try { W.kiwiReseller && W.kiwiReseller.applyAll && W.kiwiReseller.applyAll(); } catch (_) {}
+            try { if (typeof W.kiwiRerender === 'function') W.kiwiRerender(); } catch (_) {}
+        }
+        return n;
+    };
+    function loadOverrides(tries) {
+        tries = tries || 0;
+        if (!ready()) { if (tries < 15) setTimeout(() => loadOverrides(tries + 1), 1000); return; }
+        W.kiwiRpc('kiwi_price_overrides', {}).then(o => { W.KIWI_PRICE_OVERRIDES = o; W.kiwiApplyPriceOverrides(o); }).catch(() => {});   // sin v95.sql: quedan los precios de siempre
+    }
+
+    // ---------- 2) Panel staff → COSTOS Y MÁRGENES (solo Owner) ----------
+    const isOwner = () => (W.getMyStaffRole && W.getMyStaffRole()) === 'owner';
+    const C = W.KIWI_COSTS = { data: null, busy: false, sync: null };
+    const inputCls = 'bg-kiwi-dark border border-kiwi-border rounded-lg p-1.5 text-xs text-white';
+    function syncBtn() { const b = document.getElementById('kadm-tab-costos'); if (b) b.classList.toggle('hidden', !isOwner()); }
+    function tierPct(cost) { const t = (C.data && C.data.settings && C.data.settings.tiers) || []; const s = t.slice().sort((a, b) => (a.lt == null ? 1e12 : a.lt) - (b.lt == null ? 1e12 : b.lt)); for (const e of s) if (cost < (e.lt == null ? 1e12 : Number(e.lt))) return Number(e.pct); return s.length ? Number(s[s.length - 1].pct) : 10; }
+    const sitePrice = k => {
+        if (k === 'rbx_grupo') return W.KRX_GRUPO_USDT_PER_10 * 10; if (k === 'rbx_mayor') return W.KRX_MAYOR_USDT_PER_100; if (k === 'rbx_gamepass') return W.KGP_USDT_PER_10 * 10;
+        if (k === 'rbx_gp_oferta') return W.KGP_OFFER_USDT_PER_10 * 10; if (k === 'rbx_plus') return W.KPLUS_USDT_PER_10 * 10;
+        if (k === 'bloxfruits') { const p = (W.products || []).find(x => x.category === 'roblox' && x.sub === 'fruits' && /Robux/.test(String(x.price))); if (!p) return null; const m = String(p.price).match(/^([\d.]+)\s*Robux.*\$([\d.]+)\s*ARS/); return m ? Math.round(parseFloat(m[2].replace(/\./g, '')) / 1600 / parseInt(m[1].replace(/\./g, ''), 10) * 1000 * 1000) / 1000 : null; }
+        const m = /^p:(\d+)$/.exec(k); if (m) { const p = (W.products || []).find(x => String(x.id) === m[1]); return p ? Number(p.usdtPrice) || null : null; }
+        return null;
+    };
+    W.kiwiCostsLoad = async function (fresh) {
+        const box = document.getElementById('admin-costos'); if (!box) return;
+        if (!isOwner()) { box.innerHTML = '<p class="text-sm text-gray-400">Solo el Owner.</p>'; return; }
+        if (C.busy) return; C.busy = true;
+        if (!C.data) box.innerHTML = '<p class="text-sm text-gray-400">Cargando costos en vivo…</p>';
+        try {
+            const sids = Object.values(SOCIAL_SVC).map(k => (W.SOCIAL_DELIVERY && W.SOCIAL_DELIVERY.services || {})[k]).filter(Boolean);
+            const r = await fetch('/api/game', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'owner_costs', token: tok(), fresh: !!fresh, social_ids: sids }) });
+            const j = await r.json().catch(() => null);
+            if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+            C.data = j; render();
+        } catch (e) { box.innerHTML = '<p class="text-sm text-yellow-300">No se pudo cargar: ' + esc(e.message) + (/Owner|403/.test(e.message) ? '' : ' (¿falta correr kiwii-v95.sql o subir api/game.js?)') + '</p>'; }
+        finally { C.busy = false; }
+    };
+    const th = t => `<th class="py-1 pr-2 font-semibold whitespace-nowrap text-left">${t}</th>`;
+    const td = (t, c) => `<td class="py-1 pr-2 whitespace-nowrap ${c || ''}">${t}</td>`;
+    const tbl = (head, rows) => `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-gray-500"><tr>${head.map(th).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    const sec = (id, title, sub, body) => `<details class="rounded-xl border border-white/10 bg-black/20 p-3 mb-3" ${id === 'cfg' ? '' : 'open'} id="kc-${id}"><summary class="cursor-pointer font-orbitron text-sm text-kiwi-gold font-bold">${title}</summary><p class="text-[11px] text-gray-400 mt-1 mb-2">${sub}</p>${body}</details>`;
+    const profitCell = (price, cost) => price > 0 && cost > 0 ? `<b class="${price - cost > 0 ? 'text-green-300' : 'text-red-300'}">${n2(price - cost)}</b>` : '<span class="text-gray-500">—</span>';
+    function gameTitles() {
+        const t = {};
+        (W.products || []).forEach(p => { if (p.raId) t[p.raId] = p.title; if (p.raLegacyId) t[p.raLegacyId] = p.title; });
+        (W.KIWI_RA_ITEMS || []).forEach(it => { if (it.ra && !t[it.ra]) t[it.ra] = (it.category || '') + ' · ' + it.title; });
+        return t;
+    }
+    function mappedIds() { const s = new Set(); Object.values(W.DIGITAL_MAP || {}).forEach(m => { if (m.variant_id) s.add(m.variant_id); else s.add(m.product_id); }); return s; }
+    function render() {
+        const box = document.getElementById('admin-costos'); const d = C.data; if (!box || !d) return;
+        const S = d.settings || {}, items = d.items || [], byKey = {}; items.forEach(i => { byKey[i.key] = i; });
+        const tiers = (S.tiers || []).map((t, i) => `<label class="text-[11px] text-gray-400">${t.lt == null ? 'resto' : 'costo &lt; ' + esc(t.lt)}<input type="number" step="0.5" min="0" max="300" data-kc-tier="${i}" data-lt="${t.lt == null ? '' : esc(t.lt)}" value="${esc(t.pct)}" class="${inputCls} w-full mt-1"></label>`).join('');
+        const cfg = `<div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">${tiers}</div>
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+              <label class="text-[11px] text-gray-400">% Discord<input id="kc-discord" type="number" step="0.5" value="${esc(S.discord_pct)}" class="${inputCls} w-full mt-1"></label>
+              <label class="text-[11px] text-gray-400">% Streaming / IA<input id="kc-dpct" type="number" step="0.5" value="${esc(S.digital_pct)}" class="${inputCls} w-full mt-1"></label>
+              <label class="text-[11px] text-gray-400">EUR → USD<input id="kc-eur" type="number" step="0.01" value="${esc(S.eur_usd)}" class="${inputCls} w-full mt-1"></label>
+              <label class="text-[11px] text-gray-400">Mínimo streaming (USDT)<input id="kc-dmin" type="number" step="0.5" value="${esc(S.digital_min)}" class="${inputCls} w-full mt-1"></label>
+              <label class="text-[11px] text-gray-400">Precio x2 (costo 0,75–1)<input id="kc-dx2" type="number" step="0.5" value="${esc(S.digital_x2)}" class="${inputCls} w-full mt-1"></label>
+              <label class="text-[11px] text-gray-400">Redondeo streaming<select id="kc-dstep" class="${inputCls} w-full mt-1">${[1, 0.5, 0.1, 0.01].map(v => `<option value="${v}" ${Number(S.digital_step) === v ? 'selected' : ''}>${v === 1 ? 'USDT entero' : v}</option>`).join('')}</select></label>
+            </div>
+            <button type="button" onclick="window.kiwiCostsSaveSettings()" class="mt-2 bg-kiwi-gold text-black font-bold rounded-lg px-3 py-1.5 text-xs">Guardar reglas</button> <span id="kc-cfg-msg" class="text-xs ml-2" role="status"></span>`;
+        // manuales
+        const man = items.filter(i => i.kind === 'manual').map(i => {
+            const pr = i.cost > 0 ? ceil2(i.cost * (1 + (i.pct != null ? Number(i.pct) : tierPct(i.cost)) / 100)) : null, sp = sitePrice(i.key);
+            const hint = sp ? tierPct(sp / 1.2) : null;
+            return `<tr class="border-t border-white/5" data-kc-man="${esc(i.key)}">${td(esc(i.label || i.key))}${td(esc(i.unit || ''))}${td(sp ? n2(sp) : '—')}
+              ${td(`<input type="number" step="0.0001" min="0" data-f="cost" value="${i.cost != null ? esc(i.cost) : ''}" placeholder="falta costo" class="${inputCls} w-24" oninput="window.kiwiCostsPreview(this)">`)}
+              ${td(`<input type="number" step="0.5" min="0" max="300" data-f="pct" value="${i.pct != null ? esc(i.pct) : ''}" placeholder="tramo" class="${inputCls} w-16" oninput="window.kiwiCostsPreview(this)">`)}
+              ${td(`<span data-f="price">${pr ? n2(pr) : '<span class="text-yellow-300">falta costo</span>'}</span>`)}${td(`<span data-f="profit">${profitCell(pr, i.cost)}</span>`)}
+              ${td(`<label class="inline-flex items-center gap-1"><input type="checkbox" data-f="apply" ${i.apply ? 'checked' : ''}> aplicar</label>`)}</tr>`;
+        }).join('');
+        // juegos automáticos
+        const gt = gameTitles();
+        const games = (d.games || []).filter(g => g.cost > 0).sort((a, b) => String(a.category).localeCompare(String(b.category)) || a.id - b.id).map(g => `<tr class="border-t border-white/5">${td(esc(gt[g.id] || g.title || ('#' + g.id)) + (g.inactive ? ' <span class="text-red-300">(inactivo)</span>' : ''), 'max-w-[16rem] truncate')}${td(esc(g.category))}${td(n2(g.cost))}${td(g.pct != null ? n2(g.pct) + '%' : '—')}${td(g.price ? n2(g.price) + (g.bulk ? ' /u' : '') : '—')}${td(profitCell(g.price, g.cost))}${td(g.rule === 'tier' ? 'tramo' : (g.rule === 'pct' ? '% fijo' : '—'))}
+            ${td(`<input type="number" step="0.5" min="0" max="200" id="kc-g-${g.id}" placeholder="tramo" class="${inputCls} w-16"> <button type="button" class="text-kiwi-gold underline" onclick="window.kiwiCostsSaveGame(${g.id})">Guardar</button>`)}</tr>`).join('');
+        // streaming / IA
+        const dg = d.digital || {}, ids = mappedIds(), eur = Number(S.eur_usd) || 1.15;
+        const drow = (p, v) => {
+            const it = v || p, sale = it.sale || {}, key = 'dg:' + it.id, ov = byKey[key];
+            const costUsd = Number(it.cost) * eur * (sale.qty || 1);
+            return `<tr class="border-t border-white/5">${td(esc(p.name) + (v ? ' · ' + esc(v.name) : ''), 'max-w-[18rem] truncate')}${td(ids.has(it.id) ? '<span class="text-green-300">sí</span>' : '<span class="text-gray-500">no</span>')}${td(n2(it.cost) + ' ' + esc(dg.currency || 'EUR'))}${td((sale.qty || 1) + '')}${td(n2(costUsd))}${td(it.stock == null ? '∞' : esc(it.stock))}
+              ${td(sale.price ? n2(sale.price) : '—')}${td(profitCell(sale.price, costUsd))}
+              ${td(`<input type="number" step="0.5" min="0" max="300" id="kc-d-${esc(it.id)}" value="${ov && ov.pct != null ? esc(ov.pct) : ''}" placeholder="${esc(S.digital_pct)}" class="${inputCls} w-16"> <button type="button" class="text-kiwi-gold underline" onclick="window.kiwiCostsSaveDigital('${esc(it.id)}', '${esc((p.name + (v ? ' · ' + v.name : '')).replace(/'/g, ''))}')">Guardar</button>`)}</tr>`;
+        };
+        const drows = (dg.products || []).map(p => (p.variants && p.variants.length) ? p.variants.map(v => drow(p, v)).join('') : drow(p, null)).join('');
+        // redes
+        const so = d.social || {}, rates = so.rates || {};
+        const srows = Object.keys(SOCIAL_SVC).map(k => {
+            const sid = (W.SOCIAL_DELIVERY && W.SOCIAL_DELIVERY.services || {})[SOCIAL_SVC[k]], r = rates[sid], it = byKey['so:' + k];
+            const qs = Object.keys(((W.KIWI_SOCIAL_PRICING || {}).tablas || {})[k] && W.KIWI_SOCIAL_PRICING.tablas[k]['1'] || {}).map(Number).sort((a, b) => a - b);
+            const cur = (W.KIWI_SOCIAL_PRICING.tablas[k] || {})['1'] || {};
+            const ex = qs.length ? qs[Math.min(2, qs.length - 1)] : 1000, ec = r ? r.rate * ex / 1000 : null;
+            return `<tr class="border-t border-white/5" data-kc-so="${k}">${td(esc(SOCIAL_LABEL[k]))}${td(r ? n2(r.rate) : '<span class="text-yellow-300">sin dato</span>')}${td(ex.toLocaleString('es-AR') + ': ' + (cur[ex] != null ? n2(cur[ex]) : '—') + (ec ? ' <span class="text-gray-500">(' + Math.round((cur[ex] / ec - 1) * 100) + '%)</span>' : ''))}
+              ${td(`<input type="number" step="0.5" min="0" max="300" data-f="pct" value="${it && it.pct != null ? esc(it.pct) : ''}" placeholder="tramo" class="${inputCls} w-16">`)}
+              ${td(`<label class="inline-flex items-center gap-1"><input type="checkbox" data-f="apply" ${it && it.apply ? 'checked' : ''}> aplicar</label>`)}
+              ${td(`<button type="button" class="text-kiwi-gold underline" ${r ? '' : 'disabled'} onclick="window.kiwiCostsSaveSocial('${k}')">Calcular y guardar</button>`)}</tr>`;
+        }).join('');
+        box.innerHTML = `<p class="kadm-sub">Precio = costo × (1 + %). El % es sobre el COSTO. Vacío = regla por tramo. Solo el Owner ve esta sección.</p>
+          <div class="flex flex-wrap gap-2 mb-3"><button type="button" onclick="window.kiwiCostsLoad(true)" class="border border-white/15 rounded-lg px-3 py-1.5 text-xs text-gray-200"><i class="fa-solid fa-rotate mr-1"></i>Actualizar costos en vivo</button>
+            <button type="button" onclick="window.kiwiCostsSync()" class="bg-kiwi-gold text-black font-bold rounded-lg px-3 py-1.5 text-xs"><i class="fa-solid fa-arrows-rotate mr-1"></i>Sincronizar catálogo (streaming / IA)</button></div>
+          <div id="kc-sync-out">${C.sync || ''}</div>
+          ${sec('cfg', 'Reglas generales', 'Tramos por costo (juegos automáticos y productos manuales sin % propio), Discord, y la regla de streaming / IA.', cfg)}
+          ${sec('man', 'Productos manuales (cargar costo)', 'Robux, Blox Fruits y diamantes limitados no tienen costo en vivo: cargalo acá. "Aplicar" = la tienda usa el precio calculado. Sin aplicar, la web sigue con el precio actual.', tbl(['Producto', 'Unidad', 'Precio web', 'Costo USDT', '%', 'Precio', 'Ganancia', ''], man || '<tr><td class="py-2 text-gray-500" colspan="8">Sin líneas (¿falta correr kiwii-v95.sql?)</td></tr>') + `<button type="button" onclick="window.kiwiCostsSaveManual()" class="mt-2 bg-kiwi-gold text-black font-bold rounded-lg px-3 py-1.5 text-xs">Guardar productos manuales</button> <span id="kc-man-msg" class="text-xs ml-2" role="status"></span>`)}
+          ${sec('games', 'Recargas automáticas (costo en vivo)', 'El % se aplica en el servidor al cobrar. Vacío + Guardar = vuelve a la regla por tramo. Discord se recomienda 10%.' + (d.games_live === false ? ' <b class="text-yellow-300">Costos de respaldo (el proveedor no respondió).</b>' : ''), tbl(['Producto', 'Categoría', 'Costo', '% actual', 'Precio', 'Ganancia', 'Regla', 'Nuevo %'], games || '<tr><td class="py-2 text-gray-500" colspan="8">Sin datos.</td></tr>') + '<p id="kc-g-msg" class="text-xs mt-1" role="status"></p>')}
+          ${sec('dig', 'Streaming / IA / herramientas (costo en vivo)', 'Costo en ' + esc(dg.currency || 'EUR') + ' × ' + esc(eur) + ' = USD. Costo &lt; 0,75: 2 cuentas, mismo precio · 0,75–1: 2 cuentas a ' + esc(S.digital_x2) + ' USDT. "En la tienda" = ya está publicado.', dg.ok === false ? '<p class="text-yellow-300 text-xs">No se pudo leer el catálogo (¿falta la clave del proveedor en Vercel?).</p>' : tbl(['Producto', 'En la tienda', 'Costo', 'Cuentas', 'Costo USD', 'Stock', 'Precio', 'Ganancia', '% propio'], drows) + '<p id="kc-d-msg" class="text-xs mt-1" role="status"></p>')}
+          ${sec('soc', 'Redes sociales (costo en vivo por 1.000)', '"Calcular y guardar" arma la tabla de precios con el % (vacío = tramo según el costo de cada paquete; mínimo 0,30 USDT). Revendedores: la ganancia se reduce a la mitad / un cuarto.', so.ok === false ? '<p class="text-yellow-300 text-xs">No se pudo leer el costo de redes.</p>' : tbl(['Línea', 'Costo x1000', 'Precio actual (ej.)', '%', '', ''], srows) + '<p id="kc-s-msg" class="text-xs mt-1" role="status"></p>')}`;
+    }
+    W.kiwiCostsPreview = function (el) {
+        const tr = el.closest('tr'); if (!tr) return;
+        const c = Number(tr.querySelector('[data-f=cost]').value), pv = tr.querySelector('[data-f=pct]').value;
+        const pr = c > 0 ? ceil2(c * (1 + (pv !== '' ? Number(pv) : tierPct(c)) / 100)) : null;
+        tr.querySelector('[data-f=price]').innerHTML = pr ? n2(pr) : '<span class="text-yellow-300">falta costo</span>';
+        tr.querySelector('[data-f=profit]').innerHTML = profitCell(pr, c);
+    };
+    const say = (id, t, ok) => { const m = document.getElementById(id); if (m) { m.className = 'text-xs ml-2 ' + (ok ? 'text-green-300' : 'text-red-300'); m.textContent = t; } };
+    const rpc = (fn, a) => W.kiwiRpc(fn, Object.assign({ p_token: tok() }, a || {}));
+    W.kiwiCostsSaveSettings = async function () {
+        const tiers = Array.from(document.querySelectorAll('[data-kc-tier]')).map(i => ({ lt: i.dataset.lt === '' ? null : Number(i.dataset.lt), pct: Number(i.value) }));
+        const v = id => (document.getElementById(id) || {}).value;
+        try { await rpc('kiwi_cost_settings_save', { p_settings: { tiers, discord_pct: v('kc-discord'), digital_pct: v('kc-dpct'), eur_usd: v('kc-eur'), digital_min: v('kc-dmin'), digital_x2: v('kc-dx2'), digital_step: v('kc-dstep') } }); say('kc-cfg-msg', 'Guardado. Los precios de streaming se actualizan en ~5 min.', true); W.kiwiCostsLoad(true); }
+        catch (e) { say('kc-cfg-msg', e.message); }
+    };
+    W.kiwiCostsSaveManual = async function () {
+        const rows = Array.from(document.querySelectorAll('[data-kc-man]')).map(tr => {
+            const it = (C.data.items || []).find(i => i.key === tr.dataset.kcMan) || {};
+            const c = tr.querySelector('[data-f=cost]').value, p = tr.querySelector('[data-f=pct]').value, ap = tr.querySelector('[data-f=apply]').checked;
+            return { key: tr.dataset.kcMan, kind: 'manual', label: it.label, category: it.category, unit: it.unit, cost: c === '' ? null : Number(c), pct: p === '' ? null : Number(p), apply: ap && c !== '' };
+        });
+        try { const r = await rpc('kiwi_cost_save', { p_items: rows }); say('kc-man-msg', 'Guardado (' + r.saved + '). Los precios "aplicados" se ven al recargar la tienda.', true); await W.kiwiCostsLoad(); loadOverrides(); }
+        catch (e) { say('kc-man-msg', e.message); }
+    };
+    W.kiwiCostsSaveGame = async function (id) {
+        const v = (document.getElementById('kc-g-' + id) || {}).value;
+        try { await rpc('kiwi_cost_prov_margin', { p_key: id, p_pct: v === '' ? null : Number(v) }); say('kc-g-msg', 'Guardado #' + id + '. El servidor lo usa en ~15 min (caché).', true); }
+        catch (e) { say('kc-g-msg', e.message); }
+    };
+    W.kiwiCostsSaveDigital = async function (id, label) {
+        const v = (document.getElementById('kc-d-' + id) || {}).value;
+        try { await rpc('kiwi_cost_save', { p_items: [{ key: 'dg:' + id, kind: 'digital', label, category: 'digital', pct: v === '' ? null : Number(v), apply: v !== '' }] }); say('kc-d-msg', 'Guardado. El precio se actualiza en ~5 min.', true); }
+        catch (e) { say('kc-d-msg', e.message); }
+    };
+    W.kiwiCostsSaveSocial = async function (k) {
+        const tr = document.querySelector('[data-kc-so="' + k + '"]'), rates = (C.data.social || {}).rates || {};
+        const sid = (W.SOCIAL_DELIVERY && W.SOCIAL_DELIVERY.services || {})[SOCIAL_SVC[k]], r = rates[sid]; if (!r || !tr) return;
+        const pv = tr.querySelector('[data-f=pct]').value, ap = tr.querySelector('[data-f=apply]').checked;
+        const qs = Object.keys(W.KIWI_SOCIAL_PRICING.tablas[k]['1'] || {}).map(Number);
+        const t = { '1': {}, '0.5': {}, '0.25': {} };
+        qs.forEach(q => {
+            const c = r.rate * q / 1000, pct = pv !== '' ? Number(pv) : tierPct(c), pub = Math.max(SOCIAL_FLOOR, ceil2(c * (1 + pct / 100)));
+            t['1'][q] = pub; t['0.5'][q] = Math.max(ceil2(c), ceil2(c + (pub - c) * 0.5)); t['0.25'][q] = Math.max(ceil2(c), ceil2(c + (pub - c) * 0.25));
+        });
+        try { await rpc('kiwi_cost_save', { p_items: [{ key: 'so:' + k, kind: 'social', label: SOCIAL_LABEL[k], category: 'social', unit: '1000', cost: r.rate, pct: pv === '' ? null : Number(pv), apply: ap, table: t }] });
+              say('kc-s-msg', SOCIAL_LABEL[k] + ': guardado' + (ap ? ' y aplicado' : ' (sin aplicar)') + '. Ej. 1.000 = ' + (t['1'][1000] != null ? n2(t['1'][1000]) : '—') + ' USDT.', true); if (ap) loadOverrides(); }
+        catch (e) { say('kc-s-msg', e.message); }
+    };
+    // Sincronizar: compara el catálogo del proveedor con lo publicado en la tienda
+    W.kiwiCostsSync = async function () {
+        await W.kiwiCostsLoad(true);
+        const dg = (C.data && C.data.digital) || {}; if (!dg.ok) return;
+        const live = new Map(); (dg.products || []).forEach(p => { if ((p.variants || []).length) p.variants.forEach(v => live.set(v.id, { name: p.name + ' · ' + v.name, stock: v.stock })); else live.set(p.id, { name: p.name, stock: p.stock }); });
+        const map = W.DIGITAL_MAP || {}, inStore = mappedIds();
+        const gone = Object.keys(map).filter(k => !live.has(map[k].variant_id || map[k].product_id));
+        const fresh = Array.from(live.entries()).filter(([id]) => !inStore.has(id));
+        const out = Object.keys(map).filter(k => { const l = live.get(map[k].variant_id || map[k].product_id); return l && l.stock !== null && Number(l.stock) <= 0; });
+        C.sync = `<div class="rounded-xl border border-kiwi-gold/40 bg-kiwi-gold/5 p-3 mb-3 text-xs text-gray-200">
+          <p class="font-bold text-kiwi-gold mb-1">Sincronización (${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })})</p>
+          <p><b>En la tienda pero ya NO existen en el proveedor (${gone.length}):</b> ${gone.map(esc).join(', ') || 'ninguno'}</p>
+          <p class="mt-1"><b>Sin stock ahora (${out.length}):</b> ${out.map(esc).join(', ') || 'ninguno'}</p>
+          <p class="mt-1"><b>Nuevos en el proveedor, no publicados (${fresh.length}):</b> ${fresh.map(([, l]) => esc(l.name) + (l.stock === 0 ? ' (sin stock)' : '')).join(', ') || 'ninguno'}</p>
+          <p class="mt-1 text-gray-400">Los precios de lo publicado ya se recalculan solos con el costo en vivo. Para publicar un producto nuevo hace falta agregarlo al catálogo de la web (pedímelo).</p></div>`;
+        const o = document.getElementById('kc-sync-out'); if (o) o.innerHTML = C.sync;
+    };
+    function hookStaff() {
+        const prev = W.switchStaffTab;
+        if (typeof prev === 'function' && !prev.__costos) {
+            W.switchStaffTab = function (tab) {
+                if (tab !== 'costos') { const r = prev.apply(this, arguments); setTimeout(syncBtn, 0); return r; }
+                if (!isOwner()) { return prev.apply(this, ['cuentas']); }
+                const S = W.KIWI_STAFF_MANUAL; if (S) { S.seq++; S.tab = 'costos'; S.busy = false; }
+                try { currentStaffTab = 'costos'; } catch (_) {}
+                document.querySelectorAll('#admin-content > .admin-tab').forEach(n => n.classList.toggle('hidden', n.id !== 'admin-costos'));
+                document.querySelectorAll('#admin-page .kadm-tabs > button').forEach(n => {
+                    const m = (n.getAttribute('onclick') || '').match(/switchStaffTab\('([^']+)'/), on = !!m && m[1] === 'costos';
+                    ['text-kiwi-gold', 'border-b-2', 'border-kiwi-gold'].forEach(c => n.classList.toggle(c, on)); n.classList.toggle('text-gray-500', !on);
+                });
+                const lb = document.getElementById('kiwi-staff-updated'); if (lb) lb.textContent = 'Costos y márgenes';
+                syncBtn(); return W.kiwiCostsLoad();
+            };
+            W.switchStaffTab.__costos = true; W.switchStaffTab.__aff = prev.__aff;
+        }
+        const pr = W.kiwiStaffRefresh;
+        if (typeof pr === 'function' && !pr.__costos) {
+            W.kiwiStaffRefresh = function () { const st = W.KIWI_STAFF_MANUAL; if (st && st.tab === 'costos') return W.kiwiCostsLoad(true); return pr.apply(this, arguments); };
+            W.kiwiStaffRefresh.__costos = true; W.kiwiStaffRefresh.__aff = pr.__aff;
+        }
+        const ap = document.getElementById('admin-page');
+        if (ap) new MutationObserver(syncBtn).observe(ap, { attributes: true, attributeFilter: ['class'] });
+        syncBtn();
+    }
+    function boot() { setTimeout(hookStaff, 600); setTimeout(syncBtn, 1500); loadOverrides(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })(window);
 </script>
