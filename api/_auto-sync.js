@@ -15,7 +15,12 @@ function srcOf(ref) {
     const id = digital && digital.verifyRef ? digital.verifyRef(r) : null;
     return id ? { src: 'digital', id } : null;
   }
-  if (/^\d{1,20}$/.test(r)) return { src: 'social', id: r };
+  if (/^S:/.test(r)) {   // v98: redes con referencia firmada por el servidor
+    social = social || mod('./social');
+    const id = social && social.verifyRef ? social.verifyRef(r) : null;
+    return id ? { src: 'social', id } : null;
+  }
+  if (/^\d{1,20}$/.test(r)) return { src: 'social', id: r };   // pedidos viejos (antes de v98; desde v98 la web ya no puede poner referencias)
   return null;
 }
 // Redes: estados típicos Pending / In progress / Processing / Completed / Partial / Canceled (+ remains)
